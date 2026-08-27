@@ -47,8 +47,8 @@
 
 | ID | Item | Wave | Status | Phase | Assignee | Started | Completed | Blockers / Notes |
 |---|---|---|---|---|---|---|---|---|
-| F1 | Solution & project skeleton | 0 | ⬜ | Design |  |  |  |  |
-| F2 | Domain common types (`Entity`, `AuditableEntity`, `ValueObject`, strong IDs) | 0 | ⬜ | Design |  |  |  |  |
+| F1 | Solution & project skeleton | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Committed to `main` (194220f); builds clean (0 errors/0 warnings). |
+| F2 | Domain common types (`Entity`, `AuditableEntity`, `ValueObject`, `DomainException`, strong IDs) | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Implemented in `TopLab.Domain/Common` (Entity, ValueObject, AuditableEntity, DomainException, StronglyTypedId); matches Architecture §4.1 + ADR-0012/0013. |
 | F3 | Result pattern & MediatR pipeline behaviors (Validation, Authorization, Logging) | 0 | ⬜ | Design |  |  |  |  |
 | F4 | Persistence baseline (`ApplicationDbContext`, `AuditableEntitySaveChangesInterceptor`, `IDateTimeProvider`, `ICurrentUserService`) | 0 | ⬜ | Design |  |  |  |  |
 | F5 | Data model — baseline entity schemas across all entity groups | 0 | ⬜ | Design |  |  |  |  |
@@ -90,7 +90,7 @@
 
 | Wave | Modules | Status Summary |
 |---|---|---|
-| Wave 0 — Foundations | F1, F2, F3, F4, F5, F6 | ⬜ Not Started |
+| Wave 0 — Foundations | F1, F2, F3, F4, F5, F6 | 🟨 In Progress |
 | Wave 1 — Configuration Backbone | M17, M22 | ⬜ Not Started |
 | Wave 2 — Reference Data | M14, M12 | ⬜ Not Started |
 | Wave 3 — Reference-Data Extensions | M13, M15, M01 | ⬜ Not Started |
@@ -353,7 +353,8 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 
 | Date | Item | Change | By |
 |---|---|---|---|
-|  |  |  |  |
+| 2026-08-28 | F1 | Solution & project skeleton created; builds clean (0 errors/0 warnings); committed to `main` (194220f). | Local coding agent (Top-Lab) |
+| 2026-08-28 | F2 | Domain common types implemented in `TopLab.Domain/Common` (Entity, ValueObject, AuditableEntity, DomainException, StronglyTypedId); `TopLab.Domain.Tests` wired to `TopLab.Domain`; unit tests added. Matches Architecture §4.1 and ADR-0012/0013. | Local coding agent (Top-Lab) |
 
 Add one row per material change.
 
