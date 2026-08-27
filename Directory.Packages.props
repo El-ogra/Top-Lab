@@ -1,0 +1,27 @@
+<Project>
+
+  <PropertyGroup>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Licensed-package pins (Top-Lab is a commercial product intended for resale).
+      MediatR 12.x = last free Apache-2.0 line before the v13 commercial license.
+      FluentValidation 12.x = Apache-2.0, free for commercial use.
+      EF Core 8.x = matches the net8.0 / net8.0-windows TFMs; do NOT move to 9.x/10.x.
+    -->
+    <PackageVersion Include="MediatR" Version="12.5.0" />
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.30" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.30" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.30" />
+
+    <!-- Test framework (xUnit v2, no mocking lib, plain Assert) -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
+
+</Project>

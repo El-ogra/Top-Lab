@@ -1,0 +1,47 @@
+# Build output
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / Rider / VS Code user files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.idea/
+*.resharper
+.vs/
+
+# Build artifacts
+*.dll
+*.exe
+*.pdb
+*.cache
+*.ilk
+*.ncb
+
+# Connection strings & secrets — never commit
+appsettings*.json
+appsettings.*.json
+*.secrets.json
+secrets.json
+connectionStrings.config
+*.config.user
+web.config.user
+
+# Local database & backups (workstation-local, not source)
+*.mdf
+*.ldf
+*.bak
+*.sqlite
+*.db
+
+# Logs
+*.log
+logs/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+~$*

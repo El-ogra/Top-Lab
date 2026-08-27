@@ -1,0 +1,39 @@
+root = true
+
+# Top-Lab solution-wide formatting rules (Coding Standards §6.12)
+# When this file is silent, these defaults apply.
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{cs,csx}]
+# C# language / style
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_prefer_braces = true:warning
+csharp_prefer_simple_using_statement = true:suggestion
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Naming (Coding Standards §4.2 / §4.4)
+dotnet_naming_rule.pascal_types.severity = suggestion
+dotnet_naming_symbols.pascal_types.applicable_kinds = class:interface:struct:enum:property:method:field:namespace
+dotnet_naming_symbols.pascal_types.applicable_accessibilities = *
+dotnet_naming_style.pascal_types.capitalization = pascal_case
+
+dotnet_naming_rule.upper_snake_permission.severity = suggestion
+dotnet_naming_symbols.permission_codes.applicable_kinds = property:field:parameter
+dotnet_naming_symbols.permission_codes.required_modifiers = const
+dotnet_naming_style.upper_snake.capitalization = all_upper
+dotnet_naming_style.upper_snake.word_separator = _
+
+[*.{csproj,props,targets,json,sln}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
