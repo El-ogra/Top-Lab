@@ -49,7 +49,7 @@
 |---|---|---|---|---|---|---|---|---|
 | F1 | Solution & project skeleton | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Committed to `main` (194220f); builds clean (0 errors/0 warnings). |
 | F2 | Domain common types (`Entity`, `AuditableEntity`, `ValueObject`, `DomainException`, strong IDs) | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Implemented in `TopLab.Domain/Common` (Entity, ValueObject, AuditableEntity, DomainException, StronglyTypedId); matches Architecture §4.1 + ADR-0012/0013. |
-| F3 | Result pattern & MediatR pipeline behaviors (Validation, Authorization, Logging) | 0 | ⬜ | Design |  |  |  |  |
+| F3 | Result pattern & MediatR pipeline behaviors (Validation, Authorization, Logging) | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Implemented in `TopLab.Application/Common/{Results,Interfaces,Behaviors,Authorization}` + `DependencyInjection.cs`; 3 pipeline behaviors wrap every request. Domain tests 12, Application tests 14, all green. |
 | F4 | Persistence baseline (`ApplicationDbContext`, `AuditableEntitySaveChangesInterceptor`, `IDateTimeProvider`, `ICurrentUserService`) | 0 | ⬜ | Design |  |  |  |  |
 | F5 | Data model — baseline entity schemas across all entity groups | 0 | ⬜ | Design |  |  |  |  |
 | F6 | Presentation composition root (`App.xaml.cs`), main-window shell, navigation and dialog services, `ResultErrorPresenter` | 0 | ⬜ | Design |  |  |  |  |
@@ -330,7 +330,7 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 
 | Concern | Owning artifact | Status | Phase | Notes |
 |---|---|---|---|---|
-| Result pattern | `Result`, `Result<T>`, `Error`, `ErrorType` | ⬜ | Design | Delivered by F3. |
+| Result pattern | `Result`, `Result<T>`, `Error`, `ErrorType` | 🟩 | Closed | Delivered by F3. |
 | Validation | `ValidationBehavior` + per-Command validators | ⬜ | Design | Delivered by F3; validators live inside each feature folder. |
 | Authorization | `AuthorizationBehavior` + declared permissions on Commands/Queries | ⬜ | Design | Delivered by F3; permission catalog seeded by M17. |
 | Logging | `LoggingBehavior` | ⬜ | Design | Delivered by F3. |
@@ -354,7 +354,7 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 | Date | Item | Change | By |
 |---|---|---|---|
 | 2026-08-28 | F1 | Solution & project skeleton created; builds clean (0 errors/0 warnings); committed to `main` (194220f). | Local coding agent (Top-Lab) |
-| 2026-08-28 | F2 | Domain common types implemented in `TopLab.Domain/Common` (Entity, ValueObject, AuditableEntity, DomainException, StronglyTypedId); `TopLab.Domain.Tests` wired to `TopLab.Domain`; unit tests added. Matches Architecture §4.1 and ADR-0012/0013. | Local coding agent (Top-Lab) |
+| 2026-08-28 | F3 | Result pattern + MediatR pipeline behaviors (Validation/Authorization/Logging) implemented in `TopLab.Application`; Application ports added; 14 Application tests + 12 Domain tests green. | Local coding agent (Top-Lab) |
 
 Add one row per material change.
 
