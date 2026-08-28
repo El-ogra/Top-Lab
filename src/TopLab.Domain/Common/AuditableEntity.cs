@@ -8,18 +8,18 @@ namespace TopLab.Domain.Common;
 /// <c>AuditableEntitySaveChangesInterceptor</c> in the Infrastructure layer
 /// (ADR-0013) — domain/handler code must never set them manually.
 /// </summary>
-public abstract class AuditableEntity<TId> : Entity<TId>
+public abstract class AuditableEntity<TId> : Entity<TId>, IAuditableEntity
     where TId : notnull
 {
-    public int CreatedByUserId { get; internal set; }
+    public int CreatedByUserId { get; set; }
 
-    public DateTime CreatedAtUtc { get; internal set; }
+    public DateTime CreatedAtUtc { get; set; }
 
-    public int LastModifiedByUserId { get; internal set; }
+    public int LastModifiedByUserId { get; set; }
 
-    public DateTime LastModifiedAtUtc { get; internal set; }
+    public DateTime LastModifiedAtUtc { get; set; }
 
-    public int ModificationCount { get; internal set; }
+    public int ModificationCount { get; set; }
 
     protected AuditableEntity()
     {
