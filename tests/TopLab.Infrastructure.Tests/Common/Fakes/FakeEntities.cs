@@ -41,13 +41,13 @@ public sealed class NonAuditableTestEntity : Entity<int>
 /// </summary>
 public sealed class FakeCurrentUserService : ICurrentUserService
 {
-    public bool IsAuthenticated { get; init; } = true;
+    public bool IsAuthenticated { get; set; } = true;
 
-    public int UserId { get; init; } = 42;
+    public int UserId { get; set; } = 42;
 
-    public bool IsAbsolutePermission { get; init; }
+    public bool IsAbsolutePermission { get; set; }
 
-    public HashSet<string> GrantedPermissions { get; init; } = new();
+    public HashSet<string> GrantedPermissions { get; set; } = new();
 
     public bool HasPermission(string code) => GrantedPermissions.Contains(code);
 }
@@ -57,5 +57,5 @@ public sealed class FakeCurrentUserService : ICurrentUserService
 /// </summary>
 public sealed class FakeDateTimeProvider : IDateTimeProvider
 {
-    public DateTime UtcNow { get; init; } = new(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+    public DateTime UtcNow { get; set; } = new(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
 }

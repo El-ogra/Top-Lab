@@ -61,7 +61,7 @@ public sealed class AuditableEntitySaveChangesInterceptor : SaveChangesIntercept
 
         foreach (EntityEntry entry in context.ChangeTracker.Entries())
         {
-            if (entry.Entity is not AuditableEntity<int> auditable)
+            if (entry.Entity is not IAuditableEntity auditable)
             {
                 continue;
             }
@@ -80,8 +80,8 @@ public sealed class AuditableEntitySaveChangesInterceptor : SaveChangesIntercept
                     // Audit fields are owned by this interceptor; any handler-side
                     // changes to them are reverted so the persisted value is the
                     // one we just computed.
-                    entry.Property(nameof(AuditableEntity<int>.CreatedByUserId)).IsModified = false;
-                    entry.Property(nameof(AuditableEntity<int>.CreatedAtUtc)).IsModified = false;
+                    entry.Property(nameof(IAuditableEntity.CreatedByUserId)).IsModified = false;
+                    entry.Property(nameof(IAuditableEntity.CreatedAtUtc)).IsModified = false;
                     auditable.LastModifiedByUserId = userId;
                     auditable.LastModifiedAtUtc = nowUtc;
                     auditable.ModificationCount++;
