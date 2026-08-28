@@ -10,7 +10,7 @@ public sealed class CustomGroupConfiguration : IEntityTypeConfiguration<CustomGr
     public void Configure(EntityTypeBuilder<CustomGroup> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => CustomGroupId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => CustomGroupId.Create(v)).ValueGeneratedOnAdd().HasColumnName("CustomGroupId");
         b.Property(e => e.Name).HasMaxLength(150).IsRequired();
     }
 }

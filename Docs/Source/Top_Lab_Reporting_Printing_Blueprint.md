@@ -238,7 +238,7 @@ Receipt printing (P-05) honors `ReceiptSettings.PrintOnce` (one physical receipt
 
 | Rule | Specification |
 |---|---|
-| Result printability | A result row may be printed once it has reached at least the **Finished** lifecycle stage (`PatientTest.IsReviewed` / finish flags per the Data Model). Unfinished rows are excluded from P-01 by the query. |
+| Result printability | A result row may be printed once it has reached at least the **Verified** lifecycle stage (`PatientTest.IsReviewed = true` per the Data Model). Per PRD §8.1/§8.3 the lifecycle is Entry → Finish → **Verify** → Print → Delivered, so the Finished stage alone is insufficient; verification must be complete. Unfinished or unverified rows are excluded from P-01 by the query. |
 | Print-block-on-balance | When the operating user's `BlockPrintOnRemainingBalance` is set and a balance remains, the Deliver/print path is refused with a `Forbidden`/`Conflict` result before printing (Data Model BR-07; UI/UX S-12). |
 | Print count | `PatientTest.PrintCount` and `LastPrintedByUserId`/`AtUtc` are updated on each physical print (the T audit surface, Data Model §6.1, Architecture ADR-0014). |
 | Re-print | Re-printing an already-printed result is permitted (it is not a new lifecycle stage); the print count increments. |

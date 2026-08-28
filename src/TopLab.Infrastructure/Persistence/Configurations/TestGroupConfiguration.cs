@@ -10,7 +10,7 @@ public sealed class TestGroupConfiguration : IEntityTypeConfiguration<TestGroup>
     public void Configure(EntityTypeBuilder<TestGroup> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => TestGroupId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => TestGroupId.Create(v)).ValueGeneratedOnAdd().HasColumnName("TestGroupId");
         b.Property(e => e.Name).HasMaxLength(150).IsRequired();
     }
 }

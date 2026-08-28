@@ -10,7 +10,7 @@ public sealed class AttendanceRecordConfiguration : IEntityTypeConfiguration<Att
     public void Configure(EntityTypeBuilder<AttendanceRecord> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => AttendanceRecordId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => AttendanceRecordId.Create(v)).ValueGeneratedOnAdd().HasColumnName("AttendanceRecordId");
         b.Property(e => e.UserId).HasConversion(v => v.Value, v => UserId.Create(v)).IsRequired();
         b.Property(e => e.CheckInAtUtc).HasColumnType("datetime2").IsRequired();
         b.Property(e => e.BreakStartAtUtc).HasColumnType("datetime2").IsRequired(false);

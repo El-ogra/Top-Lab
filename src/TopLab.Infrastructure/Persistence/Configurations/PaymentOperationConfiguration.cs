@@ -10,7 +10,7 @@ public sealed class PaymentOperationConfiguration : IEntityTypeConfiguration<Pay
     public void Configure(EntityTypeBuilder<PaymentOperation> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => PaymentOperationId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => PaymentOperationId.Create(v)).ValueGeneratedOnAdd().HasColumnName("PaymentOperationId");
         b.Property(e => e.PatientId).HasConversion(v => v.Value, v => PatientId.Create(v)).IsRequired();
         b.Property(e => e.Amount).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired();
         b.Property(e => e.DiscountAmount).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired(false);

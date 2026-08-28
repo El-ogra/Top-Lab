@@ -10,7 +10,7 @@ public sealed class PatientTitleConfiguration : IEntityTypeConfiguration<Patient
     public void Configure(EntityTypeBuilder<PatientTitle> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => PatientTitleId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => PatientTitleId.Create(v)).ValueGeneratedOnAdd().HasColumnName("PatientTitleId");
         b.Property(e => e.TitleText).HasMaxLength(50).IsRequired();
         b.Property(e => e.IsDefault).IsRequired();
     }

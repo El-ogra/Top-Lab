@@ -10,7 +10,7 @@ public sealed class SentOutSamplePaymentConfiguration : IEntityTypeConfiguration
     public void Configure(EntityTypeBuilder<SentOutSamplePayment> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => SentOutSamplePaymentId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => SentOutSamplePaymentId.Create(v)).ValueGeneratedOnAdd().HasColumnName("SentOutSamplePaymentId");
         b.Property(e => e.SentOutSampleId).HasConversion(v => v.Value, v => SentOutSampleId.Create(v)).IsRequired();
         b.Property(e => e.AmountPaid).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired();
         b.Property(e => e.PaidAtUtc).HasColumnType("datetime2").IsRequired();

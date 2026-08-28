@@ -10,7 +10,7 @@ public sealed class PriceListConfiguration : IEntityTypeConfiguration<PriceList>
     public void Configure(EntityTypeBuilder<PriceList> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => PriceListId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => PriceListId.Create(v)).ValueGeneratedOnAdd().HasColumnName("PriceListId");
         b.Property(e => e.Name).HasMaxLength(150).IsRequired();
     }
 }

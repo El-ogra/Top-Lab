@@ -10,7 +10,7 @@ public sealed class TestConfiguration : IEntityTypeConfiguration<Test>
     public void Configure(EntityTypeBuilder<Test> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => TestId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => TestId.Create(v)).ValueGeneratedOnAdd().HasColumnName("TestId");
         b.Property(e => e.Name).HasMaxLength(150).IsRequired();
         b.Property(e => e.ReportName).HasMaxLength(150).IsRequired();
         b.Property(e => e.ReceiptName).HasMaxLength(150).IsRequired();

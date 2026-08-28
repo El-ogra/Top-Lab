@@ -10,7 +10,7 @@ public sealed class PatientTestConfiguration : IEntityTypeConfiguration<PatientT
     public void Configure(EntityTypeBuilder<PatientTest> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => PatientTestId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => PatientTestId.Create(v)).ValueGeneratedOnAdd().HasColumnName("PatientTestId");
         b.Property(e => e.PatientId).HasConversion(v => v.Value, v => PatientId.Create(v)).IsRequired();
         b.Property(e => e.TestId).HasConversion(v => v.Value, v => TestId.Create(v)).IsRequired();
         b.Property(e => e.PriceAtOrderTime).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired();

@@ -22,6 +22,16 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     {
     }
 
+    IQueryable<TEntity> IApplicationDbContext.Set<TEntity>() => base.Set<TEntity>();
+
+    void IApplicationDbContext.Add<TEntity>(TEntity entity) => base.Add(entity);
+
+    void IApplicationDbContext.Update<TEntity>(TEntity entity) => base.Update(entity);
+
+    void IApplicationDbContext.Remove<TEntity>(TEntity entity) => base.Remove(entity);
+
+    Task<bool> IApplicationDbContext.CanConnectAsync(CancellationToken cancellationToken) => base.Database.CanConnectAsync(cancellationToken);
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Discover every Fluent-API configuration in this assembly so adding

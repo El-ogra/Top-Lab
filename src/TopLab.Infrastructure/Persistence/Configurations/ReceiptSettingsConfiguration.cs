@@ -10,7 +10,7 @@ public sealed class ReceiptSettingsConfiguration : IEntityTypeConfiguration<Rece
     public void Configure(EntityTypeBuilder<ReceiptSettings> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).ValueGeneratedNever();
+        b.Property(e => e.Id).ValueGeneratedNever().HasColumnName("ReceiptSettingsId");
         b.Property(e => e.TopMarginCm).HasColumnType("decimal(5,2)").HasPrecision(5,2).IsRequired();
         b.Property(e => e.Currency).HasMaxLength(10).IsRequired();
         b.Property(e => e.PickupTimeDefault).HasColumnType("time").IsRequired(false);

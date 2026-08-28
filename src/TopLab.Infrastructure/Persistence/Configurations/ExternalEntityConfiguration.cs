@@ -10,7 +10,7 @@ public sealed class ExternalEntityConfiguration : IEntityTypeConfiguration<Exter
     public void Configure(EntityTypeBuilder<ExternalEntity> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => ExternalEntityId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => ExternalEntityId.Create(v)).ValueGeneratedOnAdd().HasColumnName("ExternalEntityId");
         b.Property(e => e.EntityType).HasConversion<int>().HasColumnType("tinyint").IsRequired();
         b.Property(e => e.Name).HasMaxLength(200).IsRequired();
         b.Property(e => e.City).HasMaxLength(100).IsRequired(false);

@@ -10,7 +10,7 @@ public sealed class TestCommentConfiguration : IEntityTypeConfiguration<TestComm
     public void Configure(EntityTypeBuilder<TestComment> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => TestCommentId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => TestCommentId.Create(v)).ValueGeneratedOnAdd().HasColumnName("TestCommentId");
         b.Property(e => e.TestId).HasConversion(v => v.Value, v => TestId.Create(v)).IsRequired();
         b.Property(e => e.CommentText).HasMaxLength(1000).IsRequired();
         b.HasOne<Test>().WithMany().HasForeignKey(e => e.TestId).OnDelete(DeleteBehavior.Cascade);

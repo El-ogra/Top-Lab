@@ -10,7 +10,7 @@ public sealed class SystemSettingsConfiguration : IEntityTypeConfiguration<Syste
     public void Configure(EntityTypeBuilder<SystemSettings> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).ValueGeneratedNever();
+        b.Property(e => e.Id).ValueGeneratedNever().HasColumnName("SystemSettingsId");
         b.Property(e => e.DefaultAccountType).HasConversion<int>().HasColumnType("tinyint").IsRequired();
         b.Property(e => e.PrintLabIdInsteadOfPatientId).IsRequired();
         b.Property(e => e.AutoReviewAndComplete).IsRequired();

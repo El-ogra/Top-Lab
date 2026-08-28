@@ -10,7 +10,7 @@ public sealed class ReferenceRangeConfiguration : IEntityTypeConfiguration<Refer
     public void Configure(EntityTypeBuilder<ReferenceRange> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => ReferenceRangeId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => ReferenceRangeId.Create(v)).ValueGeneratedOnAdd().HasColumnName("ReferenceRangeId");
         b.Property(e => e.TestId).HasConversion(v => v.Value, v => TestId.Create(v)).IsRequired();
         b.Property(e => e.Sex).HasConversion(v => v == null ? (int?)null : (int)v.Value, v => v == null ? null : (TopLab.Domain.Common.Enums.Sex)v.Value).HasColumnType("tinyint").IsRequired(false);
         b.Property(e => e.AgeUnit).HasConversion<int>().HasColumnType("tinyint").IsRequired();

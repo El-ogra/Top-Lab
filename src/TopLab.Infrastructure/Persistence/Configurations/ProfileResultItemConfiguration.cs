@@ -10,7 +10,7 @@ public sealed class ProfileResultItemConfiguration : IEntityTypeConfiguration<Pr
     public void Configure(EntityTypeBuilder<ProfileResultItem> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => ProfileResultItemId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => ProfileResultItemId.Create(v)).ValueGeneratedOnAdd().HasColumnName("ProfileResultItemId");
         b.Property(e => e.PatientTestId).HasConversion(v => v.Value, v => PatientTestId.Create(v)).IsRequired();
         b.Property(e => e.AnalyteName).HasMaxLength(150).IsRequired();
         b.Property(e => e.ResultValue).HasMaxLength(100).IsRequired();

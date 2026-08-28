@@ -10,7 +10,7 @@ public sealed class MedicalConditionTypeConfiguration : IEntityTypeConfiguration
     public void Configure(EntityTypeBuilder<MedicalConditionType> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => MedicalConditionTypeId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => MedicalConditionTypeId.Create(v)).ValueGeneratedOnAdd().HasColumnName("MedicalConditionTypeId");
         b.Property(e => e.Name).HasMaxLength(100).IsRequired();
         b.Property(e => e.Category).HasConversion<int>().HasColumnType("tinyint").IsRequired();
     }

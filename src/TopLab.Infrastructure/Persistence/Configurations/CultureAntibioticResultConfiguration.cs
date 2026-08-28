@@ -10,7 +10,7 @@ public sealed class CultureAntibioticResultConfiguration : IEntityTypeConfigurat
     public void Configure(EntityTypeBuilder<CultureAntibioticResult> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => CultureAntibioticResultId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => CultureAntibioticResultId.Create(v)).ValueGeneratedOnAdd().HasColumnName("CultureAntibioticResultId");
         b.Property(e => e.PatientTestId).HasConversion(v => v.Value, v => PatientTestId.Create(v)).IsRequired();
         b.Property(e => e.AntibioticId).HasConversion(v => v.Value, v => AntibioticId.Create(v)).IsRequired();
         b.Property(e => e.SensitivityCategory).HasConversion<int>().HasColumnType("tinyint").IsRequired();

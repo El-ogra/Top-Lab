@@ -10,7 +10,7 @@ public sealed class SentOutSampleConfiguration : IEntityTypeConfiguration<SentOu
     public void Configure(EntityTypeBuilder<SentOutSample> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => SentOutSampleId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => SentOutSampleId.Create(v)).ValueGeneratedOnAdd().HasColumnName("SentOutSampleId");
         b.Property(e => e.PatientTestId).HasConversion(v => v.Value, v => PatientTestId.Create(v)).IsRequired();
         b.Property(e => e.ExternalLabEntityId).HasConversion(v => v.Value, v => ExternalEntityId.Create(v)).IsRequired();
         b.Property(e => e.CostPrice).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired();

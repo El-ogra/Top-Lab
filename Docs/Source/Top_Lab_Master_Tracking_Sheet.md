@@ -51,8 +51,8 @@
 | F2 | Domain common types (`Entity`, `AuditableEntity`, `ValueObject`, `DomainException`, strong IDs) | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Implemented in `TopLab.Domain/Common` (Entity, ValueObject, AuditableEntity, DomainException, StronglyTypedId); matches Architecture §4.1 + ADR-0012/0013. |
 | F3 | Result pattern & MediatR pipeline behaviors (Validation, Authorization, Logging) | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Implemented in `TopLab.Application/Common/{Results,Interfaces,Behaviors,Authorization}` + `DependencyInjection.cs`; 3 pipeline behaviors wrap every request. Domain tests 12, Application tests 14, all green. |
 | F4 | Persistence baseline (`ApplicationDbContext`, `AuditableEntitySaveChangesInterceptor`, `IDateTimeProvider`, `ICurrentUserService`) | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Implemented `IApplicationDbContext` port in Application; `ApplicationDbContext` in Infrastructure with Fluent-API discovery; `AuditableEntitySaveChangesInterceptor` populates Created/Modified audit columns and increments `ModificationCount`; `SystemDateTimeProvider` and `CurrentUserService` (scoped, in-memory session) in Infrastructure; `AddInfrastructure` wires DbContext, interceptor, identity and time providers; 11 Infrastructure tests + 14 Application + 12 Domain = 37 tests green; build 0/0. |
-| F5 | Data model — baseline entity schemas across all entity groups | 0 | ⬜ | Design |  |  |  |  |
-| F6 | Presentation composition root (`App.xaml.cs`), main-window shell, navigation and dialog services, `ResultErrorPresenter` | 0 | ⬜ | Design |  |  |  |  |
+| F5 | Data model — baseline entity schemas across all entity groups | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Implemented 36-table baseline: Domain entities across 9 groups + Fluent-API configurations + `BaselineDataModel` migration (commit `94b5213` / merge `61cad11`); build 0/0, 73 tests green; conventions per Data Model §2–§12, Architecture §4.1/§8. |
+| F6 | Presentation composition root (`App.xaml.cs`), main-window shell, navigation and dialog services, `ResultErrorPresenter` | 0 | 🟩 | Closed | Local coding agent (Top-Lab) | 2026-08-28 | 2026-08-28 | Implemented `App.xaml.cs` composition root wiring Application+Infrastructure+Presentation, `MainWindow` shell, `NavigationService`, `DialogService`, `ResultErrorPresenter` (commit `896db5b` "بعد تنفيذ F6"); build 0/0. |
 
 ---
 
@@ -90,7 +90,7 @@
 
 | Wave | Modules | Status Summary |
 |---|---|---|
-| Wave 0 — Foundations | F1, F2, F3, F4, F5, F6 | 🟨 In Progress |
+| Wave 0 — Foundations | F1, F2, F3, F4, F5, F6 | 🟩 Done |
 | Wave 1 — Configuration Backbone | M17, M22 | ⬜ Not Started |
 | Wave 2 — Reference Data | M14, M12 | ⬜ Not Started |
 | Wave 3 — Reference-Data Extensions | M13, M15, M01 | ⬜ Not Started |
@@ -356,6 +356,8 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 | 2026-08-28 | F1 | Solution & project skeleton created; builds clean (0 errors/0 warnings); committed to `main` (194220f). | Local coding agent (Top-Lab) |
 | 2026-08-28 | F3 | Result pattern + MediatR pipeline behaviors (Validation/Authorization/Logging) implemented in `TopLab.Application`; Application ports added; 14 Application tests + 12 Domain tests green. | Local coding agent (Top-Lab) |
 | 2026-08-28 | F4 | Persistence baseline implemented: `IApplicationDbContext` port + `ApplicationDbContext` + `AuditableEntitySaveChangesInterceptor` + `SystemDateTimeProvider` + `CurrentUserService` + Infrastructure DI. 11 Infrastructure tests + 14 Application + 12 Domain = 37 tests green; build 0/0. | Local coding agent (Top-Lab) |
+| 2026-08-28 | F5 | Baseline entity schemas across all entity groups implemented (36 tables, Fluent-API configurations, `BaselineDataModel` migration `20260828052248`). Commits `94b5213` / `61cad11`; build 0/0, tests 73 green; verified against Data Model §4–§12 and Architecture §4.1. | Local coding agent (Top-Lab) |
+| 2026-08-28 | F6 | Presentation composition root and shell implemented (`App.xaml.cs`, `MainWindow`, navigation/dialog services, `ResultErrorPresenter`). Commit `896db5b` "بعد تنفيذ F6"; build 0/0, presentation boots via Host. | Local coding agent (Top-Lab) |
 
 Add one row per material change.
 

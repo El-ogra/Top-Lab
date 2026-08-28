@@ -41,9 +41,12 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-        // Identity and time providers — Scoped so they live for the duration of
-        // an EF Core operation or a single dispatched request.
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        // Identity: Singleton for the desktop single-user session (one signed-in
+        // person at a time, session lasts for app lifetime). Scoped would give
+        // each request/unit-of-work a separate snapshot, causing stale/empty
+        // identity across handlers and the audit interceptor. IDateTimeProvider
+        // remains Scoped (stateless, per-operation clock).
+        services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
 
         return services;

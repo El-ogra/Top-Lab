@@ -20,12 +20,10 @@ public class ApplicationDbContextTests
     public async Task IApplicationDbContext_AddAndSaveChanges_WorksThroughInterface()
     {
         IApplicationDbContext ctx = new TestApplicationDbContext(InMemoryContextFactory.Create());
-        var entry = ctx.Add(new AuditableTestEntity(10)
+        ctx.Add(new AuditableTestEntity(10)
         {
             Name = "via-interface",
         });
-
-        Assert.Equal(EntityState.Added, entry.State);
 
         var written = await ctx.SaveChangesAsync();
         Assert.Equal(1, written);

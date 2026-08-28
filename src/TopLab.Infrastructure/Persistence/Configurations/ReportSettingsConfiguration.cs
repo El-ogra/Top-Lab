@@ -10,7 +10,7 @@ public sealed class ReportSettingsConfiguration : IEntityTypeConfiguration<Repor
     public void Configure(EntityTypeBuilder<ReportSettings> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).ValueGeneratedNever();
+        b.Property(e => e.Id).ValueGeneratedNever().HasColumnName("ReportSettingsId");
         b.Property(e => e.PageMarginLeftCm).HasColumnType("decimal(5,2)").HasPrecision(5,2).IsRequired();
         b.Property(e => e.PageMarginBottomCm).HasColumnType("decimal(5,2)").HasPrecision(5,2).IsRequired();
         b.Property(e => e.ReportTopSpaceCm).HasColumnType("decimal(5,2)").HasPrecision(5,2).IsRequired();

@@ -10,7 +10,7 @@ public sealed class PermissionConfiguration : IEntityTypeConfiguration<Permissio
     public void Configure(EntityTypeBuilder<Permission> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => PermissionId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => PermissionId.Create(v)).ValueGeneratedOnAdd().HasColumnName("PermissionId");
         b.Property(e => e.Code).HasMaxLength(50).IsRequired();
         b.HasIndex(e => e.Code).IsUnique();
         b.Property(e => e.Description).HasMaxLength(300).IsRequired();

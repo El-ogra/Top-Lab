@@ -10,7 +10,7 @@ public sealed class CashMovementConfiguration : IEntityTypeConfiguration<CashMov
     public void Configure(EntityTypeBuilder<CashMovement> b)
     {
         b.HasKey(e => e.Id);
-        b.Property(e => e.Id).HasConversion(v => v.Value, v => CashMovementId.Create(v)).ValueGeneratedOnAdd();
+        b.Property(e => e.Id).HasConversion(v => v.Value, v => CashMovementId.Create(v)).ValueGeneratedOnAdd().HasColumnName("CashMovementId");
         b.Property(e => e.MovementType).HasConversion<int>().HasColumnType("tinyint").IsRequired();
         b.Property(e => e.Amount).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired();
         b.Property(e => e.RelatedExternalEntityId).HasConversion(v => v == null ? (int?)null : v.Value, v => v == null ? null : ExternalEntityId.Create(v.Value)).IsRequired(false);

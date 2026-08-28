@@ -17,7 +17,7 @@ public sealed class CheckDatabaseConnectivityQueryHandler : IRequestHandler<Chec
     {
         try
         {
-            var can = await _db.Database.CanConnectAsync(cancellationToken);
+            var can = await _db.CanConnectAsync(cancellationToken);
             return Result<bool>.Success(can);
         }
         catch (Exception ex)
