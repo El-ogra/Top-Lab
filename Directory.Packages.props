@@ -15,6 +15,7 @@
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.30" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.30" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.30" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.30" />
 
     <!-- Test framework (xUnit v2, no mocking lib, plain Assert) -->

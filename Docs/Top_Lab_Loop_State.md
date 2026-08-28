@@ -37,9 +37,10 @@ execution is interrupted (e.g. context compaction), and records every judge verd
 
 ## 4. Iteration log (append-only)
 - **Iter 1 (F3):** Wrote Result/Error/ErrorType + Application ports (ICurrentUserService, IDateTimeProvider, IAppLogger, IReportPrintingService, IBarcodeService, IAuthorizedRequest) + 3 MediatR behaviors (Validation/Authorization/Logging) + DI. Tests: fakes + behavior tests + Result tests. Build failed (missing using in 2 interfaces) → fixed. Build failed (fake validators must derive AbstractValidator; WPF App ambiguous with TopLab.Application namespace) → fixed. Build failed (RequestHandlerDelegate takes CancellationToken; closed-generic Result matching) → fixed. **JUDGE: build 0/0, tests 26/26, dep-rule OK → GREEN.**
+- **Iter 1 (F4):** Added `IApplicationDbContext` port to Application. Added `ApplicationDbContext` (partial, Fluent-API config discovery) + `AuditableEntitySaveChangesInterceptor` + `SystemDateTimeProvider` + `CurrentUserService` in Infrastructure. Wired `AddInfrastructure` with DbContext + interceptor + identity/time providers. Fixed `InternalsVisibleTo` for Domain internals. Added 11 Infrastructure tests (interceptor behavior on Add/Modify, InMemory factory wiring, current-user service semantics, system date-time provider). Build issues: CPM InMemory package version; test entities not in model (resolved with `TestApplicationDbContext` partial subclass); `UserId` default in factory hid interceptor effect (resolved with explicit fake in test). **JUDGE: build 0/0, tests 37/37, dep-rule OK → GREEN.**
 
 ## 5. Blockers / open questions
 <!-- None yet -->
 
 ## 6. Resume pointer
-Currently at feature: **F4**. Last green feature: **F3**.
+Currently at feature: **F5**. Last green feature: **F4**.

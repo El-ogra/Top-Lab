@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +23,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TopLab.Infrastructure\TopLab.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\TopLab.Application\TopLab.Application.csproj" />
+    <ProjectReference Include="..\..\src\TopLab.Domain\TopLab.Domain.csproj" />
   </ItemGroup>
 
 </Project>
