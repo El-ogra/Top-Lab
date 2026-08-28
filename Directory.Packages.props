@@ -18,6 +18,8 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.30" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.30" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.30" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
 
     <!-- Test framework (xUnit v2, no mocking lib, plain Assert) -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />

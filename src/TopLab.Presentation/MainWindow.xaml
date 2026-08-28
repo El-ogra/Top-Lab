@@ -5,8 +5,71 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TopLab.Presentation"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-
-    </Grid>
+        Title="Top-Lab — نظام توب لاب" Height="600" Width="1024"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterScreen">
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="#1E3A5F">
+            <ItemsControl ItemsSource="{Binding NavigationItems}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding Title}" Command="{Binding Command}" IsEnabled="{Binding IsEnabled}" Margin="4" Padding="8,4" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding CurrentUserName}" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock Text="{Binding LastLoginText}" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="10" Height="10" Margin="0,0,4,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="Red" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDatabaseConnected}" Value="True">
+                                        <Setter Property="Fill" Value="Green" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding DatabaseConnectivityText}" />
+                </StackPanel>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="{Binding CurrentDateTime, StringFormat={}{0:G}}" FlowDirection="LeftToRight" />
+            </StatusBarItem>
+        </StatusBar>
+        <Grid>
+            <ContentControl Content="{Binding CurrentViewModel}">
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type local:ViewModels.Shell.HomeViewModel}">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="Top-Lab — لوحة التحكم" FontSize="20" Margin="0,0,0,16"/>
+                            <WrapPanel>
+                                <Button Content="إضافة وتعديل بيانات المرضى" Margin="4" Padding="16,8"/>
+                                <Button Content="إدخال نتائج التحاليل" Margin="4" Padding="16,8"/>
+                                <Button Content="بحث عن مريض" Margin="4" Padding="16,8"/>
+                                <Button Content="تسليم نتائج المرضى" Margin="4" Padding="16,8"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </DataTemplate>
+                </ContentControl.Resources>
+            </ContentControl>
+        </Grid>
+    </DockPanel>
 </Window>

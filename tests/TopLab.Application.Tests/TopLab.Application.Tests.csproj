@@ -23,6 +23,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TopLab.Application\TopLab.Application.csproj" />
     <ProjectReference Include="..\..\src\TopLab.Domain\TopLab.Domain.csproj" />
+    <ProjectReference Include="..\..\src\TopLab.Infrastructure\TopLab.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
   </ItemGroup>
 
 </Project>
