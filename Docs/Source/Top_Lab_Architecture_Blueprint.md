@@ -137,9 +137,7 @@ TopLab.Domain/
 │   └── DiscountLimit.cs
 ├── Attendance/
 │   └── AttendanceRecord.cs
-├── Audit/
-│   ├── PatientAuditTrail.cs        (P-button concept)
-│   └── TestAuditTrail.cs           (T-button concept)
+├── Audit/                          (no dedicated entities — per-test T-audit columns live inline on PatientTest per §6.4 / ADR-0014; P-audit reuses Patient audit columns + PaymentOperation; AuditAndTraceability screens are future-state — M10 / Wave 8 — querying those columns)
 ├── Accounting/
 │   ├── CashDrawerInventory.cs
 │   └── CompanyDelegateAccount.cs
@@ -367,7 +365,7 @@ Every Command and Query that requires a specific permission level (e.g., P/T aud
 
 Every entity that requires creation/modification tracking derives from `AuditableEntity` (§4.1), which carries `CreatedByUserId`, `CreatedAtUtc`, `LastModifiedByUserId`, `LastModifiedAtUtc`, and a running `ModificationCount`. These fields are populated automatically by `AuditableEntitySaveChangesInterceptor` in the Infrastructure layer at the moment of persistence — no handler sets them manually, which guarantees they cannot be forgotten or falsified by an incomplete implementation.
 
-The restricted per-test audit trail (result entry user, review user, printing user and count, delivery user, with timestamps for each) is modeled as a dedicated `TestAuditTrail` entity in the `Audit` domain grouping, populated at each lifecycle transition by the corresponding `ResultsEntry` / `ResultDelivery` command handlers, and exposed only through the `AuditAndTraceability` feature, which is gated end-to-end by the authorization rule in §6.3.
+The restricted per-test audit trail (result entry user, review user, printing user and count, delivery user, with timestamps for each) is stored as inline columns directly on the `PatientTest` entity (table `PatientTests`) — `EnteredByUserId/EnteredAtUtc`, `ReviewedByUserId/ReviewedAtUtc`, `PrintCount/LastPrintedByUserId/LastPrintedAtUtc`, `DeliveredByUserId/DeliveredAtUtc` — populated at each lifecycle transition by the corresponding `ResultsEntry` / `ResultDelivery` command handlers, and exposed only through the `AuditAndTraceability` feature, which is gated end-to-end by the authorization rule in §6.3. Since the relationship is strictly 1:1, no separate `TestAuditTrail` entity or table is required (see ADR-0014).
 
 ### 6.5 Logging
 
@@ -451,7 +449,7 @@ TopLab.sln
 │   │   ├── SentOutSamples/
 │   │   ├── Users/
 │   │   ├── Attendance/
-│   │   ├── Audit/
+│   │   ├── Audit/                      (no dedicated entities — see §6.4 / ADR-0014; future-state M10 / Wave 8 — queries PatientTest / Patient inline columns)
 │   │   ├── Accounting/
 │   │   ├── SampleCollection/
 │   │   ├── Settings/
