@@ -66,7 +66,7 @@ Infrastructure ──▶  Application  ──▶  Domain
 - `TopLab.Domain` compiles with only the .NET base class library. It never references EF Core, WPF, MediatR, file I/O, or any external package.
 - `TopLab.Application` references only `TopLab.Domain` and mediator / validation abstractions permitted by architectural decision.
 - `TopLab.Infrastructure` references `TopLab.Application` and `TopLab.Domain`.
-- `TopLab.Presentation` references `TopLab.Application` only. It never references `TopLab.Infrastructure` or `TopLab.Domain` concrete types in view code.
+- `TopLab.Presentation` references `TopLab.Application` only, EXCEPT for the composition root (`App.xaml.cs` and its direct DI wiring call), which may reference `TopLab.Infrastructure` directly and exclusively for the purpose of dependency registration. No ViewModel, View, or any other Presentation class may reference Infrastructure under any circumstance.
 
 ### 3.2 Feature-folder organization (Binding)
 

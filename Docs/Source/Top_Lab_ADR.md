@@ -485,6 +485,29 @@ No handler re-implements any of these concerns.
 
 ---
 
+### ADR-0024 — Composition root may reference Infrastructure directly; reflection workaround removed
+
+- **Status:** Accepted
+- **Date:** 2026-08-29
+
+**Context.** The composition-root wiring in `TopLab.Presentation` avoided a compile-time reference to `TopLab.Infrastructure` via `ReferenceOutputAssembly=false` on the `ProjectReference`, then loaded Infrastructure at runtime through `Assembly.Load("TopLab.Infrastructure")` and reflection-invoked `AddInfrastructure` by string name in `App.xaml.cs`, supported by a custom MSBuild target (`CopyInfrastructureRuntime`) that copied the DLL manually. This satisfied the letter of "Presentation never references Infrastructure" but hid a real dependency behind fragile, non-refactor-safe, runtime-only-failing string lookups. Two independent audits flagged this as blocker B-03. The Dependency Rule (Architecture §2.2, Coding Standards §3.1) stated Presentation references Application only, with no composition-root exception.
+
+**Decision.** Adopt option O2 (owner-approved): the composition root is the one place in Clean Architecture that is expected to know all layers. `TopLab.Presentation` MAY reference `TopLab.Infrastructure` directly and exclusively inside the composition root (`App.xaml.cs` and its direct DI wiring call) for the purpose of dependency registration via a normal compile-time call `TopLab.Infrastructure.DependencyInjection.AddInfrastructure(services, configuration)`. Every other file in Presentation (ViewModels, Views, any other class) remains strictly forbidden from referencing Infrastructure. The reflection-based loading, string-based method lookup, `ReferenceOutputAssembly=false`, and `CopyInfrastructureRuntime` target are removed.
+
+**Consequences.**
+- `TopLab.Presentation.csproj` carries a normal `ProjectReference` to `TopLab.Infrastructure`; the DLL is copied automatically by MSBuild.
+- `App.xaml.cs` calls `AddInfrastructure` directly; renames and signature changes are caught at compile time, not at runtime.
+- The Dependency Rule in Architecture §2.2 and Coding Standards §3.1 is amended to carve out the composition-root exception with identical wording.
+- An automated architecture test (NetArchTest.Rules) asserts that no type in Presentation ViewModels or Views namespaces depends on `TopLab.Infrastructure`; the composition-root class is explicitly excluded from that rule.
+
+**Alternatives considered.**
+- *Keep reflection (O1):* rejected — preserves runtime fragility, hides the real dependency without removing it, and defeats compile-time safety and IDE refactoring.
+- *Separate Composition/Bootstrapper project (O3):* rejected — adds a fifth top-level project and indirection for a single wiring call; disproportionate to the problem when the well-established Clean Architecture convention already permits the composition root to know all layers.
+
+**Related.** ADR-0005, Architecture §2.2, Coding Standards §3.1.
+
+---
+
 ## 3. Reserved Ranges for Future Decisions
 
 - **ADR-0100 – 0199** — reserved for reporting/printing infrastructure decisions.

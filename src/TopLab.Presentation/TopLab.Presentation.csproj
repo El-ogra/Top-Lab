@@ -2,14 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TopLab.Application\TopLab.Application.csproj" />
-    <!-- Runtime-only reference to Infrastructure: ensures TopLab.Infrastructure.dll is built
-         and copied to the Presentation output for reflection-based composition (Architecture §2.2).
-         ReferenceOutputAssembly=false preserves the forbidden compile-time dependency ban. -->
-    <ProjectReference Include="..\TopLab.Infrastructure\TopLab.Infrastructure.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <Private>true</Private>
-    </ProjectReference>
+    <ProjectReference Include="..\TopLab.Infrastructure\TopLab.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,14 +26,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
-  <!-- Ensure Infrastructure assembly is present at runtime for reflection load (Architecture §2.2) -->
-  <Target Name="CopyInfrastructureRuntime" AfterTargets="Build">
-    <ItemGroup>
-      <InfraFiles Include="..\TopLab.Infrastructure\bin\$(Configuration)\net8.0\TopLab.Infrastructure.dll" />
-      <InfraFiles Include="..\TopLab.Infrastructure\bin\$(Configuration)\net8.0\TopLab.Infrastructure.pdb" />
-    </ItemGroup>
-    <Copy SourceFiles="@(InfraFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
-  </Target>
 
 </Project>

@@ -49,7 +49,7 @@ Infrastructure ──depends on──▶  Application  ──depends on──▶
 - **Domain** has no dependency on any other layer. It does not reference Entity Framework Core, WPF, or any external library beyond the base class library.
 - **Application** depends only on Domain. It defines interfaces (ports) for anything it needs from the outside world (persistence, printing, barcode generation) but never implements them.
 - **Infrastructure** depends on Application (to implement its interfaces) and on Domain (to persist and reconstruct domain objects). Infrastructure is a plugin to Application, never the reverse.
-- **Presentation** depends on Application only. It never references Infrastructure or Domain types directly in view code; it communicates exclusively through Application-layer contracts (Commands, Queries, and their results).
+- **Presentation** depends on Application only, EXCEPT for the composition root (`App.xaml.cs` and its direct DI wiring call), which may reference `TopLab.Infrastructure` directly and exclusively for the purpose of dependency registration. No ViewModel, View, or any other Presentation class may reference Infrastructure under any circumstance. Outside the composition root, Presentation communicates exclusively through Application-layer contracts (Commands, Queries, and their results).
 
 ### 2.3 Why this matters for a multi-agent build process
 
