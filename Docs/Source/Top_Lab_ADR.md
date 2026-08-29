@@ -498,7 +498,6 @@ No handler re-implements any of these concerns.
 - `TopLab.Presentation.csproj` carries a normal `ProjectReference` to `TopLab.Infrastructure`; the DLL is copied automatically by MSBuild.
 - `App.xaml.cs` calls `AddInfrastructure` directly; renames and signature changes are caught at compile time, not at runtime.
 - The Dependency Rule in Architecture §2.2 and Coding Standards §3.1 is amended to carve out the composition-root exception with identical wording.
-- An automated architecture test (NetArchTest.Rules) asserts that no type in Presentation ViewModels or Views namespaces depends on `TopLab.Infrastructure`; the composition-root class is explicitly excluded from that rule.
 
 **Alternatives considered.**
 - *Keep reflection (O1):* rejected — preserves runtime fragility, hides the real dependency without removing it, and defeats compile-time safety and IDE refactoring.
