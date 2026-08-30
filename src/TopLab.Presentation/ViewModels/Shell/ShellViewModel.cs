@@ -114,7 +114,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
     private IReadOnlyList<NavigationItem> BuildNavigationItems()
     {
-        string[] titles = ["Patients", "Laboratory", "Work sheet", "Tools", "Accounts", "Statistics", "Users", "System", "Setting", "About Us", "Exit"];
+        string[] titles = ["المرضى", "المعمل", "ورقة العمل", "الأدوات", "الحسابات", "الإحصائيات", "المستخدمون", "النظام", "الإعدادات", "حول البرنامج", "خروج"];
         var list = new List<NavigationItem>();
         foreach (var title in titles)
         {
@@ -125,7 +125,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                 IsEnabled = true,
                 Command = new RelayCommand(_ =>
                 {
-                    if (t == "Exit")
+                    if (t == "خروج")
                     {
                         System.Windows.Application.Current.Shutdown();
                     }

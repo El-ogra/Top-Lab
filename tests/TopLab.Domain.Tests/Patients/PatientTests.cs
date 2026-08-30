@@ -39,8 +39,8 @@ public class PatientTests
     public void AssignLabId_Valid_Sets()
     {
         var p = Patient.Create(PatientId.Create(1), "Ali", Sex.Female, 25, AgeUnit.Year, DateTime.UtcNow);
-        p.AssignLabId("LAB-123");
-        Assert.Equal("LAB-123", p.LabId);
+        p.AssignLabId(LabId.Create("LAB-123"));
+        Assert.Equal("LAB-123", p.LabId!.Value);
     }
 
     [Fact]

@@ -24,6 +24,8 @@ obj/
 # Connection strings & secrets — never commit
 appsettings*.json
 appsettings.*.json
+!src/TopLab.Presentation/appsettings.example.json
+# Safe non-secret template — allowed (above)
 *.secrets.json
 secrets.json
 connectionStrings.config
@@ -45,3 +47,6 @@ logs/
 .DS_Store
 Thumbs.db
 ~$*
+
+# Loop memory (transient working file - deleted at phase end)
+Docs/LoopMemory.md

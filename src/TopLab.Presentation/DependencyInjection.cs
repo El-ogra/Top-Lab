@@ -4,6 +4,7 @@ using TopLab.Presentation.Common.Navigation;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.ViewModels.Shell;
+using TopLab.Presentation.ViewModels.Setup;
 
 namespace TopLab.Presentation;
 
@@ -16,10 +17,12 @@ public static class DependencyInjection
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<ResultErrorPresenter>();
         services.AddSingleton<IAppLogger, WpfAppLogger>();
+        services.AddSingleton<TopLab.Presentation.Services.Configuration.ConfigurationFileService>();
 
         // ViewModels
         services.AddTransient<ShellViewModel>();
         services.AddTransient<HomeViewModel>();
+        services.AddTransient<DatabaseSetupViewModel>();
 
         // Windows
         services.AddSingleton<MainWindow>();

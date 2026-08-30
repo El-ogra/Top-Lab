@@ -1,15 +1,8 @@
 using TopLab.Domain.Common;
+using TopLab.Domain.Common.Ids;
 using Xunit;
 
 namespace TopLab.Domain.Tests.Common;
-
-public sealed class LabId : StronglyTypedId<string>
-{
-    public LabId(string value)
-        : base(value)
-    {
-    }
-}
 
 public class StronglyTypedIdTests
 {
@@ -40,13 +33,13 @@ public class StronglyTypedIdTests
     [Fact]
     public void GivenStringBackedId_WhenCompared_ThenStructuralEqualityHolds()
     {
-        Assert.Equal(new LabId("LAB-001"), new LabId("LAB-001"));
-        Assert.NotEqual(new LabId("LAB-001"), new LabId("LAB-002"));
+        Assert.Equal(LabId.Create("LAB-001"), LabId.Create("LAB-001"));
+        Assert.NotEqual(LabId.Create("LAB-001"), LabId.Create("LAB-002"));
     }
 
     [Fact]
     public void GivenNullValue_WhenConstructingId_ThenThrowsArgumentNullException()
     {
-        Assert.Throws<System.ArgumentNullException>(() => new LabId(null!));
+        Assert.Throws<System.ArgumentNullException>(() => LabId.Create(null!));
     }
 }

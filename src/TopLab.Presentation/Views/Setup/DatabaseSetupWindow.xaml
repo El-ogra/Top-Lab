@@ -1,0 +1,56 @@
+<Window x:Class="TopLab.Presentation.Views.Setup.DatabaseSetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="إعداد قاعدة البيانات — Top-Lab" Height="420" Width="520"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="إعداد الاتصال بقاعدة البيانات (أول تشغيل)"
+                   FontSize="16" FontWeight="Bold" Margin="0,0,0,16" />
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="الخادم (Server):" VerticalAlignment="Center" Margin="0,0,12,8" />
+        <TextBox Grid.Row="1" Grid.Column="1" x:Name="ServerTextBox" Text="(localdb)\mssqllocaldb" Margin="0,0,0,8" />
+
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="قاعدة البيانات:" VerticalAlignment="Center" Margin="0,0,12,8" />
+        <TextBox Grid.Row="2" Grid.Column="1" x:Name="DatabaseTextBox" Text="TopLab" Margin="0,0,0,8" />
+
+        <CheckBox Grid.Row="3" Grid.ColumnSpan="2" x:Name="IntegratedSecurityCheckBox"
+                  Content="الاتصال بصلاحيات Windows (Integrated Security)" IsChecked="True" Margin="0,4,0,8" />
+
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="اسم المستخدم:" VerticalAlignment="Center" Margin="0,0,12,8" />
+        <TextBox Grid.Row="4" Grid.Column="1" x:Name="UsernameTextBox" Margin="0,0,0,8" />
+
+        <TextBlock Grid.Row="5" Grid.Column="0" Text="كلمة المرور:" VerticalAlignment="Center" Margin="0,0,12,8" />
+        <PasswordBox Grid.Row="5" Grid.Column="1" x:Name="PasswordBox" Margin="0,0,0,8" />
+
+        <TextBlock Grid.Row="6" Grid.ColumnSpan="2" x:Name="StatusText"
+                   Text="{Binding StatusText}" Foreground="#555555" Margin="0,4,0,8" TextWrapping="Wrap" />
+
+        <StackPanel Grid.Row="7" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Left">
+            <Button Content="اختبار الاتصال" Width="110" Padding="8,4" Margin="0,0,8,0" Click="TestConnectionButton_Click" />
+            <Button Content="حفظ" Width="90" Padding="8,4" Margin="0,0,8,0" Click="SaveButton_Click" />
+            <Button Content="إلغاء" Width="80" Padding="8,4" Click="CancelButton_Click" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="9" Grid.ColumnSpan="2" Text="سيتم حفظ الإعدادات في %ProgramData%\TopLab\appsettings.json"
+                   FontSize="11" Foreground="#888888" Margin="0,12,0,0" />
+    </Grid>
+</Window>

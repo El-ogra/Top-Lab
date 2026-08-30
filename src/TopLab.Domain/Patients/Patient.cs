@@ -10,7 +10,7 @@ namespace TopLab.Domain.Patients;
 /// </summary>
 public sealed class Patient : AuditableEntity<PatientId>
 {
-    public string? LabId { get; private set; }
+    public LabId? LabId { get; private set; }
 
     public string? Title { get; private set; }
 
@@ -65,7 +65,7 @@ public sealed class Patient : AuditableEntity<PatientId>
         DateTime registrationDateUtc,
         AccountType accountType,
         bool isVip,
-        string? labId,
+        LabId? labId,
         string? title,
         string? nationalId,
         string? address,
@@ -107,7 +107,7 @@ public sealed class Patient : AuditableEntity<PatientId>
         DateTime registrationDateUtc,
         AccountType accountType = AccountType.Individual,
         bool isVip = false,
-        string? labId = null,
+        LabId? labId = null,
         string? title = null,
         string? nationalId = null,
         string? address = null,
@@ -184,14 +184,17 @@ public sealed class Patient : AuditableEntity<PatientId>
         RecentContrastImaging = recentContrastImaging;
     }
 
-    public void AssignLabId(string labId)
+    public void AssignLabId(LabId labId)
     {
-        if (string.IsNullOrWhiteSpace(labId))
+        if (labId is null)
         {
-            throw new ArgumentException("LabId is required.", nameof(labId));
+            throw new ArgumentNullException(nameof(labId));
         }
-
-        LabId = labId.Trim();
+        if (string.IsNullOrWhiteSpace(labId.Value))
+        {
+            throw new ArgumentException("LabId value is required.", nameof(labId));
+        }
+        LabId = labId;
     }
 
     public void SetTreatingDoctor(ExternalEntityId? treatingDoctorId)

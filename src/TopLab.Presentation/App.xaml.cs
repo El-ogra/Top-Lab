@@ -1,8 +1,15 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 using TopLab.Application;
 using TopLab.Infrastructure;
+using TopLab.Infrastructure.Persistence;
+using TopLab.Presentation.Services.Configuration;
+using TopLab.Presentation.ViewModels.Setup;
+using TopLab.Presentation.Views.Setup;
 
 namespace TopLab.Presentation;
 
@@ -20,12 +27,46 @@ public partial class App : System.Windows.Application
     {
         var builder = Host.CreateApplicationBuilder(e.Args);
 
+        var programDataDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "TopLab");
+        Directory.CreateDirectory(programDataDir);
+        var programDataConfigPath = Path.Combine(programDataDir, "appsettings.json");
+        builder.Configuration.AddJsonFile(programDataConfigPath, optional: true, reloadOnChange: true);
+
+        if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("TopLab")))
+        {
+            var svc = new ConfigurationFileService();
+            var vm = new DatabaseSetupViewModel(svc);
+            var win = new DatabaseSetupWindow(vm);
+            var r = win.ShowDialog() ?? false;
+            if (!r)
+            {
+                Shutdown(1);
+                return;
+            }
+            builder.Configuration.AddJsonFile(svc.GetProgramDataPath(), optional: false, reloadOnChange: true);
+        }
+
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
         builder.Services.AddPresentation();
 
         _host = builder.Build();
         _host.Start();
+
+        try
+        {
+            using var s = _host.Services.CreateScope();
+            var db = s.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.MigrateAsync().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"فشل المهاجرات:\n{ex.Message}", "Top-Lab", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+            return;
+        }
 
         var main = _host.Services.GetRequiredService<MainWindow>();
         main.Show();
