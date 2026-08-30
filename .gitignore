@@ -47,6 +47,3 @@ logs/
 .DS_Store
 Thumbs.db
 ~$*
-
-# Loop memory (transient working file - deleted at phase end)
-Docs/LoopMemory.md
