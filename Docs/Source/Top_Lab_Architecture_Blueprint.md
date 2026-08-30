@@ -431,6 +431,7 @@ The Presentation layer is exercised through manual verification and, where pract
 - **Single shared database.** `ApplicationDbContext` connects to exactly one SQL Server instance shared by all workstations at the site; the architecture contains no per-workstation data store and no synchronization layer, because none is needed.
 - **Single branch.** No branch-scoping concept exists anywhere in Domain, Application, or Infrastructure; introducing one would be a deviation from this architecture and requires a formal revision of this document first.
 - **Operational safety.** The Result pattern (§6.1) ensures that an unfinished or invalid operation is always visible to the user as a clear message rather than a silent failure or an unhandled crash, directly supporting predictable, attributable system behavior.
+- **First-run bootstrap.** When no connection string is configured (fresh workstation), the composition root in `App.xaml.cs` shows a short setup wizard (`DatabaseSetupWindow`) instead of crashing; on success it reloads `%ProgramData%\TopLab\appsettings.json` (ADR-0025) and only then registers Infrastructure. After the host starts, `ApplicationDbContext.Database.MigrateAsync()` runs behind a guarded `try/catch`, finishing with `MainWindow` only when the schema is ready.
 
 ---
 

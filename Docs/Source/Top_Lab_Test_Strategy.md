@@ -102,6 +102,7 @@ Additional test projects are not introduced. New tests belong inside the mirrori
 - Culture antibiotic filtering: antibiotics flagged `Pregnant` appear only when the patient is pregnancy-indicated; antibiotics flagged `Children` appear only for patients under 12 years.
 - Patient-history retrieval by name or by Lab ID: both paths return the same visits when the patient has multiple registrations sharing the same Lab ID.
 - Multiple-phone-number search: a query with any one of a patient's stored telephone numbers returns that patient's record.
+- Connection configuration is intentionally *not* an Application-layer responsibility: the file read/write contract and the first-run wizard live in Presentation and are verified at the Presentation/manual layer (§3.4, §7.3).
 
 ### 3.3 Infrastructure tests (`TopLab.Infrastructure.Tests`)
 
@@ -121,6 +122,8 @@ Additional test projects are not introduced. New tests belong inside the mirrori
 
 - ViewModels are exercised by unit tests that dispatch commands to the mediator via a fake and assert the resulting UI-state properties (loading flags, error text produced by `ResultErrorPresenter`, navigation invocations).
 - No UI-automation layer is mandated. Manual verification checklists (see §7) supplement automated coverage for user-facing behaviors that cannot be asserted without rendering the visual tree.
+- **First-run setup wizard (smoke).** With no `%ProgramData%\TopLab\appsettings.json` and no local `appsettings.json`, the application must show `DatabaseSetupWindow` and stay alive (no raw crash). After the wizard saves, the next launch must skip the wizard, run `MigrateAsync` idempotently against the stored connection, and reach `MainWindow`. Verified in the Foundation phase end-to-end gate (§7.3) and at PDCA-5.
+- **Building without a local `appsettings.json`.** `TopLab.Presentation.csproj` copies `appsettings.json` only when it exists (`Condition="Exists(...)"`), so a clean clone builds despite the file being gitignored; the committed `appsettings.example.json` still ships to the output.
 
 ---
 

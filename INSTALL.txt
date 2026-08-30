@@ -1,0 +1,80 @@
+Top-Lab — Installation Guide (نظام توب لاب — دليل التثبيت)
+===========================================================
+
+Target: Windows 10/11 x64, local network single-site deployment.
+
+------------------------------------------------------------
+1. BUILD (البناء)
+------------------------------------------------------------
+Prerequisites:
+  - .NET 8 SDK (https://dotnet.microsoft.com/download/dotnet/8.0)
+  - SQL Server is not required on the build machine for the
+    framework-dependent publish below.
+
+Steps:
+  dotnet restore TopLab.sln
+  dotnet build TopLab.sln -c Release          # expect 0 errors / 0 warnings
+  dotnet test TopLab.sln -c Release --no-build  # expect all tests green
+
+Publish (framework-dependent, recommended):
+  dotnet publish src/TopLab.Presentation/TopLab.Presentation.csproj -c Release -p:PublishProfile=FolderProfile
+  -> output: src/TopLab.Presentation/bin/Release/net8.0-windows/win-x64/publish/
+
+Self-contained publish (no .NET runtime needed on target, larger):
+  dotnet publish src/TopLab.Presentation/TopLab.Presentation.csproj -c Release -p:PublishProfile=FolderProfile.SelfContained
+  -> output: .../publish-selfcontained/
+
+------------------------------------------------------------
+2. TRANSFER (النقل)
+------------------------------------------------------------
+Copy the publish folder to each workstation, e.g. C:\TopLab\ on every machine.
+
+IMPORTANT distribution hygiene:
+  - REMOVE appsettings.json from the copied folder if present. It is the
+    personal developer settings file and is not part of a release.
+  - Keep appsettings.example.json: it is the safe documented template.
+  - Do not copy %ProgramData%\TopLab from one machine to another.
+
+------------------------------------------------------------
+3. INSTALL (التثبيت)
+------------------------------------------------------------
+  - A shortcut to TopLab.Presentation.exe may be created on the desktop.
+  - No administrative privileges are required at runtime. The setup wizard
+    creates %ProgramData%\TopLab\appsettings.json on first run; the operator
+    account must have write access to %ProgramData% (default for standard
+    users on a properly configured workstation).
+
+Config file locations:
+  - Effective settings: C:\ProgramData\TopLab\appsettings.json
+  - Personal dev override: appsettings.json next to the executable
+    (gitignored, unsupported in distribution)
+  - Template: appsettings.example.json next to the executable
+
+------------------------------------------------------------
+4. FIRST RUN (أول تشغيل)
+------------------------------------------------------------
+1. Start TopLab.Presentation.exe.
+2. If no connection string is configured, the setup wizard appears:
+     Server (default "(localdb)\mssqllocaldb" or your SQL Server name)
+     Database (default "TopLab")
+     Integrated Security (recommended) OR SQL login + password
+   Click "اختبار الاتصال" (Test connection), then "حفظ" (Save).
+3. The wizard writes %ProgramData%\TopLab\appsettings.json and the
+   application applies pending migrations automatically, then opens the
+   main window. The wizard is not shown again on subsequent launches.
+
+Database requirements:
+  - SQL Server 2019+ (or LocalDB for single-machine evaluation).
+  - The schema and seeds are applied by MigrateAsync on startup; no manual
+    SQL is required.
+
+------------------------------------------------------------
+5. TROUBLESHOOTING (حل المشاكل)
+------------------------------------------------------------
+  - "تعذر الاتصال بقاعدة البيانات": verify Server name, SQL Server service
+    is running (or LocalDB: sqllocaldb start MSSQLLocalDB), firewall allows
+    1433/tcp, and the login has CREATE DATABASE permission on first run.
+  - Database existing but blocked: check %ProgramData%\TopLab\appsettings.json
+    on that workstation; delete it and relaunch to reopen the wizard.
+  - TLS/encryption errors on some SQL setups: the wizard uses
+    TrustServerCertificate=True and MultipleActiveResultSets=true by default.

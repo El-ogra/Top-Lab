@@ -533,6 +533,8 @@ Configuration tables hold **exactly one row each** (enforced by a fixed, non-edi
 
 **Design note — database connection settings.** The server name, login, and database name used to reach the shared SQL Server database (§14, "Database server settings") are **not** stored as a row inside that same database, for the evident reason that the connection details must be available before a connection can be made. These values belong in a local application configuration file on each workstation, outside the scope of this data model.
 
+**Design note — workstation configuration store.** The effective connection settings are read from `%ProgramData%\TopLab\appsettings.json` (ADR-0025). The first-run setup wizard writes this file after validating connectivity; the committed `appsettings.example.json` documents the safe Integrated-Security default. The database schema itself is unaffected — `LabId` stays on the existing `nvarchar(30)` `Patients` column.
+
 ---
 
 ## 13. Business-Rule-to-Schema Mapping

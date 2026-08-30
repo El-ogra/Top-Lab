@@ -507,6 +507,33 @@ No handler re-implements any of these concerns.
 
 ---
 
+### ADR-0025 — Workstation connection settings stored under `%ProgramData%\TopLab` with a committed safe template
+
+- **Status:** Accepted
+- **Date:** 2026-08-30
+
+**Context.** `appsettings.json` in `TopLab.Presentation` is the conventional workstation-local settings file, but it carries a real connection string and is therefore gitignored (`.gitignore`: `appsettings*.json`). The guard introduced for B-02 then left a clean clone of the repository unable to produce a working application configuration, and the effective per-machine settings lived only in the developer's working tree — invisible to CI, to other developers, and to a first-time operator. A second, machine-scoped store is needed for a desktop workload that must run before any database connection exists, so it cannot come from the database it describes (see ADR-0021).
+
+**Decision.** Connection settings are stored in two distinct places, with one source of truth for runtime:
+
+1. **Committed safe template** — `appsettings.example.json` in the Presentation project contains the default Integrated-Security form (`Server=(localdb)\mssqllocaldb;Database=TopLab;...`) with **no** password, is explicitly un-ignored in `.gitignore`, and is copied to the output directory. It documents the schema and the safe default without leaking credentials.
+2. **Machine-scoped store** — the first-run setup wizard (`DatabaseSetupWindow`) validates a connection and writes the effective `ConnectionStrings:TopLab` value to `%ProgramData%\TopLab\appsettings.json`. The composition root registers that file with the configuration builder (optional at load time), and it takes precedence over the gitignored local `appsettings.json`. The personal per-developer `appsettings.json` remains supported for development but is never the distribution path.
+
+Strongly-typed string identifiers (`LabId`) are stored through an EF Core value converter mapping to the existing `nvarchar(30)` column, so the data model is unchanged by the type migration (ADR-0012).
+
+**Consequences.**
+- A clean machine runs the setup wizard on first launch instead of crashing with a raw `InvalidOperationException`.
+- `ConfigurationFileService` (Presentation) owns the store path and the JSON read/write contract; it is registered as a singleton in DI.
+- `MigrateAsync` runs from the composition root after the host starts, behind a `try/catch` that surfaces a friendly Arabic message and shuts down cleanly if migration fails.
+
+**Alternatives considered.**
+- *User-profile store (`%LocalAppData%`):* rejected — settings must follow the workstation so every operator account on the same machine reaches the same database.
+- *Encrypt the file with DPAPI at write time:* deferred — the store lives on a trusted workstation volume; DPAPI remains a candidate hardening step and is documented as such, not implemented here.
+
+**Related.** ADR-0007 (close), ADR-0012, ADR-0021, Architecture §2.2/§11, Coding Standards §3.1/§10.
+
+---
+
 ## 3. Reserved Ranges for Future Decisions
 
 - **ADR-0100 – 0199** — reserved for reporting/printing infrastructure decisions.

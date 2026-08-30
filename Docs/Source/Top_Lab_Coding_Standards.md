@@ -386,6 +386,8 @@ Refs: FR-M04-004
 ## 10. Configuration and Secrets
 
 - Database connection settings live in a workstation-local application configuration file and are never committed to source control.
+- The canonical machine-scoped store is `%ProgramData%\TopLab\appsettings.json`, written by the first-run setup wizard and read by the composition root with precedence over the local `appsettings.json` (ADR-0025).
+- `appsettings.example.json` is a committed, password-free template that mirrors the schema of the personal settings file; it is the only configuration file that may be committed.
 - The internal windows password (secondary password gating sensitive windows) ships with a documented default and is expected to be changed at deployment. The factory default is not committed as an environment-specific value; it is documented as such in deployment materials.
 - No credential, connection string, or key material appears in the source tree, in tests, or in commit history.
 
