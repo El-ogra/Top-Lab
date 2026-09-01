@@ -18,3 +18,17 @@ public sealed record PermissionDto(
     int Id,
     string Code,
     string Description);
+
+public sealed record UserDetailDto(
+    int Id,
+    string UserName,
+    bool IsAbsolutePermission,
+    bool IsActive,
+    DateTime? LastLoginAtUtc,
+    decimal DiscountLimitPercent,
+    bool BlockPrintOnRemainingBalance,
+    TimeOnly? WorkStartTime,
+    TimeOnly? WorkEndTime,
+    bool HasBreakPeriod,
+    int? BreakDurationMinutes,
+    IReadOnlyList<string> GrantedPermissionCodes);
