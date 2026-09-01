@@ -5,6 +5,7 @@ using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.ViewModels.Shell;
 using TopLab.Presentation.ViewModels.Setup;
+using TopLab.Presentation.Views.Setup;
 
 namespace TopLab.Presentation;
 
@@ -23,8 +24,10 @@ public static class DependencyInjection
         services.AddTransient<ShellViewModel>();
         services.AddTransient<HomeViewModel>();
         services.AddTransient<DatabaseSetupViewModel>();
+        services.AddTransient<FirstRunAdminViewModel>();
 
         // Windows
+        services.AddTransient<FirstRunAdminWindow>();
         services.AddSingleton<MainWindow>();
 
         return services;

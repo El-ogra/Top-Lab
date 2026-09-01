@@ -1,0 +1,56 @@
+<Window x:Class="TopLab.Presentation.Views.Setup.FirstRunAdminWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="إنشاء أول مدير نظام — Top-Lab" Height="520" Width="480"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="مرحبًا — يجب إنشاء أول حساب مدير نظام"
+                   FontSize="14" FontWeight="Bold" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="لا يوجد أي مستخدم بصلاحية مطلقة في قاعدة البيانات الحالية. يجب إنشاء حساب المدير الأول قبل المتابعة. لا توجد كلمة مرور افتراضية."
+                   TextWrapping="Wrap" Foreground="#555555" Margin="0,0,0,16"/>
+
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="اسم المستخدم:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <TextBox Grid.Row="2" Grid.Column="1" x:Name="UserNameTextBox" Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="كلمة المرور:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <PasswordBox Grid.Row="3" Grid.Column="1" x:Name="PasswordBox" Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="تأكيد كلمة المرور:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <PasswordBox Grid.Row="4" Grid.Column="1" x:Name="ConfirmPasswordBox" Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="5" Grid.Column="0" Text="كلمة المرور الثانوية:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <PasswordBox Grid.Row="5" Grid.Column="1" x:Name="SecondaryPasswordBox" Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="6" Grid.Column="0" Text="تأكيد الثانوية:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <PasswordBox Grid.Row="6" Grid.Column="1" x:Name="ConfirmSecondaryPasswordBox" Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="7" Grid.ColumnSpan="2" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,8"/>
+
+        <StackPanel Grid.Row="9" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Left">
+            <Button Content="إنشاء" Width="90" Padding="8,4" Margin="0,0,8,0" Click="CreateButton_Click"/>
+            <Button Content="خروج" Width="80" Padding="8,4" Click="ExitButton_Click"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="9" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Center"
+                   Text="يمكنك إنشاء مدير إضافي لاحقًا من شاشة المستخدمين." FontSize="11" Foreground="#888888"/>
+    </Grid>
+</Window>

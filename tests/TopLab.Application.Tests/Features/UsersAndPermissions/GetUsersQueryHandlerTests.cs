@@ -9,7 +9,7 @@ namespace TopLab.Application.Tests.Features.UsersAndPermissions;
 public class GetUsersQueryHandlerTests
 {
     [Fact]
-    public async Task GetUsers_DoesNotContainHashMaterial()
+    public void GetUsers_DoesNotContainHashMaterial()
     {
         var dtoType = typeof(TopLab.Application.Features.UsersAndPermissions.Common.UserSummaryDto);
         var props = dtoType.GetProperties().Select(p => p.Name).ToList();
@@ -34,7 +34,7 @@ public class GetUsersQueryHandlerTests
     }
 
     [Fact]
-    public async Task GetUserById_DoesNotContainHashMaterial()
+    public void GetUserById_DoesNotContainHashMaterial()
     {
         var dtoType = typeof(TopLab.Application.Features.UsersAndPermissions.Common.UserDetailDto);
         var props = dtoType.GetProperties().Select(p => p.Name).ToList();

@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
+using MediatR;
 using TopLab.Application;
+using TopLab.Application.Features.UsersAndPermissions.Queries.HasAnyAbsoluteUser;
 using TopLab.Infrastructure;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Presentation.Services.Configuration;
@@ -64,6 +66,31 @@ public partial class App : System.Windows.Application
         catch (Exception ex)
         {
             MessageBox.Show($"فشل المهاجرات:\n{ex.Message}", "Top-Lab", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+            return;
+        }
+
+        try
+        {
+            using var scope = _host.Services.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<ISender>();
+            var hasAnyResult = mediator.Send(new HasAnyAbsoluteUserQuery()).GetAwaiter().GetResult();
+            bool hasAny = hasAnyResult.IsSuccess && hasAnyResult.Value;
+            if (!hasAny)
+            {
+                var vm = scope.ServiceProvider.GetRequiredService<FirstRunAdminViewModel>();
+                var window = new FirstRunAdminWindow(vm);
+                var dialogResult = window.ShowDialog();
+                if (dialogResult != true)
+                {
+                    Shutdown(1);
+                    return;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"فشل التحقق من مدير النظام:\n{ex.Message}", "Top-Lab", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
             return;
         }
