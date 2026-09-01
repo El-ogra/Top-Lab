@@ -102,7 +102,7 @@ Any action that deletes data (deleting a patient, a payment operation, a test fr
 
 ### 4.7 Secondary-password gate
 
-Sensitive windows (user creation, inventory/cash-drawer screens) are wrapped by a shared modal — the "System menu password" dialog — prompting for the internal windows password before the underlying screen becomes accessible. This is implemented once as a reusable navigation guard, not duplicated per screen.
+Sensitive windows (user creation, inventory/cash-drawer screens) are wrapped by a shared modal — the "System menu password" dialog — prompting for the internal windows password before the underlying screen becomes accessible. This is implemented once as a reusable navigation guard, not duplicated per screen. The dialog verifies the current session user's own secondary password (via VerifySecondaryPasswordQuery) and is consumed through the single shared IDialogService implementation (ShowSecondaryPasswordDialogAsync) by every gated window, including the Users screen.
 
 ### 4.8 Print / preview action
 
@@ -175,7 +175,7 @@ Each entry lists: the screen, its primary ViewModel, its key bound fields/contro
 
 | Screen | ViewModel | Key fields / controls | Actions → Commands/Queries | Notes |
 |---|---|---|---|---|
-| **S-23 Users & Permissions** | `UserManagementViewModel` | Users list; user name, main password, internal windows password, last-login (read-only); working-hours start/end; break-period checkbox + duration; Absolute/Limited permission toggle; granular permission checklist including discount limit percentage | Add → `CreateUserCommand`; Edit → `UpdateUserCommand`; Save → `SaveUserPermissionsCommand`; Delete | Gated by the secondary-password dialog (§4.7); permission changes take effect at the affected user's next login |
+| **S-23 Users & Permissions** | `UserManagementViewModel` | Users list; user name, main password (write-only), internal windows password (write-only), last-login (read-only); working-hours start/end; break-period checkbox + duration; Absolute/Limited permission toggle; granular permission checklist including discount limit percentage | Add → `CreateUserCommand`; Edit → `UpdateUserCommand`; Save → `SaveUserPermissionsCommand`; Delete | Gated by the secondary-password dialog (§4.7); permission changes take effect at the affected user's next login; password fields are write-only (always empty on edit, populated only to change password) and the audit-access checklist item is not offered in limited mode |
 | **S-24 Attendance** | `AttendanceViewModel` | Check-in/break/check-out registration controls; manager-only overview (overtime, lateness) | Record → `RecordAttendanceEventCommand`; Overview → `GetAttendanceOverviewQuery` | Overview panel visible only to the system manager |
 
 ### 5.9 Accounting & Statistics

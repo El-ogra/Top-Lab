@@ -534,6 +534,35 @@ Strongly-typed string identifiers (`LabId`) are stored through an EF Core value 
 
 ---
 
+### ADR-0026 — M17: User & Permission Management security, floor and provisioning
+
+- **Status:** Accepted
+- **Date:** 2026-09-01
+
+**Context.** The `Users`, `Permissions`, and `UserPermissionGrants` tables and the `AuthorizationBehavior` pipeline existed from F5 but had no authentication, no password hashing, no user-management surface, and no first-run bootstrap. M17 had to deliver the complete backbone without a new migration, without an external identity package (ADR-0010), without a seeded credential, and without a database trigger.
+
+**Decision.**
+
+1. **Password hashing — PBKDF2-SHA256 on the .NET BCL only.** Both the main and the secondary (internal windows) passwords are stored only as self-describing strings `PBKDF2-SHA256$<iterations>$<base64-salt>$<base64-hash>` inside the existing `nvarchar(300)` columns (`PasswordHash`, `InternalWindowsPasswordHash`). Parameters: PBKDF2 with HMAC-SHA256 via `Rfc2898DeriveBytes`, minimum 100,000 iterations, 128-bit cryptographically random salt per hash, 256-bit derived key, constant-time verification via `CryptographicOperations.FixedTimeEquals`. The storage format is self-describing so iteration counts can be raised without a schema change; total length ≈ 120–160 characters fits within `nvarchar(300)`. No NuGet package is added; implementation lives in `Infrastructure/Identity/Pbkdf2PasswordHasher` behind the `IPasswordHasher` port.
+
+2. **Application-layer-only last-active-absolute-user floor.** The invariant "at least one active absolute-permission user must exist" is enforced as a hard refusal in the Application layer only (`Error.Conflict("لا يمكن تعطيل آخر مدير نظام؛ يجب إنشاء بديل أولاً")`) on every path that could violate it: demote (clear `IsAbsolutePermission`), deactivate, and physical delete. No database constraint, trigger, or filtered index is introduced.
+
+3. **Guarded physical delete.** A user is physically removed only when that `UserId` has zero references anywhere in audit-relevant data (`CreatedByUserId`/`LastModifiedByUserId` on all auditable sets plus `PaymentOperation.ReceivedByUserId`, `CashMovement.PerformedByUserId`, `PatientTest` lifecycle columns, and `AttendanceRecord.UserId`). If any reference exists the operation is refused with `Error.Conflict("لا يمكن حذف مستخدم له سجلات مرتبطة؛ استخدم التعطيل بدلاً من الحذف")` and deactivation is offered instead. No `IsDeleted` column is added; deactivation (`IsActive = false`) is the soft path.
+
+4. **First-run interactive administrator provisioning with no shipped credential.** No seed row, no factory password literal, no hard-coded hash exists in source, tests, or migrations. On startup after `MigrateAsync`, the composition root dispatches `HasAnyAbsoluteUserQuery`; when no active absolute user exists it shows `FirstRunAdminWindow` (collecting username, main password + confirmation, secondary password + confirmation, dispatching `CreateUserCommand` with `isAbsolute: true`) before `MainWindow`. Exiting without creating an administrator shuts the application down. When an active absolute user already exists the wizard never appears. The only documented recovery for a lost administrator is a manual SQL procedure (generate a PBKDF2-SHA256 hash with the same parameters and update `PasswordHash` directly); no break-glass or in-product recovery key is introduced.
+
+5. **Secondary-password gate and permission catalog handling.** The shared "System menu password" dialog is implemented once in `DialogService.ShowSecondaryPasswordDialogAsync` and dispatches `VerifySecondaryPasswordQuery` against the current session user's own `InternalWindowsPasswordHash`. The Users screen is the first consumer; the dialog is reusable for later modules. The permission catalog is fixed at the thirteen seed rows; the audit-access grant (`PT_AUDIT_ACCESS`) is hidden/disabled for limited-mode users at the Presentation surface while the pipeline honors a present grant as defense-in-depth. Password fields on the management screen are write-only.
+
+**Consequences.**
+- Credential material never leaves the write path: queries return no hash material, DTOs contain no hash members, and edit-form password fields are always empty on load.
+- Sign-in failures are uniform (`Forbidden` with "اسم المستخدم أو كلمة المرور غير صحيحة") for unknown user and wrong password; inactive users receive "المستخدم غير مفعل"; no account lockout, no session timeout, no workstation or time-window restriction is introduced.
+- Permission and grant changes take effect at the affected user's next login only; the `ICurrentUserService` singleton is populated at sign-in.
+- Deployment on a fresh database provisions the first administrator interactively; deployment on an existing database skips the wizard. No credential is documented because none exists.
+
+**Related.** ADR-0009, ADR-0010, ADR-0013, M17 Implementation Plan S1–S6.
+
+---
+
 ## 3. Reserved Ranges for Future Decisions
 
 - **ADR-0100 – 0199** — reserved for reporting/printing infrastructure decisions.

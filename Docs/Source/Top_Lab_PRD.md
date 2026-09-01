@@ -309,7 +309,7 @@ The complete requirements for this module are specified in §11 (Auditability an
 ### M17 — User & Permission Management
 
 - **FR-M17-001** — The system shall support creating users and assigning each user work permissions (**Users** icon → **إنشاء مستخدمين**).
-- **FR-M17-002** — Opening user creation shall request the **internal windows password** (كلمة مرور النوافذ الداخلية). A **default** exists; the responsible user **shall change it at deployment** (NFR-02/03).
+- **FR-M17-002** — Opening the users management screen shall request the **current session user's own internal windows password** (كلمة مرور النوافذ الداخلية) via the System menu password dialog. Every user carries their own secondary password set at account creation; no default credential of any kind exists.
 - **FR-M17-003** — Adding a user: press **إضافة**, enter the user name and the user's **main and secondary passwords** (كلمة المرور / كلمة مرور النوافذ الداخلية), assign permissions, then **حفظ**; the user appears in the users list. The window shows "**وقت آخر دخول**" (last login time), **working-hours scheduling** (وقت بداية العمل / وقت انتهاء العمل, AM/PM), and an **employee break-period** definition (هل توجد فترة راحة للموظف + duration).
 - **FR-M17-004** — Permissions shall support **absolute / limited** modes (صلاحية مطلقة للمشرفين ومديري النظام / صلاحية محدودة لمستخدمي النظام) and the following granular items:
   1. إضافة وتعديل بيانات المريض (طباعة وصل — طباعة باركود)
@@ -327,8 +327,8 @@ The complete requirements for this module are specified in §11 (Auditability an
   13. الاطلاع على حساب الدرج والحسابات الأخرى (جرد يومي — أسبوعي — شهري — سنوي … إلخ)
 - **FR-M17-005** — On login, permissions apply as entered; attempting a non-authorized action displays the denial message (FR-M01-005).
 - **FR-M17-006** — User data and permissions are editable: select user → **تعديل** → **حفظ**; users are deletable (**حذف**).
-- **FR-M17-007** — An **admin** user exists by default.
-- **FR-M17-008** — Access to the **P/T audit functionality** (§11) shall be restricted to the **System Administrator or users with Absolute Permissions**. This restriction is binding and is not configurable down to limited-permission users.
+- **FR-M17-007** — No admin user exists by default. The first run of a fresh installation interactively provisions the first administrator (absolute permission) through the first-run wizard; the operator chooses the username and both passwords. No default account or credential ships.
+- **FR-M17-008** — Access to the **P/T audit functionality** (§11) shall be restricted to the **System Administrator or users with Absolute Permissions**. This restriction is binding and is not configurable down to limited-permission users. Implemented reconciliation: the restriction is enforced at the product surface by never offering the audit-access grant (PT_AUDIT_ACCESS) to limited-mode users in the management screen, while the authorization pipeline honors a present grant as defense-in-depth.
 
 ### M18 — Attendance & Time Tracking
 
@@ -533,7 +533,7 @@ Arabic UI labels are authoritative; English glosses are provided for technical c
 | UI-20 | **Custom Groups window** | إضافة مجموعة; إضافة تحليل with price; حذف |
 | UI-21 | **External entities window** | Entity-type selection (treating doctor / sent samples / referral-contract); name, city, address, phone, fax, responsible person & phone; Patient Price; discount/commission %; ID generation action; حفظ/تعديل/حذف; left entity list |
 | UI-22 | **Culture Antibiotics window** | Culture selection; attached-antibiotic list + count; إضافة; manual-entry fields; حذف; Pregnant and Children checkboxes |
-| UI-23 | **Users & permissions window** | Title "نافذة إنشاء وتعديل صلاحيات المستخدمين"; users list with "Users No." (admin default); fields اسم المستخدم, كلمة المرور, كلمة مرور النوافذ الداخلية, وقت آخر دخول; working-hours start/end (AM/PM); **break-period checkbox + duration**; صلاحية مطلقة / صلاحية محدودة; permission checkboxes (full list in FR-M17-004) incl. حد الخصم المسموح %; buttons القائمة الرئيسية, حذف, حفظ, تعديل, اضافة |
+| UI-23 | **Users & permissions window** | Title "نافذة إنشاء وتعديل صلاحيات المستخدمين"; users list showing all users with the operator-created first administrator present from first run; fields اسم المستخدم, كلمة المرور, كلمة مرور النوافذ الداخلية, وقت آخر دخول; working-hours start/end (AM/PM); **break-period checkbox + duration**; صلاحية مطلقة / صلاحية محدودة; permission checkboxes (full list in FR-M17-004) incl. حد الخصم المسموح %; buttons القائمة الرئيسية, حذف, حفظ, تعديل, اضافة |
 | UI-24 | **Attendance window** | Attendance / break / departure registration; manager-only review view (overtime, lateness) |
 | UI-25 | **Accounts window** | Buttons: الجرد وحساب الدرج, العينات المرسلة للخارج, صرف وإيداع نقدية, **حساب شركات ومندوبين (company/delegate settlement tracking)**; password dialog "System menu password / Please Enter Your Second Password / OK / Cancel"; period pickers; عرض; per-element filters (user / sent samples / treating doctor / referral entity / account type) with report types مفصل بالنتائج / بالأسعار / مفصل / مجمع; summary cards (total samples, discounts, after-discount, sent-out, paid, unpaid, cash supplies, remaining-to-lab, commissions & shares, safe cash, net profit); ترسل إلى; خلاص; إجمالي عينات المرضى drill-down |
 | UI-26 | **Statistics window** | Statistics icon → statistic-type selection; yearly by month/sex, monthly, group request rate, yearly sample counts |

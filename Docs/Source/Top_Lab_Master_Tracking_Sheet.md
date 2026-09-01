@@ -60,7 +60,7 @@
 
 | ID | Module | Wave | Status | Phase | Assignee | Depends on | Started | Completed | Blockers / Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| M17 | User & Permission Management | 1 | ⬜ | Design |  | Foundations |  |  |  |
+| M17 | User & Permission Management | 1 | 🟩 | Done | Local coding agent (Top-Lab) | Foundations | 2026-09-01 | 2026-09-01 | Delivered: PBKDF2-SHA256 hashing, sign-in/sign-out, secondary-password gate, user management CRUD, first-run wizard, floor & guarded delete; 162 tests green. |
 | M22 | System & Print Settings | 1 | ⬜ | Design |  | Foundations |  |  |  |
 | M14 | External Entities | 2 | ⬜ | Design |  | M17, M22 |  |  |  |
 | M12 | Test Catalog & Reference Ranges | 2 | ⬜ | Design |  | M17, M22 |  |  |  |
@@ -142,11 +142,13 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 
 **Module: M17 — User & Permission Management**
 - Wave: 1
-- Owner:
-- Dependencies satisfied? Foundations only.
-- Implementation status: ⬜
-- Current phase: Design
-- Notes: prerequisite for every downstream authorization decision; delivers `User`, `Permission`, `UserPermissionGrant`, absolute/limited modes, internal windows password, discount limit %, print-block-on-balance flag, working-hours and break configuration.
+- Owner: Local coding agent (Top-Lab)
+- Dependencies satisfied? Foundations only — satisfied.
+- Implementation status: 🟩
+- Current phase: Done
+- Notes: prerequisite for every downstream authorization decision; delivers `User`, `Permission`, `UserPermissionGrant`, absolute/limited modes, internal windows password, discount limit %, print-block-on-balance flag, working-hours and break configuration. Delivered surface: PBKDF2-SHA256 password hashing (self-describing format, no schema change), sign-in/sign-out, secondary-password gate, user management screen, first-run administrator wizard, last-active-absolute-user floor, guarded delete. Build 0/0, 162 tests green (71 Domain + 60 Application + 31 Infrastructure).
+- Started: 2026-09-01
+- Completed: 2026-09-01
 
 **Module: M22 — System & Print Settings**
 - Wave: 1
@@ -332,7 +334,7 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 |---|---|---|---|---|
 | Result pattern | `Result`, `Result<T>`, `Error`, `ErrorType` | 🟩 | Closed | Delivered by F3. |
 | Validation | `ValidationBehavior` + per-Command validators | ⬜ | Design | Delivered by F3; validators live inside each feature folder. |
-| Authorization | `AuthorizationBehavior` + declared permissions on Commands/Queries | ⬜ | Design | Delivered by F3; permission catalog seeded by M17. |
+| Authorization | `AuthorizationBehavior` + declared permissions on Commands/Queries | 🟩 | Closed | Delivered by F3; permission catalog of thirteen codes seeded by M17 and consumed by the authorization pipeline; no pending catalog. |
 | Logging | `LoggingBehavior` | ⬜ | Design | Delivered by F3. |
 | Audit columns | `AuditableEntity` + `AuditableEntitySaveChangesInterceptor` | ⬜ | Design | Delivered by F2 + F4. |
 | Patient aggregate status | `PatientStatusCalculator` (Domain service) | ⬜ | Design | Delivered inside M04. |

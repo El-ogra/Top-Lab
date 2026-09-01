@@ -251,7 +251,11 @@ The following checklists are applied per module during audit. Each item is Pass 
 - ☐ Adding a user assigns absolute or limited permissions and, in limited mode, the granular thirteen items.
 - ☐ Discount-limit percentage is captured per user and enforced downstream.
 - ☐ Last-login date/time is recorded and visible in user management.
-- ☐ The default `admin` user exists.
+- ☐ The first-run wizard provisions the first administrator on a fresh installation; no default credential exists.
+- ☐ Uniform sign-in failure returns the identical message "اسم المستخدم أو كلمة المرور غير صحيحة" for unknown user and wrong password (no user-enumeration leak).
+- ☐ Demoting, deactivating, or deleting the last active absolute-permission user is refused with Conflict "لا يمكن تعطيل آخر مدير نظام؛ يجب إنشاء بديل أولاً".
+- ☐ Password fields on the edit form are write-only: always empty on load, populated only to change a password.
+- ☐ The audit-access permission item (PT_AUDIT_ACCESS) is not offered in limited mode; it is offered in absolute mode.
 
 **M18 — Attendance.**
 

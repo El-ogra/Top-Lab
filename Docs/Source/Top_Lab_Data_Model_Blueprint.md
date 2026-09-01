@@ -378,8 +378,8 @@ Multiple partial payments toward a single sent-out sample are supported by allow
 |---|---|---|
 | UserId | int PK | |
 | UserName | nvarchar(100) | Unique |
-| PasswordHash | nvarchar(300) | Main password |
-| InternalWindowsPasswordHash | nvarchar(300) | Secondary password gating sensitive windows |
+| PasswordHash | nvarchar(300) | Main password — self-describing `PBKDF2-SHA256$iterations$salt$hash` (≈120–160 chars) within existing `nvarchar(300)` |
+| InternalWindowsPasswordHash | nvarchar(300) | Secondary password gating sensitive windows — self-describing `PBKDF2-SHA256$iterations$salt$hash` (≈120–160 chars) within existing `nvarchar(300)` |
 | IsAbsolutePermission | bit | |
 | DiscountLimitPercent | decimal(5,2) | |
 | BlockPrintOnRemainingBalance | bit | |
