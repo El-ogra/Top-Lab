@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddSingleton<ResultErrorPresenter>();
         services.AddSingleton<IAppLogger, WpfAppLogger>();
         services.AddSingleton<TopLab.Presentation.Services.Configuration.ConfigurationFileService>();
+        services.AddSingleton<TopLab.Application.Common.Interfaces.IWorkstationConnectionSettingsProvider, TopLab.Presentation.Services.Configuration.WorkstationConnectionSettingsProvider>();
+        services.AddSingleton<TopLab.Application.Common.Interfaces.ILabPrintTextStore, TopLab.Presentation.Services.Configuration.JsonLabPrintTextStore>();
 
         // ViewModels
         services.AddTransient<ShellViewModel>();

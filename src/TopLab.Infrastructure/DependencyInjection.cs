@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
+using TopLab.Infrastructure.Backup;
 using TopLab.Infrastructure.Identity;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Persistence.Interceptors;
+using TopLab.Infrastructure.Persistence.Maintenance;
 
 namespace TopLab.Infrastructure;
 
@@ -49,6 +51,12 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
+
+        // Backup/maintenance: Scoped (depends on the Scoped ApplicationDbContext).
+        services.AddScoped<IDatabaseMaintenanceService, SqlServerDatabaseMaintenanceService>();
+
+        // Daily backup hook runs in the background independently of any UI.
+        services.AddHostedService<DailyBackupHostedService>();
 
         return services;
     }
