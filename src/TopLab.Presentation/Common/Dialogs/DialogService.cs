@@ -63,4 +63,29 @@ public sealed class DialogService : IDialogService
             return false;
         }
     }
+
+    public Task<string?> PickBackupFolderAsync(string initialDirectory)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "اختر مجلد النسخ الاحتياطي"
+        };
+        if (!string.IsNullOrWhiteSpace(initialDirectory))
+        {
+            dialog.InitialDirectory = initialDirectory;
+        }
+
+        return Task.FromResult(dialog.ShowDialog() == true ? dialog.FolderName : null);
+    }
+
+    public Task<string?> PickBackupFileAsync()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "اختر ملف النسخة الاحتياطية",
+            Filter = "ملفات النسخ الاحتياطي (*.bak)|*.bak|جميع الملفات (*.*)|*.*"
+        };
+
+        return Task.FromResult(dialog.ShowDialog() == true ? dialog.FileName : null);
+    }
 }

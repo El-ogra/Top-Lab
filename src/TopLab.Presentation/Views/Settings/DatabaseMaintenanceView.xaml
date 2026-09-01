@@ -1,0 +1,36 @@
+<UserControl x:Class="TopLab.Presentation.Views.Settings.DatabaseMaintenanceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20" MaxWidth="760" HorizontalAlignment="Center">
+
+            <TextBlock Text="صيانة قاعدة البيانات" FontSize="20" Margin="0,0,0,16" />
+
+            <TextBlock Text="نسخ احتياطي الآن" FontWeight="Bold" Margin="0,0,0,8" />
+            <TextBlock Text="اختر المجلد الهدف للنسخة الاحتياطية (يُعبأ مسبقاً بمسار النسخ اليومي)."
+                       TextWrapping="Wrap" Foreground="#666666" Margin="0,0,0,8" />
+            <Button Content="اختيار المجلد والنسخ الآن" Height="40" Margin="0,0,0,8"
+                    Command="{Binding BackupNowCommand}" />
+
+            <Separator Margin="0,16" />
+
+            <TextBlock Text="استعادة نسخة احتياطية" FontWeight="Bold" Margin="0,0,0,8" />
+            <TextBlock Text="اختر ملف النسخة (.bak). سيتم عمل نسخة احترازية قبل الاستعادة وسيُطلب إعادة تشغيل النظام."
+                       TextWrapping="Wrap" Foreground="#666666" Margin="0,0,0,8" />
+            <Button Content="اختيار ملف والاستعادة" Height="40" Margin="0,0,0,8"
+                    Command="{Binding RestoreCommand}" />
+
+            <Separator Margin="0,16" />
+
+            <TextBlock Text="تطبيق التحديثات / تهيئة النظام" FontWeight="Bold" Margin="0,0,0,8" />
+            <TextBlock Text="تطبيق ترحيلات قاعدة البيانات المعلقة والتحقق من بيانات التهيئة."
+                       TextWrapping="Wrap" Foreground="#666666" Margin="0,0,0,8" />
+            <Button Content="تطبيق التحديثات" Height="40" Margin="0,8,0,0"
+                    Command="{Binding ApplyUpdatesCommand}" />
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,12,0,0" />
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="0,4,0,0" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

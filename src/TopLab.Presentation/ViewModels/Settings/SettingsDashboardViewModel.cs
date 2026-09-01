@@ -31,6 +31,7 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
         OpenReportSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<ReportSettingsViewModel>());
         OpenReceiptSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<ReceiptSettingsViewModel>());
         OpenEnvelopeSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<EnvelopeSettingsViewModel>());
+        OpenDatabaseMaintenanceCommand = new AsyncRelayCommand(_ => OpenDatabaseMaintenanceAsync(navigation));
         RunSystemInitializationCommand = new AsyncRelayCommand(_ => RunSystemInitializationAsync());
     }
 
@@ -50,7 +51,20 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
     public RelayCommand OpenReportSettingsCommand { get; }
     public RelayCommand OpenReceiptSettingsCommand { get; }
     public RelayCommand OpenEnvelopeSettingsCommand { get; }
+    public AsyncRelayCommand OpenDatabaseMaintenanceCommand { get; }
     public AsyncRelayCommand RunSystemInitializationCommand { get; }
+
+    public async Task OpenDatabaseMaintenanceAsync(INavigationService navigation)
+    {
+        bool granted = await _dialogs.ShowSecondaryPasswordDialogAsync();
+        if (!granted)
+        {
+            await _dialogs.ShowErrorAsync("لم يتم التحقق من كلمة المرور الثانوية. لا يمكن فتح صيانة قاعدة البيانات.");
+            return;
+        }
+
+        navigation.NavigateTo<DatabaseMaintenanceViewModel>();
+    }
 
     public async Task RunSystemInitializationAsync()
     {

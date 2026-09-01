@@ -10,7 +10,7 @@
         <Button Content="إعدادات التقرير" Height="44" Margin="0,4" Command="{Binding OpenReportSettingsCommand}" />
         <Button Content="إعدادات الإيصال" Height="44" Margin="0,4" Command="{Binding OpenReceiptSettingsCommand}" />
         <Button Content="إعدادات الظرف" Height="44" Margin="0,4" Command="{Binding OpenEnvelopeSettingsCommand}" />
-        <Button Content="صيانة قاعدة البيانات" Height="44" Margin="0,4" IsEnabled="False" />
+        <Button Content="صيانة قاعدة البيانات" Height="44" Margin="0,4" Command="{Binding OpenDatabaseMaintenanceCommand}" />
 
         <Separator Margin="0,16" />
 

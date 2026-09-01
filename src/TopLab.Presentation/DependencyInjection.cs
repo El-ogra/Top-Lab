@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddTransient<ReportSettingsViewModel>();
         services.AddTransient<ReceiptSettingsViewModel>();
         services.AddTransient<EnvelopeSettingsViewModel>();
+        services.AddTransient<DatabaseMaintenanceViewModel>();
 
         // Windows
         services.AddTransient<FirstRunAdminWindow>();
