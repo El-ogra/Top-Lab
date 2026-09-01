@@ -29,4 +29,16 @@ public sealed class EnvelopeSettings : Entity<int>
             SuppressCaptions = false
         };
     }
+
+    public void Update(decimal topMarginCm, HeaderFooterMode mode, bool suppressCaptions)
+    {
+        if (topMarginCm < 0m || topMarginCm > 30m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(topMarginCm), "Envelope top margin must be between 0 and 30 cm.");
+        }
+
+        TopMarginCm = topMarginCm;
+        HeaderFooterMode = mode;
+        SuppressCaptions = suppressCaptions;
+    }
 }

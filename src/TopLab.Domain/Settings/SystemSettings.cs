@@ -56,4 +56,62 @@ public sealed class SystemSettings : Entity<int>
             DailyBackupPath = null
         };
     }
+
+    public void SetDefaultAccountType(AccountType value)
+    {
+        if (value != AccountType.Individual
+            && value != AccountType.LabToLab
+            && value != AccountType.Contracts
+            && value != AccountType.Free)
+        {
+            throw new ArgumentException("Vip is not a valid default account type.", nameof(value));
+        }
+
+        DefaultAccountType = value;
+    }
+
+    public void SetGeneralFlags(
+        bool saveTreatingDoctorOnlyFromEntityWindow,
+        bool enablePatientNameSearchAssist,
+        bool disableAutoTitleInsertion,
+        bool printFileExternalBarcode,
+        bool printDateTimeOnTubeBarcode,
+        bool printLabIdInsteadOfPatientId,
+        bool autoReviewAndComplete,
+        bool printAccountInsteadOfDateOnReport)
+    {
+        SaveTreatingDoctorOnlyFromEntityWindow = saveTreatingDoctorOnlyFromEntityWindow;
+        EnablePatientNameSearchAssist = enablePatientNameSearchAssist;
+        DisableAutoTitleInsertion = disableAutoTitleInsertion;
+        PrintFileExternalBarcode = printFileExternalBarcode;
+        PrintDateTimeOnTubeBarcode = printDateTimeOnTubeBarcode;
+        PrintLabIdInsteadOfPatientId = printLabIdInsteadOfPatientId;
+        AutoReviewAndComplete = autoReviewAndComplete;
+        PrintAccountInsteadOfDateOnReport = printAccountInsteadOfDateOnReport;
+    }
+
+    public void SetResultScreenAccountDisplayMode(ResultScreenAccountDisplayMode mode)
+    {
+        ResultScreenAccountDisplayMode = mode;
+    }
+
+    public void SetDailyBackup(bool enabled, string? path)
+    {
+        if (enabled)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentException("Backup path is required when daily backup is enabled.", nameof(path));
+            }
+
+            if (path.Length > 300)
+            {
+                throw new ArgumentException("Backup path must be at most 300 characters.", nameof(path));
+            }
+
+            DailyBackupPath = path;
+        }
+
+        DailyBackupEnabled = enabled;
+    }
 }

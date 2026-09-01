@@ -18,4 +18,14 @@ public sealed class PrinterAssignment
         OutputType = outputType;
         PrinterName = printerName;
     }
+
+    public void ChangePrinter(string printerName)
+    {
+        if (string.IsNullOrWhiteSpace(printerName) || printerName.Length > 200)
+        {
+            throw new ArgumentException("Printer name must be non-empty and at most 200 characters.", nameof(printerName));
+        }
+
+        PrinterName = printerName.Trim();
+    }
 }

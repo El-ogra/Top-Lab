@@ -22,4 +22,21 @@ public sealed class EnvelopePrintItemPosition
         LeftOffsetCm = leftOffsetCm;
         TopOffsetCm = topOffsetCm;
     }
+
+    public void Update(bool isEnabled, decimal leftOffsetCm, decimal topOffsetCm)
+    {
+        if (leftOffsetCm < 0m || leftOffsetCm > 30m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(leftOffsetCm), "Left offset must be between 0 and 30 cm.");
+        }
+
+        if (topOffsetCm < 0m || topOffsetCm > 30m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(topOffsetCm), "Top offset must be between 0 and 30 cm.");
+        }
+
+        IsEnabled = isEnabled;
+        LeftOffsetCm = leftOffsetCm;
+        TopOffsetCm = topOffsetCm;
+    }
 }

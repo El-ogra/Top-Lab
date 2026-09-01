@@ -41,4 +41,32 @@ public sealed class ReceiptSettings : Entity<int>
             HeaderFooterMode = HeaderFooterMode.None
         };
     }
+
+    public void Update(
+        decimal topMarginCm,
+        string currency,
+        TimeOnly? pickupTimeDefault,
+        bool printOnce,
+        TestDetailDisplayMode mode,
+        bool cashierPrinterEnabled,
+        HeaderFooterMode headerFooterMode)
+    {
+        if (topMarginCm < 0m || topMarginCm > 30m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(topMarginCm), "Receipt top margin must be between 0 and 30 cm.");
+        }
+
+        if (string.IsNullOrWhiteSpace(currency) || currency.Length > 10)
+        {
+            throw new ArgumentException("Currency must be non-empty and at most 10 characters.", nameof(currency));
+        }
+
+        TopMarginCm = topMarginCm;
+        Currency = currency.Trim();
+        PickupTimeDefault = pickupTimeDefault;
+        PrintOnce = printOnce;
+        TestDetailDisplayMode = mode;
+        CashierPrinterEnabled = cashierPrinterEnabled;
+        HeaderFooterMode = headerFooterMode;
+    }
 }

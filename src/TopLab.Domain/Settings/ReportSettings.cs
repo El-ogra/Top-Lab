@@ -60,4 +60,41 @@ public sealed class ReportSettings : Entity<int>
 
         ReportTopSpaceCm = value;
     }
+
+    public void SetMargins(decimal leftCm, decimal bottomCm)
+    {
+        if (leftCm < 0m || leftCm > 30m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(leftCm), "Page margin left must be between 0 and 30 cm.");
+        }
+
+        if (bottomCm < 0m || bottomCm > 30m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(bottomCm), "Page margin bottom must be between 0 and 30 cm.");
+        }
+
+        PageMarginLeftCm = leftCm;
+        PageMarginBottomCm = bottomCm;
+    }
+
+    public void SetPaperSize(PaperSize size)
+    {
+        PaperSize = size;
+    }
+
+    public void SetHeaderFooterMode(HeaderFooterMode mode)
+    {
+        HeaderFooterMode = mode;
+    }
+
+    public void SetDoctorSignature(bool enabled)
+    {
+        DoctorSignatureEnabled = enabled;
+    }
+
+    public void SetHistoryOptions(HistorySortMode sortMode, bool autoDisplay)
+    {
+        HistorySortMode = sortMode;
+        HistoryAutoDisplayEnabled = autoDisplay;
+    }
 }
