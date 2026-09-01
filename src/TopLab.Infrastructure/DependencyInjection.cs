@@ -46,6 +46,7 @@ public static class DependencyInjection
         // each request/unit-of-work a separate snapshot, causing stale/empty
         // identity across handlers and the audit interceptor. IDateTimeProvider
         // remains Scoped (stateless, per-operation clock).
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
 
