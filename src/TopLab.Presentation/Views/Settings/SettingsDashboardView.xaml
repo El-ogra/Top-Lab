@@ -1,0 +1,21 @@
+<UserControl x:Class="TopLab.Presentation.Views.Settings.SettingsDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <StackPanel Margin="20" MaxWidth="640" HorizontalAlignment="Center">
+        <TextBlock Text="الإعدادات" FontSize="20" Margin="0,0,0,4" />
+        <TextBlock Text="اختر قسم الإعدادات الذي تريد تعديله" Foreground="#666666" Margin="0,0,0,16" />
+
+        <Button Content="الإعدادات العامة والنظام" Height="44" Margin="0,4" Command="{Binding OpenSystemSettingsCommand}" />
+        <Button Content="إعدادات التقرير" Height="44" Margin="0,4" IsEnabled="False" />
+        <Button Content="إعدادات الإيصال" Height="44" Margin="0,4" IsEnabled="False" />
+        <Button Content="إعدادات الظرف" Height="44" Margin="0,4" IsEnabled="False" />
+        <Button Content="صيانة قاعدة البيانات" Height="44" Margin="0,4" IsEnabled="False" />
+
+        <Separator Margin="0,16" />
+
+        <Button Content="تهيئة النظام للنسخة الحديثة" Height="44" Margin="0,4"
+                Command="{Binding RunSystemInitializationCommand}" />
+        <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="0,8,0,0" />
+    </StackPanel>
+</UserControl>

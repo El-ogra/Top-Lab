@@ -143,6 +143,10 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                             await vm.LoadAsync();
                         }
                     }
+                    else if (t == "الإعدادات")
+                    {
+                        _navigation.NavigateTo<ViewModels.Settings.SettingsDashboardViewModel>();
+                    }
                     else
                     {
                         // Future: navigate to feature

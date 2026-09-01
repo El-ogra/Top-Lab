@@ -1,0 +1,115 @@
+<UserControl x:Class="TopLab.Presentation.Views.Settings.SystemSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20" MaxWidth="760" HorizontalAlignment="Center">
+
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="القائمة الرئيسية" Width="110" Margin="8,0,0,0"
+                        Command="{Binding BackToDashboardCommand}" />
+                <TextBlock Text="الإعدادات العامة والنظام" FontSize="20" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <TextBlock Text="الطابعات" FontWeight="Bold" Margin="0,16,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="طابعة التقارير (الافتراضية):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="0" Grid.Column="1" IsEditable="True" Margin="0,4"
+                          ItemsSource="{Binding InstalledPrinters}" Text="{Binding ReportPrinter, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="طابعة الباركود:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="1" Grid.Column="1" IsEditable="True" Margin="0,4"
+                          ItemsSource="{Binding InstalledPrinters}" Text="{Binding BarcodePrinter, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="طابعة الأظرف:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="2" Grid.Column="1" IsEditable="True" Margin="0,4"
+                          ItemsSource="{Binding InstalledPrinters}" Text="{Binding EnvelopePrinter, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="طابعة الإيصالات:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="3" Grid.Column="1" IsEditable="True" Margin="0,4"
+                          ItemsSource="{Binding InstalledPrinters}" Text="{Binding ReceiptPrinter, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+
+            <TextBlock Text="نوع الحساب الافتراضي" FontWeight="Bold" Margin="0,16,0,4" />
+            <ComboBox ItemsSource="{Binding AccountTypeOptions}" SelectedItem="{Binding DefaultAccountType}" />
+
+            <TextBlock Text="الإعدادات العامة" FontWeight="Bold" Margin="0,16,0,8" />
+            <CheckBox Content="حفظ الطبيب المعالج من شاشة البيانات فقط" IsChecked="{Binding SaveTreatingDoctorOnlyFromEntityWindow}" />
+            <CheckBox Content="تفعيل البحث المساعد عن اسم المريض" IsChecked="{Binding EnablePatientNameSearchAssist}" />
+            <CheckBox Content="تعطيل إدراج اللقب تلقائياً" IsChecked="{Binding DisableAutoTitleInsertion}" />
+            <CheckBox Content="طباعة باركود خارجي على الملف" IsChecked="{Binding PrintFileExternalBarcode}" />
+            <CheckBox Content="طباعة التاريخ والوقت على باركود الأنبوبة" IsChecked="{Binding PrintDateTimeOnTubeBarcode}" />
+            <CheckBox Content="طباعة رقم المعمل بدلاً من رقم المريض" IsChecked="{Binding PrintLabIdInsteadOfPatientId}" />
+            <CheckBox Content="مراجعة وإتمام النتائج تلقائياً" IsChecked="{Binding AutoReviewAndComplete}" />
+            <CheckBox Content="طباعة الحساب بدلاً من التاريخ على التقرير" IsChecked="{Binding PrintAccountInsteadOfDateOnReport}" />
+
+            <TextBlock Text="عرض الحساب على شاشة النتائج" Margin="0,12,0,4" />
+            <ComboBox ItemsSource="{Binding DisplayModeOptions}" SelectedItem="{Binding ResultScreenAccountDisplayMode}" />
+
+            <TextBlock Text="النسخ الاحتياطي اليومي" FontWeight="Bold" Margin="0,16,0,4" />
+            <CheckBox Content="تفعيل النسخ الاحتياطي اليومي" IsChecked="{Binding DailyBackupEnabled}" />
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="المسار:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox Grid.Column="1" Text="{Binding DailyBackupPath, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2" Content="تحقق" Width="80" Margin="8,0,0,0" Command="{Binding CheckBackupPathCommand}" />
+            </Grid>
+
+            <TextBlock Text="إعدادات خادم قواعد البيانات" FontWeight="Bold" Margin="0,20,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="الخادم:" VerticalAlignment="Center" Margin="0,4,8,4" Width="160" />
+                <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4" Text="{Binding Server, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="قاعدة البيانات:" VerticalAlignment="Center" Margin="0,4,8,4" Width="160" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4" Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="اسم المستخدم:" VerticalAlignment="Center" Margin="0,4,8,4" Width="160" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4" Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="كلمة المرور:" VerticalAlignment="Center" Margin="0,4,8,4" Width="160" />
+                <PasswordBox x:Name="DbPasswordBox" Grid.Row="3" Grid.Column="1" Margin="0,4"
+                             PasswordChanged="DbPasswordBox_PasswordChanged" />
+            </Grid>
+
+            <CheckBox Content="مصادقة ويندوز (تكاملية)" IsChecked="{Binding IntegratedSecurity}" Margin="0,8,0,0" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                <Button Content="اختبار الاتصال" Width="110" Margin="0,0,8,0" Command="{Binding TestDatabaseServerCommand}" />
+                <Button Content="حفظ إعدادات الخادم" Width="140" Command="{Binding SaveDatabaseServerCommand}" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                <Button Content="حفظ الإعدادات" Width="120" Command="{Binding SaveCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

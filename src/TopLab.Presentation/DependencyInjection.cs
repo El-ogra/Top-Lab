@@ -3,8 +3,10 @@ using TopLab.Application.Common.Interfaces;
 using TopLab.Presentation.Common.Navigation;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
+using TopLab.Presentation.Services;
 using TopLab.Presentation.ViewModels.Shell;
 using TopLab.Presentation.ViewModels.Setup;
+using TopLab.Presentation.ViewModels.Settings;
 using TopLab.Presentation.ViewModels.Users;
 using TopLab.Presentation.Views.Setup;
 
@@ -19,6 +21,7 @@ public static class DependencyInjection
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<ResultErrorPresenter>();
         services.AddSingleton<IAppLogger, WpfAppLogger>();
+        services.AddSingleton<IPrinterCatalogService, PrinterCatalogService>();
         services.AddSingleton<TopLab.Presentation.Services.Configuration.ConfigurationFileService>();
         services.AddSingleton<TopLab.Application.Common.Interfaces.IWorkstationConnectionSettingsProvider, TopLab.Presentation.Services.Configuration.WorkstationConnectionSettingsProvider>();
         services.AddSingleton<TopLab.Application.Common.Interfaces.ILabPrintTextStore, TopLab.Presentation.Services.Configuration.JsonLabPrintTextStore>();
@@ -29,6 +32,8 @@ public static class DependencyInjection
         services.AddTransient<DatabaseSetupViewModel>();
         services.AddTransient<FirstRunAdminViewModel>();
         services.AddTransient<UserManagementViewModel>();
+        services.AddTransient<SettingsDashboardViewModel>();
+        services.AddTransient<SystemSettingsViewModel>();
 
         // Windows
         services.AddTransient<FirstRunAdminWindow>();

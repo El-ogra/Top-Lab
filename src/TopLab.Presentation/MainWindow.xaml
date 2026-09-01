@@ -6,6 +6,8 @@
          xmlns:local="clr-namespace:TopLab.Presentation"
          xmlns:usersVm="clr-namespace:TopLab.Presentation.ViewModels.Users"
          xmlns:usersView="clr-namespace:TopLab.Presentation.Views.Users"
+         xmlns:settingsVm="clr-namespace:TopLab.Presentation.ViewModels.Settings"
+         xmlns:settingsView="clr-namespace:TopLab.Presentation.Views.Settings"
          mc:Ignorable="d"
          Title="Top-Lab — نظام توب لاب" Height="600" Width="1024"
          FlowDirection="RightToLeft"
@@ -72,6 +74,12 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type usersVm:UserManagementViewModel}">
                         <usersView:UserManagementView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type settingsVm:SettingsDashboardViewModel}">
+                        <settingsView:SettingsDashboardView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type settingsVm:SystemSettingsViewModel}">
+                        <settingsView:SystemSettingsView/>
                     </DataTemplate>
                 </ContentControl.Resources>
             </ContentControl>
