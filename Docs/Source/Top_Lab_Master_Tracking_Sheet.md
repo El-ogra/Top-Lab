@@ -61,7 +61,7 @@
 | ID | Module | Wave | Status | Phase | Assignee | Depends on | Started | Completed | Blockers / Notes |
 |---|---|---|---|---|---|---|---|---|---|
 | M17 | User & Permission Management | 1 | 🟩 | Done | Local coding agent (Top-Lab) | Foundations | 2026-09-01 | 2026-09-01 | Delivered: PBKDF2-SHA256 hashing, sign-in/sign-out, secondary-password gate, user management CRUD, first-run wizard, floor & guarded delete; 162 tests green. |
-| M22 | System & Print Settings | 1 | ⬜ | Design |  | Foundations |  |  |  |
+| M22 | System & Print Settings | 1 | 🟩 | Done | Local coding agent (Top-Lab) | Foundations | 2026-09-02 | 2026-09-02 | Delivered: six settings aggregates with mutators/invariant guards, read/write Application surface, Infrastructure maintenance + workstation-local lab-text store + daily-backup hook, Settings dashboard (S-27), System (S-28), Report (S-29), Receipt (S-30), Envelope (S-31) and secondary-password-gated Database Maintenance (S-32) screens; 268 tests green. |
 | M14 | External Entities | 2 | ⬜ | Design |  | M17, M22 |  |  |  |
 | M12 | Test Catalog & Reference Ranges | 2 | ⬜ | Design |  | M17, M22 |  |  |  |
 | M13 | Price Lists, Comments & Custom Groups | 3 | ⬜ | Design |  | M12, M14 |  |  |  |
@@ -91,7 +91,7 @@
 | Wave | Modules | Status Summary |
 |---|---|---|
 | Wave 0 — Foundations | F1, F2, F3, F4, F5, F6 | 🟩 Done |
-| Wave 1 — Configuration Backbone | M17, M22 | ⬜ Not Started |
+| Wave 1 — Configuration Backbone | M17, M22 | 🟩 Done |
 | Wave 2 — Reference Data | M14, M12 | ⬜ Not Started |
 | Wave 3 — Reference-Data Extensions | M13, M15, M01 | ⬜ Not Started |
 | Wave 4 — Patient Lifecycle Entry | M02, M21 | ⬜ Not Started |
@@ -152,10 +152,11 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 
 **Module: M22 — System & Print Settings**
 - Wave: 1
-- Owner:
+- Owner: Local coding agent (Top-Lab)
 - Dependencies satisfied? Foundations only.
-- Implementation status: ⬜
-- Current phase: Design
+- Implementation status: 🟩
+- Current phase: Done
+- Completed: 2026-09-02
 - Notes: delivers `SystemSettings`, `ReportSettings`, `ReceiptSettings`, `EnvelopeSettings`, `EnvelopePrintItemPosition`, `PrinterAssignment`; daily backup, Database Maintenance, and system initialization functions.
 
 **Module: M14 — External Entities**
@@ -360,6 +361,7 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 | 2026-08-28 | F4 | Persistence baseline implemented: `IApplicationDbContext` port + `ApplicationDbContext` + `AuditableEntitySaveChangesInterceptor` + `SystemDateTimeProvider` + `CurrentUserService` + Infrastructure DI. 11 Infrastructure tests + 14 Application + 12 Domain = 37 tests green; build 0/0. | Local coding agent (Top-Lab) |
 | 2026-08-28 | F5 | Baseline entity schemas across all entity groups implemented (36 tables, Fluent-API configurations, `BaselineDataModel` migration `20260828052248`). Commits `94b5213` / `61cad11`; build 0/0, tests 73 green; verified against Data Model §4–§12 and Architecture §4.1. | Local coding agent (Top-Lab) |
 | 2026-08-28 | F6 | Presentation composition root and shell implemented (`App.xaml.cs`, `MainWindow`, navigation/dialog services, `ResultErrorPresenter`). Commit `896db5b` "بعد تنفيذ F6"; build 0/0, presentation boots via Host. | Local coding agent (Top-Lab) |
+| 2026-09-02 | M22 | System & Print Settings implemented across S1–S8: domain mutators/invariant guards, read+write Application surface, Infrastructure maintenance + workstation-local lab-text store + daily-backup hook + seed-repair, Settings dashboard and System/Report/Receipt/Envelope/Database Maintenance screens, secondary-password gate. 268 tests green; build 0/0. Commit `docs(m22): finalize module 22 documentation, ADR-0027, tracking sheet, and handoff`. | Local coding agent (Top-Lab) |
 
 Add one row per material change.
 

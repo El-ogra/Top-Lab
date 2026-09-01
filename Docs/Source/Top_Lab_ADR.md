@@ -563,6 +563,31 @@ Strongly-typed string identifiers (`LabId`) are stored through an EF Core value 
 
 ---
 
+### ADR-0027 — M22: workstation-local lab identification text and font storage; no images, no colors in print configuration
+
+- **Status:** Accepted
+- **Date:** 2026-09-02
+
+**Context.** Report, receipt, and envelope settings surface lab identification text (name, address, phone) and a font family/size for the printed subjects. M22 keeps configuration workstation-local where it concerns machine-specific artifacts (ADR-0021) and must not introduce schema churn, binary assets, or NuGet packages.
+
+**Decision.**
+
+1. **Lab print text is workstation-local, file-backed, per scope.** The lab name/address/phone and chosen font are persisted to a JSON file (`lab-print-text.json` under the workstation configuration location) via the `ILabPrintTextStore` port, keyed by `LabPrintTextScope` (Report / Receipt / Envelope). The single system-wide `LabPrintTextDto` carries `LabName`, `Address`, `Phone`, `FontFamily`, `FontSizePt`. This keeps the business database unchanged (no migration, no new tables) and matches ADR-0021's locality rationale for machine-specific print output. `SaveLabPrintTextCommand` / `GetLabPrintTextQuery` are permission-gated like the other setting writes.
+
+2. **No images and no color controls in the implemented print configuration.** The PRD's optional image-based header/footer and header/footer color editing (FR-M22-004/005) are deliberately excluded from this delivery. Text/font configuration replaces them; no image picker and no color picker appear anywhere in the system-report/receipt/envelope screens, and the DTOs carry no image or color members.
+
+3. **Envelope alignment is data, not drawings.** Envelope item alignment (`EnvelopePrintItemPosition`) is configured as four persisted rows (Name, Code, ReferralEntity, Date) with enable and Left/Top offset-cm values; the barcode preview on the envelope screen is a static placeholder rectangle with no live rendering dependency.
+
+**Consequences.**
+
+- Report/receipt/envelope provisioning requires no migration; print text and fonts travel only on the workstation that printed them.
+- The excluded image/color capabilities remain documented in the PRD; a future decision can introduce them without changing the database schema or the lab-text DTO shape (they would only add fields).
+- A single `EDIT_SYSTEM_SETTINGS` permission guards the entire settings surface; the Database Maintenance window additionally requires the secondary-password gate reused from M17 (`DialogService.ShowSecondaryPasswordDialogAsync`).
+
+**Related.** ADR-0020, ADR-0021, ADR-0025, M22 Implementation Plan S1–S8.
+
+---
+
 ## 3. Reserved Ranges for Future Decisions
 
 - **ADR-0100 – 0199** — reserved for reporting/printing infrastructure decisions.
