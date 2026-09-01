@@ -28,6 +28,8 @@ public sealed class CurrentUserService : ICurrentUserService
 
     public int UserId { get; private set; }
 
+    public string UserName { get; private set; } = string.Empty;
+
     public bool IsAbsolutePermission { get; private set; }
 
     private ISet<string> _grantedPermissions = new HashSet<string>(StringComparer.Ordinal);
@@ -38,9 +40,10 @@ public sealed class CurrentUserService : ICurrentUserService
     /// Replaces the active session with the supplied values. Called by the
     /// composition root at sign-in, sign-out, and after permission changes.
     /// </summary>
-    public void SetSession(int userId, bool isAbsolutePermission, IEnumerable<string> grantedPermissions)
+    public void SetSession(int userId, string userName, bool isAbsolutePermission, IEnumerable<string> grantedPermissions)
     {
         UserId = userId;
+        UserName = userName;
         IsAbsolutePermission = isAbsolutePermission;
         _grantedPermissions = new HashSet<string>(grantedPermissions, StringComparer.Ordinal);
         IsAuthenticated = true;
@@ -52,6 +55,7 @@ public sealed class CurrentUserService : ICurrentUserService
     public void ClearSession()
     {
         UserId = 0;
+        UserName = string.Empty;
         IsAbsolutePermission = false;
         _grantedPermissions = new HashSet<string>(StringComparer.Ordinal);
         IsAuthenticated = false;

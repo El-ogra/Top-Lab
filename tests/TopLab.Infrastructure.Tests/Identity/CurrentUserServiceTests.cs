@@ -12,6 +12,7 @@ public class CurrentUserServiceTests
 
         Assert.False(service.IsAuthenticated);
         Assert.Equal(0, service.UserId);
+        Assert.Equal(string.Empty, service.UserName);
         Assert.False(service.IsAbsolutePermission);
         Assert.False(service.HasPermission("ANY"));
     }
@@ -20,10 +21,11 @@ public class CurrentUserServiceTests
     public void GivenSetSession_WhenInspected_ThenValuesAreExposed()
     {
         var service = new CurrentUserService(new TestServiceProvider());
-        service.SetSession(userId: 7, isAbsolutePermission: true, grantedPermissions: new[] { "ADD_EDIT_PATIENT" });
+        service.SetSession(userId: 7, userName: "ahmed", isAbsolutePermission: true, grantedPermissions: new[] { "ADD_EDIT_PATIENT" });
 
         Assert.True(service.IsAuthenticated);
         Assert.Equal(7, service.UserId);
+        Assert.Equal("ahmed", service.UserName);
         Assert.True(service.IsAbsolutePermission);
         Assert.True(service.HasPermission("ADD_EDIT_PATIENT"));
         Assert.False(service.HasPermission("OTHER"));
@@ -33,12 +35,13 @@ public class CurrentUserServiceTests
     public void GivenClearSession_ThenSessionIsAnonymous()
     {
         var service = new CurrentUserService(new TestServiceProvider());
-        service.SetSession(7, true, new[] { "P1" });
+        service.SetSession(7, "ahmed", true, new[] { "P1" });
 
         service.ClearSession();
 
         Assert.False(service.IsAuthenticated);
         Assert.Equal(0, service.UserId);
+        Assert.Equal(string.Empty, service.UserName);
         Assert.False(service.IsAbsolutePermission);
         Assert.False(service.HasPermission("P1"));
     }
@@ -50,7 +53,7 @@ public class CurrentUserServiceTests
         // service must compare exactly so a code like "Add_Patient" cannot
         // accidentally match "ADD_PATIENT".
         var service = new CurrentUserService(new TestServiceProvider());
-        service.SetSession(1, false, new[] { "ADD_PATIENT" });
+        service.SetSession(1, "user1", false, new[] { "ADD_PATIENT" });
 
         Assert.True(service.HasPermission("ADD_PATIENT"));
         Assert.False(service.HasPermission("add_patient"));

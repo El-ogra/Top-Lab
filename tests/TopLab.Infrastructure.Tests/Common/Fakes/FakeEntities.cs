@@ -45,11 +45,31 @@ public sealed class FakeCurrentUserService : ICurrentUserService
 
     public int UserId { get; set; } = 42;
 
+    public string UserName { get; set; } = "fakeuser";
+
     public bool IsAbsolutePermission { get; set; }
 
     public HashSet<string> GrantedPermissions { get; set; } = new();
 
     public bool HasPermission(string code) => GrantedPermissions.Contains(code);
+
+    public void SetSession(int userId, string userName, bool isAbsolutePermission, IEnumerable<string> grantedPermissions)
+    {
+        UserId = userId;
+        UserName = userName;
+        IsAbsolutePermission = isAbsolutePermission;
+        GrantedPermissions = new HashSet<string>(grantedPermissions, StringComparer.Ordinal);
+        IsAuthenticated = true;
+    }
+
+    public void ClearSession()
+    {
+        UserId = 0;
+        UserName = string.Empty;
+        IsAbsolutePermission = false;
+        GrantedPermissions = new HashSet<string>(StringComparer.Ordinal);
+        IsAuthenticated = false;
+    }
 }
 
 /// <summary>

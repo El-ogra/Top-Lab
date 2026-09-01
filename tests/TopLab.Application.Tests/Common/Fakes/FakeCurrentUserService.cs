@@ -9,13 +9,38 @@ namespace TopLab.Application.Tests.Common.Fakes;
 /// </summary>
 public sealed class FakeCurrentUserService : ICurrentUserService
 {
-    public bool IsAuthenticated { get; init; } = true;
+    public bool IsAuthenticated { get; set; } = true;
 
-    public int UserId { get; init; } = 1;
+    public int UserId { get; set; } = 1;
 
-    public bool IsAbsolutePermission { get; init; }
+    public string UserName { get; set; } = "testuser";
+
+    public bool IsAbsolutePermission { get; set; }
 
     public HashSet<string> GrantedPermissions { get; init; } = new();
 
     public bool HasPermission(string code) => GrantedPermissions.Contains(code);
+
+    public void SetSession(int userId, string userName, bool isAbsolutePermission, IEnumerable<string> grantedPermissions)
+    {
+        UserId = userId;
+        UserName = userName;
+        IsAbsolutePermission = isAbsolutePermission;
+        GrantedPermissions.Clear();
+        foreach (var code in grantedPermissions)
+        {
+            GrantedPermissions.Add(code);
+        }
+
+        IsAuthenticated = true;
+    }
+
+    public void ClearSession()
+    {
+        UserId = 0;
+        UserName = string.Empty;
+        IsAbsolutePermission = false;
+        GrantedPermissions.Clear();
+        IsAuthenticated = false;
+    }
 }

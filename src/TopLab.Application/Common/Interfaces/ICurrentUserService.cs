@@ -10,9 +10,15 @@ public interface ICurrentUserService
 
     int UserId { get; }
 
+    string UserName { get; }
+
     /// <summary>True for users holding absolute permission; such users bypass per-item permission checks.</summary>
     bool IsAbsolutePermission { get; }
 
     /// <summary>True when the current user holds the named permission code (UPPER_SNAKE_CASE).</summary>
     bool HasPermission(string code);
+
+    void SetSession(int userId, string userName, bool isAbsolutePermission, IEnumerable<string> grantedPermissions);
+
+    void ClearSession();
 }
