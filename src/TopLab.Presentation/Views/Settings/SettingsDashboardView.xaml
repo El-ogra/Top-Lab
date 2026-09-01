@@ -7,9 +7,9 @@
         <TextBlock Text="اختر قسم الإعدادات الذي تريد تعديله" Foreground="#666666" Margin="0,0,0,16" />
 
         <Button Content="الإعدادات العامة والنظام" Height="44" Margin="0,4" Command="{Binding OpenSystemSettingsCommand}" />
-        <Button Content="إعدادات التقرير" Height="44" Margin="0,4" IsEnabled="False" />
-        <Button Content="إعدادات الإيصال" Height="44" Margin="0,4" IsEnabled="False" />
-        <Button Content="إعدادات الظرف" Height="44" Margin="0,4" IsEnabled="False" />
+        <Button Content="إعدادات التقرير" Height="44" Margin="0,4" Command="{Binding OpenReportSettingsCommand}" />
+        <Button Content="إعدادات الإيصال" Height="44" Margin="0,4" Command="{Binding OpenReceiptSettingsCommand}" />
+        <Button Content="إعدادات الظرف" Height="44" Margin="0,4" Command="{Binding OpenEnvelopeSettingsCommand}" />
         <Button Content="صيانة قاعدة البيانات" Height="44" Margin="0,4" IsEnabled="False" />
 
         <Separator Margin="0,16" />

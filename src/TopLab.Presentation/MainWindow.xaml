@@ -81,6 +81,15 @@
                     <DataTemplate DataType="{x:Type settingsVm:SystemSettingsViewModel}">
                         <settingsView:SystemSettingsView/>
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type settingsVm:ReportSettingsViewModel}">
+                        <settingsView:ReportSettingsView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type settingsVm:ReceiptSettingsViewModel}">
+                        <settingsView:ReceiptSettingsView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type settingsVm:EnvelopeSettingsViewModel}">
+                        <settingsView:EnvelopeSettingsView/>
+                    </DataTemplate>
                 </ContentControl.Resources>
             </ContentControl>
         </Grid>

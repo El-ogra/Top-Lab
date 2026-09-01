@@ -1,0 +1,129 @@
+<UserControl x:Class="TopLab.Presentation.Views.Settings.EnvelopeSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20" MaxWidth="760" HorizontalAlignment="Center">
+
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="القائمة الرئيسية" Width="110" Margin="8,0,0,0"
+                        Command="{Binding BackToDashboardCommand}" />
+                <TextBlock Text="إعدادات الأظرف" FontSize="20" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <TextBlock Text="إعدادات الطباعة" FontWeight="Bold" Margin="0,16,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="الهامش العلوي (سم):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4" Text="{Binding TopMarginCm, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="الرأس والتذييل:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,4" ItemsSource="{Binding HeaderFooterModeOptions}"
+                          SelectedItem="{Binding HeaderFooterMode}" />
+
+                <CheckBox Grid.Row="2" Grid.Column="1" Content="إخفاء التسميات" IsChecked="{Binding SuppressCaptions}"
+                          Margin="0,8,0,0" />
+            </Grid>
+
+            <TextBlock Text="مواضع بنود الطباعة" FontWeight="Bold" Margin="0,20,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="البند" FontWeight="Bold" Margin="0,4,8,4" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="مفعّل" FontWeight="Bold" Margin="0,4,8,4" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="الإزاحة اليسرى (سم)" FontWeight="Bold" Margin="0,4,8,4" />
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="الإزاحة العلوية (سم)" FontWeight="Bold" Margin="0,4,8,4" />
+
+                <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" ItemsSource="{Binding EnvelopePositions}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Caption}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <CheckBox Grid.Column="1" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBox Grid.Column="2" Margin="0,0,8,0" Text="{Binding LeftOffsetCm, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Column="3" Text="{Binding TopOffsetCm, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+
+            <TextBlock Text="معاينة الباركود (ثابت)" FontWeight="Bold" Margin="0,16,0,8" />
+            <Border BorderBrush="Black" BorderThickness="1" Height="40" Width="220" HorizontalAlignment="Right"
+                    Background="#EEEEEE">
+                <TextBlock Text="|| ||| |||| ||" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontFamily="Consolas" FontSize="20" />
+            </Border>
+
+            <TextBlock Text="بيانات المعمل ونص الطباعة" FontWeight="Bold" Margin="0,20,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="اسم المعمل:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4" Text="{Binding LabName, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="العنوان:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4" Text="{Binding LabAddress, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="الهاتف:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4" Text="{Binding LabPhone, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="الخط:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,4" ItemsSource="{Binding FontFamilyOptions}"
+                          SelectedItem="{Binding FontFamily}" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="حجم الخط (نقطة):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="4" Grid.Column="1" Margin="0,4" Text="{Binding FontSizePt, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                <Button Content="حفظ الإعدادات" Width="120" Command="{Binding SaveCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -7,9 +7,8 @@ using TopLab.Presentation.Common.Navigation;
 
 namespace TopLab.Presentation.ViewModels.Settings;
 
-/// <summary>S-27: launcher into the settings sections, the system-initialization
-/// action, and (Database Maintenance wired in S7; report/receipt/envelope
-/// navigation added in S6 alongside their screens).</summary>
+/// <summary>S-27: launcher into the settings sections and the system-initialization
+/// action (Database Maintenance entry added in S7).</summary>
 public sealed class SettingsDashboardViewModel : ViewModelBase
 {
     private readonly ISender _mediator;
@@ -29,6 +28,9 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
         _presenter = presenter;
 
         OpenSystemSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<SystemSettingsViewModel>());
+        OpenReportSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<ReportSettingsViewModel>());
+        OpenReceiptSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<ReceiptSettingsViewModel>());
+        OpenEnvelopeSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<EnvelopeSettingsViewModel>());
         RunSystemInitializationCommand = new AsyncRelayCommand(_ => RunSystemInitializationAsync());
     }
 
@@ -45,6 +47,9 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
     }
 
     public RelayCommand OpenSystemSettingsCommand { get; }
+    public RelayCommand OpenReportSettingsCommand { get; }
+    public RelayCommand OpenReceiptSettingsCommand { get; }
+    public RelayCommand OpenEnvelopeSettingsCommand { get; }
     public AsyncRelayCommand RunSystemInitializationCommand { get; }
 
     public async Task RunSystemInitializationAsync()

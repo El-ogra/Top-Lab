@@ -1,0 +1,100 @@
+<UserControl x:Class="TopLab.Presentation.Views.Settings.ReceiptSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20" MaxWidth="760" HorizontalAlignment="Center">
+
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="القائمة الرئيسية" Width="110" Margin="8,0,0,0"
+                        Command="{Binding BackToDashboardCommand}" />
+                <TextBlock Text="إعدادات الإيصالات" FontSize="20" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <TextBlock Text="إعدادات الطباعة" FontWeight="Bold" Margin="0,16,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="الهامش العلوي (سم):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4" Text="{Binding TopMarginCm, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="العملة (10 أحرف كحد أقصى):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4" Text="{Binding Currency, UpdateSourceTrigger=PropertyChanged}" MaxLength="10" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="وقت الاستلام الافتراضي (س س:د د):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4" Text="{Binding PickupTimeDefault, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="طريقة عرض تفاصيل الفحص:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,4" ItemsSource="{Binding TestDetailDisplayModeOptions}"
+                          SelectedItem="{Binding TestDetailDisplayMode}" />
+            </Grid>
+
+            <CheckBox Content="الطباعة مرة واحدة فقط" IsChecked="{Binding PrintOnce}" Margin="0,12,0,0" />
+
+            <TextBlock Text="الرأس والتذييل" FontWeight="Bold" Margin="0,16,0,4" />
+            <ComboBox ItemsSource="{Binding HeaderFooterModeOptions}" SelectedItem="{Binding HeaderFooterMode}" />
+
+            <TextBlock Text="طابعة الكاشير" FontWeight="Bold" Margin="0,16,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <CheckBox Grid.Column="0" Content="تفعيل طابعة الكاشير" IsChecked="{Binding CashierPrinterEnabled}"
+                          VerticalAlignment="Center" Margin="0,0,12,0" />
+                <ComboBox Grid.Column="1" IsEditable="True" Margin="0,4"
+                          ItemsSource="{Binding InstalledPrinters}" Text="{Binding ReceiptPrinter, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2" Content="حفظ الطابعة" Width="100" Margin="8,0,0,0"
+                        Command="{Binding SaveCashierPrinterCommand}" />
+            </Grid>
+
+            <TextBlock Text="بيانات المعمل ونص الطباعة" FontWeight="Bold" Margin="0,20,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="اسم المعمل:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4" Text="{Binding LabName, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="العنوان:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4" Text="{Binding LabAddress, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="الهاتف:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4" Text="{Binding LabPhone, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="الخط:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,4" ItemsSource="{Binding FontFamilyOptions}"
+                          SelectedItem="{Binding FontFamily}" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="حجم الخط (نقطة):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="4" Grid.Column="1" Margin="0,4" Text="{Binding FontSizePt, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                <Button Content="حفظ الإعدادات" Width="120" Command="{Binding SaveCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
