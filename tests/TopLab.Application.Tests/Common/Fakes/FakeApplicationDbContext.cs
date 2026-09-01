@@ -6,6 +6,7 @@ using TopLab.Domain.ExternalEntities;
 using TopLab.Domain.Patients;
 using TopLab.Domain.Results;
 using TopLab.Domain.SentOutSamples;
+using TopLab.Domain.Settings;
 using TopLab.Domain.Tests;
 using TopLab.Domain.Users;
 
@@ -24,6 +25,12 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<ExternalEntity> ExternalEntities { get; } = new();
     public List<SentOutSample> SentOutSamples { get; } = new();
     public List<AttendanceRecord> AttendanceRecords { get; } = new();
+    public List<SystemSettings> SystemSettings { get; } = new();
+    public List<ReportSettings> ReportSettings { get; } = new();
+    public List<ReceiptSettings> ReceiptSettings { get; } = new();
+    public List<EnvelopeSettings> EnvelopeSettings { get; } = new();
+    public List<EnvelopePrintItemPosition> EnvelopePrintItemPositions { get; } = new();
+    public List<PrinterAssignment> PrinterAssignments { get; } = new();
 
     public int SaveChangesCallCount { get; private set; }
 
@@ -84,6 +91,36 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)AttendanceRecords.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(SystemSettings))
+        {
+            return (IQueryable<TEntity>)(object)SystemSettings.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(ReportSettings))
+        {
+            return (IQueryable<TEntity>)(object)ReportSettings.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(ReceiptSettings))
+        {
+            return (IQueryable<TEntity>)(object)ReceiptSettings.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(EnvelopeSettings))
+        {
+            return (IQueryable<TEntity>)(object)EnvelopeSettings.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(EnvelopePrintItemPosition))
+        {
+            return (IQueryable<TEntity>)(object)EnvelopePrintItemPositions.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(PrinterAssignment))
+        {
+            return (IQueryable<TEntity>)(object)PrinterAssignments.AsQueryable();
+        }
+
         return Enumerable.Empty<TEntity>().AsQueryable();
     }
 
@@ -100,6 +137,12 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is ExternalEntity ee) ExternalEntities.Add(ee);
         else if (entity is SentOutSample sos) SentOutSamples.Add(sos);
         else if (entity is AttendanceRecord ar) AttendanceRecords.Add(ar);
+        else if (entity is SystemSettings sys) SystemSettings.Add(sys);
+        else if (entity is ReportSettings rep) ReportSettings.Add(rep);
+        else if (entity is ReceiptSettings rec) ReceiptSettings.Add(rec);
+        else if (entity is EnvelopeSettings env) EnvelopeSettings.Add(env);
+        else if (entity is EnvelopePrintItemPosition epos) EnvelopePrintItemPositions.Add(epos);
+        else if (entity is PrinterAssignment pa) PrinterAssignments.Add(pa);
         else throw new NotSupportedException($"Add not supported for {typeof(TEntity).Name}");
     }
 
@@ -121,6 +164,12 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is ExternalEntity ee) ExternalEntities.Remove(ee);
         else if (entity is SentOutSample sos) SentOutSamples.Remove(sos);
         else if (entity is AttendanceRecord ar) AttendanceRecords.Remove(ar);
+        else if (entity is SystemSettings sys) SystemSettings.Remove(sys);
+        else if (entity is ReportSettings rep) ReportSettings.Remove(rep);
+        else if (entity is ReceiptSettings rec) ReceiptSettings.Remove(rec);
+        else if (entity is EnvelopeSettings env) EnvelopeSettings.Remove(env);
+        else if (entity is EnvelopePrintItemPosition epos) EnvelopePrintItemPositions.Remove(epos);
+        else if (entity is PrinterAssignment pa) PrinterAssignments.Remove(pa);
         else throw new NotSupportedException($"Remove not supported for {typeof(TEntity).Name}");
     }
 
