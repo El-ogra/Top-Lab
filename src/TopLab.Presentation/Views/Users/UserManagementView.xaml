@@ -1,0 +1,79 @@
+<UserControl x:Class="TopLab.Presentation.Views.Users.UserManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Users list -->
+        <Border Grid.Column="0" BorderBrush="#CCCCCC" BorderThickness="1" Margin="0,0,8,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="قائمة المستخدمين" FontWeight="Bold" Margin="8" />
+                <ListBox ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" DisplayMemberPath="UserName" Margin="8"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Right: Detail -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="8,0,0,0">
+
+                <TextBlock Text="بيانات المستخدم" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
+
+                <TextBlock Text="اسم المستخدم:" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="كلمة المرور (اتركه فارغًا للإبقاء):" Margin="0,4,0,2"/>
+                <PasswordBox x:Name="PasswordBox" PasswordChanged="PasswordBox_PasswordChanged" Margin="0,0,0,8"/>
+
+                <TextBlock Text="كلمة المرور الثانوية (اتركه فارغًا للإبقاء):" Margin="0,4,0,2"/>
+                <PasswordBox x:Name="SecondaryPasswordBox" PasswordChanged="SecondaryPasswordBox_PasswordChanged" Margin="0,0,0,8"/>
+
+                <TextBlock Text="{Binding LastLoginText}" Foreground="#666666" Margin="0,0,0,8"/>
+
+                <CheckBox Content="صلاحية مطلقة" IsChecked="{Binding IsAbsolutePermission}" Margin="0,4,0,8"/>
+
+                <TextBlock Text="الخصائص:" FontWeight="Bold" Margin="0,8,0,4"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="الخصم %:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Text="{Binding DiscountLimitPercent}" Width="80" Margin="0,0,16,0"/>
+                    <CheckBox Content="حجب الطباعة عند وجود رصيد" IsChecked="{Binding BlockPrintOnRemainingBalance}" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <TextBlock Text="ساعات العمل:" Margin="0,8,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="من:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Text="{Binding WorkStartTime, StringFormat=hh\\:mm}" Width="70" Margin="0,0,8,0"/>
+                    <TextBlock Text="إلى:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Text="{Binding WorkEndTime, StringFormat=hh\\:mm}" Width="70"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <CheckBox Content="يوجد استراحة" IsChecked="{Binding HasBreakPeriod}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="المدة (دقيقة):" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Text="{Binding BreakDurationMinutes}" Width="60"/>
+                </StackPanel>
+
+                <TextBlock Text="الصلاحيات:" FontWeight="Bold" Margin="0,8,0,4"/>
+                <ItemsControl ItemsSource="{Binding PermissionItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Code}" IsChecked="{Binding IsGranted}" IsEnabled="{Binding IsEnabled}" Margin="0,2"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,8"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="اضافة" Width="80" Margin="0,0,8,0" Command="{Binding CreateCommand}"/>
+                    <Button Content="تعديل" Width="80" Margin="0,0,8,0" Command="{Binding UpdateCommand}"/>
+                    <Button Content="حفظ الصلاحيات" Width="110" Margin="0,0,8,0" Command="{Binding SavePermissionsCommand}"/>
+                    <Button Content="حذف" Width="80" Margin="0,0,8,0" Command="{Binding DeleteCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

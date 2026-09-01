@@ -123,11 +123,25 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
             {
                 Title = t,
                 IsEnabled = true,
-                Command = new RelayCommand(_ =>
+                Command = new RelayCommand(async _ =>
                 {
                     if (t == "خروج")
                     {
                         System.Windows.Application.Current.Shutdown();
+                    }
+                    else if (t == "المستخدمون")
+                    {
+                        bool ok = await _dialogs.ShowSecondaryPasswordDialogAsync();
+                        if (!ok)
+                        {
+                            return;
+                        }
+
+                        _navigation.NavigateTo<ViewModels.Users.UserManagementViewModel>();
+                        if (_navigation.CurrentViewModel is ViewModels.Users.UserManagementViewModel vm)
+                        {
+                            await vm.LoadAsync();
+                        }
                     }
                     else
                     {
@@ -143,16 +157,39 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
     public async Task LoadStatusAsync()
     {
         // User
-        if (_currentUser.IsAuthenticated)
+        if (_currentUser.IsAuthenticated && !string.IsNullOrWhiteSpace(_currentUser.UserName))
         {
-            CurrentUserName = $"User #{_currentUser.UserId}";
+            CurrentUserName = _currentUser.UserName;
+            try
+            {
+                var sessionResult = await _mediator.Send(new TopLab.Application.Features.UsersAndPermissions.Queries.GetCurrentSession.GetCurrentSessionQuery());
+                if (sessionResult.IsSuccess && sessionResult.Value is not null)
+                {
+                    CurrentUserName = sessionResult.Value.UserName;
+                    LastLoginText = sessionResult.Value.LastLoginAtUtc.HasValue
+                        ? sessionResult.Value.LastLoginAtUtc.Value.ToLocalTime().ToString("g")
+                        : "أول تسجيل دخول";
+                }
+                else
+                {
+                    LastLoginText = "أول تسجيل دخول";
+                }
+            }
+            catch
+            {
+                LastLoginText = "أول تسجيل دخول";
+            }
+        }
+        else if (_currentUser.IsAuthenticated)
+        {
+            CurrentUserName = _currentUser.UserName;
+            LastLoginText = "أول تسجيل دخول";
         }
         else
         {
             CurrentUserName = "—";
+            LastLoginText = "أول تسجيل دخول";
         }
-
-        LastLoginText = "أول تسجيل دخول";
 
         // DB
         try
