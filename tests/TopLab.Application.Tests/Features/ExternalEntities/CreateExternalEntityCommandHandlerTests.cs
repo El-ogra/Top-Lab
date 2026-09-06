@@ -29,7 +29,7 @@ public class CreateExternalEntityCommandHandlerTests
         var result = await handler.Handle(Doctor(), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(1, db.ExternalEntities.Count);
+        Assert.Single(db.ExternalEntities);
         Assert.Equal("Dr. Ahmed", db.ExternalEntities[0].Name);
         Assert.Null(db.ExternalEntities[0].PriceListId);
     }
