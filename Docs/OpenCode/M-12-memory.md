@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-12.md
 - **Date Created:** 2026-09-06
 - **Total Slices:** 5
-- **Current Slice:** 3 — next (Slices 1-2 committed)
+- **Current Slice:** 4 — next (Slices 1-3 committed)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -111,16 +111,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build src/TopLab.Application` + `dotnet test tests/TopLab.Application.Tests`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan sections 5-5.6; all handlers implement IAuthorizedRequest with EDIT_SYSTEM_SETTINGS; validators mirror domain guards (PatientPrice>=0, TestCode max 50 required, name required, age/comment rules); no DeleteTest/DeleteTestGroup use-cases (deactivate/soft-delete instead); SaveWorkGroupLogItems must produce ONE SaveChanges (SaveChangesCallCount == 1).
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: 14 command use-case files + 14 validators + DependencyInjection registration (R-1 gap pre-check) + auth test conventions.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: commands -> validators -> DI wiring -> handler unit tests -> auth tests.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: build + test output.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-12] Slice 3/5: Application write surface (commands) + validators + auth tests — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build src/TopLab.Application` + `dotnet test tests/TopLab.Application.Tests`.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan sections 5-5.6; all handlers implement IAuthorizedRequest with EDIT_SYSTEM_SETTINGS; validators mirror domain guards (PatientPrice>=0, TestCode max 50 required, name required, age/comment rules); no DeleteTest/DeleteTestGroup use-cases (deactivate/soft-delete instead); SaveWorkGroupLogItems must produce ONE SaveChanges (SaveChangesCallCount == 1).
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: 14 command use-case files + 14 validators + DependencyInjection registration (R-1 gap pre-check) + auth test conventions.
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: commands -> validators -> DI wiring -> handler unit tests -> auth tests.
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
+- [x] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: build + test output.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-12] Slice 3/5: Application write surface (commands) + validators + auth tests — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — never push.
 
 ---
 
@@ -168,10 +168,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 2/5 slices done
+- Overall: 3/5 slices done
 - Slice 1 — Domain behaviors + tests: [x] Done
 - Slice 2 — Application read surface (queries) + DTOs + fakes + tests: [x] Done
-- Slice 3 — Application write surface (commands) + validators + auth tests: [ ] Not started
+- Slice 3 — Application write surface (commands) + validators + auth tests: [x] Done
 - Slice 4 — Infrastructure + migration + configs: [ ] Not started
 - Slice 5 — Hardening / docs / close-out: [ ] Not started
 
@@ -200,5 +200,16 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-06 | 2 | 8 | Documentation Update | PASS — memory file updated | — |
 | 2026-09-06 | 2 | 9 | Memory Status Update | PASS — statuses set to Done | — |
 | 2026-09-06 | 2 | 10 | Git Commit (local, authorized) | PASS — commit 5a641d0 (17 files) | 5a641d0 |
+| 2026-09-06 | 3 | 1 | Pre-Execution Verification (application) | PASS — build 0/0; tests 145/145 | — |
+| 2026-09-06 | 3 | 2 | Deep Understanding | PASS — sections 5-5.6 captured; handlers IAuthorizedRequest EDIT_SYSTEM_SETTINGS | — |
+| 2026-09-06 | 3 | 3 | File Analysis + R-1 pre-flight | PASS — AddValidatorsFromAssembly absent in src/; gap confirmed | — |
+| 2026-09-06 | 3 | 4 | Planning | PASS — 8-step plan written (commands -> validators -> DI -> tests -> auth) | — |
+| 2026-09-06 | 3 | 5 | Execution — R-1 fix + 14 command use-cases + 42 files + DI registration | R-1 landed: FluentValidation.DependencyInjectionExtensions 12.1.1 + AddValidatorsFromAssemblyContaining<CreateTestCommandValidator> | — |
+| 2026-09-06 | 3 | 5 | Execution — 9 test classes incl. validator + auth + DI registration tests | PASS | — |
+| 2026-09-06 | 3 | 6 | Post-Execution Verification (application) | 2 compile fixes (UniqueViolation wrapper seeding, nullable Theory params); PASS — build 0/0 0 warnings | — |
+| 2026-09-06 | 3 | 7 | Validation Gate VG-03 | PASS — build zero/zero, tests 280/280 | — |
+| 2026-09-06 | 3 | 8 | Documentation Update | PASS — memory file + checkboxes updated | — |
+| 2026-09-06 | 3 | 9 | Memory Status Update | PASS — statuses set to Done | — |
+| 2026-09-06 | 3 | 10 | Git Commit (local, authorized) | PASS — commit d44bf18 (65 files) | d44bf18 |
 
 ## Stop Report (append only if a stop condition triggers)
