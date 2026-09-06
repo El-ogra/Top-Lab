@@ -12,5 +12,6 @@ public sealed class TestGroupConfiguration : IEntityTypeConfiguration<TestGroup>
         b.HasKey(e => e.Id);
         b.Property(e => e.Id).HasConversion(v => v.Value, v => TestGroupId.Create(v)).ValueGeneratedOnAdd().HasColumnName("TestGroupId");
         b.Property(e => e.Name).HasMaxLength(150).IsRequired();
+        b.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
     }
 }

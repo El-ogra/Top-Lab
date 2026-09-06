@@ -87,4 +87,37 @@ public class F5ConfigurationTests
         var idx = et.GetIndexes().FirstOrDefault(i => i.Properties.Count == 3);
         Assert.NotNull(idx);
     }
+
+    [Fact]
+    public void Test_HasTestCodeColumn_UniqueIndex()
+    {
+        var et = GetEntityType<TopLab.Domain.Tests.Test>();
+        var prop = et.FindProperty(nameof(TopLab.Domain.Tests.Test.TestCode));
+        Assert.NotNull(prop);
+        Assert.False(prop.IsNullable);
+        Assert.Equal(50, prop.GetMaxLength());
+        var idx = et.GetIndexes().FirstOrDefault(i => i.Properties.Any(p => p.Name == nameof(TopLab.Domain.Tests.Test.TestCode)));
+        Assert.NotNull(idx);
+        Assert.True(idx!.IsUnique);
+    }
+
+    [Fact]
+    public void Test_HasIsActiveColumn_DefaultTrue()
+    {
+        var et = GetEntityType<TopLab.Domain.Tests.Test>();
+        var prop = et.FindProperty(nameof(TopLab.Domain.Tests.Test.IsActive));
+        Assert.NotNull(prop);
+        Assert.False(prop.IsNullable);
+        Assert.Equal(true, prop.GetDefaultValue());
+    }
+
+    [Fact]
+    public void TestGroup_HasIsActiveColumn_DefaultTrue()
+    {
+        var et = GetEntityType<TopLab.Domain.Tests.TestGroup>();
+        var prop = et.FindProperty(nameof(TopLab.Domain.Tests.TestGroup.IsActive));
+        Assert.NotNull(prop);
+        Assert.False(prop.IsNullable);
+        Assert.Equal(true, prop.GetDefaultValue());
+    }
 }

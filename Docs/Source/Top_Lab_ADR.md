@@ -588,6 +588,38 @@ Strongly-typed string identifiers (`LabId`) are stored through an EF Core value 
 
 ---
 
+### ADR-0028 — Add user-facing `Tests.TestCode` column for FR-M12-001 "test number" search
+
+- **Status:** Accepted
+- **Date:** 2026-09-06
+
+**Context.** FR-M12-001 requires searchability by test name, containing group, or test number. "Test number" is a user-entered, display-facing, stable identifier distinct from the internal `TestId` surrogate. No existing column satisfies this; reusing `TestId` is rejected because it is internal and not display-stable across data imports.
+
+**Decision.** Add `Tests.TestCode nvarchar(50) NOT NULL` with a unique index `IX_Tests_TestCode` using the database default collation (`SQL_Latin1_General_CP1_CI_AS`, case-insensitive — same precedent as `IX_Users_UserName`). Domain enforces required + trimmed; Application validator enforces max-length 50; DB enforces uniqueness.
+
+**Consequences.** One new EF migration; the F5 baseline tables are otherwise unchanged; search by `TestCode` is exact-match (codes are unique); M-04 (or any downstream module) may display `TestCode` on receipts and reports. M-12 does not change `PatientTest` or any other downstream schema.
+
+**Related.** M12 Implementation Plan §5, F5 baseline.
+
+---
+
+### ADR-0029 — Add `IsActive` lifecycle field to `Tests` and `TestGroups` with Deactivate/Reactivate write surface and cascading deactivation
+
+- **Status:** Accepted
+- **Date:** 2026-09-06
+
+**Context.** The module requires a way to retire tests and test groups from active use without destroying historical data. Hard delete is rejected because it would orphan reference ranges, work-group log items, and future patient-test rows. A boolean lifecycle flag is the simplest mechanism that satisfies this need.
+
+**Decision.** Add `Tests.IsActive bit NOT NULL DEFAULT 1` and `TestGroups.IsActive bit NOT NULL DEFAULT 1`. The write surface exposes `DeactivateTest`/`ReactivateTest` and `DeactivateTestGroup`/`ReactivateTestGroup` commands. No hard delete of Test or TestGroup exists in M-12. **Deactivating a TestGroup cascades atomically to all member Tests** — the handler loads every Test with `TestGroupId == group.Id` and sets `IsActive = false` on each, within a single `SaveChangesAsync` call (single transaction). **Reactivating a TestGroup does NOT cascade** — member Tests retain their current `IsActive` state and must be individually reactivated if desired. This asymmetry is deliberate: deactivation cascading ensures a group and its contents are retired together (no orphaned active tests under an inactive group); non-cascading reactivation prevents inadvertently reactivating tests that were individually deprecated, pending review, or temporarily unavailable. Read-side queries filter by `IsActive = true` by default; an `IncludeInactive` parameter explicitly overrides this.
+
+**Consequences.** The migration adds two columns with a `DEFAULT 1` constraint (existing rows become active). The `DeactivateTestGroupCommandHandler` must query `_db.Set<Test>().Where(t => t.TestGroupId == groupId && t.IsActive)` to find affected tests, then call `Deactivate()` on each and add/update them. The read surface must pass `IncludeInactive` correctly. The Presentation layer (future) uses the flag to grey-out or hide inactive records in catalog and group lists. Reactivation is always possible per-test.
+
+**Baseline observation (waiver for M-12).** `WorkGroupLogItem` has no FK relationship to `Test` in the F5 baseline — `WorkGroupLogItemConfiguration` deliberately suppresses the relationship, so no `Test → WorkGroupLogItem` cascade constraint exists. M-12 offers no hard delete of tests (soft-deactivate instead), so the gap is inert for this module; adding the FK would exceed the locked migration scope (§5.5), so M-12 records the gap and leaves it to a future module.
+
+**Related.** ADR-0018 (soft delete for audit-relevant records), M12 Implementation Plan §5.
+
+---
+
 ## 3. Reserved Ranges for Future Decisions
 
 - **ADR-0100 – 0199** — reserved for reporting/printing infrastructure decisions.

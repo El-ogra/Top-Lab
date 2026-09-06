@@ -12,6 +12,8 @@ public sealed class TestConfiguration : IEntityTypeConfiguration<Test>
         b.HasKey(e => e.Id);
         b.Property(e => e.Id).HasConversion(v => v.Value, v => TestId.Create(v)).ValueGeneratedOnAdd().HasColumnName("TestId");
         b.Property(e => e.Name).HasMaxLength(150).IsRequired();
+        b.Property(e => e.TestCode).HasMaxLength(50).IsRequired();
+        b.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
         b.Property(e => e.ReportName).HasMaxLength(150).IsRequired();
         b.Property(e => e.ReceiptName).HasMaxLength(150).IsRequired();
         b.Property(e => e.TestGroupId).HasConversion(v => v == null ? (int?)null : v.Value, v => v == null ? null : TestGroupId.Create(v.Value)).IsRequired(false);
@@ -25,6 +27,7 @@ public sealed class TestConfiguration : IEntityTypeConfiguration<Test>
         b.Property(e => e.IsCultureType).IsRequired();
         b.HasOne<TestGroup>().WithMany().HasForeignKey(e => e.TestGroupId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(e => e.TestGroupId);
+        b.HasIndex(e => e.TestCode, "IX_Tests_TestCode").IsUnique();
         b.HasIndex(e => e.Name);
     }
 }
