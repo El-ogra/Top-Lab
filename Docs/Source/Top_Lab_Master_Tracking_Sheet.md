@@ -63,7 +63,7 @@
 | M17 | User & Permission Management | 1 | 🟩 | Done | Local coding agent (Top-Lab) | Foundations | 2026-09-01 | 2026-09-01 | Delivered: PBKDF2-SHA256 hashing, sign-in/sign-out, secondary-password gate, user management CRUD, first-run wizard, floor & guarded delete; 162 tests green. |
 | M22 | System & Print Settings | 1 | 🟩 | Done | Local coding agent (Top-Lab) | Foundations | 2026-09-02 | 2026-09-02 | Delivered: six settings aggregates with mutators/invariant guards, read/write Application surface, Infrastructure maintenance + workstation-local lab-text store + daily-backup hook, Settings dashboard (S-27), System (S-28), Report (S-29), Receipt (S-30), Envelope (S-31) and secondary-password-gated Database Maintenance (S-32) screens; 268 tests green. |
 | M14 | External Entities | 2 | ⬜ | Design |  | M17, M22 |  |  |  |
-| M12 | Test Catalog & Reference Ranges | 2 | ⬜ | Design |  | M17, M22 |  |  |  |
+| M12 | Test Catalog & Reference Ranges | 2 | 🟩 | Done | Local coding agent (Top-Lab) | M17, M22 | 2026-09-06 | 2026-09-06 | Delivered: Test/TestGroup/ReferenceRange lifecycle (deactivate/reactivate, atomic TestGroup cascade), WorkGroupLog item atomic save, unique TestCode search column, EDIT_SYSTEM_SETTINGS gate; 487 tests green; ADR-0028/0029. |
 | M13 | Price Lists, Comments & Custom Groups | 3 | ⬜ | Design |  | M12, M14 |  |  |  |
 | M15 | Culture & Antibiotic Configuration | 3 | ⬜ | Design |  | M12 |  |  |  |
 | M01 | Application Access & Main Navigation | 3 | ⬜ | Design |  | M17 |  |  |  |
@@ -92,7 +92,7 @@
 |---|---|---|
 | Wave 0 — Foundations | F1, F2, F3, F4, F5, F6 | 🟩 Done |
 | Wave 1 — Configuration Backbone | M17, M22 | 🟩 Done |
-| Wave 2 — Reference Data | M14, M12 | ⬜ Not Started |
+| Wave 2 — Reference Data | M14, M12 | ⬜ Not Started — M12 🟩 Done, M14 pending |
 | Wave 3 — Reference-Data Extensions | M13, M15, M01 | ⬜ Not Started |
 | Wave 4 — Patient Lifecycle Entry | M02, M21 | ⬜ Not Started |
 | Wave 5 — Patient Money & Results | M03, M04 | ⬜ Not Started |
@@ -169,11 +169,12 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 
 **Module: M12 — Test Catalog & Reference Ranges**
 - Wave: 2
-- Owner:
-- Dependencies satisfied? Requires M17, M22.
-- Implementation status: ⬜
-- Current phase: Design
-- Notes: delivers `TestGroup`, `Test`, `ReferenceRange`, `TestComment`, `PatientTitle`, and the age-unit-sensitive matching rule.
+- Owner: Local coding agent (Top-Lab)
+- Dependencies satisfied? Requires M17, M22 — satisfied.
+- Implementation status: 🟩
+- Current phase: Done
+- Completed: 2026-09-06
+- Notes: delivers `TestGroup`, `Test`, `ReferenceRange`, `TestComment`, `PatientTitle`, and the age-unit-sensitive matching rule. M-12 adds `Tests.TestCode` (nvarchar(50), unique `IX_Tests_TestCode`) and lifecycle `IsActive` columns (default 1) on `Tests`/`TestGroups` (migration `20260906093902_AddTestCodeAndLifecycleColumns`), plus the soft-lifecycle write surface (no hard delete of Test/TestGroup). ADR-0028/0029. Documentation: `Docs/Handoff_M12.md`.
 
 **Module: M13 — Price Lists, Comments & Custom Groups**
 - Wave: 3
@@ -362,6 +363,7 @@ The following blocks are pre-created; contents mirror the master board in §4 an
 | 2026-08-28 | F5 | Baseline entity schemas across all entity groups implemented (36 tables, Fluent-API configurations, `BaselineDataModel` migration `20260828052248`). Commits `94b5213` / `61cad11`; build 0/0, tests 73 green; verified against Data Model §4–§12 and Architecture §4.1. | Local coding agent (Top-Lab) |
 | 2026-08-28 | F6 | Presentation composition root and shell implemented (`App.xaml.cs`, `MainWindow`, navigation/dialog services, `ResultErrorPresenter`). Commit `896db5b` "بعد تنفيذ F6"; build 0/0, presentation boots via Host. | Local coding agent (Top-Lab) |
 | 2026-09-02 | M22 | System & Print Settings implemented across S1–S8: domain mutators/invariant guards, read+write Application surface, Infrastructure maintenance + workstation-local lab-text store + daily-backup hook + seed-repair, Settings dashboard and System/Report/Receipt/Envelope/Database Maintenance screens, secondary-password gate. 268 tests green; build 0/0. Commit `docs(m22): finalize module 22 documentation, ADR-0027, tracking sheet, and handoff`. | Local coding agent (Top-Lab) |
+| 2026-09-06 | M12 | Test Catalog & Reference Ranges implemented across S1–S5: domain lifecycle behaviors (Deactivate/Reactivate + atomic TestGroup cascade), ReferenceRange snapshot + BR-04 age/sex matching, Application read/write surface (5 queries, 14 commands, 14 validators, EDIT_SYSTEM_SETTINGS gate), Infrastructure migration `AddTestCodeAndLifecycleColumns` (Tests.TestCode nvarchar(50) unique, Tests/TestGroups.IsActive default 1) applied to LocalDB, ADR-0028/0029. 487 tests green; build 0/0; coverage Domain/Application/Infrastructure floors met. Slice commits `234f98d`, `5a641d0`, `d44bf18`, `9758466`. | Local coding agent (Top-Lab) |
 
 Add one row per material change.
 

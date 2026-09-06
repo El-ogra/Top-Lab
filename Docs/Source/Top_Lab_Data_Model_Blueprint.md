@@ -131,6 +131,7 @@ Modeling the medical-history checklist as a catalog plus a join table (rather th
 |---|---|---|
 | TestGroupId | int PK | |
 | Name | nvarchar(150) | e.g., Kidney Function, Liver Profile |
+| IsActive | bit, default 1 | Lifecycle flag (ADR-0029); deactivating a group cascades atomically to member Tests |
 
 ### 5.2 `Test` **[Auditable]**
 
@@ -138,6 +139,8 @@ Modeling the medical-history checklist as a catalog plus a join table (rather th
 |---|---|---|
 | TestId | int PK | |
 | Name | nvarchar(150) | |
+| TestCode | nvarchar(50), unique (IX_Tests_TestCode) | User-facing "test number" for FR-M12-001 search (ADR-0028) |
+| IsActive | bit, default 1 | Lifecycle flag (ADR-0029); soft-deactivate, no hard delete |
 | ReportName | nvarchar(150) | |
 | ReceiptName | nvarchar(150) | |
 | TestGroupId | int FK → TestGroup, nullable | |
