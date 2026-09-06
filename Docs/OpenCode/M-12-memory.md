@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-12.md
 - **Date Created:** 2026-09-06
 - **Total Slices:** 5
-- **Current Slice:** 4 — next (Slices 1-3 committed)
+- **Current Slice:** 5 — next (Slices 1-4 committed)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -132,16 +132,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build src/TopLab.Infrastructure` + `dotnet test tests/TopLab.Infrastructure.Tests`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan sections 6-6.4; migration scope LOCKED (only Tests.TestCode max-50 + unique IX_Tests_TestCode, Tests.IsActive default true, TestGroups.IsActive default true); soft-delete cascade semantics tested (domain-only isolation already proven in S1; full cascade at Application layer in S3); R-1 pre-approved fix if pre-flight confirms the validator-registration gap.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: TestConfiguration.cs, TestGroupConfiguration.cs, ModelSnapshot, F5ConfigurationTests.cs, TestDeletionCascadeTests.cs, Top_Lab_ADR.md, DependencyInjection.cs.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: configs -> EF config tests -> migration generate -> apply to LocalDB -> ADR entries -> R-1 fix if confirmed.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-04 passed. Evidence: build/test output + successful `dotnet ef database update` against LocalDB.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-12] Slice 4/5: Infrastructure + migration + configs — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build src/TopLab.Infrastructure` + `dotnet test tests/TopLab.Infrastructure.Tests`.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan sections 6-6.4; migration scope LOCKED (only Tests.TestCode max-50 + unique IX_Tests_TestCode, Tests.IsActive default true, TestGroups.IsActive default true); soft-delete cascade semantics tested (domain-only isolation already proven in S1; full cascade at Application layer in S3); R-1 pre-approved fix if pre-flight confirms the validator-registration gap.
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: TestConfiguration.cs, TestGroupConfiguration.cs, ModelSnapshot, F5ConfigurationTests.cs, TestDeletionCascadeTests.cs, Top_Lab_ADR.md, DependencyInjection.cs.
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: configs -> EF config tests -> migration generate -> apply to LocalDB -> ADR entries -> R-1 fix if confirmed.
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
+- [x] **Stage 7 — Validation Gate:** VG-04 passed. Evidence: build/test output + successful `dotnet ef database update` against LocalDB.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-12] Slice 4/5: Infrastructure + migration + configs — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — never push.
 
 ---
 
@@ -168,11 +168,11 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 3/5 slices done
+- Overall: 4/5 slices done
 - Slice 1 — Domain behaviors + tests: [x] Done
 - Slice 2 — Application read surface (queries) + DTOs + fakes + tests: [x] Done
 - Slice 3 — Application write surface (commands) + validators + auth tests: [x] Done
-- Slice 4 — Infrastructure + migration + configs: [ ] Not started
+- Slice 4 — Infrastructure + migration + configs: [x] Done
 - Slice 5 — Hardening / docs / close-out: [ ] Not started
 
 ## Execution Log
@@ -211,5 +211,18 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-06 | 3 | 8 | Documentation Update | PASS — memory file + checkboxes updated | — |
 | 2026-09-06 | 3 | 9 | Memory Status Update | PASS — statuses set to Done | — |
 | 2026-09-06 | 3 | 10 | Git Commit (local, authorized) | PASS — commit d44bf18 (65 files) | d44bf18 |
+| 2026-09-06 | 4 | 1 | Pre-Execution Verification (solution) | PASS — build 0/0; infra tests 31/31 | — |
+| 2026-09-06 | 4 | 2 | Deep Understanding | PASS — sections 5-5.6 captured | — |
+| 2026-09-06 | 4 | 3 | File Analysis | PASS — configs, snapshot, F5 tests inspected | — |
+| 2026-09-06 | 4 | 4 | Planning | PASS — 5-step plan written | — |
+| 2026-09-06 | 4 | 5 | Execution — configs + migration | PASS — migration AddTestCodeAndLifecycleColumns 20260906093902 | — |
+| 2026-09-06 | 4 | 5 | Migration scope check | 1st attempt FAILED: `--no-build` used stale assembly -> nvarchar(max), no index, default false; rebuilt + regenerated -> nvarchar(50) + IX_tests_TestCode unique + default true. Scope gate PASS | — |
+| 2026-09-06 | 4 | 5 | Apply/rollback to LocalDB | PASS — update, revert to RenamePkColumns, re-apply; idempotent script shows ONLY Tests/TestGroups | — |
+| 2026-09-06 | 4 | 5 | Cascade tests + ADR | Plan expected FK Test->WorkGroupLogItem CASCADE; baseline has NO such FK (config suppresses it) -> OWNER WAIVED: keep locked scope, document deviation in ADR-0029 | — |
+| 2026-09-06 | 4 | 6 | Post-Execution Verification (solution) | PASS — build 0/0; infra 38/38 | — |
+| 2026-09-06 | 4 | 7 | Validation Gate VG-04 | PASS — full suite 487/487 (Domain 169 + App 280 + Infra 38) | — |
+| 2026-09-06 | 4 | 8 | Documentation Update | PASS — memory file + checkboxes updated | — |
+| 2026-09-06 | 4 | 9 | Memory Status Update | PASS — statuses set to Done | — |
+| 2026-09-06 | 4 | 10 | Git Commit (local, authorized) | PASS — commit 9758466 (8 files) | 9758466 |
 
 ## Stop Report (append only if a stop condition triggers)
