@@ -29,4 +29,42 @@ public sealed class WorkGroupLog : Entity<WorkGroupLogId>
 
         return new WorkGroupLog(id, name.Trim());
     }
+
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        Name = name.Trim();
+    }
+
+    public bool ContainsTest(TestId testId)
+    {
+        return _items.Any(i => i.TestId == testId);
+    }
+
+    public void AddItem(TestId testId)
+    {
+        if (_items.Any(i => i.TestId == testId))
+        {
+            throw new ArgumentException("Test already exists in the work group log.", nameof(testId));
+        }
+
+        _items.Add(WorkGroupLogItem.Create(Id, testId));
+    }
+
+    public void RemoveItem(TestId testId)
+    {
+        var item = _items.FirstOrDefault(i => i.TestId == testId)
+            ?? throw new ArgumentException("Test is not in the work group log.", nameof(testId));
+
+        _items.Remove(item);
+    }
+
+    public void ClearItems()
+    {
+        _items.Clear();
+    }
 }

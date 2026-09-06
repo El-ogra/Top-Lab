@@ -10,7 +10,7 @@ public class TestCatalogTests
     [Fact]
     public void Test_Create_Valid()
     {
-        var t = Test.Create(TestId.Create(1), "CBC", "CBC Report", "CBC Receipt", 60, 100m);
+        var t = Test.Create(TestId.Create(1), "CBC", "CBC Report", "CBC Receipt", "CBC", 60, 100m);
         Assert.Equal("CBC", t.Name);
         Assert.False(t.IsSentOut);
     }
@@ -18,13 +18,13 @@ public class TestCatalogTests
     [Fact]
     public void Test_Create_SentOut_WithoutCost_Throws()
     {
-        Assert.Throws<ArgumentException>(() => Test.Create(TestId.Create(1), "CBC", "R", "Rec", 60, 100m, isSentOut: true, sentOutCostPrice: null));
+        Assert.Throws<ArgumentException>(() => Test.Create(TestId.Create(1), "CBC", "R", "Rec", "CBC", 60, 100m, isSentOut: true, sentOutCostPrice: null));
     }
 
     [Fact]
     public void Test_Create_ZeroDuration_Throws()
     {
-        Assert.Throws<ArgumentException>(() => Test.Create(TestId.Create(1), "CBC", "R", "Rec", 0, 100m));
+        Assert.Throws<ArgumentException>(() => Test.Create(TestId.Create(1), "CBC", "R", "Rec", "CBC", 0, 100m));
     }
 
     [Fact]

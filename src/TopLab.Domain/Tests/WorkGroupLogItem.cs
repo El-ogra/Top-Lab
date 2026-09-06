@@ -8,13 +8,28 @@ public sealed class WorkGroupLogItem
 
     public TestId TestId { get; private set; } = default!;
 
-    private WorkGroupLogItem()
+    public WorkGroupLogItem()
     {
     }
 
-    public WorkGroupLogItem(WorkGroupLogId workGroupLogId, TestId testId)
+    private WorkGroupLogItem(WorkGroupLogId workGroupLogId, TestId testId)
     {
         WorkGroupLogId = workGroupLogId;
         TestId = testId;
+    }
+
+    public static WorkGroupLogItem Create(WorkGroupLogId workGroupLogId, TestId testId)
+    {
+        if (workGroupLogId is null)
+        {
+            throw new ArgumentNullException(nameof(workGroupLogId));
+        }
+
+        if (testId is null)
+        {
+            throw new ArgumentNullException(nameof(testId));
+        }
+
+        return new WorkGroupLogItem(workGroupLogId, testId);
     }
 }
