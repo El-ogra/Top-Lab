@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-12.md
 - **Date Created:** 2026-09-06
 - **Total Slices:** 5
-- **Current Slice:** 1 — in progress (Stages 1-7 verified, commit pending)
+- **Current Slice:** 3 — next (Slices 1-2 committed)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,8 +53,8 @@ Additional user-authorized execution parameters (override skill defaults):
 
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
-| 1 | Domain behaviors + tests | [~] In progress (Stages 1-7 done, commit pending) | VG-01 |
-| 2 | Application read surface (queries) + DTOs + fakes + tests | [ ] Not started | VG-02 |
+| 1 | Domain behaviors + tests | [x] Done | VG-01 |
+| 2 | Application read surface (queries) + DTOs + fakes + tests | [x] Done | VG-02 |
 | 3 | Application write surface (commands) + validators + auth tests | [ ] Not started | VG-03 |
 | 4 | Infrastructure + migration + configs | [ ] Not started | VG-04 |
 | 5 | Hardening / docs / close-out | [ ] Not started | VG-05 |
@@ -76,9 +76,9 @@ Additional user-authorized execution parameters (override skill defaults):
 - [x] **Stage 5 — Execution:** All 7 implementation/edit steps completed; 5 new test files written (55 new tests).
 - [x] **Stage 6 — Post-Execution Verification:** Domain builds zero errors + zero warnings (Build succeeded, 0 Warning(s), 0 Error(s)); `dotnet test tests/TopLab.Domain.Tests` PASS (Failed: 0, Passed: 169, Skipped: 0, Total: 169).
 - [x] **Stage 7 — Validation Gate:** VG-01 PASS — build zero/zero; 169/169 tests passed; external `new WorkGroupLogItem(` grep in src+tests = 0 callers (only sanctioned factory line inside WorkGroupLogItem.cs — plan-mandated implementation; documented interpretation of R-5 gate).
-- [ ] **Stage 8 — Documentation Update:** Memory file and per-slice checkboxes marked; remaining evidence appended to execution log.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated in this file.
-- [ ] **Stage 10 — Git Commit (authorized local):** Staged and committed locally per owner authorization (never push). Message per R-commit pattern: `[M-12] Slice 1/5: Domain behaviors + tests — loop-engineering` + `Stages 1-10 verified. Gate VG-01 passed.`
+- [x] **Stage 8 — Documentation Update:** Memory file and per-slice checkboxes marked; remaining evidence appended to execution log.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated in this file.
+- [x] **Stage 10 — Git Commit (authorized local):** Committed locally per owner authorization (never push): `234f98d` — `[M-12] Slice 1/5: Domain behaviors + tests — loop-engineering` (14 files, +1319/-50).
 
 ---
 
@@ -90,16 +90,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build src/TopLab.Application` + `dotnet test tests/TopLab.Application.Tests`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan sections 4-4.5; queries must NOT implement IAuthorizedRequest (auth is command-side only); DTOs must map domain shapes incl. TestCode/IsActive and ReferenceRange snapshot-consistent values; fakes must support AsNoTracking query paths.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: testCatalogDtos.cs, 5 query folders, FakeApplicationDbContext, 5 QueryHandlerTests + existing Application conventions.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs first, then queries, then fake extension, then handler tests.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build + test output.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-12] Slice 2/5: Application read surface (queries) + DTOs + fakes + tests — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — never push.
+- [x] **Stage 1 — Pre-Execution Verification:** PASS — `dotnet build src/TopLab.Application` 0 Warning(s)/0 Error(s); `dotnet test tests/TopLab.Application.Tests` PASS (123/123).
+- [x] **Stage 2 — Deep Understanding:** PASS — plan sections 4.1-4.5: 5 queries, 6 DTO records, not IAuthorizedRequest, IApplicationDbContext only; search semantics (plain Contains, collation-based CI, no ToLower/Like per plan); default active-filter vs IncludeInactive; GetTestById returns regardless of IsActive.
+- [x] **Stage 3 — File Analysis:** PASS — inspected IApplicationDbContext, FakeApplicationDbContext, GetUserById/GetUsers handlers+tests, Result/Error, GetUsersQueryHandlerTests patterns, feature folder conventions (Features/TestCatalogAndReferenceRanges/{Common,Queries/<UseCase>}).
+- [x] **Stage 4 — Planning:** PASS — DTOs -> 5 query files -> fake extension -> 5 test classes; group-name axis done via pre-computed matching group-id ints (plain Contains per plan); WorkGroupLog items read as rows via Set<WorkGroupLogItem> (EF-coupling-free).
+- [x] **Stage 5 — Execution:** PASS — Common/TestCatalogDtos.cs (6 sealed records incl. ReferenceRangeDto with Sex?/AgeUnit), SearchTestCatalog/GetTestById/GetTestGroups/GetWorkGroupLogs/GetReferenceRanges (Query+Handler each), FakeApplicationDbContext extended (TestGroup/ReferenceRange/WorkGroupLog/WorkGroupLogItem/TestComment lists in Set/Add/Remove), 5 handler test classes.
+- [x] **Stage 6 — Post-Execution Verification:** First run 143/145 AFTER 2 test-data bugs found (search term "Creative" not a substring of "Creatinine"; GetWorkGroupLogs test seeded items into log.Items instead of the WorkGroupLogItems row list) — both fixed (term "Creat", row-level seeding via WorkGroupLogItem.Create); PASS 145/145.
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — Application build zero/zero; tests 145/145 (Failed: 0).
+- [x] **Stage 8 — Documentation Update:** See execution log.
+- [x] **Stage 9 — Memory Status Update:** See Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** Committed locally (never push): `5a641d0` — `[M-12] Slice 2/5: Application read surface (queries) + DTOs + fakes + tests — loop-engineering` (17 files, +781).
 
 ---
 
@@ -168,9 +168,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 0/5 slices done (Slice 1 verification passed; commit pending)
-- Slice 1 — Domain behaviors + tests: [~] In progress (Stages 1-7 done, commit pending)
-- Slice 2 — Application read surface (queries) + DTOs + fakes + tests: [ ] Not started
+- Overall: 2/5 slices done
+- Slice 1 — Domain behaviors + tests: [x] Done
+- Slice 2 — Application read surface (queries) + DTOs + fakes + tests: [x] Done
 - Slice 3 — Application write surface (commands) + validators + auth tests: [ ] Not started
 - Slice 4 — Infrastructure + migration + configs: [ ] Not started
 - Slice 5 — Hardening / docs / close-out: [ ] Not started
@@ -187,8 +187,18 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-06 | 1 | 5 | Execution — 5 domain files + 1 new snapshot + 5 new test files + TestCatalogTests fix | PASS | — |
 | 2026-09-06 | 1 | 6 | Post-Execution Verification (domain) | PASS — build 0/0; tests 169/169 | — |
 | 2026-09-06 | 1 | 7 | Validation Gate VG-01 | PASS — build zero/zero, tests 169/169, external `new WorkGroupLogItem(` = 0 | — |
-| 2026-09-06 | 1 | 8 | Documentation Update | Pending until Stage 10 | — |
-| 2026-09-06 | 1 | 9 | Memory Status Update | Pending until Stage 10 | — |
-| 2026-09-06 | 1 | 10 | Git Commit (local, authorized) | Pending | — |
+| 2026-09-06 | 1 | 8 | Documentation Update | PASS — memory file + checkboxes updated | — |
+| 2026-09-06 | 1 | 9 | Memory Status Update | PASS — statuses set to Done | — |
+| 2026-09-06 | 1 | 10 | Git Commit (local, authorized) | PASS — commit 234f98d (14 files) | 234f98d |
+| 2026-09-06 | 2 | 1 | Pre-Execution Verification (application) | PASS — build 0/0; tests 123/123 | — |
+| 2026-09-06 | 2 | 2 | Deep Understanding | PASS — sections 4.1-4.5 captured | — |
+| 2026-09-06 | 2 | 3 | File Analysis | PASS — query/handler/result/fake conventions inspected | — |
+| 2026-09-06 | 2 | 4 | Planning | PASS — 4-step plan written | — |
+| 2026-09-06 | 2 | 5 | Execution — 6 DTOs, 5 queries+handlers, fake extension, 5 test classes | PASS | — |
+| 2026-09-06 | 2 | 6 | Post-Execution Verification (application) | 2 test-data bugs found+fixed; PASS — 145/145 | — |
+| 2026-09-06 | 2 | 7 | Validation Gate VG-02 | PASS — build zero/zero, tests 145/145 | — |
+| 2026-09-06 | 2 | 8 | Documentation Update | PASS — memory file updated | — |
+| 2026-09-06 | 2 | 9 | Memory Status Update | PASS — statuses set to Done | — |
+| 2026-09-06 | 2 | 10 | Git Commit (local, authorized) | PASS — commit 5a641d0 (17 files) | 5a641d0 |
 
 ## Stop Report (append only if a stop condition triggers)
