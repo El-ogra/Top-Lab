@@ -1,6 +1,8 @@
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Behaviors;
+using TopLab.Application.Features.TestCatalogAndReferenceRanges.Commands.CreateTest;
 
 namespace TopLab.Application;
 
@@ -15,6 +17,8 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         var assembly = typeof(DependencyInjection).Assembly;
+
+        services.AddValidatorsFromAssemblyContaining<CreateTestCommandValidator>();
 
         services.AddMediatR(cfg =>
         {
