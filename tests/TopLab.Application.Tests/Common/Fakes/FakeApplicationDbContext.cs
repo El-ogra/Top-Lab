@@ -19,6 +19,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<UserPermissionGrant> UserPermissionGrants { get; } = new();
     public List<Patient> Patients { get; } = new();
     public List<Test> Tests { get; } = new();
+    public List<TestGroup> TestGroups { get; } = new();
+    public List<ReferenceRange> ReferenceRanges { get; } = new();
+    public List<WorkGroupLog> WorkGroupLogs { get; } = new();
+    public List<WorkGroupLogItem> WorkGroupLogItems { get; } = new();
+    public List<TestComment> TestComments { get; } = new();
     public List<PatientTest> PatientTests { get; } = new();
     public List<PaymentOperation> PaymentOperations { get; } = new();
     public List<CashMovement> CashMovements { get; } = new();
@@ -59,6 +64,31 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         if (typeof(TEntity) == typeof(Test))
         {
             return (IQueryable<TEntity>)(object)Tests.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(TestGroup))
+        {
+            return (IQueryable<TEntity>)(object)TestGroups.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(ReferenceRange))
+        {
+            return (IQueryable<TEntity>)(object)ReferenceRanges.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(WorkGroupLog))
+        {
+            return (IQueryable<TEntity>)(object)WorkGroupLogs.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(WorkGroupLogItem))
+        {
+            return (IQueryable<TEntity>)(object)WorkGroupLogItems.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(TestComment))
+        {
+            return (IQueryable<TEntity>)(object)TestComments.AsQueryable();
         }
 
         if (typeof(TEntity) == typeof(PatientTest))
@@ -131,6 +161,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is UserPermissionGrant g) UserPermissionGrants.Add(g);
         else if (entity is Patient pat) Patients.Add(pat);
         else if (entity is Test t) Tests.Add(t);
+        else if (entity is TestGroup tg) TestGroups.Add(tg);
+        else if (entity is ReferenceRange rr) ReferenceRanges.Add(rr);
+        else if (entity is WorkGroupLog wgl) WorkGroupLogs.Add(wgl);
+        else if (entity is WorkGroupLogItem wgli) WorkGroupLogItems.Add(wgli);
+        else if (entity is TestComment tc) TestComments.Add(tc);
         else if (entity is PatientTest pt) PatientTests.Add(pt);
         else if (entity is PaymentOperation po) PaymentOperations.Add(po);
         else if (entity is CashMovement cm) CashMovements.Add(cm);
@@ -158,6 +193,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is UserPermissionGrant g) UserPermissionGrants.Remove(g);
         else if (entity is Patient pat) Patients.Remove(pat);
         else if (entity is Test t) Tests.Remove(t);
+        else if (entity is TestGroup tg) TestGroups.Remove(tg);
+        else if (entity is ReferenceRange rr) ReferenceRanges.Remove(rr);
+        else if (entity is WorkGroupLog wgl) WorkGroupLogs.Remove(wgl);
+        else if (entity is WorkGroupLogItem wgli) WorkGroupLogItems.Remove(wgli);
+        else if (entity is TestComment tc) TestComments.Remove(tc);
         else if (entity is PatientTest pt) PatientTests.Remove(pt);
         else if (entity is PaymentOperation po) PaymentOperations.Remove(po);
         else if (entity is CashMovement cm) CashMovements.Remove(cm);
