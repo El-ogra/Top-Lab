@@ -26,6 +26,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<TestComment> TestComments { get; } = new();
     public List<PatientTest> PatientTests { get; } = new();
     public List<PaymentOperation> PaymentOperations { get; } = new();
+    public List<PriceList> PriceLists { get; } = new();
     public List<CashMovement> CashMovements { get; } = new();
     public List<ExternalEntity> ExternalEntities { get; } = new();
     public List<SentOutSample> SentOutSamples { get; } = new();
@@ -101,6 +102,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)PaymentOperations.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(PriceList))
+        {
+            return (IQueryable<TEntity>)(object)PriceLists.AsQueryable();
+        }
+
         if (typeof(TEntity) == typeof(CashMovement))
         {
             return (IQueryable<TEntity>)(object)CashMovements.AsQueryable();
@@ -168,6 +174,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is TestComment tc) TestComments.Add(tc);
         else if (entity is PatientTest pt) PatientTests.Add(pt);
         else if (entity is PaymentOperation po) PaymentOperations.Add(po);
+        else if (entity is PriceList pl) PriceLists.Add(pl);
         else if (entity is CashMovement cm) CashMovements.Add(cm);
         else if (entity is ExternalEntity ee) ExternalEntities.Add(ee);
         else if (entity is SentOutSample sos) SentOutSamples.Add(sos);
@@ -200,6 +207,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is TestComment tc) TestComments.Remove(tc);
         else if (entity is PatientTest pt) PatientTests.Remove(pt);
         else if (entity is PaymentOperation po) PaymentOperations.Remove(po);
+        else if (entity is PriceList pl) PriceLists.Remove(pl);
         else if (entity is CashMovement cm) CashMovements.Remove(cm);
         else if (entity is ExternalEntity ee) ExternalEntities.Remove(ee);
         else if (entity is SentOutSample sos) SentOutSamples.Remove(sos);

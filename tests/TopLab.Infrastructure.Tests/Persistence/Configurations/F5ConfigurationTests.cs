@@ -120,4 +120,48 @@ public class F5ConfigurationTests
         Assert.False(prop.IsNullable);
         Assert.Equal(true, prop.GetDefaultValue());
     }
+
+    [Fact]
+    public void ExternalEntity_HasExpectedMapping()
+    {
+        var et = GetEntityType<TopLab.Domain.ExternalEntities.ExternalEntity>();
+
+        var name = et.FindProperty(nameof(TopLab.Domain.ExternalEntities.ExternalEntity.Name));
+        Assert.NotNull(name);
+        Assert.False(name!.IsNullable);
+        Assert.Equal(200, name.GetMaxLength());
+
+        var city = et.FindProperty(nameof(TopLab.Domain.ExternalEntities.ExternalEntity.City));
+        Assert.NotNull(city);
+        Assert.True(city!.IsNullable);
+        Assert.Equal(100, city.GetMaxLength());
+
+        var code = et.FindProperty(nameof(TopLab.Domain.ExternalEntities.ExternalEntity.GeneratedIdCode));
+        Assert.NotNull(code);
+        Assert.True(code!.IsNullable);
+        Assert.Equal(50, code.GetMaxLength());
+
+        var priceListId = et.FindProperty(nameof(TopLab.Domain.ExternalEntities.ExternalEntity.PriceListId));
+        Assert.NotNull(priceListId);
+        Assert.True(priceListId!.IsNullable);
+
+        var percent = et.FindProperty(nameof(TopLab.Domain.ExternalEntities.ExternalEntity.DiscountOrCommissionPercent));
+        Assert.NotNull(percent);
+        Assert.True(percent!.IsNullable);
+        Assert.Equal(5, percent.GetPrecision());
+        Assert.Equal(2, percent.GetScale());
+
+        var typeIndex = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Any(p => p.Name == nameof(TopLab.Domain.ExternalEntities.ExternalEntity.EntityType)));
+        Assert.NotNull(typeIndex);
+    }
+
+    [Fact]
+    public void ExternalEntity_HasNoUniqueIndexOnGeneratedIdCode()
+    {
+        var et = GetEntityType<TopLab.Domain.ExternalEntities.ExternalEntity>();
+
+        Assert.DoesNotContain(et.GetIndexes(), i =>
+            i.IsUnique && i.Properties.Any(p => p.Name == nameof(TopLab.Domain.ExternalEntities.ExternalEntity.GeneratedIdCode)));
+    }
 }

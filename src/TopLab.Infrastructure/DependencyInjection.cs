@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
+using TopLab.Application.Features.ExternalEntities.Common.Interfaces;
 using TopLab.Infrastructure.Backup;
 using TopLab.Infrastructure.Identity;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Persistence.Interceptors;
 using TopLab.Infrastructure.Persistence.Maintenance;
+using TopLab.Infrastructure.Services;
 
 namespace TopLab.Infrastructure;
 
@@ -50,6 +52,9 @@ public static class DependencyInjection
         // remains Scoped (stateless, per-operation clock).
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
+
+        // External entities: stateless cryptographic code generator (M-14).
+        services.AddSingleton<IEntityIdCodeGenerator, SecureEntityIdCodeGenerator>();
         services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
 
         // Backup/maintenance: Scoped (depends on the Scoped ApplicationDbContext).
