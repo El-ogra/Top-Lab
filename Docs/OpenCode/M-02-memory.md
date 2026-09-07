@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain mutators and invariants (patient, phone numbers, medical conditions, patient-test sample flags) | [x] Done | VG-01 |
-| 2 | Application: read surface (search, visit history, titles, medical conditions, registration catalog) | [ ] Not started | VG-02 |
+| 2 | Application: read surface (search, visit history, titles, medical conditions, registration catalog) | [x] Done | VG-02 |
 | 3 | Application: write surface (integrated against M-13's final surface) | [ ] Not started | VG-03 |
 | 4 | Infrastructure proof + module close-out | [ ] Not started | VG-04 |
 
@@ -88,16 +88,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §5.2 (M02-S2); all reads are unauthorized plain `IRequest<Result<...>>` (M12/M14 precedent); `GetRegistrationCatalog` is the single query the future registration screen calls on open (settled OD-4); M22 `GetSystemSettingsQuery` is issued via intra-Application MediatR (the standard "non-coupling read" pattern); `ReferralNameResolver` is called directly (it's a static class, not a query); soft-deleted patients are excluded from search and visit history; BR-03 invariant: a patient with two phone numbers is found by a search text matching either number.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `IApplicationDbContext`, `FakeApplicationDbContext` (to be extended with 4 new lists), M22 `GetSystemSettingsQuery`/`SystemSettingsDto` (read — has `DefaultAccountType` and `DisableAutoTitleInsertion`), M14 `ReferralNameResolver` (read — static `Resolve(string?, Sex)` returns "Himself" / "Herself"), M12 `SearchTestCatalogQuery` and `GetTestGroupsQuery` (read — used as delegations), `Result/Error`, `TestCatalogDtos.cs` / `ExternalEntityDtos.cs` (DTO shape precedents), validator + handler test conventions.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: (1) DTOs; (2) `PatientRegistrationAccessPolicy.cs`; (3) 6 query files; (4) fake extension (4 new lists + 4 new `Set<T>`/Add/Remove branches); (5) 6 handler test classes; (6) DI: no change.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build/test output; BR-03 invariant asserted; OD-4 wiring asserted in registration-catalog tests.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-02] Slice 2/4: Application: read surface (search, visit history, titles, medical conditions, registration catalog) — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln` → 901 tests pass.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §5.2 (M02-S2); all reads are unauthorized plain `IRequest<Result<...>>` (M12/M14 precedent); `GetRegistrationCatalog` is the single query the future registration screen calls on open (settled OD-4); M22 `GetSystemSettingsQuery` is issued via intra-Application MediatR (the standard "non-coupling read" pattern); `ReferralNameResolver` is called directly (it's a static class, not a query); soft-deleted patients are excluded from search and visit history; BR-03 invariant: a patient with two phone numbers is found by a search text matching either number.
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `IApplicationDbContext`, `FakeApplicationDbContext` (extended with 4 new lists), M22 `GetSystemSettingsQuery`/`SystemSettingsDto` (read — has `DefaultAccountType` and `DisableAutoTitleInsertion`), M14 `ReferralNameResolver` (read — static `Resolve(string?, Sex)` returns "Himself" / "Herself"), M12 `SearchTestCatalogQuery` and `GetTestGroupsQuery` (read — used as delegations), `Result/Error`, `TestCatalogDtos.cs` / `ExternalEntityDtos.cs` (DTO shape precedents), validator + handler test conventions.
+- [x] **Stage 4 — Planning:** Step-by-step plan written. Plan: (1) DTOs; (2) `PatientRegistrationAccessPolicy.cs`; (3) 6 query files; (4) fake extension (4 new lists + 4 new `Set<T>`/Add/Remove branches); (5) 6 handler test classes; (6) DI: no change.
+- [x] **Stage 5 — Execution:** Slice implemented per plan. The `GetRegistrationCatalogQueryHandler` is the first intra-Application MediatR usage in the codebase (uses `ISender`); `SearchPatientsQueryHandler` queries `PatientPhoneNumber` set for the BR-03 any-phone-number match.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass `zero errors + zero warnings`. Application.Tests: 582 passed (was 561; +21 new tests).
+- [x] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build 0/0; all 21 new PatientRegistration tests green; full suite 922 green (270 + 582 + 70); grep on `IAuthorizedRequest` in `Features/PatientRegistration/Queries` returned zero hits — none of the 5 read queries implement `IAuthorizedRequest`; BR-03 invariant asserted in `SearchPatientsQueryHandlerTests.Search_ByAnyPhoneNumber_Br03Invariant`; OD-4 wiring asserted in `GetRegistrationCatalogQueryHandlerTests.Handle_AggregatesAllSources_AndReadsSystemSettings` (DefaultAccountType/DisableAutoTitleInsertion) and `Handle_ResolvesReferralPlaceholders_BySex` (both placeholders); DI auto-discovery works (no change).
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-02] Slice 2/4: Application: read surface (search, visit history, titles, medical conditions, registration catalog) — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
 
 ---
 
@@ -145,9 +145,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/4 slices done
+- Overall: 2/4 slices done
 - Slice 1 — Domain mutators and invariants (patient, phone numbers, medical conditions, patient-test sample flags): [x] Done
-- Slice 2 — Application: read surface (search, visit history, titles, medical conditions, registration catalog): [ ] Not started
+- Slice 2 — Application: read surface (search, visit history, titles, medical conditions, registration catalog): [x] Done
 - Slice 3 — Application: write surface (integrated against M-13's final surface): [ ] Not started
 - Slice 4 — Infrastructure proof + module close-out: [ ] Not started
 
@@ -156,6 +156,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | Date (YYYY-MM-DD) | Slice | Stage | Action | Result | Commit |
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-07 | 0 | — | Memory file created | OK | — |
-| 2026-09-07 | 1 | 10 | Slice 1 implemented and verified (270 Domain.Tests; 901 total) | OK | local (pending) |
+| 2026-09-07 | 1 | 10 | Slice 1 implemented and verified (270 Domain.Tests; 901 total) | OK | local |
+| 2026-09-07 | 2 | 10 | Slice 2 implemented and verified (582 Application.Tests; 922 total) | OK | local (pending) |
 
 ## Stop Report (append only if a stop condition triggers)

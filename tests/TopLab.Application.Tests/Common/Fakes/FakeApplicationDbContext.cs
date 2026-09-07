@@ -43,6 +43,10 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<Antibiotic> Antibiotics { get; } = new();
     public List<CultureAntibioticAttachment> CultureAntibioticAttachments { get; } = new();
     public List<CultureAntibioticResult> CultureAntibioticResults { get; } = new();
+    public List<PatientPhoneNumber> PatientPhoneNumbers { get; } = new();
+    public List<PatientMedicalCondition> PatientMedicalConditions { get; } = new();
+    public List<PatientTitle> PatientTitles { get; } = new();
+    public List<MedicalConditionType> MedicalConditionTypes { get; } = new();
 
     public int SaveChangesCallCount { get; private set; }
 
@@ -193,6 +197,26 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)CultureAntibioticResults.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(PatientPhoneNumber))
+        {
+            return (IQueryable<TEntity>)(object)PatientPhoneNumbers.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(PatientMedicalCondition))
+        {
+            return (IQueryable<TEntity>)(object)PatientMedicalConditions.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(PatientTitle))
+        {
+            return (IQueryable<TEntity>)(object)PatientTitles.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(MedicalConditionType))
+        {
+            return (IQueryable<TEntity>)(object)MedicalConditionTypes.AsQueryable();
+        }
+
         return Enumerable.Empty<TEntity>().AsQueryable();
     }
 
@@ -227,6 +251,10 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is Antibiotic ab) Antibiotics.Add(ab);
         else if (entity is CultureAntibioticAttachment caa) CultureAntibioticAttachments.Add(caa);
         else if (entity is CultureAntibioticResult car) CultureAntibioticResults.Add(car);
+        else if (entity is PatientPhoneNumber ppn) PatientPhoneNumbers.Add(ppn);
+        else if (entity is PatientMedicalCondition pmc) PatientMedicalConditions.Add(pmc);
+        else if (entity is PatientTitle pt2) PatientTitles.Add(pt2);
+        else if (entity is MedicalConditionType mct) MedicalConditionTypes.Add(mct);
         else throw new NotSupportedException($"Add not supported for {typeof(TEntity).Name}");
     }
 
@@ -266,6 +294,10 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is Antibiotic ab) Antibiotics.Remove(ab);
         else if (entity is CultureAntibioticAttachment caa) CultureAntibioticAttachments.Remove(caa);
         else if (entity is CultureAntibioticResult car) CultureAntibioticResults.Remove(car);
+        else if (entity is PatientPhoneNumber ppn) PatientPhoneNumbers.Remove(ppn);
+        else if (entity is PatientMedicalCondition pmc) PatientMedicalConditions.Remove(pmc);
+        else if (entity is PatientTitle pt2) PatientTitles.Remove(pt2);
+        else if (entity is MedicalConditionType mct) MedicalConditionTypes.Remove(mct);
         else throw new NotSupportedException($"Remove not supported for {typeof(TEntity).Name}");
     }
 
