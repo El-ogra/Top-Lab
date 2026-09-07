@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-15.md
 - **Date Created:** 2026-09-07
 - **Total Slices:** 3
-- **Current Slice:** Slice 2/3 committed; Slice 3/3 in progress — 2/3 slices done
+- **Current Slice:** All 3 slices committed — 3/3 slices done; module closed
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Domain behaviors + display-filter contract | [x] Done | VG-01 |
 | 2 | Application read + write surface | [x] Done | VG-02 |
-| 3 | Infrastructure proof + module close-out | [ ] Not started | VG-03 |
+| 3 | Infrastructure proof + module close-out | [x] Done | VG-03 |
 
 ---
 
@@ -107,25 +107,25 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.1 (M15-S3) + §6 / §7 / §9; migration-scope gate runs first (config vs snapshot, expect zero drift); FK matrix incl. two negative assertions on `CultureAntibioticAttachment`; the missing DB-level integrity is compensated by the application guards of §2 rules 5–7 — recorded in ADR-0031 and handed to the M06 owner; `IsCultureType` is not in `Test.Update` (verified) — a mis-flagged test must be deactivated and recreated.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `20260828052248_BaselineDataModel.cs` (read in full — creates `Antibiotics` (l.17), `CultureAntibioticAttachments` (l.32, no FKs), `CultureAntibioticResults` FK→Antibiotics Restrict + FK→CultureResults Cascade (l.771–781)), `ApplicationDbContextModelSnapshot.cs` (relevant sections read in full), `TestDeletionCascadeTests.cs` + `ExternalEntityDeleteBehaviorTests.cs` (precedent), `InMemoryContextFactory.cs` + `TestApplicationDbContext.cs` (harness), `Top_Lab_ADR.md`, `Top_Lab_Master_Tracking_Sheet.md`, `Top_Lab_Handoff_Template.md` / `Handoff_M12.md` (template).
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: run migration-scope gate first -> configs -> EF config tests -> FK matrix incl. negative assertions -> validator registration test -> ADR-0031 -> tracking flip -> handoff.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: Release build 0/0, full suite green, FK-matrix incl. negative assertions green, snapshot unchanged (or addendum executed per gate), coverage floors met or waivers documented.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-15] Slice 3/3: Infrastructure proof + module close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: baseline build 0/0; baseline test run 863/863 green (Domain 256, Application 544, Infra 63).
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.1 (M15-S3) + §6 / §7 / §9; migration-scope gate runs first (config vs snapshot, no drift expected); FK matrix incl. two negative assertions on `CultureAntibioticAttachment`; the missing DB-level integrity is compensated by the application guards of §2 rules 5–7 — recorded in ADR-0031 and handed to the M-06 owner; `IsCultureType` is not in `Test.Update` (verified) — a mis-flagged test must be deactivated and recreated.
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `20260828052248_BaselineDataModel.cs` (verified — creates `Antibiotics` (l.17), `CultureAntibioticAttachments` (l.32, no FKs), `CultureAntibioticResults` FK→Antibiotics Restrict + FK→CultureResults Cascade (l.771–781)), `ApplicationDbContextModelSnapshot.cs` (relevant sections read — confirmed unchanged since M-12 commit `9758466`), `ExternalEntityDeleteBehaviorTests.cs` (FK delete-behavior test precedent), `InfrastructureRegistrationTests.cs` + Application-layer `ValidatorRegistrationTests.cs` (validator-registration precedent — file lives at `tests/TopLab.Application.Tests/DependencyInjection/ValidatorRegistrationTests.cs`, **not** at the plan's stated `tests/TopLab.Infrastructure.Tests/Persistence/` path; deviation recorded in Handoff §8 per M-13 precedent), `Top_Lab_ADR.md` (ADR-0030 tail), `Top_Lab_Master_Tracking_Sheet.md` (M-15 row at line 68), `Handoff_M13.md` (template precedent).
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: run migration-scope gate first -> EF config tests -> FK matrix incl. negative assertions -> validator registration test (extended at the correct Application.Tests location) -> ADR-0031 -> tracking flip -> handoff.
+- [x] **Stage 5 — Execution:** Slice implemented per plan. Files modified: `F5ConfigurationTests.cs` (added `Antibiotic_HasExpectedMapping` + `CultureAntibioticAttachment_HasCompositeKey`), `ValidatorRegistrationTests.cs` (added `HostBuiltLikeApp_ResolvesM15Validators` theory covering all 5 validators), `Top_Lab_ADR.md` (appended ADR-0031), `Top_Lab_Master_Tracking_Sheet.md` (M-15 row flipped to 🟩 Done + dated change-log row appended). Files created: `CultureAntibioticDeleteBehaviorTests.cs` (FK matrix incl. 2 negative no-FK assertions), `Handoff_M15.md`.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`. Evidence: Debug build 0/0; Release build 0/0; Debug test run 875/875 green (Domain 256, Application 549, Infra 70); Release test run 875/875 green. `ApplicationDbContextModelSnapshot.cs` untouched (verified via `git diff --stat`).
+- [x] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: Release build 0/0; full suite green; FK-matrix incl. 2 negative assertions green (`CultureAntibioticAttachment_HasNoRelationshipToTest` + `CultureAntibioticAttachment_HasNoRelationshipToAntibiotic`); snapshot unchanged; coverage floors met (Domain 12 new tests on 1 modified file; Application 49 new tests for the new feature folder; Infrastructure 7 new tests for configs + FK matrix + validator registration — no waivers); ADR-0031 appended; tracking flip + dated change-log row done; `Handoff_M15.md` produced per template.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-15] Slice 3/3: Infrastructure proof + module close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
 
 ---
 
 ## Current Status
 
-- Overall: 2/3 slices done
+- Overall: 3/3 slices done — **M-15 closed**
 - Slice 1 — Domain behaviors + display-filter contract: [x] Done (VG-01 passed)
 - Slice 2 — Application read + write surface: [x] Done (VG-02 passed)
-- Slice 3 — Infrastructure proof + module close-out: [ ] Not started
+- Slice 3 — Infrastructure proof + module close-out: [x] Done (VG-03 passed)
 
 ## Execution Log
 
@@ -134,5 +134,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-07 | 0 | — | Memory file created | OK | — |
 | 2026-09-07 | 1 | 1-10 | M15-S1 implemented (Antibiotic.Update + CultureAntibioticDisplay + 32 new tests); VG-01 passed | OK | `[M-15] Slice 1/3` |
 | 2026-09-07 | 2 | 1-10 | M15-S2 implemented (DTOs + 2 queries + 5 commands + 5 validators + translator + auth theory + 49 new tests + fake extension); VG-02 passed | OK | `[M-15] Slice 2/3` |
+| 2026-09-07 | 3 | 1-10 | M15-S3 implemented (EF config tests + FK matrix incl. 2 negative no-FK assertions + validator registration + ADR-0031 + tracking flip + Handoff_M15.md); zero drift against F5 baseline; Release build 0/0; full suite 875/875 green; VG-03 passed | OK | `[M-15] Slice 3/3` |
 
 ## Stop Report (append only if a stop condition triggers)

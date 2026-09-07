@@ -235,7 +235,7 @@ public class F5ConfigurationTests
         Assert.Equal(2, price.GetScale());
     }
 
-    [Fact]
+[Fact]
     public void TestComment_HasExpectedMapping()
     {
         var et = GetEntityType<TopLab.Domain.Tests.TestComment>();
@@ -253,5 +253,45 @@ public class F5ConfigurationTests
         var testIdIdx = et.GetIndexes().FirstOrDefault(i =>
             i.Properties.Any(p => p.Name == nameof(TopLab.Domain.Tests.TestComment.TestId)));
         Assert.NotNull(testIdIdx);
+    }
+
+    [Fact]
+    public void Antibiotic_HasExpectedMapping()
+    {
+        var et = GetEntityType<TopLab.Domain.Tests.Antibiotic>();
+
+        var id = et.FindProperty("Id");
+        Assert.NotNull(id);
+        Assert.True(id!.ValueGenerated == ValueGenerated.OnAdd);
+        Assert.Equal("AntibioticId", id.GetColumnName());
+
+        var name = et.FindProperty(nameof(TopLab.Domain.Tests.Antibiotic.Name));
+        Assert.NotNull(name);
+        Assert.False(name!.IsNullable);
+        Assert.Equal(150, name.GetMaxLength());
+
+        var pregnancy = et.FindProperty(nameof(TopLab.Domain.Tests.Antibiotic.IsPregnancyFlagged));
+        Assert.NotNull(pregnancy);
+        Assert.False(pregnancy!.IsNullable);
+
+        var children = et.FindProperty(nameof(TopLab.Domain.Tests.Antibiotic.IsChildrenFlagged));
+        Assert.NotNull(children);
+        Assert.False(children!.IsNullable);
+    }
+
+    [Fact]
+    public void CultureAntibioticAttachment_HasCompositeKey()
+    {
+        var et = GetEntityType<TopLab.Domain.Tests.CultureAntibioticAttachment>();
+
+        var key = et.FindPrimaryKey();
+        Assert.NotNull(key);
+        Assert.Equal(new[]
+        {
+            nameof(TopLab.Domain.Tests.CultureAntibioticAttachment.TestId),
+            nameof(TopLab.Domain.Tests.CultureAntibioticAttachment.AntibioticId)
+        }, key!.Properties.Select(p => p.Name).ToArray());
+
+Assert.Empty(et.GetForeignKeys());
     }
 }

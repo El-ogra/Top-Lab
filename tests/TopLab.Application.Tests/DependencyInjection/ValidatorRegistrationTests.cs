@@ -1,5 +1,10 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using TopLab.Application.Features.CultureAndAntibiotics.Commands.AttachAntibioticToCulture;
+using TopLab.Application.Features.CultureAndAntibiotics.Commands.CreateAntibiotic;
+using TopLab.Application.Features.CultureAndAntibiotics.Commands.DeleteAntibiotic;
+using TopLab.Application.Features.CultureAndAntibiotics.Commands.DetachAntibioticFromCulture;
+using TopLab.Application.Features.CultureAndAntibiotics.Commands.UpdateAntibiotic;
 using TopLab.Application.Features.ExternalEntities.Commands.CreateExternalEntity;
 using TopLab.Application.Features.ExternalEntities.Commands.DeleteExternalEntity;
 using TopLab.Application.Features.ExternalEntities.Commands.GenerateEntityIdCode;
@@ -81,6 +86,23 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<SetCustomGroupItemPriceCommand>))]
     [InlineData(typeof(IValidator<RemoveCustomGroupItemCommand>))]
     public void HostBuiltLikeApp_ResolvesM13Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<CreateAntibioticCommand>))]
+    [InlineData(typeof(IValidator<UpdateAntibioticCommand>))]
+    [InlineData(typeof(IValidator<DeleteAntibioticCommand>))]
+    [InlineData(typeof(IValidator<AttachAntibioticToCultureCommand>))]
+    [InlineData(typeof(IValidator<DetachAntibioticFromCultureCommand>))]
+    public void HostBuiltLikeApp_ResolvesM15Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();
