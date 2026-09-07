@@ -620,6 +620,37 @@ Strongly-typed string identifiers (`LabId`) are stored through an EF Core value 
 
 ---
 
+### ADR-0030 — M-13: Price Lists, Test Comments, and Custom Groups — behaviors, item-mutation protocol, and zero-migration outcome
+
+- **Status:** Accepted
+- **Date:** 2026-09-07
+
+**Context.** Module 13 implements the three reference-data concepts (price lists, fixed test comments, custom groups) on top of the M-12 catalog and the M-14 `ExternalEntity` contract. The four entities (`PriceList`, `PriceListItem`, `CustomGroup`, `CustomGroupItem`, `TestComment`) shipped as inert Create-only shells in the F5 baseline; they now need maintenance behaviors (rename, item add/update/remove, price and length guards). The Application port has no `Include` capability, so EF cannot populate aggregate `_items` collections through the interface — this constrains the item-mutation mechanics. Two further constraints are explicit: (a) price-list delete must guard against silently nulling a live `ReferralOrContract` entity's price list (the DB-level `SetNull` would do that, but it would manufacture domain-invalid entities and silently reprice future patients); (b) the schema is already complete from the F5 baseline, so no new migration is expected.
+
+**Decision.**
+
+1. **Domain behaviors.** `PriceList` and `CustomGroup` gain `Rename`, `ContainsTest`, `AddItem(testId, price)` (duplicate → `ArgumentException("Test already exists in the price list.", nameof(testId))`, negative price → `ArgumentException("Price must be >= 0.", nameof(price))`), `SetItemPrice(testId, price)` (upsert), `RemoveItem(testId)` (absent → `ArgumentException("Test is not in the price list.", nameof(testId))`). `PriceListItem` and `CustomGroupItem` gain the `price >= 0` constructor guard and `UpdatePrice`. `TestComment` gains `public const int MaxCommentTextLength = 1000`, the length guard in `Create` and `Update`, and an `Update` mutator. Guards raise `ArgumentException` with `paramName` set — the M14-style `DomainFailureTranslator` binds to `paramName` + message-fragment to produce the frozen Arabic messages.
+
+2. **Item-mutation mechanics — aggregate-as-invariant-checker + flat-set persistence.** The Application port has no `Include` (verified). The M12 precedent (`SaveWorkGroupLogItemsCommandHandler`) persists flat-set rows explicitly. M-13 mandates the same pattern, sharpened to avoid the **double-tracking hazard**: handlers (a) load the header via `Set<T>()`; (b) existence-check the `TestId` via `Set<Test>()`; (c) pre-check the flat row via `Set<PriceListItem>()` / `Set<CustomGroupItem>()`; (d) **call the aggregate method purely for invariant enforcement inside try/catch (ArgumentException) → translator** — the aggregate's in-memory `_items` mutation is intentionally NOT persisted because the aggregate instance is loaded fresh per handler invocation and its `_items` is always empty when first loaded; (e) persist idempotently against the flat set only (fresh `PriceListItem`/`CustomGroupItem` constructor for Add; tracked flat row from step (c) for Update and Remove). `RemoveItem` handlers do NOT call the aggregate's `RemoveItem` (the aggregate's `_items` would be empty, so the call would throw spuriously; the pre-check on the flat set is the invariant). `PriceListItem.UpdatePrice` and `CustomGroupItem.UpdatePrice` are `public` (the `price >= 0` invariant is enforced inside) so handlers can mutate flat rows directly.
+
+3. **Price-list delete is blocked while referenced.** `DeletePriceListCommandHandler` checks `Set<ExternalEntity>().Any(e => e.PriceListId != null && e.PriceListId.Value == request.Id)` and returns `Conflict("تعذر حذف قائمة الأسعار لارتباطها بجهات خارجية.")` before removal. A `SaveChangesAsync` `try/catch` re-maps a race-condition `IsReferenceConflict(ex)` to the same `Conflict`. Custom-group delete has no such guard (no FK target). Items cascade with their list/group at the DB level (FK Cascade, verified).
+
+4. **Permission reuse.** All 13 M-13 write commands carry `IAuthorizedRequest` with `RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS"` (consistent with M12/M14); reads are unauthorized plain `IRequest<Result<...>>`.
+
+5. **Multiple comments per test.** `CreateTestCommentCommand` performs no uniqueness check (the reference system explicitly allows it: *"ويمكن إضافة أكثر من كومنت لنفس التحليل"*).
+
+6. **No new migration.** All five M-13 tables (`PriceLists`, `PriceListItems`, `CustomGroups`, `CustomGroupItems`, `TestComments`) and the `ExternalEntities.PriceListId` column already exist from the F5 baseline migration `20260828052248_BaselineDataModel.cs` (verified line-level). The model-vs-snapshot zero-drift gate in `F5ConfigurationTests` + `PriceListCustomGroupDeleteBehaviorTests` + `PriceListItemPersistenceTests` confirms no drift; `ApplicationDbContextModelSnapshot.cs` is unchanged.
+
+7. **`TestComment.MaxCommentTextLength = 1000` constant.** Mirrors `ReferenceRange.MaxCommentLength` / `Test.MaxTestCodeLength` precedent — the column-level limit is now also enforced in the domain.
+
+8. **`RemoveItem`-absent throws.** Aligned to the verified `WorkGroupLog.RemoveItem` precedent (not the M-13 initial draft's no-op, corrected per plan §0.1.2). Handlers translate the absence case to `Error.NotFound` before calling the domain method, so the throw is a safety net only.
+
+**Consequences.** Diff is confined to `src/TopLab.Domain/{Billing,Tests}/**`, `src/TopLab.Application/Features/PriceListsCommentsAndCustomGroups/**`, `tests/**`, `Docs/**`. No Presentation content anywhere. The FK matrix is pinned by `PriceListCustomGroupDeleteBehaviorTests` (Cascade for `PriceListItem→PriceList` and `CustomGroupItem→CustomGroup` with `Items` navigation; SetNull for `ExternalEntity→PriceList`; negative assertions that `PriceListItem→Test` and `CustomGroupItem→Test` do not exist). The orphan-risk note for the absence of the latter two FKs carries to the M12 (if a future test hard-delete is ever introduced) and M02 owners. 13 new validators resolve via `AddValidatorsFromAssemblyContaining<CreateTestCommandValidator>()` (no DI wiring change). `ValidatorRegistrationTests` covers all 13. The aggregate method is no longer authoritative for item-row state — the flat set is. The plan's A9 grep gate (`\b\.Items\b` references in handlers) is clean.
+
+**Related.** M-13 Implementation Plan §3, §5, §7, §9; ADR-0011 (one config per entity via Fluent API); ADR-0018 (no soft-delete for items — items cascade with their header).
+
+---
+
 ## 3. Reserved Ranges for Future Decisions
 
 - **ADR-0100 – 0199** — reserved for reporting/printing infrastructure decisions.

@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using TopLab.Domain.Billing;
 using TopLab.Domain.Patients;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Tests.Common;
@@ -163,5 +165,93 @@ public class F5ConfigurationTests
 
         Assert.DoesNotContain(et.GetIndexes(), i =>
             i.IsUnique && i.Properties.Any(p => p.Name == nameof(TopLab.Domain.ExternalEntities.ExternalEntity.GeneratedIdCode)));
+    }
+
+    [Fact]
+    public void PriceList_HasExpectedMapping()
+    {
+        var et = GetEntityType<PriceList>();
+
+        var id = et.FindProperty("Id");
+        Assert.NotNull(id);
+        Assert.True(id!.ValueGenerated == ValueGenerated.OnAdd);
+        Assert.Equal("PriceListId", id.GetColumnName());
+
+        var name = et.FindProperty(nameof(PriceList.Name));
+        Assert.NotNull(name);
+        Assert.False(name!.IsNullable);
+        Assert.Equal(150, name.GetMaxLength());
+
+        Assert.Contains(et.GetNavigations(), n => n.Name == "Items");
+    }
+
+    [Fact]
+    public void PriceListItem_HasCompositeKeyAndDecimalPrecision()
+    {
+        var et = GetEntityType<PriceListItem>();
+
+        var key = et.FindPrimaryKey();
+        Assert.NotNull(key);
+        Assert.Equal(new[] { nameof(PriceListItem.PriceListId), nameof(PriceListItem.TestId) }, key!.Properties.Select(p => p.Name).ToArray());
+
+        var price = et.FindProperty(nameof(PriceListItem.Price));
+        Assert.NotNull(price);
+        Assert.False(price!.IsNullable);
+        Assert.Equal(18, price.GetPrecision());
+        Assert.Equal(2, price.GetScale());
+    }
+
+    [Fact]
+    public void CustomGroup_HasExpectedMapping()
+    {
+        var et = GetEntityType<TopLab.Domain.Tests.CustomGroup>();
+
+        var id = et.FindProperty("Id");
+        Assert.NotNull(id);
+        Assert.True(id!.ValueGenerated == ValueGenerated.OnAdd);
+        Assert.Equal("CustomGroupId", id.GetColumnName());
+
+        var name = et.FindProperty(nameof(TopLab.Domain.Tests.CustomGroup.Name));
+        Assert.NotNull(name);
+        Assert.False(name!.IsNullable);
+        Assert.Equal(150, name.GetMaxLength());
+
+        Assert.Contains(et.GetNavigations(), n => n.Name == "Items");
+    }
+
+    [Fact]
+    public void CustomGroupItem_HasCompositeKeyAndDecimalPrecision()
+    {
+        var et = GetEntityType<TopLab.Domain.Tests.CustomGroupItem>();
+
+        var key = et.FindPrimaryKey();
+        Assert.NotNull(key);
+        Assert.Equal(new[] { nameof(TopLab.Domain.Tests.CustomGroupItem.CustomGroupId), nameof(TopLab.Domain.Tests.CustomGroupItem.TestId) }, key!.Properties.Select(p => p.Name).ToArray());
+
+        var price = et.FindProperty(nameof(TopLab.Domain.Tests.CustomGroupItem.Price));
+        Assert.NotNull(price);
+        Assert.False(price!.IsNullable);
+        Assert.Equal(18, price.GetPrecision());
+        Assert.Equal(2, price.GetScale());
+    }
+
+    [Fact]
+    public void TestComment_HasExpectedMapping()
+    {
+        var et = GetEntityType<TopLab.Domain.Tests.TestComment>();
+
+        var id = et.FindProperty("Id");
+        Assert.NotNull(id);
+        Assert.True(id!.ValueGenerated == ValueGenerated.OnAdd);
+        Assert.Equal("TestCommentId", id.GetColumnName());
+
+        var text = et.FindProperty(nameof(TopLab.Domain.Tests.TestComment.CommentText));
+        Assert.NotNull(text);
+        Assert.False(text!.IsNullable);
+        Assert.Equal(1000, text.GetMaxLength());
+
+        var testIdIdx = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Any(p => p.Name == nameof(TopLab.Domain.Tests.TestComment.TestId)));
+        Assert.NotNull(testIdIdx);
     }
 }

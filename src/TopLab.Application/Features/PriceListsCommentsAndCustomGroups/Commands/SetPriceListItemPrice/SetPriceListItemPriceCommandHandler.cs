@@ -35,24 +35,22 @@ public sealed class SetPriceListItemPriceCommandHandler : IRequestHandler<SetPri
 
         try
         {
-            list.SetItemPrice(TestId.Create(request.TestId), request.Price);
+            if (existingRow is null)
+            {
+                _db.Add(new PriceListItem(
+                    PriceListId.Create(request.PriceListId),
+                    TestId.Create(request.TestId),
+                    request.Price));
+            }
+            else
+            {
+                existingRow.UpdatePrice(request.Price);
+                _db.Update(existingRow);
+            }
         }
         catch (ArgumentException ex)
         {
             return Result.Failure(Error.Validation(DomainFailureTranslator.Translate(ex)));
-        }
-
-        if (existingRow is null)
-        {
-            _db.Add(new PriceListItem(
-                PriceListId.Create(request.PriceListId),
-                TestId.Create(request.TestId),
-                request.Price));
-        }
-        else
-        {
-            existingRow.UpdatePrice(request.Price);
-            _db.Update(existingRow);
         }
 
         await _db.SaveChangesAsync(cancellationToken);

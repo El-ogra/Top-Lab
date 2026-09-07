@@ -34,24 +34,22 @@ public sealed class SetCustomGroupItemPriceCommandHandler : IRequestHandler<SetC
 
         try
         {
-            group.SetItemPrice(TestId.Create(request.TestId), request.Price);
+            if (existingRow is null)
+            {
+                _db.Add(new CustomGroupItem(
+                    CustomGroupId.Create(request.CustomGroupId),
+                    TestId.Create(request.TestId),
+                    request.Price));
+            }
+            else
+            {
+                existingRow.UpdatePrice(request.Price);
+                _db.Update(existingRow);
+            }
         }
         catch (ArgumentException ex)
         {
             return Result.Failure(Error.Validation(DomainFailureTranslator.Translate(ex)));
-        }
-
-        if (existingRow is null)
-        {
-            _db.Add(new CustomGroupItem(
-                CustomGroupId.Create(request.CustomGroupId),
-                TestId.Create(request.TestId),
-                request.Price));
-        }
-        else
-        {
-            existingRow.UpdatePrice(request.Price);
-            _db.Update(existingRow);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
