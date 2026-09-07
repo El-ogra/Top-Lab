@@ -17,8 +17,23 @@ public sealed class PriceListItem
 
     public PriceListItem(PriceListId priceListId, TestId testId, decimal price)
     {
+        if (price < 0)
+        {
+            throw new ArgumentException("Price must be >= 0.", nameof(price));
+        }
+
         PriceListId = priceListId;
         TestId = testId;
+        Price = price;
+    }
+
+    internal void UpdatePrice(decimal price)
+    {
+        if (price < 0)
+        {
+            throw new ArgumentException("Price must be >= 0.", nameof(price));
+        }
+
         Price = price;
     }
 }

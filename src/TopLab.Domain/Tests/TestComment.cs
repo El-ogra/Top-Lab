@@ -5,6 +5,8 @@ namespace TopLab.Domain.Tests;
 
 public sealed class TestComment : Entity<TestCommentId>
 {
+    public const int MaxCommentTextLength = 1000;
+
     public TestId TestId { get; private set; } = default!;
 
     public string CommentText { get; private set; } = default!;
@@ -27,6 +29,26 @@ public sealed class TestComment : Entity<TestCommentId>
             throw new ArgumentException("CommentText is required.", nameof(commentText));
         }
 
+        if (commentText.Trim().Length > MaxCommentTextLength)
+        {
+            throw new ArgumentException($"CommentText must be at most {MaxCommentTextLength} characters.", nameof(commentText));
+        }
+
         return new TestComment(id, testId, commentText.Trim());
+    }
+
+    public void Update(string commentText)
+    {
+        if (string.IsNullOrWhiteSpace(commentText))
+        {
+            throw new ArgumentException("CommentText is required.", nameof(commentText));
+        }
+
+        if (commentText.Trim().Length > MaxCommentTextLength)
+        {
+            throw new ArgumentException($"CommentText must be at most {MaxCommentTextLength} characters.", nameof(commentText));
+        }
+
+        CommentText = commentText.Trim();
     }
 }
