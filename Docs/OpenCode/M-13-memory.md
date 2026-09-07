@@ -159,5 +159,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-07 | 1 | 10 | Slice 1 committed (Domain behaviors + tests, VG-01) | OK | a92d238 |
 | 2026-09-07 | 2 | 10 | Slice 2 committed (Application read surface, VG-02) | OK | 1379127 |
 | 2026-09-07 | 3 | 10 | Slice 3 committed (Application write surface + validators + auth, VG-03) | OK | 75f5b8d |
+| 2026-09-07 | 4 | 10 | Slice 4 committed (Infrastructure proof + close-out, VG-04) | OK | 17396b1 |
 
 ## Stop Report (append only if a stop condition triggers)
