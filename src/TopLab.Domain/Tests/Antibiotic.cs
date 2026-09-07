@@ -32,4 +32,16 @@ public sealed class Antibiotic : Entity<AntibioticId>
 
         return new Antibiotic(id, name.Trim(), isPregnancyFlagged, isChildrenFlagged);
     }
+
+    public void Update(string name, bool isPregnancyFlagged, bool isChildrenFlagged)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        Name = name.Trim();
+        IsPregnancyFlagged = isPregnancyFlagged;
+        IsChildrenFlagged = isChildrenFlagged;
+    }
 }
