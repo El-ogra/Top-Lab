@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-13.md
 - **Date Created:** 2026-09-07
 - **Total Slices:** 4
-- **Current Slice:** Slice 1 complete — 1/4 slices done
+- **Current Slice:** Slice 2 complete — 2/4 slices done
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain behaviors and invariants (Domain layer) | [x] Complete | VG-01 |
-| 2 | Application read surface (queries + DTOs + fakes) | [ ] Not started | VG-02 |
+| 2 | Application read surface (queries + DTOs + fakes) | [x] Complete | VG-02 |
 | 3 | Application write surface + validators + auth tests | [ ] Not started | VG-03 |
 | 4 | Infrastructure proof + module close-out | [ ] Not started | VG-04 |
 
@@ -88,16 +88,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.2; reads are unauthorized plain `IRequest<Result<...>>` (M12/M14 precedent); `ItemCount` computed from flat `Set<PriceListItem>()` group-by (not aggregate navigation — port has no `Include`, verified); missing list → `NotFound("قائمة الأسعار غير موجودة.")`; test-name join via `.Value` in-memory join (`SearchTestCatalogQueryHandler` precedent); no trim on the query side (domain trims before storing).
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `IApplicationDbContext` (read in full — no `Include` capability), `FakeApplicationDbContext` (read — needs extension), `GetUserById` / `GetUsers` handler+test patterns, `Result/Error`, `SearchTestCatalogQuery` precedent, feature folder conventions.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs -> 5 query files -> fake extension -> 5 test classes.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build/test output.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-13] Slice 2/4: Application read surface (queries + DTOs + fakes) — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: `dotnet build TopLab.sln` (0/0); `dotnet test TopLab.sln` (Domain 244, Application 356, Infrastructure 48 = 648 tests).
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.2; reads are unauthorized plain `IRequest<Result<...>>` (M12/M14 precedent); `ItemCount` computed from flat `Set<PriceListItem>()` group-by (not aggregate navigation — port has no `Include`, verified); missing list → `NotFound("قائمة الأسعار غير موجودة.")`; test-name join via `.Value` in-memory join (`SearchTestCatalogQueryHandler` precedent); no trim on the query side (domain trims before storing); expression trees reject `out` var + statement lambdas — fixed by materializing via `.ToList()` before projection (mirrors `GetWorkGroupLogsQueryHandler` pattern).
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `IApplicationDbContext` (read in full — no `Include` capability), `FakeApplicationDbContext` (read — extended with 3 new sets), `GetWorkGroupLogsQueryHandler` (verified in-memory join pattern), `GetTestByIdQueryHandler` (NotFound pattern), `Result/Error`, `TestCatalogDtos` (DTO conventions), feature folder conventions.
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs (`PriceListDtos.cs`, `TestCommentDtos.cs`, `CustomGroupDtos.cs`) -> 5 query files (`GetPriceLists`, `GetPriceListById`, `GetTestComments`, `GetCustomGroups`, `GetCustomGroupById`) -> fake extension (3 new lists + typeof branches + Add/Remove branches) -> 5 query test classes.
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`. Evidence: Domain 244, Application 372 (+16 new), Infrastructure 48 = 664 tests.
+- [x] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build/test output; diff confined to `src/TopLab.Application/Features/PriceListsCommentsAndCustomGroups/**` + tests + memory.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-13] Slice 2/4: Application read surface (queries + DTOs + fakes) — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
 
 ---
 
@@ -145,9 +145,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/4 slices done
-- Slice 1 — Domain behaviors and invariants (Domain layer): [x] Complete (VG-01 passed; commit `[M-13] Slice 1/4: Domain behaviors and invariants (Domain layer) — loop-engineering`)
-- Slice 2 — Application read surface (queries + DTOs + fakes): [ ] Not started
+- Overall: 2/4 slices done
+- Slice 1 — Domain behaviors and invariants (Domain layer): [x] Complete (VG-01 passed; commit a92d238)
+- Slice 2 — Application read surface (queries + DTOs + fakes): [x] Complete (VG-02 passed)
 - Slice 3 — Application write surface + validators + auth tests: [ ] Not started
 - Slice 4 — Infrastructure proof + module close-out: [ ] Not started
 
@@ -156,5 +156,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | Date (YYYY-MM-DD) | Slice | Stage | Action | Result | Commit |
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-07 | 0 | — | Memory file created | OK | — |
+| 2026-09-07 | 1 | 10 | Slice 1 committed (Domain behaviors + tests, VG-01) | OK | a92d238 |
 
 ## Stop Report (append only if a stop condition triggers)

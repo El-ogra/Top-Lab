@@ -27,6 +27,9 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<PatientTest> PatientTests { get; } = new();
     public List<PaymentOperation> PaymentOperations { get; } = new();
     public List<PriceList> PriceLists { get; } = new();
+    public List<PriceListItem> PriceListItems { get; } = new();
+    public List<CustomGroup> CustomGroups { get; } = new();
+    public List<CustomGroupItem> CustomGroupItems { get; } = new();
     public List<CashMovement> CashMovements { get; } = new();
     public List<ExternalEntity> ExternalEntities { get; } = new();
     public List<SentOutSample> SentOutSamples { get; } = new();
@@ -107,6 +110,21 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)PriceLists.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(PriceListItem))
+        {
+            return (IQueryable<TEntity>)(object)PriceListItems.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(CustomGroup))
+        {
+            return (IQueryable<TEntity>)(object)CustomGroups.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(CustomGroupItem))
+        {
+            return (IQueryable<TEntity>)(object)CustomGroupItems.AsQueryable();
+        }
+
         if (typeof(TEntity) == typeof(CashMovement))
         {
             return (IQueryable<TEntity>)(object)CashMovements.AsQueryable();
@@ -175,6 +193,9 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is PatientTest pt) PatientTests.Add(pt);
         else if (entity is PaymentOperation po) PaymentOperations.Add(po);
         else if (entity is PriceList pl) PriceLists.Add(pl);
+        else if (entity is PriceListItem pli) PriceListItems.Add(pli);
+        else if (entity is CustomGroup cg) CustomGroups.Add(cg);
+        else if (entity is CustomGroupItem cgi) CustomGroupItems.Add(cgi);
         else if (entity is CashMovement cm) CashMovements.Add(cm);
         else if (entity is ExternalEntity ee) ExternalEntities.Add(ee);
         else if (entity is SentOutSample sos) SentOutSamples.Add(sos);
@@ -208,6 +229,9 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is PatientTest pt) PatientTests.Remove(pt);
         else if (entity is PaymentOperation po) PaymentOperations.Remove(po);
         else if (entity is PriceList pl) PriceLists.Remove(pl);
+        else if (entity is PriceListItem pli) PriceListItems.Remove(pli);
+        else if (entity is CustomGroup cg) CustomGroups.Remove(cg);
+        else if (entity is CustomGroupItem cgi) CustomGroupItems.Remove(cgi);
         else if (entity is CashMovement cm) CashMovements.Remove(cm);
         else if (entity is ExternalEntity ee) ExternalEntities.Remove(ee);
         else if (entity is SentOutSample sos) SentOutSamples.Remove(sos);
