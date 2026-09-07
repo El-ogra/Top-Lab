@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Domain mutators and invariants (patient, phone numbers, medical conditions, patient-test sample flags) | [x] Done | VG-01 |
 | 2 | Application: read surface (search, visit history, titles, medical conditions, registration catalog) | [x] Done | VG-02 |
-| 3 | Application: write surface (integrated against M-13's final surface) | [ ] Not started | VG-03 |
+| 3 | Application: write surface (integrated against M-13's final surface) | [x] Done | VG-03 |
 | 4 | Infrastructure proof + module close-out | [ ] Not started | VG-04 |
 
 ---
@@ -109,16 +109,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`. **Precondition: M-13 is fully implemented in the codebase** (§3.1 of M-02 plan).
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §5.3 (M02-S3) + §3.1 (M13 inlined contracts); all writes carry `IAuthorizedRequest` -> `ADD_EDIT_PATIENT` except `SoftDeletePatient` -> `DELETE_PATIENT` (settled OD-8); `AddTestsToVisit` four-step pricing: (1) patient has `ReferralEntityId` with `PriceListId` set -> M-13 `GetPriceListByIdQuery` (Conflict if test not in list — `التحليل غير موجود في قائمة أسعار الجهة المحال منها.`); (2) `AccountType == LabToLab` -> `Test.LabToLabPrice` if set, else `Test.PatientPrice`; (3) cash/VIP/Free -> `Test.PatientPrice`; (4) operator overrides total to zero at billing for `Free`; `AddCustomGroupToVisit` uses the same resolver with the group's per-test price as fallback when no contract price list; `TestPriceResolver` is `internal` and pure; `FakeSender` is the M-02 → M-13 MediatR test seam.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: M-13 commands/queries/DTOs/mutators inlined in §3.1 of M-02 plan (source of truth); M-13 `GetPriceListByIdQuery` / `GetCustomGroupByIdQuery` / `GetPriceListsQuery` / `GetCustomGroupsQuery` (M-13 read surface only — no M-13 write is invoked by M-02); M-14 `ExternalEntity` (referral-entity `PriceListId` / type `TreatingDoctor` / `ReferralOrContract`); M-12 `Test` (read-only `PatientPrice` / `LabToLabPrice`); M-22 `GetSystemSettingsQuery` (`DefaultAccountType`, `DisableAutoTitleInsertion`); `ICurrentUserService` (read-only); `IApplicationDbContext`; `FakeSender` (new, intra-Application MediatR shim); existing handler/validator test conventions.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: (1) `TestPriceResolver.cs`; (2) 10 command use-case folders (commands/handlers/validators); (3) `FakeSender.cs`; (4) fake extension if not already done in S2; (5) 11 handler test classes + 1 resolver test class + 1 authorization theory class; (6) grep gate on `PermissionConfiguration` (must be unchanged); (7) ADR-0032 (or next free) appended.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: build/test output; every pricing branch covered; `TestPriceResolver` pure unit tests pass; `FakeSender` seam works; grep gate on `PermissionConfiguration` clean.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated; ADR-0032 recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-02] Slice 3/4: Application: write surface (integrated against M-13's final surface) — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln` → 922 tests pass. **Precondition verified: M-13 code is deployed** (`src/TopLab.Application/Features/PriceListsCommentsAndCustomGroups/` present with `GetPriceListByIdQuery`, `GetCustomGroupByIdQuery`, etc.).
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §5.3 (M02-S3) + §3.1 (M13 inlined contracts); all writes carry `IAuthorizedRequest` -> `ADD_EDIT_PATIENT` except `SoftDeletePatient` -> `DELETE_PATIENT` (settled OD-8); `AddTestsToVisit` four-step pricing: (1) patient has `ReferralEntityId` with `PriceListId` set -> M-13 `GetPriceListByIdQuery` (Conflict if test not in list — `التحليل غير موجود في قائمة أسعار الجهة المحال منها.`); (2) `AccountType == LabToLab` -> `Test.LabToLabPrice` if set, else `Test.PatientPrice`; (3) cash/VIP/Free -> `Test.PatientPrice`; (4) operator overrides total to zero at billing for `Free`; `AddCustomGroupToVisit` uses the same resolver with the group's per-test price as fallback when no contract price list; `TestPriceResolver` is `internal` and pure; `FakeSender` is the M-02 → M-13 MediatR test seam.
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: M-13 commands/queries/DTOs/mutators inlined in §3.1 of M-02 plan (source of truth); M-13 `GetPriceListByIdQuery` / `GetCustomGroupByIdQuery` / `GetPriceListsQuery` / `GetCustomGroupsQuery` (M-13 read surface only — no M-13 write is invoked by M-02); M-14 `ExternalEntity` (referral-entity `PriceListId` / type `TreatingDoctor` / `ReferralOrContract`); M-12 `Test` (read-only `PatientPrice` / `LabToLabPrice`); M-22 `GetSystemSettingsQuery` (`DefaultAccountType`, `DisableAutoTitleInsertion`); `ICurrentUserService` (read-only); `IApplicationDbContext`; `FakeSender` (new, intra-Application MediatR shim); existing handler/validator test conventions.
+- [x] **Stage 4 — Planning:** Step-by-step plan written. Plan: (1) `TestPriceResolver.cs`; (2) 10 command use-case folders (commands/handlers/validators); (3) `FakeSender.cs`; (4) fake extension if not already done in S2; (5) 11 handler test classes + 1 resolver test class + 1 authorization theory class; (6) grep gate on `PermissionConfiguration` (must be unchanged); (7) ADR-0032 (or next free) appended.
+- [x] **Stage 5 — Execution:** Slice implemented per plan. `InternalsVisibleTo("TopLab.Application.Tests")` added in `TopLab.Application.csproj` so `TestPriceResolverTests` can resolve the `internal` resolver.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass `zero errors + zero warnings`. Application.Tests: 641 passed (was 582; +59 new tests). Total: 981 tests (270 + 641 + 70).
+- [x] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: build 0/0; all 80 PatientRegistration tests in Application.Tests green; full suite 981 green; every pricing branch covered in `TestPriceResolverTests` (cash, lab-to-lab with/without `LabToLabPrice`, contract with price list, contract missing list, free, custom-group without contract, custom-group-with-contract); `TestPriceResolver` is `internal` and pure (unit-tested in isolation); `AddTestsToVisitCommandHandlerTests` and `AddCustomGroupToVisitCommandHandlerTests` cover every branch via `FakeSender` shim; grep gate on `PermissionConfiguration` clean (`git diff` is empty — settled OD-8); ADR-0032 appended to `Docs/Source/Top_Lab_ADR.md` recording permission re-use + `TestPriceResolver` placement + `FakeSender` test seam + per-test sample-flag rule + contract-with-price-list-missing-test rule.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated; ADR-0032 recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-02] Slice 3/4: Application: write surface (integrated against M-13's final surface) — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
 
 ---
 
@@ -145,10 +145,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 2/4 slices done
+- Overall: 3/4 slices done
 - Slice 1 — Domain mutators and invariants (patient, phone numbers, medical conditions, patient-test sample flags): [x] Done
 - Slice 2 — Application: read surface (search, visit history, titles, medical conditions, registration catalog): [x] Done
-- Slice 3 — Application: write surface (integrated against M-13's final surface): [ ] Not started
+- Slice 3 — Application: write surface (integrated against M-13's final surface): [x] Done
 - Slice 4 — Infrastructure proof + module close-out: [ ] Not started
 
 ## Execution Log
@@ -157,6 +157,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-07 | 0 | — | Memory file created | OK | — |
 | 2026-09-07 | 1 | 10 | Slice 1 implemented and verified (270 Domain.Tests; 901 total) | OK | local |
-| 2026-09-07 | 2 | 10 | Slice 2 implemented and verified (582 Application.Tests; 922 total) | OK | local (pending) |
+| 2026-09-07 | 2 | 10 | Slice 2 implemented and verified (582 Application.Tests; 922 total) | OK | local |
+| 2026-09-07 | 3 | 10 | Slice 3 implemented and verified (641 Application.Tests; 981 total) | OK | local (pending) |
 
 ## Stop Report (append only if a stop condition triggers)
