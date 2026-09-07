@@ -27,7 +27,7 @@ public sealed class PriceListItem
         Price = price;
     }
 
-    internal void UpdatePrice(decimal price)
+    public void UpdatePrice(decimal price)
     {
         if (price < 0)
         {

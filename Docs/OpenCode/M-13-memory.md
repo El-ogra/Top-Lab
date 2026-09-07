@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-13.md
 - **Date Created:** 2026-09-07
 - **Total Slices:** 4
-- **Current Slice:** Slice 2 complete — 2/4 slices done
+- **Current Slice:** Slice 3 complete — 3/4 slices done
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Domain behaviors and invariants (Domain layer) | [x] Complete | VG-01 |
 | 2 | Application read surface (queries + DTOs + fakes) | [x] Complete | VG-02 |
-| 3 | Application write surface + validators + auth tests | [ ] Not started | VG-03 |
+| 3 | Application write surface + validators + auth tests | [x] Complete | VG-03 |
 | 4 | Infrastructure proof + module close-out | [ ] Not started | VG-04 |
 
 ---
@@ -109,16 +109,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.3 + §5 frozen messages; all handlers implement `IAuthorizedRequest` with `EDIT_SYSTEM_SETTINGS`; mandatory item-mutation protocol (load header -> exist-check `TestId` -> pre-check flat row -> aggregate method inside try/catch ArgumentException -> translator -> persist idempotently against flat set -> SaveChanges); `DeletePriceList` guards on `ExternalEntity.PriceListId` references -> `Conflict("تعذر حذف قائمة الأسعار لارتباطها بجهات خارجية.")`; multiple comments per test allowed (no uniqueness check); save-time `IsReferenceConflict(ex)` catch -> `Error.Conflict` (M14 precedent).
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: 12 command use-case folders + 12 validators + `DomainFailureTranslator` + `CreateExternalEntityCommand` / `DeleteExternalEntityCommand` (M14 reference handlers) + authorization test conventions.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: commands -> validators -> translator -> DI wiring (no change — `AddValidatorsFromAssemblyContaining<CreateTestCommandValidator>()` already discovers M-13 validators) -> handler unit tests -> auth theory class -> grep gates.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: build/test output; grep gates clean.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-13] Slice 3/4: Application write surface + validators + auth tests — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: `dotnet build TopLab.sln` (0/0); `dotnet test TopLab.sln` (Domain 244, Application 372, Infrastructure 48 = 664 tests).
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.3 + §5 frozen messages; all 13 write commands implement `IAuthorizedRequest` with `EDIT_SYSTEM_SETTINGS` (5 price-list + 3 test-comment + 5 custom-group); mandatory item-mutation protocol — aggregate method as invariant-checker, flat-set as persistence surface; `DeletePriceList` guards on `ExternalEntity.PriceListId` references -> `Conflict("تعذر حذف قائمة الأسعار لارتباطها بجهات خارجية.")`; multiple comments per test allowed (no uniqueness check); save-time `IsReferenceConflict(ex)` catch -> `Error.Conflict` (M14 precedent); `PriceListItem.UpdatePrice` / `CustomGroupItem.UpdatePrice` changed from `internal` to `public` so handlers can mutate flat rows directly (the aggregate method would only mutate a throwaway in-memory instance, leaving the persisted flat row unchanged). `RemoveItem` handlers do NOT call the aggregate's RemoveItem (aggregate's `_items` is empty for a freshly-loaded header; only the flat set has the items) — pre-check on flat set is the invariant.
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: 13 command use-case folders (each Command/Handler/Validator) + `DomainFailureTranslator` (paramName+fragment style matching M14) + handler test files (3 — PriceList, TestComment, CustomGroup) + validator tests + authorization theory class; precedent files: `CreateExternalEntityCommandHandler`, `DeleteExternalEntityCommandHandler`, `RenameWorkGroupLogCommandHandler`, `CreateTestGroupCommandHandler`; `IAuthorizedRequest`, `Result`, `Error` factories; `FakeApplicationDbContext` (Update is no-op, Remove removes from list).
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: commands (5 PL + 3 TC + 5 CG) -> validators (per command) -> translator (Common/DomainFailureTranslator.cs) -> DI wiring (no change — `AddValidatorsFromAssemblyContaining<CreateTestCommandValidator>()` already discovers M-13 validators) -> handler unit tests (3 files) -> auth theory class (1 file, 13 InlineData) -> grep gates.
+- [x] **Stage 5 — Execution:** Slice implemented per plan; built and fixed 2 issues: (a) flat-row price mutation required `public UpdatePrice` (was `internal`); (b) `RemoveItem` handlers skip aggregate RemoveItem call (aggregate `_items` empty for fresh header).
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`. Evidence: Domain 244, Application 462 (+90 new), Infrastructure 48 = 754 tests.
+- [x] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: build/test output; grep gate #1 (no write command missing `IAuthorizedRequest`) — all 13 commands carry it; grep gate #2 (no handler persists instance from aggregate `Items` collection) — no `.Items` references in handlers.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-13] Slice 3/4: Application write surface + validators + auth tests — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
 
 ---
 
@@ -145,10 +145,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 2/4 slices done
+- Overall: 3/4 slices done
 - Slice 1 — Domain behaviors and invariants (Domain layer): [x] Complete (VG-01 passed; commit a92d238)
-- Slice 2 — Application read surface (queries + DTOs + fakes): [x] Complete (VG-02 passed)
-- Slice 3 — Application write surface + validators + auth tests: [ ] Not started
+- Slice 2 — Application read surface (queries + DTOs + fakes): [x] Complete (VG-02 passed; commit 1379127)
+- Slice 3 — Application write surface + validators + auth tests: [x] Complete (VG-03 passed)
 - Slice 4 — Infrastructure proof + module close-out: [ ] Not started
 
 ## Execution Log
@@ -157,5 +157,6 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-07 | 0 | — | Memory file created | OK | — |
 | 2026-09-07 | 1 | 10 | Slice 1 committed (Domain behaviors + tests, VG-01) | OK | a92d238 |
+| 2026-09-07 | 2 | 10 | Slice 2 committed (Application read surface, VG-02) | OK | 1379127 |
 
 ## Stop Report (append only if a stop condition triggers)
