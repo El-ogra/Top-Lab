@@ -9,6 +9,13 @@ using TopLab.Application.Features.ExternalEntities.Commands.CreateExternalEntity
 using TopLab.Application.Features.ExternalEntities.Commands.DeleteExternalEntity;
 using TopLab.Application.Features.ExternalEntities.Commands.GenerateEntityIdCode;
 using TopLab.Application.Features.ExternalEntities.Commands.UpdateExternalEntity;
+using TopLab.Application.Features.PatientRegistration.Commands.AddCustomGroupToVisit;
+using TopLab.Application.Features.PatientRegistration.Commands.AddMedicalCondition;
+using TopLab.Application.Features.PatientRegistration.Commands.AddTestsToVisit;
+using TopLab.Application.Features.PatientRegistration.Commands.ClearAllTests;
+using TopLab.Application.Features.PatientRegistration.Commands.CreatePatient;
+using TopLab.Application.Features.PatientRegistration.Commands.RemoveTestFromVisit;
+using TopLab.Application.Features.PatientRegistration.Commands.UpdatePatientTestSampleFlags;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.CreateCustomGroup;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.CreatePriceList;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.CreateTestComment;
@@ -103,6 +110,24 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<AttachAntibioticToCultureCommand>))]
     [InlineData(typeof(IValidator<DetachAntibioticFromCultureCommand>))]
     public void HostBuiltLikeApp_ResolvesM15Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<CreatePatientCommand>))]
+    [InlineData(typeof(IValidator<AddMedicalConditionCommand>))]
+    [InlineData(typeof(IValidator<AddTestsToVisitCommand>))]
+    [InlineData(typeof(IValidator<AddCustomGroupToVisitCommand>))]
+    [InlineData(typeof(IValidator<UpdatePatientTestSampleFlagsCommand>))]
+    [InlineData(typeof(IValidator<RemoveTestFromVisitCommand>))]
+    public void HostBuiltLikeApp_ResolvesM02Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();

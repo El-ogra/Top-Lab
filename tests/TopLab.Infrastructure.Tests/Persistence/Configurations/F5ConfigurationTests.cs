@@ -30,6 +30,23 @@ public class F5ConfigurationTests
     }
 
     [Fact]
+    public void Patient_IsDeleted_IsBitNotNull()
+    {
+        var et = GetEntityType<Patient>();
+        var prop = et.FindProperty(nameof(Patient.IsDeleted));
+        Assert.NotNull(prop);
+        Assert.False(prop!.IsNullable);
+    }
+
+    [Fact]
+    public void Patient_HasIndexOnIsDeleted()
+    {
+        var et = GetEntityType<Patient>();
+        var idx = et.GetIndexes().FirstOrDefault(i => i.Properties.Any(p => p.Name == nameof(Patient.IsDeleted)));
+        Assert.NotNull(idx);
+    }
+
+    [Fact]
     public void PatientPhoneNumber_HasIndexOnPhoneNumber()
     {
         var et = GetEntityType<PatientPhoneNumber>();
@@ -87,6 +104,17 @@ public class F5ConfigurationTests
     {
         var et = GetEntityType<TopLab.Domain.Results.PatientTest>();
         var idx = et.GetIndexes().FirstOrDefault(i => i.Properties.Count == 3);
+        Assert.NotNull(idx);
+    }
+
+    [Fact]
+    public void PatientTest_HasCompositeIndex_OnPatientIdAndIsSampleDrawn()
+    {
+        var et = GetEntityType<TopLab.Domain.Results.PatientTest>();
+        var idx = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Count == 2
+            && i.Properties.Any(p => p.Name == nameof(TopLab.Domain.Results.PatientTest.PatientId))
+            && i.Properties.Any(p => p.Name == nameof(TopLab.Domain.Results.PatientTest.IsSampleDrawn)));
         Assert.NotNull(idx);
     }
 
