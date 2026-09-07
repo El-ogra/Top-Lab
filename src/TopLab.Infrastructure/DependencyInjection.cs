@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
+using TopLab.Application.Features.AccessAndNavigation.Common.Interfaces;
 using TopLab.Application.Features.ExternalEntities.Common.Interfaces;
 using TopLab.Infrastructure.Backup;
 using TopLab.Infrastructure.Identity;
@@ -56,6 +57,12 @@ public static class DependencyInjection
         // External entities: stateless cryptographic code generator (M-14).
         services.AddSingleton<IEntityIdCodeGenerator, SecureEntityIdCodeGenerator>();
         services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
+
+        // M-01 redacted connection descriptor: stateless, depends only on
+        // IConfiguration, so Singleton is appropriate. The full
+        // IWorkstationConnectionSettingsProvider registration in the
+        // Presentation layer is unchanged (M-01).
+        services.AddSingleton<IDbConnectionDescriptor, SqlServerConnectionDescriptor>();
 
         // Backup/maintenance: Scoped (depends on the Scoped ApplicationDbContext).
         services.AddScoped<IDatabaseMaintenanceService, SqlServerDatabaseMaintenanceService>();

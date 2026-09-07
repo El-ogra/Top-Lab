@@ -199,7 +199,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         try
         {
             var result = await _mediator.Send(new CheckDatabaseConnectivityQuery());
-            IsDatabaseConnected = result.IsSuccess && result.Value;
+            IsDatabaseConnected = result.IsSuccess && result.Value is { IsConnected: true };
             DatabaseConnectivityText = IsDatabaseConnected ? "متصل" : "غير متصل";
         }
         catch
