@@ -154,4 +154,20 @@ public sealed class PatientTest : AuditableEntity<PatientTestId>
         IsSampleDrawn = true;
         SampleDrawnAtUtc = drawnAtUtc;
     }
+
+    public void UpdateSampleFlags(
+        bool isUrine,
+        bool isStool,
+        bool isBlood,
+        bool isSemen,
+        bool isCsf,
+        bool isTakenOutsideLab)
+    {
+        IsUrine = isUrine;
+        IsStool = isStool;
+        IsBlood = isBlood;
+        IsSemen = isSemen;
+        IsCsf = isCsf;
+        IsTakenOutsideLab = isTakenOutsideLab;
+    }
 }

@@ -44,5 +44,6 @@ public sealed class PatientTestConfiguration : IEntityTypeConfiguration<PatientT
         b.HasIndex(e => e.PatientId);
         b.HasIndex(e => e.TestId);
         b.HasIndex(e => new { e.IsReviewed, e.IsPrinted, e.IsDelivered });
+        b.HasIndex(e => new { e.PatientId, e.IsSampleDrawn });
     }
 }

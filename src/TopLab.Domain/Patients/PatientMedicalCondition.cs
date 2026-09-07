@@ -20,4 +20,17 @@ public sealed class PatientMedicalCondition
         PatientId = patientId;
         MedicalConditionTypeId = medicalConditionTypeId;
     }
+
+    public static PatientMedicalCondition Create(PatientId patientId, MedicalConditionTypeId medicalConditionTypeId)
+    {
+        if (patientId is null)
+        {
+            throw new ArgumentNullException(nameof(patientId));
+        }
+        if (medicalConditionTypeId is null)
+        {
+            throw new ArgumentNullException(nameof(medicalConditionTypeId));
+        }
+        return new PatientMedicalCondition(patientId, medicalConditionTypeId);
+    }
 }

@@ -36,5 +36,7 @@ public sealed class PatientConfiguration : IEntityTypeConfiguration<Patient>
         b.Property(e => e.FastingHours).IsRequired(false);
         b.Property(e => e.RecentContrastImaging).IsRequired();
         b.Property(e => e.Notes).HasMaxLength(1000).IsRequired(false);
+        b.Property(e => e.IsDeleted).HasColumnType("bit").IsRequired();
+        b.HasIndex(e => e.IsDeleted);
     }
 }

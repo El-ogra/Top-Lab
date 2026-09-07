@@ -46,11 +46,21 @@ public sealed class Patient : AuditableEntity<PatientId>
 
     public string? Notes { get; private set; }
 
+    public bool IsDeleted { get; private set; }
+
     private readonly List<PatientPhoneNumber> _phoneNumbers = [];
     public IReadOnlyCollection<PatientPhoneNumber> PhoneNumbers => _phoneNumbers.AsReadOnly();
 
     private readonly List<PatientMedicalCondition> _medicalConditions = [];
     public IReadOnlyCollection<PatientMedicalCondition> MedicalConditions => _medicalConditions.AsReadOnly();
+
+    private void EnsureNotDeleted()
+    {
+        if (IsDeleted)
+        {
+            throw new InvalidOperationException("Patient is deleted and cannot be modified.");
+        }
+    }
 
     private Patient()
     {
@@ -154,6 +164,8 @@ public sealed class Patient : AuditableEntity<PatientId>
         int? fastingHours,
         bool recentContrastImaging)
     {
+        EnsureNotDeleted();
+
         if (string.IsNullOrWhiteSpace(fullName))
         {
             throw new ArgumentException("FullName is required.", nameof(fullName));
@@ -186,6 +198,8 @@ public sealed class Patient : AuditableEntity<PatientId>
 
     public void AssignLabId(LabId labId)
     {
+        EnsureNotDeleted();
+
         if (labId is null)
         {
             throw new ArgumentNullException(nameof(labId));
@@ -205,5 +219,82 @@ public sealed class Patient : AuditableEntity<PatientId>
     public void SetReferralEntity(ExternalEntityId? referralEntityId)
     {
         ReferralEntityId = referralEntityId;
+    }
+
+    public void SetPhoneNumbers(IEnumerable<PatientNumberInput> phoneNumbers)
+    {
+        EnsureNotDeleted();
+
+        _phoneNumbers.Clear();
+
+        if (phoneNumbers is null)
+        {
+            return;
+        }
+
+        foreach (var input in phoneNumbers)
+        {
+            if (input is null)
+            {
+                continue;
+            }
+
+            var trimmed = input.Number?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                continue;
+            }
+
+            var sortOrder = input.SortOrder;
+            var phone = PatientPhoneNumber.Create(
+                PatientPhoneNumberId.Create(0),
+                Id,
+                trimmed,
+                sortOrder);
+            _phoneNumbers.Add(phone);
+        }
+    }
+
+    public void AddMedicalCondition(MedicalConditionTypeId id)
+    {
+        EnsureNotDeleted();
+
+        if (id is null)
+        {
+            throw new ArgumentNullException(nameof(id));
+        }
+
+        if (_medicalConditions.Any(mc => mc.MedicalConditionTypeId.Equals(id)))
+        {
+            return;
+        }
+
+        _medicalConditions.Add(PatientMedicalCondition.Create(Id, id));
+    }
+
+    public void RemoveMedicalCondition(MedicalConditionTypeId id)
+    {
+        EnsureNotDeleted();
+
+        if (id is null)
+        {
+            throw new ArgumentNullException(nameof(id));
+        }
+
+        var existing = _medicalConditions.FirstOrDefault(mc => mc.MedicalConditionTypeId.Equals(id));
+        if (existing is not null)
+        {
+            _medicalConditions.Remove(existing);
+        }
+    }
+
+    public void SoftDelete()
+    {
+        IsDeleted = true;
+    }
+
+    public void Restore()
+    {
+        IsDeleted = false;
     }
 }

@@ -41,4 +41,26 @@ public class PatientTestTests
         Assert.Equal(2, pt.PrintCount);
         Assert.True(pt.IsPrinted);
     }
+
+    [Fact]
+    public void UpdateSampleFlags_RoundTrips_AllSixBooleans()
+    {
+        var pt = PatientTest.Create(PatientTestId.Create(1), PatientId.Create(1), TestId.Create(1), 100m);
+        pt.UpdateSampleFlags(isUrine: true, isStool: false, isBlood: true, isSemen: false, isCsf: false, isTakenOutsideLab: true);
+        Assert.True(pt.IsUrine);
+        Assert.False(pt.IsStool);
+        Assert.True(pt.IsBlood);
+        Assert.False(pt.IsSemen);
+        Assert.False(pt.IsCsf);
+        Assert.True(pt.IsTakenOutsideLab);
+    }
+
+    [Fact]
+    public void MarkSampleDrawn_RoundTrips()
+    {
+        var pt = PatientTest.Create(PatientTestId.Create(1), PatientId.Create(1), TestId.Create(1), 100m);
+        pt.MarkSampleDrawn(DateTime.UtcNow);
+        Assert.True(pt.IsSampleDrawn);
+        Assert.NotNull(pt.SampleDrawnAtUtc);
+    }
 }
