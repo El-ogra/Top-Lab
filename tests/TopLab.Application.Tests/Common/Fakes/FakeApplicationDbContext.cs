@@ -40,6 +40,9 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<EnvelopeSettings> EnvelopeSettings { get; } = new();
     public List<EnvelopePrintItemPosition> EnvelopePrintItemPositions { get; } = new();
     public List<PrinterAssignment> PrinterAssignments { get; } = new();
+    public List<Antibiotic> Antibiotics { get; } = new();
+    public List<CultureAntibioticAttachment> CultureAntibioticAttachments { get; } = new();
+    public List<CultureAntibioticResult> CultureAntibioticResults { get; } = new();
 
     public int SaveChangesCallCount { get; private set; }
 
@@ -175,6 +178,21 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)PrinterAssignments.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(Antibiotic))
+        {
+            return (IQueryable<TEntity>)(object)Antibiotics.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(CultureAntibioticAttachment))
+        {
+            return (IQueryable<TEntity>)(object)CultureAntibioticAttachments.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(CultureAntibioticResult))
+        {
+            return (IQueryable<TEntity>)(object)CultureAntibioticResults.AsQueryable();
+        }
+
         return Enumerable.Empty<TEntity>().AsQueryable();
     }
 
@@ -206,6 +224,9 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is EnvelopeSettings env) EnvelopeSettings.Add(env);
         else if (entity is EnvelopePrintItemPosition epos) EnvelopePrintItemPositions.Add(epos);
         else if (entity is PrinterAssignment pa) PrinterAssignments.Add(pa);
+        else if (entity is Antibiotic ab) Antibiotics.Add(ab);
+        else if (entity is CultureAntibioticAttachment caa) CultureAntibioticAttachments.Add(caa);
+        else if (entity is CultureAntibioticResult car) CultureAntibioticResults.Add(car);
         else throw new NotSupportedException($"Add not supported for {typeof(TEntity).Name}");
     }
 
@@ -242,6 +263,9 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is EnvelopeSettings env) EnvelopeSettings.Remove(env);
         else if (entity is EnvelopePrintItemPosition epos) EnvelopePrintItemPositions.Remove(epos);
         else if (entity is PrinterAssignment pa) PrinterAssignments.Remove(pa);
+        else if (entity is Antibiotic ab) Antibiotics.Remove(ab);
+        else if (entity is CultureAntibioticAttachment caa) CultureAntibioticAttachments.Remove(caa);
+        else if (entity is CultureAntibioticResult car) CultureAntibioticResults.Remove(car);
         else throw new NotSupportedException($"Remove not supported for {typeof(TEntity).Name}");
     }
 

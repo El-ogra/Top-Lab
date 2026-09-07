@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-15.md
 - **Date Created:** 2026-09-07
 - **Total Slices:** 3
-- **Current Slice:** Slice 1/3 committed; Slice 2/3 in progress — 1/3 slices done
+- **Current Slice:** Slice 2/3 committed; Slice 3/3 in progress — 2/3 slices done
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -52,7 +52,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain behaviors + display-filter contract | [x] Done | VG-01 |
-| 2 | Application read + write surface | [ ] Not started | VG-02 |
+| 2 | Application read + write surface | [x] Done | VG-02 |
 | 3 | Infrastructure proof + module close-out | [ ] Not started | VG-03 |
 
 ---
@@ -86,16 +86,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.1 (M15-S2) + §5 frozen messages + §9 confirmed D6-a (no composite command); reads are unauthorized plain `IRequest<Result<...>>` (M12/M14 precedent); writes are `IAuthorizedRequest` -> `EDIT_SYSTEM_SETTINGS`; `AttachAntibioticToCulture` enforces `IsCultureType` (a plain test must not receive antibiotics); antibiotic delete guards on both `CultureAntibioticAttachment` rows and `CultureAntibioticResult` rows (Restrict FK; M06 data cannot exist yet — check is forward-safe); manual-create-then-attach sequencing is the D6-a two-command flow (no composite command).
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `IApplicationDbContext`, `FakeApplicationDbContext` (needs extension), `CreateTestGroupCommandHandler` (duplicate-name precedent), `DeleteExternalEntityCommandHandler` (`IsReferenceConflict` catch), `Test.cs` (`IsCultureType` create-time-only settable), `AntibioticConfiguration`, `CultureAntibioticAttachmentConfiguration` (read in full).
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs -> 2 queries (handlers + tests) -> 5 commands (commands/handlers/validators) -> translator -> DI wiring (no change — `AddValidatorsFromAssemblyContaining<CreateTestCommandValidator>()` discovers M-15 validators) -> fake extension -> handler/validator/auth tests -> grep gate.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build/test output; every §2 rule exercised; grep gate clean.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-15] Slice 2/3: Application read + write surface — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: baseline build 0/0; baseline test run 814/814 green (Domain 256, Application 495, Infra 63).
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.1 (M15-S2) + §5 frozen messages + §9 confirmed D6-a (no composite command); reads are unauthorized plain `IRequest<Result<...>>` (M12/M14 precedent); writes are `IAuthorizedRequest` -> `EDIT_SYSTEM_SETTINGS`; `AttachAntibioticToCulture` enforces `IsCultureType` (a plain test must not receive antibiotics); antibiotic delete guards on both `CultureAntibioticAttachment` rows and `CultureAntibioticResult` rows (Restrict FK; M06 data cannot exist yet — check is forward-safe); manual-create-then-attach sequencing is the D6-a two-command flow (no composite command).
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `IApplicationDbContext`, `FakeApplicationDbContext` (extended — Antibiotics / CultureAntibioticAttachments / CultureAntibioticResults lists + branches in Set/Add/Remove), `CreateTestGroupCommandHandler` (duplicate-name precedent — exact match on trimmed value, case-sensitive), `DeleteExternalEntityCommandHandler` (`IsReferenceConflict` catch — mapped to results Conflict message), `Test.cs` (`IsCultureType` create-time-only settable, no parameter in `Update`), `AntibioticConfiguration`, `CultureAntibioticAttachmentConfiguration` (read in full — used to confirm FK / no-FK matrix).
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs -> 2 queries (handlers + tests) -> 5 commands (commands/handlers/validators) -> translator -> DI wiring (no change — `AddValidatorsFromAssemblyContaining<CreateTestCommandValidator>()` discovers M-15 validators) -> fake extension -> handler/validator/auth tests -> grep gate.
+- [x] **Stage 5 — Execution:** Slice implemented per plan. Files created: `AntibioticDtos.cs`, `DomainFailureTranslator.cs`, `GetAntibioticsQuery(.cs/.Handler.cs)`, `GetCultureAntibioticsQuery(.cs/.Handler.cs)`, `CreateAntibioticCommand(.cs/.Handler.cs/.Validator.cs)`, `UpdateAntibioticCommand(.cs/.Handler.cs/.Validator.cs)`, `DeleteAntibioticCommand(.cs/.Handler.cs/.Validator.cs)`, `AttachAntibioticToCultureCommand(.cs/.Handler.cs/.Validator.cs)`, `DetachAntibioticFromCultureCommand(.cs/.Handler.cs/.Validator.cs)`; `ReferenceConflictFakeApplicationDbContext.cs`; `AntibioticCommandHandlerTests.cs`, `CultureAntibioticAttachmentCommandHandlerTests.cs`, `AntibioticQueryHandlerTests.cs`, `AntibioticValidatorTests.cs`, `CultureAndAntibioticsAuthorizationTests.cs`, `CreateThenAttachFlowTests.cs`. Modified: `FakeApplicationDbContext.cs`.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`. Evidence: build 0/0 (final after fixing the CS8604 null warnings by trimming via local non-nullable `string` + dropping the redundant null-coalesce); test run 863/863 green (Domain 256, Application 544, Infra 63).
+- [x] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: all 5 write commands carry `IAuthorizedRequest` -> `EDIT_SYSTEM_SETTINGS` (grep gate clean); reads are unauthorized (grep clean); every §2 rule exercised: attach-to-non-culture rejected with `التحليل المحدد ليس مزرعة.`; duplicate attach rejected with `المضاد الحيوي مضاف بالفعل لهذه المزرعة.`; detach-missing rejected with `المضاد الحيوي غير مضاف لهذه المrazerعة.` (note: actual message is `المضاد الحيوي غير مضاف لهذه المزرعة.`); delete blocked by `CultureAntibioticAttachment` rows with `تعذر حذف المضاد الحيوي لارتباطه بمزرعة.`; delete blocked by `CultureAntibioticResult` rows with `تعذر حذف المضاد الحيوي لوجود نتائج مسجلة به.`; save-time `IsReferenceConflict` catch mapped to results message via `ReferenceConflictFakeApplicationDbContext`; manual create-then-attach D6-a two-command flow covered by `CreateThenAttachFlowTests`; attached-count correctness covered (zero and multi-attachment cases).
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-15] Slice 2/3: Application read + write surface — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
 
 ---
 
@@ -122,9 +122,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/3 slices done
+- Overall: 2/3 slices done
 - Slice 1 — Domain behaviors + display-filter contract: [x] Done (VG-01 passed)
-- Slice 2 — Application read + write surface: [ ] Not started
+- Slice 2 — Application read + write surface: [x] Done (VG-02 passed)
 - Slice 3 — Infrastructure proof + module close-out: [ ] Not started
 
 ## Execution Log
@@ -133,5 +133,6 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-07 | 0 | — | Memory file created | OK | — |
 | 2026-09-07 | 1 | 1-10 | M15-S1 implemented (Antibiotic.Update + CultureAntibioticDisplay + 32 new tests); VG-01 passed | OK | `[M-15] Slice 1/3` |
+| 2026-09-07 | 2 | 1-10 | M15-S2 implemented (DTOs + 2 queries + 5 commands + 5 validators + translator + auth theory + 49 new tests + fake extension); VG-02 passed | OK | `[M-15] Slice 2/3` |
 
 ## Stop Report (append only if a stop condition triggers)
