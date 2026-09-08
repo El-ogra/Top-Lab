@@ -61,7 +61,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain: lifecycle guards, snapshot child entity, full status calculator + Domain tests + MIGRATION | [x] Done | VG-01 |
-| 2 | Application read surface: worklist, result detail, patient result sheet | [ ] Not started | VG-02 |
+| 2 | Application read surface: worklist, result detail, patient result sheet | [x] Done | VG-02 |
 | 3 | Application write surface: enter, clear, refresh-range, review, unreview, print, deliver, bulk variants + authorization tests | [ ] Not started | VG-03 |
 | 4 | Infrastructure proof + close-out | [ ] Not started | VG-04 |
 
@@ -91,21 +91,21 @@ Additional user-authorized execution parameters (override skill defaults):
 ## Slice 2: Application read surface: worklist, result detail, patient result sheet
 
 - **Goal:** Read-only projections for the (future) results screen, the entry form, and the (future) print preview.
-- **Touches:** `Features/ResultsEntry/Common/ResultsEntryDtos.cs` (create — `ResultWorklistItemDto`, `ResultEntryDto`, `FrozenRangeDto`, `PatientResultSheetDto`, `ResultSheetLineDto`; maps to M12's `ReferenceRangeDto` shape directly — same assembly); `Common/ResultsEntryAccessPolicy.cs` (create — `EditResults`, `ReviewResults`, `PrintResults`, `DeliverResults`); `Common/ResultFlagComputer.cs` (create — internal static, pure: `Compute` returns `Low`/`High`/`Normal`; `SelectMatch` implements the settled overlapping-range rule — sex-matched preferred over sex-null, then narrowest age band, then lowest id); `Common/BalanceProbe.cs` (create — internal static implementing the inlined formula over `IApplicationDbContext` for a `PatientId`); `Queries/GetResultWorklist/GetResultWorklistQuery.cs` (+Handler, +Validator — optional `Day`/`HasResult`/`IsReviewed`/`TestGroupId`/`ResultKind` filters, excludes soft-deleted patients, paged 50/500); `Queries/GetResultEntry/GetResultEntryQuery.cs` (+Handler, +Validator — single `PatientTestId` → `ResultEntryDto` with frozen range preferred into `FrozenRange`); `Queries/GetPatientResultSheet/GetPatientResultSheetQuery.cs` (+Handler, +Validator — all of a patient's tests with entry state + frozen ranges); `tests/TopLab.Application.Tests/Common/Fakes/FakeApplicationDbContext.cs` (extend — `List<PatientTestReferenceRangeSnapshot>` + branches); `tests/.../Features/ResultsEntry/` (create — worklist/entry/sheet handler tests + `ResultFlagComputerTests` with exhaustive truth table).
+- **Touches:** `Features/ResultsEntry/Common/ResultsEntryDtos.cs` (create — `ResultWorklistItemDto`, `ResultEntryDto`, `FrozenRangeDto`, `PatientResultSheetDto`, `ResultSheetLineDto`; maps to M12's `ReferenceRangeDto` shape directly — same assembly); `Common/ResultsEntryAccessPolicy.cs` (create — `EditResults`, `ReviewResults`, `PrintResults`, `DeliverResults`); `Common/ResultFlagComputer.cs` (create — internal static, pure: `Compute` returns `Low`/`High`/`Normal`; `SelectMatch` implements the settled overlapping-range rule — sex-matched preferred over sex-null, then narrowest age band, then lowest id); `Common/BalanceProbe.cs` (create — internal static loader delegating exclusively to `PatientAccountCalculator.Balance` per D5, no duplicated formula); `Queries/GetResultWorklist/GetResultWorklistQuery.cs` (+Handler, +Validator — optional `Day`/`HasResult`/`IsReviewed`/`TestGroupId`/`ResultKind` filters, excludes soft-deleted patients, paged 50/500); `Queries/GetResultEntry/GetResultEntryQuery.cs` (+Handler, +Validator — single `PatientTestId` → `ResultEntryDto` with frozen range preferred into `FrozenRange`); `Queries/GetPatientResultSheet/GetPatientResultSheetQuery.cs` (+Handler, +Validator — all of a patient's tests with entry state + frozen ranges); `tests/TopLab.Application.Tests/Common/Fakes/FakeApplicationDbContext.cs` (extend — `List<PatientTestReferenceRangeSnapshot>` + branches); `tests/.../Features/ResultsEntry/` (create — worklist/entry/sheet handler tests + `ResultFlagComputerTests` with exhaustive truth table).
 - **Validation Gate:** VG-02 — Application build zero/zero; all Application tests pass; every DTO field traced to a verified domain property; no write commands in this slice; no migration in this slice.
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.3; `AggregateStatus` is computed per patient via the settled `PatientStatusCalculator` over the patient's tests + a `BalanceProbe` balance — FR-M08-007 requires patient lists to display the §8 aggregate status icon; the right-panel patient list of the results screen (FR-M04-001) is such a list; worklist shows Simple rows and *also* SpecializedProfile/Culture rows (visibility here is intentional and stated; `ResultKind` filter lets the future UI narrow); the frozen range is what the report shows — BR-05: old values persist until explicitly refreshed; `ResultFlagComputer.SelectMatch` candidates = rows where `Matches(...)`; prefer `Sex == patient sex` over `Sex == null`; then narrowest `(AgeMax − AgeMin)`; then lowest id.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: M12's `ReferenceRangeDto` (same Application assembly — maps directly), `ReferenceRange.Matches` (age-unit-sensitive per BR-04/FR-M12-005; sex-null matches both; inclusive bounds), `PatientStatusCalculator` (now implemented per Slice 1), `ResultFlag` enum, `IApplicationDbContext`, `FakeApplicationDbContext` (29 lists — needs `List<PatientTestReferenceRangeSnapshot>` extension), `Error`/`Result` patterns, M02 pagination precedent (default 50 / max 500), reference-range query pattern.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs → access policy → `ResultFlagComputer` (with `SelectMatch` rule) → `BalanceProbe` (private formula copy) → 3 queries (worklist, entry, sheet) → fake extension → handler tests + `ResultFlagComputerTests` (parse-fail / no-match / low / normal / high / boundary-inclusive / age-unit-mismatch / most-specific selection).
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build/test output; no write commands; no migration.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-04] Slice 2/4: Application read surface: worklist, result detail, patient result sheet — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.3; `AggregateStatus` is computed per patient via the settled `PatientStatusCalculator` over the patient's tests + a `BalanceProbe` balance — FR-M08-007 requires patient lists to display the §8 aggregate status icon; the right-panel patient list of the results screen (FR-M04-001) is such a list; worklist shows Simple rows and *also* SpecializedProfile/Culture rows (visibility here is intentional and stated; `ResultKind` filter lets the future UI narrow); the frozen range is what the report shows — BR-05: old values persist until explicitly refreshed; `ResultFlagComputer.SelectMatch` candidates = rows where `Matches(...)`; prefer `Sex == patient sex` over `Sex == null`; then narrowest `(AgeMax − AgeMin)`; then lowest id. D5 applied: `BalanceProbe` delegates exclusively to `PatientAccountCalculator.Balance`.
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: M12's `ReferenceRangeDto` (same Application assembly — maps directly), `ReferenceRange.Matches` (age-unit-sensitive per BR-04/FR-M12-005; sex-null matches both; inclusive bounds), `PatientStatusCalculator` (now implemented per Slice 1), `ResultFlag` enum, `IApplicationDbContext`, `FakeApplicationDbContext` (33-list live tree — extended with `List<PatientTestReferenceRangeSnapshot>`), `Error`/`Result` patterns, M02 pagination precedent (default 50 / max 500), reference-range query pattern.
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs → access policy → `ResultFlagComputer` (with `SelectMatch` rule) → `BalanceProbe` (D5 loader delegating to Domain calculator) → 3 queries (worklist, entry, sheet) → fake extension → handler tests + `ResultFlagComputerTests` (parse-fail / no-match / low / normal / high / boundary-inclusive / age-unit-mismatch / most-specific selection).
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
+- [x] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build/test output; no write commands; no migration.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-04] Slice 2/4: Application read surface: worklist, result detail, patient result sheet — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
 
 ---
 
@@ -153,9 +153,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/4 slices done
+- Overall: 2/4 slices done
 - Slice 1 — Domain: lifecycle guards, snapshot child entity, full status calculator + Domain tests + MIGRATION: [x] Done (VG-01 passed: build 0/0, Domain 317 green, full suite 1107 green, migration AddPatientTestReferenceRangeSnapshots, has-pending-model-changes = no changes)
-- Slice 2 — Application read surface: worklist, result detail, patient result sheet: [ ] Not started
+- Slice 2 — Application read surface: worklist, result detail, patient result sheet: [x] Done (VG-02 passed: build 0/0, Application 737 green, full suite 1136 green, no commands, no migration)
 - Slice 3 — Application write surface: enter, clear, refresh-range, review, unreview, print, deliver, bulk variants + authorization tests: [ ] Not started
 - Slice 4 — Infrastructure proof + close-out: [ ] Not started
 
@@ -165,5 +165,6 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-08 | 0 | — | Memory file created | OK | — |
 | 2026-09-08 | 1 | 1-10 | S1 Domain guards + snapshot 1:1 + status calculator + migration; build 0/0; Domain 317 green; full 1107 green; VG-01 passed | OK | pending |
+| 2026-09-08 | 2 | 1-10 | S2 read surface (worklist/entry/sheet + FlagComputer + BalanceProbe D5); build 0/0; Application 737 green; full 1136 green; VG-02 passed | OK | pending |
 
 ## Stop Report (append only if a stop condition triggers)

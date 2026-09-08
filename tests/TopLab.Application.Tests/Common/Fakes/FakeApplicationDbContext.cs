@@ -47,6 +47,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<PatientMedicalCondition> PatientMedicalConditions { get; } = new();
     public List<PatientTitle> PatientTitles { get; } = new();
     public List<MedicalConditionType> MedicalConditionTypes { get; } = new();
+    public List<PatientTestReferenceRangeSnapshot> PatientTestReferenceRangeSnapshots { get; } = new();
 
     public int SaveChangesCallCount { get; private set; }
 
@@ -217,6 +218,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)MedicalConditionTypes.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(PatientTestReferenceRangeSnapshot))
+        {
+            return (IQueryable<TEntity>)(object)PatientTestReferenceRangeSnapshots.AsQueryable();
+        }
+
         return Enumerable.Empty<TEntity>().AsQueryable();
     }
 
@@ -255,6 +261,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is PatientMedicalCondition pmc) PatientMedicalConditions.Add(pmc);
         else if (entity is PatientTitle pt2) PatientTitles.Add(pt2);
         else if (entity is MedicalConditionType mct) MedicalConditionTypes.Add(mct);
+        else if (entity is PatientTestReferenceRangeSnapshot snap) PatientTestReferenceRangeSnapshots.Add(snap);
         else throw new NotSupportedException($"Add not supported for {typeof(TEntity).Name}");
     }
 
@@ -298,6 +305,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is PatientMedicalCondition pmc) PatientMedicalConditions.Remove(pmc);
         else if (entity is PatientTitle pt2) PatientTitles.Remove(pt2);
         else if (entity is MedicalConditionType mct) MedicalConditionTypes.Remove(mct);
+        else if (entity is PatientTestReferenceRangeSnapshot snap) PatientTestReferenceRangeSnapshots.Remove(snap);
         else throw new NotSupportedException($"Remove not supported for {typeof(TEntity).Name}");
     }
 
