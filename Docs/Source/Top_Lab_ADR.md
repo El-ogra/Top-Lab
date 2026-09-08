@@ -715,4 +715,23 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 
 ---
 
+### ADR-0033 — M-21: Sample Collection permission reuse (no new seed row)
+
+- **Status:** Accepted
+- **Date:** 2026-09-08
+
+**Context.** Module 21 implements the sample collection & separation backend (Application layer only; no Presentation). The M21 surface is two unauthorized queries (`GetPatientsWithUncollectedSamplesQuery`, `GetPatientTestsForDrawQuery`) and two write commands (`MarkSampleDrawnCommand`, `MarkAllSamplesDrawnForPatientCommand`). The permission gate for the two writes is settled OD-8: reuse the existing `ADD_EDIT_PATIENT` code rather than introducing a new one.
+
+**Decision.**
+
+1. **Permission gate re-use — no new seed row.** Both M-21 write commands carry `IAuthorizedRequest` with `RequiredPermissionCode => SampleCollectionAccessPolicy.AddEditPatient` (the literal `"ADD_EDIT_PATIENT"`, id 1 in the 13-row catalog seeded in `src/TopLab.Infrastructure/Persistence/Configurations/PermissionConfiguration.cs`, unchanged — the `git diff` against `PermissionConfiguration.cs` is empty). The phlebotomist's draw-marking write is the same operational write as the registrator's, so the M02 code applies directly.
+2. **Own access-policy constant, mirrored shape — no cross-feature import.** M21 ships `src/TopLab.Application/Features/SampleCollection/Common/SampleCollectionAccessPolicy.cs` (`public const string AddEditPatient = "ADD_EDIT_PATIENT";`) mirroring the M02 `PatientRegistrationAccessPolicy` shape. M21 does not import M02's class; the per-feature access-policy convention (one constant holder per feature) is preserved.
+3. **Outside-drawn tests are read-only from the M21 screen (FR-M21-001).** `MarkSampleDrawnCommandHandler` rejects an `IsTakenOutsideLab` row with `Error.Conflict("تم تسجيل العينة كمسحوبة خارج المعمل؛ لا يمكن تعديلها من شاشة السحب")`, and `GetPatientsWithUncollectedSamplesQueryHandler` excludes outside-drawn rows from the un-drawn list. The message string is frozen by `MarkSampleDrawnCommandHandlerTests.OutsideDrawnTest_ReturnsConflict_WithSpecificMessage_FR_M21_001`.
+
+**Consequences.** Diff is confined to `src/TopLab.Application/Features/SampleCollection/**` (2 DTO/query files in `Common`, 2 queries, 2 commands, 5 validators), `tests/TopLab.Application.Tests/Features/SampleCollection/**` (5 test files, 20 tests), and `Docs/**` (this entry, the tracking-sheet flip, `Handoff_M21.md`). **No Domain change, no Infrastructure change, no migration, no DI wiring change** (validators resolve via `AddValidatorsFromAssemblyContaining<CreateTestCommandValidator>()`), **no Presentation content anywhere**. The 20 new tests pin every gate: the FR-M21-001 invariant on both the query and the command, the idempotent double-draw, and the exactly-once save of `MarkAllSamplesDrawnForPatientCommandHandler`.
+
+**Related.** M-21 Implementation Plan §5.1 + §3.1; ADR-0032 (M02 permission-gate re-use of `ADD_EDIT_PATIENT`/`DELETE_PATIENT`); ADR-0026 (M17 permission seeding); ADR-0030/ADR-0031 (zero-migration + permission-reuse precedent).
+
+---
+
 *End of document.*

@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-21.md
 - **Date Created:** 2026-09-07
 - **Total Slices:** 2
-- **Current Slice:** Slice 1 done — 1/2 slices done
+- **Current Slice:** All slices done — 2/2 slices done. Module M-21 complete.
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -51,7 +51,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | M-21 application: queries and `MarkSampleDrawnCommand` + tests | [x] Done | VG-01 |
-| 2 | M-21 close-out (tracking flip + handoff + ADR-0033) | [ ] Not started | VG-02 |
+| 2 | M-21 close-out (tracking flip + handoff + ADR-0033) | [x] Done | VG-02 |
 
 ---
 
@@ -84,24 +84,24 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §5.2 (M21-S2); this slice is pure documentation — no Application/Domain/Infrastructure code changes; S1's diff stays as it landed; the ADR-0033 entry is for traceability of the permission-gate reuse, not a behavioral change; the handoff's "Required Reading" cites `Handoff_M02.md` (for the integrated M-02 schema and access-policy shape inlined in §3.1 of M-21 plan) and `Handoff_M14.md` (for `ExternalEntity` reference).
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `Top_Lab_Master_Tracking_Sheet.md` (read — M-21 row to flip), `Top_Lab_Handoff_Template.md` / `Handoff_M12.md` / `Handoff_M22.md` (read — template), `Top_Lab_ADR.md` (read — append ADR-0033 or next free, confirm M-21 handoff and required-reading list).
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: (1) flip tracking-sheet M-21 row; (2) write `Handoff_M21.md` per template; (3) append ADR-0033 to `Top_Lab_ADR.md`; (4) verify build + tests still green (no code change expected to break).
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings` (no code change expected to break).
-- [ ] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: handoff document produced; tracking-sheet row updated; ADR recorded; build + tests still green.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: `dotnet build TopLab.sln -m:1` 0/0; `dotnet test TopLab.sln -m:1` 270 + 667 + 79 green (S1 commit `ea382dc` verified clean).
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §5.2 (M21-S2); pure documentation — no Application/Domain/Infrastructure code changes; S1's diff stays as it landed (`ea382dc`); ADR-0033 is for traceability of the permission-gate reuse, not a behavioral change; handoff "Required Reading" cites `Handoff_M02.md` + `Handoff_M14.md` + ADR-0033; change-log/tracking dates use the factual execution date 2026-09-08 (the plan's 2026-09-07 was written assuming same-day execution).
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `Top_Lab_Master_Tracking_Sheet.md` (read — §4 M21 row line 71, §5 Wave 4 row line 97, §9 log format line 369; §6 blocks left untouched per M02 close-out precedent), `Handoff_M02.md` (read in full — handoff structure precedent), `Top_Lab_ADR.md` (read — ADR-0032 tail, ADR-0033 is next free), `ValidatorRegistrationTests.cs` (read — explicit per-module InlineData lists; M21 validators NOT added there because VG-02 mandates no code changes in S2; assembly scanning covers them).
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: (1) flip tracking-sheet §4 M21 row to 🟩 Done + §5 Wave 4 row to 🟩 Done (both members Done, per the sheet's own wave rule) + §9 change-log row; (2) write `Docs/Handoff_M21.md` per the Handoff_M02 structure (incl. one honest deviation entry: `PatientTest` has no `IsDeleted`, guard enforced via owning `Patient` per the recorded M02 deviation); (3) append ADR-0033; (4) verify build + tests still green.
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings` (docs only, nothing to break). Evidence: build 0/0; full suite 667 + 79 (+ 270 Domain, unchanged) green.
+- [x] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: `Docs/Handoff_M21.md` produced; tracking-sheet §4/§5/§9 updated; ADR-0033 recorded; `git diff --stat` shows only the 2 modified docs (+ `Handoff_M21.md` new); zero `src/`/`tests/` changes in S2.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
 - [ ] **Stage 10 — Git Commit (authorized local):** `[M-21] Slice 2/2: M-21 close-out (tracking flip + handoff + ADR-0033) — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
 
 ---
 
 ## Current Status
 
-- Overall: 1/2 slices done
-- Slice 1 — M-21 application: queries and `MarkSampleDrawnCommand` + tests: [x] Done (VG-01 passed)
-- Slice 2 — M-21 close-out (tracking flip + handoff + ADR-0033): [ ] Not started
+- Overall: 2/2 slices done. Module M-21 complete.
+- Slice 1 — M-21 application: queries and `MarkSampleDrawnCommand` + tests: [x] Done (VG-01 passed, commit `ea382dc`)
+- Slice 2 — M-21 close-out (tracking flip + handoff + ADR-0033): [x] Done (VG-02 passed)
 
 ## Execution Log
 
@@ -109,5 +109,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-07 | 0 | — | Memory file created | OK | — |
 | 2026-09-08 | 1 | 1–9 | S1 implemented: 14 production files + 5 test files (20 tests); build 0/0; full suite 270+667+79 green; VG-01 passed | OK | — |
+| 2026-09-08 | 1 | 10 | S1 committed locally on `main` | OK | `ea382dc` |
+| 2026-09-08 | 2 | 1–9 | S2 executed: tracking §4/§5/§9 updated, `Handoff_M21.md` created, ADR-0033 appended; build 0/0; full suite green; VG-02 passed | OK | — |
 
 ## Stop Report (append only if a stop condition triggers)
