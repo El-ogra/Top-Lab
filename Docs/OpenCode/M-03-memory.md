@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-03.md
 - **Date Created:** 2026-09-08
 - **Total Slices:** 4
-- **Current Slice:** Slice 1 done — 1/4 slices done
+- **Current Slice:** Slice 2 done — 2/4 slices done
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain guards on `PaymentOperation` + balance calculator + Domain tests | [x] Done | VG-01 |
-| 2 | Application read surface: patient account, payment history, receipt data | [ ] Not started | VG-02 |
+| 2 | Application read surface: patient account, payment history, receipt data | [x] Done | VG-02 |
 | 3 | Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void | [ ] Not started | VG-03 |
 | 4 | Infrastructure proof + close-out | [ ] Not started | VG-04 |
 
@@ -88,16 +88,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §2.3; `OperationType` projected as enum name string for cashier readability (code comment); `ReceiptName` carried because receipt lines must show the receipt-facing name, not the internal catalog name; `Patients`/`PatientTests`/`PaymentOperations`/`Tests`/`Users`/`ReceiptSettings` all verified present in the 29-list fake — no new fake lists needed; handler loads Patient (NotFound on missing or `IsDeleted`), loads the patient's `PatientTest` rows (join `Test` for `Name`/`TestCode`/`ReceiptName`), loads all `PaymentOperation` rows including voided (history must show them, flagged), resolves `ReceivedByUserName` from `Users` set (fallback to raw id string when the user row is gone), computes `TotalCharged`/`TotalPaid`/`Balance` via `PatientAccountCalculator` and `TotalDiscount = Σ coalesce(DiscountAmount,0) of non-voided non-extra-charge ops`; receipt query reads `ReceiptSettings` row `Id == 1` for `Currency` (Unexpected if missing); list query is paged flat list newest first.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `IApplicationDbContext` (read in full), `FakeApplicationDbContext` (read — no extension needed; all 6 entity types present), `PaymentOperationConfiguration` (re-verified), `TestConfiguration` (`ReceiptName` ≤150), `ReceiptSettings` (Currency = "L.E."), `User` set in fake (for `ReceivedByUserName` resolution), `Error`/`Result` patterns, M22 settings-missing message style, M02 pagination precedent.
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs (`PatientBillingDtos.cs`) → access policy class → `GetPatientAccountQuery` (load patient/Tests/PaymentOperations, compute via `PatientAccountCalculator`, resolve user names with deleted-user fallback) → `GetPatientReceiptQuery` (same + currency from `ReceiptSettings`) → `ListPatientPaymentsQuery` (paged, newest first, voided included) → handler test classes.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build/test output; every DTO field traced; no write commands.
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-03] Slice 2/4: Application read surface: patient account, payment history, receipt data — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §2.3; `OperationType` projected as enum name string for cashier readability (code comment); `ReceiptName` carried because receipt lines must show the receipt-facing name, not the internal catalog name; handler loads Patient (NotFound on missing or `IsDeleted`), loads the patient's `PatientTest` rows (join `Test` for `Name`/`TestCode`/`ReceiptName`; NO `IsDeleted` filter — live tree confirms `PatientTest` has no such flag, no drift), loads all `PaymentOperation` rows including voided (history must show them, flagged), resolves `ReceivedByUserName` from `Users` set (fallback to raw id string when the user row is gone), computes `TotalCharged`/`TotalPaid`/`Balance` via `PatientAccountCalculator` and `TotalDiscount = Σ coalesce(DiscountAmount,0) of non-voided non-extra-charge ops`; receipt query reads `ReceiptSettings` row `Id == 1` for `Currency` (Unexpected if missing, M22 precedent); list query is paged flat list newest first (`OperationAtUtc` desc, id desc; NotFound on missing/soft-deleted patient for consistency).
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `IApplicationDbContext` (read in full), `FakeApplicationDbContext` (read — no extension needed; all 6 entity types present), `PaymentOperationConfiguration` (re-verified), `TestConfiguration` (`ReceiptName` ≤150), `ReceiptSettings` (Currency = "L.E."), `User` set in fake (for `ReceivedByUserName` resolution), `Error`/`Result` patterns, M22 settings-missing message style, M02 pagination precedent.
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: DTOs (`PatientBillingDtos.cs`) → access policy class → `GetPatientAccountQuery` (load patient/Tests/PaymentOperations, compute via `PatientAccountCalculator`, resolve user names with deleted-user fallback) → `GetPatientReceiptQuery` (same + currency from `ReceiptSettings`) → `ListPatientPaymentsQuery` (paged, newest first, voided included) → handler test classes.
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
+- [x] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: build/test output; every DTO field traced; no write commands.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-03] Slice 2/4: Application read surface: patient account, payment history, receipt data — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
 
 ---
 
@@ -145,8 +145,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/4 slices done
+- Overall: 2/4 slices done
 - Slice 1 — Domain guards on `PaymentOperation` + balance calculator + Domain tests: [x] Done (VG-01 passed: build 0/0, Domain 287 green, full suite 1033 green, diff confined to Domain/Billing + Domain.Tests/Billing, no migration)
+- Slice 2 — Application read surface: patient account, payment history, receipt data: [x] Done (VG-02 passed: build 0/0, Application 680 green, full suite 1046 green, diff confined to Features/PatientBilling + PatientBilling tests, no commands, PatientTest has no IsDeleted flag — no drift)
 - Slice 2 — Application read surface: patient account, payment history, receipt data: [ ] Not started
 - Slice 3 — Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void: [ ] Not started
 - Slice 4 — Infrastructure proof + close-out: [ ] Not started
@@ -157,5 +158,6 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-08 | 0 | — | Memory file created | OK | — |
 | 2026-09-08 | 1 | 1-10 | S1 Domain guards + calculator + Domain tests; live-tree re-verified (config, 33-list fake with all 6 lists, ADR max = 0033 → next 0034, tracking row L72); build 0/0; Domain 287 green; full 1033 green; VG-01 passed | OK | pending |
+| 2026-09-08 | 2 | 1-10 | S2 read surface (account/receipt/list queries + DTOs + policy + shared reader); PatientTest confirmed flag-free; 1 build fix (missing using); build 0/0; Application 680 green; full 1046 green; VG-02 passed | OK | pending |
 
 ## Stop Report (append only if a stop condition triggers)
