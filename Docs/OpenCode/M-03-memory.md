@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-03.md
 - **Date Created:** 2026-09-08
 - **Total Slices:** 4
-- **Current Slice:** Slice 2 done — 2/4 slices done
+- **Current Slice:** Slice 3 done — 3/4 slices done
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Domain guards on `PaymentOperation` + balance calculator + Domain tests | [x] Done | VG-01 |
 | 2 | Application read surface: patient account, payment history, receipt data | [x] Done | VG-02 |
-| 3 | Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void | [ ] Not started | VG-03 |
+| 3 | Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void | [x] Done | VG-03 |
 | 4 | Infrastructure proof + close-out | [ ] Not started | VG-04 |
 
 ---
@@ -109,16 +109,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §2.4; `RecordPaymentCommand` is ungated (no `IAuthorizedRequest`) — recording a payment is the registrar/cashier's routine action; when `DiscountAmount` is supplied, the handler loads the current `User` row and — unless `_currentUser.IsAbsolutePermission` — rejects with `Error.Validation("الخصم يتجاوز الحد المسموح به لهذا المستخدم.")` when `DiscountAmount > Amount * user.DiscountLimitPercent / 100m` (Data Model §13 BR-06 + Test Strategy §3.2/§7.2: breach → `Result.Failure` of type `Validation`); absolute-permission users exempt (FR-M17-004 absolute/limited model — stated pin); `RecordExtraChargeCommand` is `IsExtraCharge=true` ungated; `RecordCorrectionCommand` and `VoidPaymentOperationCommand` carry `IAuthorizedRequest` with `RequiredPermissionCode => PatientBillingAccessPolicy.CashDisburseDeposit` (FR-M17-004 item 11 scope: «محاسبة المرضى … (حسابات)»); `SettleAccountInFullCommand` computes current balance via `PatientAccountCalculator` and rejects `Error.Conflict("لا يوجد رصيد مستحق للتسوية.")` when balance ≤ 0; void is idempotent in Domain but handler returns friendly `العملية ملغاة بالفعل.` conflict on double-call; no edit command ships (ADR-0017 + Coding Standards §7.4); `DomainFailureTranslator` maps `ArgumentException` paramNames to frozen Arabic messages (M13/M14/M15 style).
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `ICurrentUserService` (`IsAbsolutePermission`, `UserId`, `UserName`), `IDateTimeProvider`, `IApplicationDbContext` (`PaymentOperations`, `Patients`, `Users` sets), `Error`/`Result` patterns, M13/M14/M15-style `DomainFailureTranslator` precedent, M22 direct settings read precedent, `IAuthorizedRequest` template, `MediatR` pipeline (Validation → Authorization → Logging).
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: (1) `DomainFailureTranslator` (paramName matcher); (2) `RecordPaymentCommand` (ungated, discount-cap path); (3) `RecordExtraChargeCommand` (ungated); (4) `RecordCorrectionCommand` (gated on `CashDisburseDeposit`); (5) `SettleAccountInFullCommand` (balance check, ungated); (6) `VoidPaymentOperationCommand` (gated on `CashDisburseDeposit`, friendly-conflict on double-call); (7) per-command handler tests; (8) `PatientBillingAuthorizationTests` (gate matrix + standard denial).
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: build/test output; authorization theory tests green; grep gates clean (no missing `IAuthorizedRequest`).
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-03] Slice 3/4: Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §2.4; `RecordPaymentCommand` is ungated (no `IAuthorizedRequest`) — recording a payment is the registrar/cashier's routine action; when `DiscountAmount` is supplied, the handler loads the current `User` row and — unless `_currentUser.IsAbsolutePermission` — rejects with `Error.Validation("الخصم يتجاوز الحد المسموح به لهذا المستخدم.")` when `DiscountAmount > Amount * user.DiscountLimitPercent / 100m` (Data Model §13 BR-06 + Test Strategy §3.2/§7.2: breach → `Result.Failure` of type `Validation`); absolute-permission users exempt (FR-M17-004 absolute/limited model — stated pin); missing user row ⇒ effective cap zero (fail-closed, frozen breach message reused, handler comment); `RecordExtraChargeCommand` is `IsExtraCharge=true` ungated; `RecordCorrectionCommand` and `VoidPaymentOperationCommand` carry `IAuthorizedRequest` with `RequiredPermissionCode => PatientBillingAccessPolicy.CashDisburseDeposit` (FR-M17-004 item 11 scope: «محاسبة المرضى … (حسابات)»); `SettleAccountInFullCommand` computes current balance via `PatientAccountCalculator` and rejects `Error.Conflict("لا يوجد رصيد مستحق للتسوية.")` when balance ≤ 0; void is idempotent in Domain but handler returns friendly `العملية ملغاة بالفعل.` conflict on double-call; no edit command ships (ADR-0017 + Coding Standards §7.4); `DomainFailureTranslator` maps `ArgumentException` paramNames to frozen Arabic messages (M13/M14/M15 style).
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `ICurrentUserService` (`IsAbsolutePermission`, `UserId`, `UserName`), `IDateTimeProvider`, `IApplicationDbContext` (`PaymentOperations`, `Patients`, `Users` sets), `Error`/`Result` patterns, M13/M14/M15-style `DomainFailureTranslator` precedent, M22 direct settings read precedent, `IAuthorizedRequest` template, `MediatR` pipeline (Validation → Authorization → Logging).
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: (1) `DomainFailureTranslator` (paramName matcher); (2) `RecordPaymentCommand` (ungated, discount-cap path); (3) `RecordExtraChargeCommand` (ungated); (4) `RecordCorrectionCommand` (gated on `CashDisburseDeposit`); (5) `SettleAccountInFullCommand` (balance check, ungated); (6) `VoidPaymentOperationCommand` (gated on `CashDisburseDeposit`, friendly-conflict on double-call); (7) per-command handler tests; (8) `PatientBillingAuthorizationTests` (gate matrix + standard denial).
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
+- [x] **Stage 7 — Validation Gate:** VG-03 passed. Evidence: build 0/0; full suite 287+708+79 green; grep gate — only RecordCorrection/Void implement IAuthorizedRequest; git status shows no Migrations and no PermissionConfiguration change; diff confined to Features/PatientBilling + PatientBilling tests.
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-03] Slice 3/4: Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
 
 ---
 
@@ -145,9 +145,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 2/4 slices done
+- Overall: 3/4 slices done
 - Slice 1 — Domain guards on `PaymentOperation` + balance calculator + Domain tests: [x] Done (VG-01 passed: build 0/0, Domain 287 green, full suite 1033 green, diff confined to Domain/Billing + Domain.Tests/Billing, no migration)
 - Slice 2 — Application read surface: patient account, payment history, receipt data: [x] Done (VG-02 passed: build 0/0, Application 680 green, full suite 1046 green, diff confined to Features/PatientBilling + PatientBilling tests, no commands, PatientTest has no IsDeleted flag — no drift)
+- Slice 3 — Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void: [x] Done (VG-03 passed: build 0/0, Application 708 green, full suite 1074 green, gate matrix grep-clean, no migration, no PermissionConfiguration change)
 - Slice 2 — Application read surface: patient account, payment history, receipt data: [ ] Not started
 - Slice 3 — Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void: [ ] Not started
 - Slice 4 — Infrastructure proof + close-out: [ ] Not started
@@ -159,5 +160,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-08 | 0 | — | Memory file created | OK | — |
 | 2026-09-08 | 1 | 1-10 | S1 Domain guards + calculator + Domain tests; live-tree re-verified (config, 33-list fake with all 6 lists, ADR max = 0033 → next 0034, tracking row L72); build 0/0; Domain 287 green; full 1033 green; VG-01 passed | OK | pending |
 | 2026-09-08 | 2 | 1-10 | S2 read surface (account/receipt/list queries + DTOs + policy + shared reader); PatientTest confirmed flag-free; 1 build fix (missing using); build 0/0; Application 680 green; full 1046 green; VG-02 passed | OK | pending |
+| 2026-09-08 | 3 | 1-10 | S3 write surface (5 commands + translator); 1 build fix (wrong using); resumed after owner retry prompt — tree byte-identical to verified state; build 0/0; Application 708 green; full 1074 green; gate-matrix grep clean; VG-03 passed | OK | pending |
 
 ## Stop Report (append only if a stop condition triggers)
