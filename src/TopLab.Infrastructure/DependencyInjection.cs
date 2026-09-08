@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Features.AccessAndNavigation.Common.Interfaces;
 using TopLab.Application.Features.ExternalEntities.Common.Interfaces;
+using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Infrastructure.Backup;
 using TopLab.Infrastructure.Identity;
 using TopLab.Infrastructure.Persistence;
@@ -57,6 +58,7 @@ public static class DependencyInjection
         // External entities: stateless cryptographic code generator (M-14).
         services.AddSingleton<IEntityIdCodeGenerator, SecureEntityIdCodeGenerator>();
         services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
+        services.AddScoped<IPatientReportPdfExporter, PatientReportPdfExporter>();
 
         // M-01 redacted connection descriptor: stateless, depends only on
         // IConfiguration, so Singleton is appropriate. The full

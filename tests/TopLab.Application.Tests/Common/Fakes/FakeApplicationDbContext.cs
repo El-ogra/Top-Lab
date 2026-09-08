@@ -48,6 +48,8 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<PatientTitle> PatientTitles { get; } = new();
     public List<MedicalConditionType> MedicalConditionTypes { get; } = new();
     public List<PatientTestReferenceRangeSnapshot> PatientTestReferenceRangeSnapshots { get; } = new();
+    public List<ProfileResultItem> ProfileResultItems { get; } = new();
+    public List<CultureResult> CultureResults { get; } = new();
 
     public int SaveChangesCallCount { get; private set; }
 
@@ -223,6 +225,16 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)PatientTestReferenceRangeSnapshots.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(ProfileResultItem))
+        {
+            return (IQueryable<TEntity>)(object)ProfileResultItems.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(CultureResult))
+        {
+            return (IQueryable<TEntity>)(object)CultureResults.AsQueryable();
+        }
+
         return Enumerable.Empty<TEntity>().AsQueryable();
     }
 
@@ -262,6 +274,8 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is PatientTitle pt2) PatientTitles.Add(pt2);
         else if (entity is MedicalConditionType mct) MedicalConditionTypes.Add(mct);
         else if (entity is PatientTestReferenceRangeSnapshot snap) PatientTestReferenceRangeSnapshots.Add(snap);
+        else if (entity is ProfileResultItem pri) ProfileResultItems.Add(pri);
+        else if (entity is CultureResult cr) CultureResults.Add(cr);
         else throw new NotSupportedException($"Add not supported for {typeof(TEntity).Name}");
     }
 
@@ -306,6 +320,8 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is PatientTitle pt2) PatientTitles.Remove(pt2);
         else if (entity is MedicalConditionType mct) MedicalConditionTypes.Remove(mct);
         else if (entity is PatientTestReferenceRangeSnapshot snap) PatientTestReferenceRangeSnapshots.Remove(snap);
+        else if (entity is ProfileResultItem pri) ProfileResultItems.Remove(pri);
+        else if (entity is CultureResult cr) CultureResults.Remove(cr);
         else throw new NotSupportedException($"Remove not supported for {typeof(TEntity).Name}");
     }
 

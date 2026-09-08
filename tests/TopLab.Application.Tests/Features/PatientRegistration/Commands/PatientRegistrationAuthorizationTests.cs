@@ -27,7 +27,8 @@ public class PatientRegistrationAuthorizationTests
             return new CreatePatientCommand(
                 "X", Sex.Male, 30, AgeUnit.Year, DateTime.UtcNow, AccountType.Individual,
                 false, null, null, null, null, null, null, null, false, null, false, null,
-                Array.Empty<PatientNumberInput>(), Array.Empty<int>());
+                Array.Empty<PatientNumberInput>(), Array.Empty<int>(),
+                new[] { new AddTestInput(10, false, false, true, false, false, false) });
         }
         if (commandType == typeof(UpdatePatientCommand))
         {

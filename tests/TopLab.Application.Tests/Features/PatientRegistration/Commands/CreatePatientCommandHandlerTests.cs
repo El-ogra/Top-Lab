@@ -1,4 +1,5 @@
 using TopLab.Application.Common.Results;
+using TopLab.Application.Features.PatientRegistration.Commands.AddTestsToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.CreatePatient;
 using TopLab.Application.Features.SystemAndPrintSettings.Common;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetSystemSettings;
@@ -8,6 +9,7 @@ using TopLab.Domain.Common.Ids;
 using TopLab.Domain.ExternalEntities;
 using TopLab.Domain.Patients;
 using TopLab.Domain.Settings;
+using TopLab.Domain.Tests;
 using Xunit;
 
 namespace TopLab.Application.Tests.Features.PatientRegistration.Commands;
@@ -36,7 +38,8 @@ public class CreatePatientCommandHandlerTests
             RecentContrastImaging: false,
             Notes: null,
             PhoneNumbers: new[] { new PatientNumberInput("01012345678", 0) },
-            MedicalConditionIds: condition.HasValue ? new[] { condition.Value } : Array.Empty<int>());
+            MedicalConditionIds: condition.HasValue ? new[] { condition.Value } : Array.Empty<int>(),
+            Tests: new[] { new AddTestInput(10, false, false, true, false, false, false) });
     }
 
     private static (FakeApplicationDbContext Db, FakeSender Sender) Build()
@@ -44,6 +47,8 @@ public class CreatePatientCommandHandlerTests
         var db = new FakeApplicationDbContext();
         var sender = new FakeSender();
         db.SystemSettings.Add(SystemSettings.CreateDefault());
+        db.Tests.Add(Test.Create(TestId.Create(10), "CBC", "CBC", "CBC", "T10", 30, 100m));
+        db.Tests.Add(Test.Create(TestId.Create(11), "Glucose", "Glucose", "Glucose", "T11", 30, 50m));
         sender.WithResponse(new GetSystemSettingsQuery(), Result<SystemSettingsDto>.Success(new SystemSettingsDto(
             AccountType.Individual, false, false, false, false, false, false, false, false,
             ResultScreenAccountDisplayMode.Hidden, false, null)));
@@ -65,6 +70,8 @@ public class CreatePatientCommandHandlerTests
         Assert.True(result.Value >= 0);
         Assert.Single(db.Patients);
         Assert.Single(db.Patients[0].PhoneNumbers);
+        Assert.Single(db.PatientTests);
+        Assert.Equal(1, db.SaveChangesCallCount);
     }
 
     [Fact]
@@ -174,5 +181,82 @@ public class CreatePatientCommandHandlerTests
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ErrorType.NotFound, result.Error!.Type);
+    }
+
+    [Fact]
+    public async Task Create_EmptyTests_Validation_D1()
+    {
+        var (db, sender) = Build();
+        var handler = new CreatePatientCommandHandler(db, sender);
+
+        var cmd = Valid() with { Tests = Array.Empty<AddTestInput>() };
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorType.Validation, result.Error!.Type);
+        Assert.Empty(db.Patients);
+        Assert.Empty(db.PatientTests);
+    }
+
+    [Fact]
+    public async Task Create_DuplicateTests_Validation_D1()
+    {
+        var (db, sender) = Build();
+        var handler = new CreatePatientCommandHandler(db, sender);
+
+        var cmd = Valid() with
+        {
+            Tests = new[]
+            {
+                new AddTestInput(10, false, false, true, false, false, false),
+                new AddTestInput(10, false, false, true, false, false, false)
+            }
+        };
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorType.Validation, result.Error!.Type);
+        Assert.Empty(db.Patients);
+    }
+
+    [Fact]
+    public async Task Create_UnknownTest_NotFound_D1()
+    {
+        var (db, sender) = Build();
+        var handler = new CreatePatientCommandHandler(db, sender);
+
+        var cmd = Valid() with
+        {
+            Tests = new[] { new AddTestInput(999, false, false, true, false, false, false) }
+        };
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorType.NotFound, result.Error!.Type);
+        Assert.Empty(db.Patients);
+    }
+
+    [Fact]
+    public async Task Create_MultipleTests_Persisted_InSingleSave_D1()
+    {
+        var (db, sender) = Build();
+        var handler = new CreatePatientCommandHandler(db, sender);
+
+        var cmd = Valid() with
+        {
+            Tests = new[]
+            {
+                new AddTestInput(10, false, false, true, false, false, false),
+                new AddTestInput(11, true, false, false, false, false, false)
+            }
+        };
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(db.Patients);
+        Assert.Equal(2, db.PatientTests.Count);
+        Assert.Equal(1, db.SaveChangesCallCount);
+        Assert.Contains(db.PatientTests, pt => pt.PriceAtOrderTime == 100m);
+        Assert.Contains(db.PatientTests, pt => pt.PriceAtOrderTime == 50m);
     }
 }

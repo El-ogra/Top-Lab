@@ -2,11 +2,14 @@ using MediatR;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.PatientRegistration.Common;
+using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Queries.GetPriceListById;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetSystemSettings;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Common.Ids;
 using TopLab.Domain.ExternalEntities;
 using TopLab.Domain.Patients;
+using TopLab.Domain.Results;
+using TopLab.Domain.Tests;
 
 namespace TopLab.Application.Features.PatientRegistration.Commands.CreatePatient;
 
@@ -116,7 +119,84 @@ public sealed class CreatePatientCommandHandler : IRequestHandler<CreatePatientC
             patient.AddMedicalCondition(MedicalConditionTypeId.Create(conditionId));
         }
 
+        // D1: registration requires at least one analysis in the same Application
+        // transaction. Empty selection is a Validation failure; AddTestsToVisit
+        // remains the edit-existing-visit operation only.
+        var orderedTests = request.Tests ?? Array.Empty<AddTestsToVisit.AddTestInput>();
+        if (orderedTests.Count == 0)
+        {
+            return Result<int>.Failure(Error.Validation("يجب اختيار تحليل واحد على الأقل."));
+        }
+
+        if (orderedTests.Select(t => t.TestId).Distinct().Count() != orderedTests.Count)
+        {
+            return Result<int>.Failure(Error.Validation("لا يمكن تكرار نفس التحليل في نفس الزيارة."));
+        }
+
+        var requestedTestIds = orderedTests.Select(t => TestId.Create(t.TestId)).ToList();
+        var tests = _db.Set<Test>().Where(t => requestedTestIds.Contains(t.Id)).ToDictionary(t => t.Id, t => t);
+
+        foreach (var req in orderedTests)
+        {
+            if (!tests.ContainsKey(TestId.Create(req.TestId)))
+            {
+                return Result<int>.Failure(Error.NotFound($"التحليل غير موجود (id={req.TestId})."));
+            }
+        }
+
+        ExternalEntity? referralEntity = referralEntityId is null
+            ? null
+            : _db.Set<ExternalEntity>().FirstOrDefault(e => e.Id.Equals(referralEntityId));
+
+        IReadOnlyDictionary<TestId, decimal> priceListItems = new Dictionary<TestId, decimal>();
+        if (referralEntity?.PriceListId is not null)
+        {
+            var plResult = await _sender.Send(new GetPriceListByIdQuery(referralEntity.PriceListId.Value), cancellationToken);
+            if (!plResult.IsSuccess)
+            {
+                return Result<int>.Failure(plResult.Error!);
+            }
+            priceListItems = plResult.Value!.Items.ToDictionary(i => TestId.Create(i.TestId), i => i.Price);
+        }
+
+        var groupPrices = new Dictionary<TestId, decimal>();
+
         _db.Add(patient);
+
+        foreach (var req in orderedTests)
+        {
+            var testId = TestId.Create(req.TestId);
+            var test = tests[testId];
+
+            if (referralEntity?.PriceListId is not null && !priceListItems.ContainsKey(testId))
+            {
+                return Result<int>.Failure(Error.Conflict("التحليل غير موجود في قائمة أسعار الجهة المحال منها."));
+            }
+
+            var price = TestPriceResolver.Resolve(
+                effectiveAccountType,
+                test.PatientPrice,
+                test.LabToLabPrice,
+                referralEntity,
+                priceListItems,
+                groupPrices,
+                testId);
+
+            var pt = PatientTest.Create(
+                PatientTestId.Create(0),
+                patient.Id,
+                testId,
+                price,
+                req.IsUrine,
+                req.IsStool,
+                req.IsBlood,
+                req.IsSemen,
+                req.IsCsf,
+                req.IsTakenOutsideLab);
+
+            _db.Add(pt);
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
 
         return Result<int>.Success(patient.Id.Value);

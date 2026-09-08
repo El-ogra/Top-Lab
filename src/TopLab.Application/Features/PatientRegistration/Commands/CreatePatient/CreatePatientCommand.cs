@@ -1,6 +1,7 @@
 using MediatR;
 using TopLab.Application.Common.Authorization;
 using TopLab.Application.Common.Results;
+using TopLab.Application.Features.PatientRegistration.Commands.AddTestsToVisit;
 using TopLab.Application.Features.PatientRegistration.Common;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Common.Ids;
@@ -28,7 +29,8 @@ public sealed record CreatePatientCommand(
     bool RecentContrastImaging,
     string? Notes,
     IReadOnlyList<PatientNumberInput> PhoneNumbers,
-    IReadOnlyList<int> MedicalConditionIds)
+    IReadOnlyList<int> MedicalConditionIds,
+    IReadOnlyList<AddTestInput> Tests)
     : IRequest<Result<int>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => PatientRegistrationAccessPolicy.AddEditPatient;

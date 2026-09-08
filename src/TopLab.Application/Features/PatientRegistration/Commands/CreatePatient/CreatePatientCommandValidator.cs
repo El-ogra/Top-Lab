@@ -43,5 +43,18 @@ public sealed class CreatePatientCommandValidator : AbstractValidator<CreatePati
                     .NotEmpty().WithMessage("رقم الهاتف مطلوب.")
                     .MaximumLength(30).WithMessage("رقم الهاتف يجب ألا يتجاوز 30 حرفًا.");
             });
+
+        RuleFor(x => x.Tests)
+            .NotEmpty().WithMessage("يجب اختيار تحليل واحد على الأقل.");
+
+        RuleForEach(x => x.Tests).ChildRules(test =>
+        {
+            test.RuleFor(t => t.TestId).GreaterThan(0).WithMessage("معرّف التحليل غير صالح.");
+        });
+
+        RuleFor(x => x.Tests)
+            .Must(t => t == null || t.Select(x => x.TestId).Distinct().Count() == t.Count)
+            .When(x => x.Tests != null && x.Tests.Count > 0)
+            .WithMessage("لا يمكن تكرار نفس التحليل في نفس الزيارة.");
     }
 }
