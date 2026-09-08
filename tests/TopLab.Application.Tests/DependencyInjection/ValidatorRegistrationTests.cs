@@ -29,6 +29,19 @@ using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.Ren
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.SetCustomGroupItemPrice;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.SetPriceListItemPrice;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.UpdateTestComment;
+using TopLab.Application.Features.ResultsEntry.Commands.BulkPrint;
+using TopLab.Application.Features.ResultsEntry.Commands.ClearResult;
+using TopLab.Application.Features.ResultsEntry.Commands.EnterResult;
+using TopLab.Application.Features.ResultsEntry.Commands.ExportPatientReportPdf;
+using TopLab.Application.Features.ResultsEntry.Commands.MarkAllPatientResultsReviewed;
+using TopLab.Application.Features.ResultsEntry.Commands.MarkResultDelivered;
+using TopLab.Application.Features.ResultsEntry.Commands.MarkResultPrinted;
+using TopLab.Application.Features.ResultsEntry.Commands.RefreshResultReferenceRange;
+using TopLab.Application.Features.ResultsEntry.Commands.ReviewResult;
+using TopLab.Application.Features.ResultsEntry.Commands.UnreviewResult;
+using TopLab.Application.Features.ResultsEntry.Queries.GetPatientResultSheet;
+using TopLab.Application.Features.ResultsEntry.Queries.GetResultEntry;
+using TopLab.Application.Features.ResultsEntry.Queries.GetResultWorklist;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Commands.CreateTest;
 
 namespace TopLab.Application.Tests.DependencyInjection;
@@ -128,6 +141,32 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<UpdatePatientTestSampleFlagsCommand>))]
     [InlineData(typeof(IValidator<RemoveTestFromVisitCommand>))]
     public void HostBuiltLikeApp_ResolvesM02Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<GetResultWorklistQuery>))]
+    [InlineData(typeof(IValidator<GetResultEntryQuery>))]
+    [InlineData(typeof(IValidator<GetPatientResultSheetQuery>))]
+    [InlineData(typeof(IValidator<EnterResultCommand>))]
+    [InlineData(typeof(IValidator<ClearResultCommand>))]
+    [InlineData(typeof(IValidator<RefreshResultReferenceRangeCommand>))]
+    [InlineData(typeof(IValidator<ReviewResultCommand>))]
+    [InlineData(typeof(IValidator<UnreviewResultCommand>))]
+    [InlineData(typeof(IValidator<MarkResultPrintedCommand>))]
+    [InlineData(typeof(IValidator<MarkResultDeliveredCommand>))]
+    [InlineData(typeof(IValidator<MarkAllPatientResultsReviewedCommand>))]
+    [InlineData(typeof(IValidator<BulkPrintPreflightQuery>))]
+    [InlineData(typeof(IValidator<ExecuteBulkPrintCommand>))]
+    [InlineData(typeof(IValidator<ExportPatientReportPdfCommand>))]
+    public void HostBuiltLikeApp_ResolvesM04Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();

@@ -63,7 +63,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | Domain: lifecycle guards, snapshot child entity, full status calculator + Domain tests + MIGRATION | [x] Done | VG-01 |
 | 2 | Application read surface: worklist, result detail, patient result sheet | [x] Done | VG-02 |
 | 3 | Application write surface: enter, clear, refresh-range, review, unreview, print, deliver, bulk variants + authorization tests | [x] Done | VG-03 |
-| 4 | Infrastructure proof + close-out | [ ] Not started | VG-04 |
+| 4 | Infrastructure proof + close-out | [x] Done | VG-04 |
 
 ---
 
@@ -138,26 +138,26 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.5; migration-scope gate: diff the new migration vs. `ApplicationDbContextModelSnapshot.cs` (table shape, PK/FK, column types/nullability) — expected exact match; drift → stop + addendum; ADR-0035 records: settled status-model implementation (PRD §8.2/§8.3 states + min-over-stages + account condition; the S1/S2 "newly registered" micro-pin); snapshot persistence as the settled BR-05 freeze in a dedicated child table (the storage mechanism settled by the owner) and the dropped stateless intent methods; the FR-M04-008 refresh command; the lifecycle guard chain and the owner-settled edit-lock policy (free re-entry until reviewed; `UnreviewResultCommand` gated on `REVIEW_RESULTS`); auto review-and-completion as a system action (§8.4); balance-block via per-user bool + delivery-not-gated (settled); the owner-settled most-specific range selection (sex-matched preferred, then narrowest age band, lowest id on a tie); simple-only `EnterResultCommand` channel rule; tracking-sheet M04 row verified at line 73.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `F5ConfigurationTests.cs`, `ApplicationDbContextModelSnapshot.cs` (relevant sections), the new migration, InMemory harness, `Top_Lab_ADR.md`, `Top_Lab_Master_Tracking_Sheet.md`, `Top_Lab_Handoff_Template.md` / `Handoff_M12.md` (template), M22 settings (`AutoReviewAndComplete`).
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: run migration-scope gate first (migration vs. snapshot; expect exact match) → extend `F5ConfigurationTests` for snapshot mapping → create `ResultLifecyclePersistenceTests` (InMemory end-to-end + cascade) → extend validator-registration test → ADR-0035 → tracking flip → handoff.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-04 passed. Evidence: Release build 0/0, full suite green, migration gate passed, coverage floors met or waivers documented, zero Presentation content (grep gate).
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-04] Slice 4/4: Infrastructure proof + close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §3.5; migration-scope gate: diff the new migration vs. `ApplicationDbContextModelSnapshot.cs` (table shape, PK/FK, column types/nullability) — expected exact match; drift → stop + addendum; ADR-0035 records: settled status-model implementation (PRD §8.2/§8.3 states + min-over-stages + account condition; the S1/S2 "newly registered" micro-pin); snapshot persistence as the settled BR-05 freeze in a dedicated child table (the storage mechanism settled by the owner) and the dropped stateless intent methods; the FR-M04-008 refresh command; the lifecycle guard chain and the owner-settled edit-lock policy (free re-entry until reviewed; `UnreviewResultCommand` gated on `REVIEW_RESULTS`); auto review-and-completion as a system action (§8.4); balance-block via per-user bool + delivery-not-gated (settled); the owner-settled most-specific range selection (sex-matched preferred, then narrowest age band, lowest id on a tie); simple-only `EnterResultCommand` channel rule; tracking-sheet M04 row verified at line 73. D1–D5 carried into ADR-0035 as binding.
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `F5ConfigurationTests.cs`, `ApplicationDbContextModelSnapshot.cs` (relevant sections), the new migration, InMemory harness, `Top_Lab_ADR.md` (max ADR-0034 → next 0035), `Top_Lab_Master_Tracking_Sheet.md` (M04 row line 73), `Top_Lab_Handoff_Template.md` / `Handoff_M03.md` (template precedent), M22 settings (`AutoReviewAndComplete`).
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: run migration-scope gate first (migration vs. snapshot; expect exact match) → extend `F5ConfigurationTests` for snapshot mapping → create `ResultLifecyclePersistenceTests` (InMemory end-to-end + cascade) → extend validator-registration test (14 M04 validators) → ADR-0035 → tracking flip → handoff.
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
+- [x] **Stage 7 — Validation Gate:** VG-04 passed. Evidence: Release build 0/0, full suite green, migration gate passed, coverage floors met or waivers documented, zero Presentation content (grep gate).
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-04] Slice 4/4: Infrastructure proof + close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — on `main`, never push.
 
 ---
 
 ## Current Status
 
-- Overall: 3/4 slices done
+- Overall: 4/4 slices done — MODULE COMPLETE
 - Slice 1 — Domain: lifecycle guards, snapshot child entity, full status calculator + Domain tests + MIGRATION: [x] Done (VG-01 passed: build 0/0, Domain 317 green, full suite 1107 green, migration AddPatientTestReferenceRangeSnapshots, has-pending-model-changes = no changes)
 - Slice 2 — Application read surface: worklist, result detail, patient result sheet: [x] Done (VG-02 passed: build 0/0, Application 737 green, full suite 1136 green, no commands, no migration)
 - Slice 3 — Application write surface: enter, clear, refresh-range, review, unreview, print, deliver, bulk variants + authorization tests: [x] Done (VG-03 passed: build 0/0, Application 804 green, full suite 1206 green, no migration, no PermissionConfiguration change)
-- Slice 4 — Infrastructure proof + close-out: [ ] Not started
+- Slice 4 — Infrastructure proof + close-out: [x] Done (VG-04 passed: Release 0/0, full suite 1223 green, zero drift proven, F5 + persistence + exporter green, ADR-0035, tracking flip, Handoff_M04.md, zero Presentation)
 
 ## Execution Log
 
@@ -167,5 +167,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-08 | 1 | 1-10 | S1 Domain guards + snapshot 1:1 + status calculator + migration; build 0/0; Domain 317 green; full 1107 green; VG-01 passed | OK | pending |
 | 2026-09-08 | 2 | 1-10 | S2 read surface (worklist/entry/sheet + FlagComputer + BalanceProbe D5); build 0/0; Application 737 green; full 1136 green; VG-02 passed | OK | pending |
 | 2026-09-08 | 3 | 1-10 | S3 write surface (D1 atomic registration, D4 guard, clear/refresh/review/unreview/print+balance/deliver, D2 export+infra, D3 bulk two-step + auth); build 0/0; Application 804 green; full 1206 green; VG-03 passed | OK | pending |
+| 2026-09-08 | 4 | 1-10 | S4 infra proof + close-out; drift gate = no changes; F5 + lifecycle/cascade green; 14 validators resolved; ADR-0035; tracking flip + change-log; Handoff_M04.md; Release 0/0; full 1223 green; zero Presentation; VG-04 passed; MODULE COMPLETE | OK | pending |
 
 ## Stop Report (append only if a stop condition triggers)

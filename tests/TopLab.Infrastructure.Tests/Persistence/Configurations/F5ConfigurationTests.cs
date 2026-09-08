@@ -364,4 +364,60 @@ Assert.Empty(et.GetForeignKeys());
 
         Assert.Null(et.FindProperty(nameof(PaymentOperation.IsEffectivelyZero)));
     }
+
+    [Fact]
+    public void PatientTestReferenceRangeSnapshot_HasExpectedMapping()
+    {
+        var et = GetEntityType<TopLab.Domain.Results.PatientTestReferenceRangeSnapshot>();
+
+        var key = et.FindPrimaryKey();
+        Assert.NotNull(key);
+        Assert.Equal(
+            new[] { nameof(TopLab.Domain.Results.PatientTestReferenceRangeSnapshot.PatientTestId) },
+            key!.Properties.Select(p => p.Name).ToArray());
+
+        var min = et.FindProperty(nameof(TopLab.Domain.Results.PatientTestReferenceRangeSnapshot.MinValue));
+        Assert.NotNull(min);
+        Assert.False(min!.IsNullable);
+        Assert.Equal(18, min.GetPrecision());
+        Assert.Equal(4, min.GetScale());
+
+        var max = et.FindProperty(nameof(TopLab.Domain.Results.PatientTestReferenceRangeSnapshot.MaxValue));
+        Assert.NotNull(max);
+        Assert.False(max!.IsNullable);
+        Assert.Equal(18, max.GetPrecision());
+        Assert.Equal(4, max.GetScale());
+
+        var low = et.FindProperty(nameof(TopLab.Domain.Results.PatientTestReferenceRangeSnapshot.LowComment));
+        Assert.NotNull(low);
+        Assert.True(low!.IsNullable);
+        Assert.Equal(500, low.GetMaxLength());
+
+        var high = et.FindProperty(nameof(TopLab.Domain.Results.PatientTestReferenceRangeSnapshot.HighComment));
+        Assert.NotNull(high);
+        Assert.True(high!.IsNullable);
+        Assert.Equal(500, high.GetMaxLength());
+
+        var sex = et.FindProperty(nameof(TopLab.Domain.Results.PatientTestReferenceRangeSnapshot.Sex));
+        Assert.NotNull(sex);
+        Assert.True(sex!.IsNullable);
+        // HasColumnType("tinyint") is a relational annotation the InMemory provider
+        // does not surface (GetProviderClrType() is null for the nullable enum);
+        // the tinyint annotation itself is pinned by the zero-drift gate (snapshot).
+        Assert.Equal(typeof(TopLab.Domain.Common.Enums.Sex?), sex.ClrType);
+
+        var ageUnit = et.FindProperty(nameof(TopLab.Domain.Results.PatientTestReferenceRangeSnapshot.AgeUnit));
+        Assert.NotNull(ageUnit);
+        Assert.False(ageUnit!.IsNullable);
+        Assert.Equal(typeof(TopLab.Domain.Common.Enums.AgeUnit), ageUnit.ClrType);
+
+        var captured = et.FindProperty(nameof(TopLab.Domain.Results.PatientTestReferenceRangeSnapshot.CapturedAtUtc));
+        Assert.NotNull(captured);
+        Assert.False(captured!.IsNullable);
+        Assert.Equal(typeof(DateTimeOffset), captured.ClrType);
+
+        var fk = Assert.Single(et.GetForeignKeys());
+        Assert.Equal(DeleteBehavior.Cascade, fk.DeleteBehavior);
+        Assert.Equal(typeof(TopLab.Domain.Results.PatientTest), fk.PrincipalEntityType.ClrType);
+    }
 }
