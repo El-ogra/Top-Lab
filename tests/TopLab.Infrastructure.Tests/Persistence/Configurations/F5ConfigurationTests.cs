@@ -322,4 +322,46 @@ public class F5ConfigurationTests
 
 Assert.Empty(et.GetForeignKeys());
     }
+
+    [Fact]
+    public void PaymentOperation_HasExpectedMapping()
+    {
+        var et = GetEntityType<PaymentOperation>();
+
+        var amount = et.FindProperty(nameof(PaymentOperation.Amount));
+        Assert.NotNull(amount);
+        Assert.False(amount!.IsNullable);
+        Assert.Equal(18, amount.GetPrecision());
+        Assert.Equal(2, amount.GetScale());
+
+        var discount = et.FindProperty(nameof(PaymentOperation.DiscountAmount));
+        Assert.NotNull(discount);
+        Assert.True(discount!.IsNullable);
+        Assert.Equal(18, discount.GetPrecision());
+        Assert.Equal(2, discount.GetScale());
+
+        var operationType = et.FindProperty(nameof(PaymentOperation.OperationType));
+        Assert.NotNull(operationType);
+        Assert.False(operationType!.IsNullable);
+        // HasColumnType("tinyint") is a relational annotation the InMemory provider
+        // does not surface; the int conversion below is its InMemory-observable proxy.
+        // The tinyint annotation itself is pinned by the zero-drift gate (snapshot).
+        Assert.Equal(typeof(int), operationType.GetProviderClrType());
+
+        var fk = Assert.Single(et.GetForeignKeys());
+        Assert.Equal(DeleteBehavior.Cascade, fk.DeleteBehavior);
+        Assert.Equal(typeof(Patient), fk.PrincipalEntityType.ClrType);
+
+        var idx = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Any(p => p.Name == nameof(PaymentOperation.PatientId)));
+        Assert.NotNull(idx);
+    }
+
+    [Fact]
+    public void PaymentOperation_IsEffectivelyZero_IsNotMapped()
+    {
+        var et = GetEntityType<PaymentOperation>();
+
+        Assert.Null(et.FindProperty(nameof(PaymentOperation.IsEffectivelyZero)));
+    }
 }

@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-03.md
 - **Date Created:** 2026-09-08
 - **Total Slices:** 4
-- **Current Slice:** Slice 3 done — 3/4 slices done
+- **Current Slice:** All 4 slices done — module complete
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -55,7 +55,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | Domain guards on `PaymentOperation` + balance calculator + Domain tests | [x] Done | VG-01 |
 | 2 | Application read surface: patient account, payment history, receipt data | [x] Done | VG-02 |
 | 3 | Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void | [x] Done | VG-03 |
-| 4 | Infrastructure proof + close-out | [ ] Not started | VG-04 |
+| 4 | Infrastructure proof + close-out | [x] Done | VG-04 |
 
 ---
 
@@ -130,25 +130,26 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §2.5; migration-scope gate is an input hypothesis that must be proven — "no migration expected" is not the proof; ADR-0034 records: settled balance formula, void-and-reissue + id-11 gate (with honest scope-reading note), discount-cap-only enforcement with `Validation` failure + absolute-user exemption pin, single-payment-command shape, `Correction` sign-convention pin, no-edit decision with UI-Blueprint S-04 reconciliation note, payments-ungated/corrections-gated split, deleted-user name fallback; tracking-sheet M03 row verified at line 72.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `F5ConfigurationTests.cs` (existing `PaymentOperation` partial coverage), `ApplicationDbContextModelSnapshot.cs` (relevant sections), `20260828052248_BaselineDataModel.cs` + `20260828123530_RenamePkColumns.cs` + `20260906093902_AddTestCodeAndLifecycleColumns.cs` (the three F5 migrations), InMemory harness, `Top_Lab_ADR.md` (last allocated ADR-0031 at `70f145e`; M02/M21 reserve 0032/0033 per their FINAL plans), `Top_Lab_Master_Tracking_Sheet.md` (M03 row at line 72), `Top_Lab_Handoff_Template.md` / `Handoff_M12.md` (template).
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: run migration-scope gate first (model vs. snapshot; expect zero drift) → extend `F5ConfigurationTests` with `PaymentOperation` mapping assertions → create `PaymentOperationPersistenceTests` (InMemory round-trip) → ADR-0034 → tracking flip → handoff.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-04 passed. Evidence: Release build 0/0, full suite green, zero model drift proven, coverage floors met or waivers documented, zero Presentation content (grep gate).
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-03] Slice 4/4: Infrastructure proof + close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §2.5; migration-scope gate is an input hypothesis that must be proven — "no migration expected" is not the proof; ADR-0034 records: settled balance formula, void-and-reissue + id-11 gate (with honest scope-reading note), discount-cap-only enforcement with `Validation` failure + absolute-user exemption pin, single-payment-command shape, `Correction` sign-convention pin, no-edit decision with UI-Blueprint S-04 reconciliation note, payments-ungated/corrections-gated split, deleted-user name fallback; tracking-sheet M03 row verified at line 72.
+- [x] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `F5ConfigurationTests.cs` (no `PaymentOperation` coverage — all assertions added fresh), `ApplicationDbContextModelSnapshot.cs` (relevant sections), the four F5+M02 migrations, InMemory harness (`InMemoryContextFactory` + `ApplicationDbContext` implementing `IApplicationDbContext`), `Top_Lab_ADR.md` (max ADR-0033 confirmed → next 0034), `Top_Lab_Master_Tracking_Sheet.md` (M03 row at line 72 + §9 change-log format), `Handoff_M21.md` (template).
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: run migration-scope gate first (model vs. snapshot; expect zero drift) → extend `F5ConfigurationTests` with `PaymentOperation` mapping assertions → create `PaymentOperationPersistenceTests` (InMemory round-trip) → ADR-0034 → tracking flip → handoff.
+- [x] **Stage 5 — Execution:** Slice implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
+- [x] **Stage 7 — Validation Gate:** VG-04 passed. Evidence: Release build 0/0; full suite 287+708+82=1077 green; `has-pending-model-changes` = "No changes..."; coverage Domain 95.2% / Application 85.9% / Infra tests-only green (floors met, no waiver); zero Presentation content (grep gate on diff).
+- [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-03] Slice 4/4: Infrastructure proof + close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — on `main`, never push.
 
 ---
 
 ## Current Status
 
-- Overall: 3/4 slices done
+- Overall: 4/4 slices done — MODULE COMPLETE
 - Slice 1 — Domain guards on `PaymentOperation` + balance calculator + Domain tests: [x] Done (VG-01 passed: build 0/0, Domain 287 green, full suite 1033 green, diff confined to Domain/Billing + Domain.Tests/Billing, no migration)
 - Slice 2 — Application read surface: patient account, payment history, receipt data: [x] Done (VG-02 passed: build 0/0, Application 680 green, full suite 1046 green, diff confined to Features/PatientBilling + PatientBilling tests, no commands, PatientTest has no IsDeleted flag — no drift)
 - Slice 3 — Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void: [x] Done (VG-03 passed: build 0/0, Application 708 green, full suite 1074 green, gate matrix grep-clean, no migration, no PermissionConfiguration change)
+- Slice 4 — Infrastructure proof + close-out: [x] Done (VG-04 passed: Release 0/0, full suite 1077 green, zero drift proven, F5 + persistence green, coverage 95.2/85.9%/tests-only, ADR-0034, tracking flip, Handoff_M03.md, zero Presentation)
 - Slice 2 — Application read surface: patient account, payment history, receipt data: [ ] Not started
 - Slice 3 — Application write surface: record payment (with optional discount), extra charge, correction, full settlement, void: [ ] Not started
 - Slice 4 — Infrastructure proof + close-out: [ ] Not started
@@ -161,5 +162,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-08 | 1 | 1-10 | S1 Domain guards + calculator + Domain tests; live-tree re-verified (config, 33-list fake with all 6 lists, ADR max = 0033 → next 0034, tracking row L72); build 0/0; Domain 287 green; full 1033 green; VG-01 passed | OK | pending |
 | 2026-09-08 | 2 | 1-10 | S2 read surface (account/receipt/list queries + DTOs + policy + shared reader); PatientTest confirmed flag-free; 1 build fix (missing using); build 0/0; Application 680 green; full 1046 green; VG-02 passed | OK | pending |
 | 2026-09-08 | 3 | 1-10 | S3 write surface (5 commands + translator); 1 build fix (wrong using); resumed after owner retry prompt — tree byte-identical to verified state; build 0/0; Application 708 green; full 1074 green; gate-matrix grep clean; VG-03 passed | OK | pending |
+| 2026-09-08 | 4 | 1-10 | S4 infra proof + close-out; drift gate = no changes; 1 test fix (InMemory has no relational type mapping → int-conversion proxy assertion); F5 + persistence green; ADR-0034; tracking flip + change-log; Handoff_M03.md; Release 0/0; full 1077 green; coverage 95.2/85.9%/tests-only; zero Presentation; VG-04 passed; MODULE COMPLETE | OK | pending |
 
 ## Stop Report (append only if a stop condition triggers)
