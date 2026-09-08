@@ -29,6 +29,7 @@ public partial class ApplicationDbContext
     public Microsoft.EntityFrameworkCore.DbSet<Antibiotic> Antibiotics => Set<Antibiotic>();
     public Microsoft.EntityFrameworkCore.DbSet<CultureAntibioticAttachment> CultureAntibioticAttachments => Set<CultureAntibioticAttachment>();
     public Microsoft.EntityFrameworkCore.DbSet<PatientTest> PatientTests => Set<PatientTest>();
+    public Microsoft.EntityFrameworkCore.DbSet<PatientTestReferenceRangeSnapshot> PatientTestReferenceRangeSnapshots => Set<PatientTestReferenceRangeSnapshot>();
     public Microsoft.EntityFrameworkCore.DbSet<ProfileResultItem> ProfileResultItems => Set<ProfileResultItem>();
     public Microsoft.EntityFrameworkCore.DbSet<CultureResult> CultureResults => Set<CultureResult>();
     public Microsoft.EntityFrameworkCore.DbSet<CultureAntibioticResult> CultureAntibioticResults => Set<CultureAntibioticResult>();

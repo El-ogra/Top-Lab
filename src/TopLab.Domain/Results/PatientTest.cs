@@ -114,6 +114,11 @@ public sealed class PatientTest : AuditableEntity<PatientTestId>
 
     public void EnterResult(string? resultValue, ResultFlag? flag, int? enteredByUserId, DateTime? enteredAtUtc, string? notes = null)
     {
+        if (IsReviewed)
+        {
+            throw new InvalidOperationException("Result is reviewed; unreview first.");
+        }
+
         ResultValue = resultValue;
         ResultFlag = flag;
         EnteredByUserId = enteredByUserId;
@@ -121,8 +126,50 @@ public sealed class PatientTest : AuditableEntity<PatientTestId>
         Notes = notes;
     }
 
+    public void ClearResult()
+    {
+        if (IsReviewed || IsPrinted || IsDelivered)
+        {
+            throw new InvalidOperationException("Result is locked.");
+        }
+
+        ResultValue = null;
+        ResultFlag = null;
+        Notes = null;
+        EnteredByUserId = null;
+        EnteredAtUtc = null;
+    }
+
+    public void Unreview()
+    {
+        if (IsPrinted || IsDelivered)
+        {
+            throw new InvalidOperationException("Printed or delivered results cannot be un-reviewed.");
+        }
+
+        IsReviewed = false;
+        ReviewedByUserId = null;
+        ReviewedAtUtc = null;
+    }
+
+    public void MarkEntered(int enteredByUserId, DateTime enteredAtUtc)
+    {
+        if (IsReviewed)
+        {
+            throw new InvalidOperationException("Result is reviewed; unreview first.");
+        }
+
+        EnteredByUserId = enteredByUserId;
+        EnteredAtUtc = enteredAtUtc;
+    }
+
     public void MarkReviewed(int reviewedByUserId, DateTime reviewedAtUtc)
     {
+        if (EnteredAtUtc is null)
+        {
+            throw new InvalidOperationException("Result not entered.");
+        }
+
         IsReviewed = true;
         ReviewedByUserId = reviewedByUserId;
         ReviewedAtUtc = reviewedAtUtc;
@@ -130,6 +177,11 @@ public sealed class PatientTest : AuditableEntity<PatientTestId>
 
     public void MarkPrinted(int printedByUserId, DateTime printedAtUtc)
     {
+        if (EnteredAtUtc is null || !IsReviewed)
+        {
+            throw new InvalidOperationException("Result not reviewed.");
+        }
+
         IsPrinted = true;
         PrintCount++;
         LastPrintedByUserId = printedByUserId;
@@ -138,6 +190,11 @@ public sealed class PatientTest : AuditableEntity<PatientTestId>
 
     public void MarkDelivered(int deliveredByUserId, DateTime deliveredAtUtc)
     {
+        if (!IsPrinted)
+        {
+            throw new InvalidOperationException("Result not printed.");
+        }
+
         IsDelivered = true;
         DeliveredByUserId = deliveredByUserId;
         DeliveredAtUtc = deliveredAtUtc;
