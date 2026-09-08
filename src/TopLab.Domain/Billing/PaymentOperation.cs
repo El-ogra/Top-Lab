@@ -22,6 +22,12 @@ public sealed class PaymentOperation : AuditableEntity<PaymentOperationId>
 
     public bool IsVoided { get; private set; }
 
+    /// <summary>
+    /// Convenience read-only flag for tests and callers. Getter-only by design;
+    /// EF Core ignores getter-only properties by convention, so this adds no column.
+    /// </summary>
+    public bool IsEffectivelyZero => !IsVoided && Amount == 0m && (DiscountAmount ?? 0m) == 0m;
+
     private PaymentOperation()
     {
     }
@@ -56,6 +62,16 @@ public sealed class PaymentOperation : AuditableEntity<PaymentOperationId>
         bool isExtraCharge = false,
         OperationType operationType = OperationType.Payment)
     {
+        if (amount < 0)
+            throw new ArgumentException("Amount must be >= 0.", nameof(amount));
+        if (discountAmount < 0)
+            throw new ArgumentException("Discount must be >= 0.", nameof(discountAmount));
+        if (discountAmount > amount)
+            throw new ArgumentException("Discount cannot exceed the operation amount.", nameof(discountAmount));
+        if (isExtraCharge && discountAmount is > 0)
+            throw new ArgumentException("An extra charge cannot carry a discount.", nameof(discountAmount));
+        if (operationType == OperationType.FullSettlement && amount <= 0)
+            throw new ArgumentException("Settlement amount must be > 0.", nameof(amount));
         return new PaymentOperation(id, patientId, amount, discountAmount, isExtraCharge, operationType, receivedByUserId, operationAtUtc);
     }
 
