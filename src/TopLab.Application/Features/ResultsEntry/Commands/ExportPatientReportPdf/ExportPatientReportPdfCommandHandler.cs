@@ -68,6 +68,7 @@ public sealed class ExportPatientReportPdfCommandHandler : IRequestHandler<Expor
         }
 
         var catalog = _db.Set<Test>().ToDictionary(t => t.Id.Value);
+        var analyteCatalog = _db.Set<Analyte>().ToDictionary(a => a.Id.Value);
         var snapshots = _db.Set<PatientTestReferenceRangeSnapshot>()
             .Where(s => tests.Select(t => t.Id.Value).Contains(s.PatientTestId.Value))
             .ToDictionary(s => s.PatientTestId.Value);
@@ -104,13 +105,15 @@ public sealed class ExportPatientReportPdfCommandHandler : IRequestHandler<Expor
                     snapshot.CapturedAtUtc);
 
             var profileTexts = new List<string>();
-            if (profileByTest.TryGetValue(pt.Id.Value, out var profileItems))
-            {
-                foreach (var item in profileItems)
+                if (profileByTest.TryGetValue(pt.Id.Value, out var profileItems))
                 {
-                    profileTexts.Add($"{item.AnalyteName}: {item.ResultValue}{(string.IsNullOrWhiteSpace(item.Unit) ? string.Empty : " " + item.Unit)}");
+                    foreach (var item in profileItems)
+                    {
+                        analyteCatalog.TryGetValue(item.AnalyteId.Value, out var analyte);
+                        var name = analyte?.Name ?? $"[{item.AnalyteId.Value}]";
+                        profileTexts.Add($"{name}: {item.ResultValue}{(string.IsNullOrWhiteSpace(item.Unit) ? string.Empty : " " + item.Unit)}");
+                    }
                 }
-            }
 
             string? cultureSummary = null;
             if (cultureByTest.TryGetValue(pt.Id.Value, out var culture))

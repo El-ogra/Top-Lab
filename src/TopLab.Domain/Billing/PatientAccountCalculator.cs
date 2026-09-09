@@ -38,4 +38,35 @@ public static class PatientAccountCalculator
     {
         return TotalCharged(pricesAtOrderTime, operations) - TotalPaid(operations);
     }
+
+    /// <summary>
+    /// Central entry point for manual (ad-hoc) test selection (Decision 2): the order
+    /// charges the sum of the individually resolved unit prices.
+    /// </summary>
+    public static decimal ManualSelectionCharge(IReadOnlyList<decimal> individualPrices)
+    {
+        ArgumentNullException.ThrowIfNull(individualPrices);
+
+        if (individualPrices.Any(p => p < 0))
+        {
+            throw new ArgumentException("Individual prices must be >= 0.", nameof(individualPrices));
+        }
+
+        return individualPrices.Sum();
+    }
+
+    /// <summary>
+    /// Central entry point for profile selection (Decision 2): the order charges the
+    /// profile's immutable FixedPrice and never enumerates its constituent
+    /// analytes/tests and is never overridden by price lists/custom groups.
+    /// </summary>
+    public static decimal ProfileSelectionCharge(decimal fixedPrice)
+    {
+        if (fixedPrice < 0)
+        {
+            throw new ArgumentException("FixedPrice must be >= 0.", nameof(fixedPrice));
+        }
+
+        return fixedPrice;
+    }
 }

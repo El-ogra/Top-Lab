@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using TopLab.Domain.Billing;
+using TopLab.Domain.Common.Ids;
 using TopLab.Domain.Patients;
+using TopLab.Domain.Results;
+using TopLab.Domain.Tests;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Tests.Common;
 using Xunit;
@@ -419,5 +422,195 @@ Assert.Empty(et.GetForeignKeys());
         var fk = Assert.Single(et.GetForeignKeys());
         Assert.Equal(DeleteBehavior.Cascade, fk.DeleteBehavior);
         Assert.Equal(typeof(TopLab.Domain.Results.PatientTest), fk.PrincipalEntityType.ClrType);
+    }
+
+    [Fact]
+    public void Analyte_HasUniqueName_AndCurrentRange()
+    {
+        var et = GetEntityType<Analyte>();
+
+        var id = et.FindProperty("Id");
+        Assert.NotNull(id);
+        Assert.True(id!.ValueGenerated == ValueGenerated.OnAdd);
+        Assert.Equal("AnalyteId", id.GetColumnName());
+
+        var name = et.FindProperty(nameof(Analyte.Name));
+        Assert.NotNull(name);
+        Assert.False(name!.IsNullable);
+        Assert.Equal(150, name.GetMaxLength());
+
+        var idx = et.GetIndexes().FirstOrDefault(i => i.Properties.Any(p => p.Name == nameof(Analyte.Name)));
+        Assert.NotNull(idx);
+        Assert.True(idx!.IsUnique);
+
+        var rangeNav = et.GetNavigations().FirstOrDefault(n => n.Name == nameof(Analyte.CurrentRange));
+        Assert.NotNull(rangeNav);
+        Assert.Equal(typeof(AnalyteReferenceRange), rangeNav!.ClrType);
+    }
+
+    [Fact]
+    public void AnalyteReferenceRange_HasUniqueAnalyteId_OneAggregatePerAnalyte()
+    {
+        var et = GetEntityType<AnalyteReferenceRange>();
+
+        var id = et.FindProperty("Id");
+        Assert.NotNull(id);
+        Assert.True(id!.ValueGenerated == ValueGenerated.OnAdd);
+        Assert.Equal("AnalyteReferenceRangeId", id.GetColumnName());
+
+        var idx = et.GetIndexes().FirstOrDefault(i => i.Properties.Any(p => p.Name == nameof(AnalyteReferenceRange.AnalyteId)));
+        Assert.NotNull(idx);
+        Assert.True(idx!.IsUnique);
+    }
+
+    [Fact]
+    public void AnalyteReferenceRangeBand_HasBandShape_AndDecimalPrecision()
+    {
+        var et = GetEntityType<AnalyteReferenceRangeBand>();
+
+        var min = et.FindProperty(nameof(AnalyteReferenceRangeBand.MinValue));
+        Assert.NotNull(min);
+        Assert.False(min!.IsNullable);
+        Assert.Equal(18, min.GetPrecision());
+        Assert.Equal(4, min.GetScale());
+
+        var max = et.FindProperty(nameof(AnalyteReferenceRangeBand.MaxValue));
+        Assert.NotNull(max);
+        Assert.False(max!.IsNullable);
+        Assert.Equal(18, max.GetPrecision());
+        Assert.Equal(4, max.GetScale());
+
+        var low = et.FindProperty(nameof(AnalyteReferenceRangeBand.LowComment));
+        Assert.NotNull(low);
+        Assert.True(low!.IsNullable);
+        Assert.Equal(500, low.GetMaxLength());
+
+        var rangeIdx = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Any(p => p.Name == nameof(AnalyteReferenceRangeBand.AnalyteReferenceRangeId)));
+        Assert.NotNull(rangeIdx);
+    }
+
+    [Fact]
+    public void Profile_HasUniqueTestPairing_AndImmutableFixedPrice()
+    {
+        var et = GetEntityType<Profile>();
+
+        var id = et.FindProperty("Id");
+        Assert.NotNull(id);
+        Assert.True(id!.ValueGenerated == ValueGenerated.OnAdd);
+        Assert.Equal("ProfileId", id.GetColumnName());
+
+        var price = et.FindProperty(nameof(Profile.FixedPrice));
+        Assert.NotNull(price);
+        Assert.False(price!.IsNullable);
+        Assert.Equal(18, price.GetPrecision());
+        Assert.Equal(2, price.GetScale());
+
+        var testIdx = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Any(p => p.Name == nameof(Profile.TestId)));
+        Assert.NotNull(testIdx);
+        Assert.True(testIdx!.IsUnique);
+
+        var active = et.FindProperty(nameof(Profile.IsActive));
+        Assert.NotNull(active);
+        Assert.False(active!.IsNullable);
+        Assert.Equal(true, active.GetDefaultValue());
+    }
+
+    [Fact]
+    public void ProfileAnalyte_HasUniqueProfileAnalytePair()
+    {
+        var et = GetEntityType<ProfileAnalyte>();
+
+        var idx = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Any(p => p.Name == nameof(ProfileAnalyte.ProfileId))
+            && i.Properties.Any(p => p.Name == nameof(ProfileAnalyte.AnalyteId)));
+        Assert.NotNull(idx);
+        Assert.True(idx!.IsUnique);
+        Assert.Equal(2, idx!.Properties.Count);
+    }
+
+    [Fact]
+    public void Test_HasNullableAnalyteIdMapping()
+    {
+        var et = GetEntityType<Test>();
+
+        var analyteId = et.FindProperty(nameof(Test.AnalyteId));
+        Assert.NotNull(analyteId);
+        Assert.True(analyteId!.IsNullable);
+
+        var idx = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Any(p => p.Name == nameof(Test.AnalyteId)));
+        Assert.NotNull(idx);
+    }
+
+    [Fact]
+    public void ProfileResultItem_HasRequiredAnalyteId_NotLegacyName()
+    {
+        var et = GetEntityType<ProfileResultItem>();
+
+        Assert.Null(et.FindProperty("AnalyteName"));
+
+        var analyteId = et.FindProperty(nameof(ProfileResultItem.AnalyteId));
+        Assert.NotNull(analyteId);
+        Assert.False(analyteId!.IsNullable);
+        Assert.Equal(typeof(AnalyteId), analyteId.ClrType);
+
+        var fk = et.GetForeignKeys().FirstOrDefault(f =>
+            f.Properties.Any(p => p.Name == nameof(ProfileResultItem.AnalyteId)));
+        Assert.NotNull(fk);
+        Assert.Equal(typeof(Analyte), fk!.PrincipalEntityType.ClrType);
+        Assert.Equal(DeleteBehavior.Restrict, fk!.DeleteBehavior);
+
+        var printCount = et.FindProperty(nameof(ProfileResultItem.PrintCount));
+        Assert.NotNull(printCount);
+    }
+
+    [Fact]
+    public void ProfileResultItemReferenceRangeSnapshot_HasExpectedMapping()
+    {
+        var et = GetEntityType<ProfileResultItemReferenceRangeSnapshot>();
+
+        var key = et.FindPrimaryKey();
+        Assert.NotNull(key);
+        Assert.Equal(
+            new[] { nameof(ProfileResultItemReferenceRangeSnapshot.ProfileResultItemId) },
+            key!.Properties.Select(p => p.Name).ToArray());
+
+        var analyteId = et.FindProperty(nameof(ProfileResultItemReferenceRangeSnapshot.AnalyteId));
+        Assert.NotNull(analyteId);
+        Assert.False(analyteId!.IsNullable);
+
+        // Historical identity — no FK to the live analyte (mirrors M-04 snapshot).
+        Assert.DoesNotContain(et.GetForeignKeys(), f =>
+            f.PrincipalEntityType.ClrType == typeof(Analyte));
+
+        var min = et.FindProperty(nameof(ProfileResultItemReferenceRangeSnapshot.MinValue));
+        Assert.NotNull(min);
+        Assert.Equal(18, min!.GetPrecision());
+        Assert.Equal(4, min.GetScale());
+
+        var captured = et.FindProperty(nameof(ProfileResultItemReferenceRangeSnapshot.CapturedAtUtc));
+        Assert.NotNull(captured);
+        Assert.Equal(typeof(DateTimeOffset), captured!.ClrType);
+    }
+
+    [Fact]
+    public void ProfileResultAmendment_HasExpectedMapping_AndCascade()
+    {
+        var et = GetEntityType<ProfileResultAmendment>();
+
+        var id = et.FindProperty("Id");
+        Assert.NotNull(id);
+        Assert.True(id!.ValueGenerated == ValueGenerated.OnAdd);
+        Assert.Equal("ProfileResultAmendmentId", id.GetColumnName());
+
+        var fk = Assert.Single(et.GetForeignKeys());
+        Assert.Equal(DeleteBehavior.Cascade, fk.DeleteBehavior);
+        Assert.Equal(typeof(ProfileResultItem), fk.PrincipalEntityType.ClrType);
+
+        var idx = et.GetIndexes().FirstOrDefault(i =>
+            i.Properties.Any(p => p.Name == nameof(ProfileResultAmendment.ProfileResultItemId)));
+        Assert.NotNull(idx);
     }
 }

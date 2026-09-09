@@ -25,8 +25,11 @@ public sealed class TestConfiguration : IEntityTypeConfiguration<Test>
         b.Property(e => e.LabToLabPrice).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired(false);
         b.Property(e => e.ResultKind).HasConversion<int>().HasColumnType("tinyint").IsRequired();
         b.Property(e => e.IsCultureType).IsRequired();
+        b.Property(e => e.AnalyteId).HasConversion(v => v == null ? (int?)null : v.Value, v => v == null ? null : AnalyteId.Create(v.Value)).IsRequired(false);
         b.HasOne<TestGroup>().WithMany().HasForeignKey(e => e.TestGroupId).OnDelete(DeleteBehavior.SetNull);
+        b.HasOne<Analyte>().WithMany().HasForeignKey(e => e.AnalyteId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(e => e.TestGroupId);
+        b.HasIndex(e => e.AnalyteId);
         b.HasIndex(e => e.TestCode, "IX_Tests_TestCode").IsUnique();
         b.HasIndex(e => e.Name);
     }

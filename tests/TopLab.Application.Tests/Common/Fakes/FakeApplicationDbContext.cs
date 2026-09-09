@@ -21,6 +21,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<Test> Tests { get; } = new();
     public List<TestGroup> TestGroups { get; } = new();
     public List<ReferenceRange> ReferenceRanges { get; } = new();
+    public List<Analyte> Analytes { get; } = new();
+    public List<AnalyteReferenceRange> AnalyteReferenceRanges { get; } = new();
+    public List<AnalyteReferenceRangeBand> AnalyteReferenceRangeBands { get; } = new();
+    public List<Profile> Profiles { get; } = new();
+    public List<ProfileAnalyte> ProfileAnalytes { get; } = new();
     public List<WorkGroupLog> WorkGroupLogs { get; } = new();
     public List<WorkGroupLogItem> WorkGroupLogItems { get; } = new();
     public List<TestComment> TestComments { get; } = new();
@@ -49,6 +54,8 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<MedicalConditionType> MedicalConditionTypes { get; } = new();
     public List<PatientTestReferenceRangeSnapshot> PatientTestReferenceRangeSnapshots { get; } = new();
     public List<ProfileResultItem> ProfileResultItems { get; } = new();
+    public List<ProfileResultItemReferenceRangeSnapshot> ProfileResultItemReferenceRangeSnapshots { get; } = new();
+    public List<ProfileResultAmendment> ProfileResultAmendments { get; } = new();
     public List<CultureResult> CultureResults { get; } = new();
 
     public int SaveChangesCallCount { get; private set; }
@@ -88,6 +95,31 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         if (typeof(TEntity) == typeof(ReferenceRange))
         {
             return (IQueryable<TEntity>)(object)ReferenceRanges.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(Analyte))
+        {
+            return (IQueryable<TEntity>)(object)Analytes.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(AnalyteReferenceRange))
+        {
+            return (IQueryable<TEntity>)(object)AnalyteReferenceRanges.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(AnalyteReferenceRangeBand))
+        {
+            return (IQueryable<TEntity>)(object)AnalyteReferenceRangeBands.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(Profile))
+        {
+            return (IQueryable<TEntity>)(object)Profiles.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(ProfileAnalyte))
+        {
+            return (IQueryable<TEntity>)(object)ProfileAnalytes.AsQueryable();
         }
 
         if (typeof(TEntity) == typeof(WorkGroupLog))
@@ -230,6 +262,16 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)ProfileResultItems.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(ProfileResultItemReferenceRangeSnapshot))
+        {
+            return (IQueryable<TEntity>)(object)ProfileResultItemReferenceRangeSnapshots.AsQueryable();
+        }
+
+        if (typeof(TEntity) == typeof(ProfileResultAmendment))
+        {
+            return (IQueryable<TEntity>)(object)ProfileResultAmendments.AsQueryable();
+        }
+
         if (typeof(TEntity) == typeof(CultureResult))
         {
             return (IQueryable<TEntity>)(object)CultureResults.AsQueryable();
@@ -247,6 +289,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is Test t) Tests.Add(t);
         else if (entity is TestGroup tg) TestGroups.Add(tg);
         else if (entity is ReferenceRange rr) ReferenceRanges.Add(rr);
+        else if (entity is Analyte an) Analytes.Add(an);
+        else if (entity is AnalyteReferenceRange arr) AnalyteReferenceRanges.Add(arr);
+        else if (entity is AnalyteReferenceRangeBand arrb) AnalyteReferenceRangeBands.Add(arrb);
+        else if (entity is Profile prof) Profiles.Add(prof);
+        else if (entity is ProfileAnalyte paar) ProfileAnalytes.Add(paar);
         else if (entity is WorkGroupLog wgl) WorkGroupLogs.Add(wgl);
         else if (entity is WorkGroupLogItem wgli) WorkGroupLogItems.Add(wgli);
         else if (entity is TestComment tc) TestComments.Add(tc);
@@ -275,6 +322,8 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is MedicalConditionType mct) MedicalConditionTypes.Add(mct);
         else if (entity is PatientTestReferenceRangeSnapshot snap) PatientTestReferenceRangeSnapshots.Add(snap);
         else if (entity is ProfileResultItem pri) ProfileResultItems.Add(pri);
+        else if (entity is ProfileResultItemReferenceRangeSnapshot pris) ProfileResultItemReferenceRangeSnapshots.Add(pris);
+        else if (entity is ProfileResultAmendment pra) ProfileResultAmendments.Add(pra);
         else if (entity is CultureResult cr) CultureResults.Add(cr);
         else throw new NotSupportedException($"Add not supported for {typeof(TEntity).Name}");
     }
@@ -293,6 +342,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is Test t) Tests.Remove(t);
         else if (entity is TestGroup tg) TestGroups.Remove(tg);
         else if (entity is ReferenceRange rr) ReferenceRanges.Remove(rr);
+        else if (entity is Analyte an) Analytes.Remove(an);
+        else if (entity is AnalyteReferenceRange arr) AnalyteReferenceRanges.Remove(arr);
+        else if (entity is AnalyteReferenceRangeBand arrb) AnalyteReferenceRangeBands.Remove(arrb);
+        else if (entity is Profile prof) Profiles.Remove(prof);
+        else if (entity is ProfileAnalyte paar) ProfileAnalytes.Remove(paar);
         else if (entity is WorkGroupLog wgl) WorkGroupLogs.Remove(wgl);
         else if (entity is WorkGroupLogItem wgli) WorkGroupLogItems.Remove(wgli);
         else if (entity is TestComment tc) TestComments.Remove(tc);
@@ -321,6 +375,8 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is MedicalConditionType mct) MedicalConditionTypes.Remove(mct);
         else if (entity is PatientTestReferenceRangeSnapshot snap) PatientTestReferenceRangeSnapshots.Remove(snap);
         else if (entity is ProfileResultItem pri) ProfileResultItems.Remove(pri);
+        else if (entity is ProfileResultItemReferenceRangeSnapshot pris) ProfileResultItemReferenceRangeSnapshots.Remove(pris);
+        else if (entity is ProfileResultAmendment pra) ProfileResultAmendments.Remove(pra);
         else if (entity is CultureResult cr) CultureResults.Remove(cr);
         else throw new NotSupportedException($"Remove not supported for {typeof(TEntity).Name}");
     }

@@ -146,4 +146,44 @@ public class PatientAccountCalculatorTests
         Assert.Equal(90m, PatientAccountCalculator.TotalPaid(ops));
         Assert.Equal(80m, PatientAccountCalculator.Balance(prices, ops));
     }
+
+    [Fact]
+    public void ManualSelectionCharge_SumsIndividualPrices()
+    {
+        Assert.Equal(120m, PatientAccountCalculator.ManualSelectionCharge(new[] { 100m, 20m }));
+        Assert.Equal(0m, PatientAccountCalculator.ManualSelectionCharge(Array.Empty<decimal>()));
+    }
+
+    [Fact]
+    public void ManualSelectionCharge_RejectsNegativePrice()
+    {
+        Assert.Throws<ArgumentException>(() => PatientAccountCalculator.ManualSelectionCharge(new[] { 100m, -5m }));
+    }
+
+    [Fact]
+    public void ProfileSelectionCharge_ReturnsFixedPrice_Only()
+    {
+        Assert.Equal(200m, PatientAccountCalculator.ProfileSelectionCharge(200m));
+        Assert.Equal(0m, PatientAccountCalculator.ProfileSelectionCharge(0m));
+    }
+
+    [Fact]
+    public void ProfileSelectionCharge_RejectsNegative()
+    {
+        Assert.Throws<ArgumentException>(() => PatientAccountCalculator.ProfileSelectionCharge(-1m));
+    }
+
+    [Fact]
+    public void Balance_RemainsTheOnlyAggregateCalculator()
+    {
+        // The new selection entry points never aggregate payment operations; they feed
+        // an order's PriceAtOrderTime so Balance is the only aggregate formula.
+        var prices = new List<decimal>
+        {
+            PatientAccountCalculator.ManualSelectionCharge(new[] { 100m, 50m }),
+            PatientAccountCalculator.ProfileSelectionCharge(200m),
+        };
+
+        Assert.Equal(350m, PatientAccountCalculator.Balance(prices, Array.Empty<PaymentOperation>()));
+    }
 }

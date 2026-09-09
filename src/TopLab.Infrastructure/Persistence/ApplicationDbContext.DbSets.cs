@@ -21,6 +21,11 @@ public partial class ApplicationDbContext
     public Microsoft.EntityFrameworkCore.DbSet<TestGroup> TestGroups => Set<TestGroup>();
     public Microsoft.EntityFrameworkCore.DbSet<Test> Tests => Set<Test>();
     public Microsoft.EntityFrameworkCore.DbSet<ReferenceRange> ReferenceRanges => Set<ReferenceRange>();
+    public Microsoft.EntityFrameworkCore.DbSet<Analyte> Analytes => Set<Analyte>();
+    public Microsoft.EntityFrameworkCore.DbSet<AnalyteReferenceRange> AnalyteReferenceRanges => Set<AnalyteReferenceRange>();
+    public Microsoft.EntityFrameworkCore.DbSet<AnalyteReferenceRangeBand> AnalyteReferenceRangeBands => Set<AnalyteReferenceRangeBand>();
+    public Microsoft.EntityFrameworkCore.DbSet<Profile> Profiles => Set<Profile>();
+    public Microsoft.EntityFrameworkCore.DbSet<ProfileAnalyte> ProfileAnalytes => Set<ProfileAnalyte>();
     public Microsoft.EntityFrameworkCore.DbSet<TestComment> TestComments => Set<TestComment>();
     public Microsoft.EntityFrameworkCore.DbSet<CustomGroup> CustomGroups => Set<CustomGroup>();
     public Microsoft.EntityFrameworkCore.DbSet<CustomGroupItem> CustomGroupItems => Set<CustomGroupItem>();
@@ -31,6 +36,8 @@ public partial class ApplicationDbContext
     public Microsoft.EntityFrameworkCore.DbSet<PatientTest> PatientTests => Set<PatientTest>();
     public Microsoft.EntityFrameworkCore.DbSet<PatientTestReferenceRangeSnapshot> PatientTestReferenceRangeSnapshots => Set<PatientTestReferenceRangeSnapshot>();
     public Microsoft.EntityFrameworkCore.DbSet<ProfileResultItem> ProfileResultItems => Set<ProfileResultItem>();
+    public Microsoft.EntityFrameworkCore.DbSet<ProfileResultItemReferenceRangeSnapshot> ProfileResultItemReferenceRangeSnapshots => Set<ProfileResultItemReferenceRangeSnapshot>();
+    public Microsoft.EntityFrameworkCore.DbSet<ProfileResultAmendment> ProfileResultAmendments => Set<ProfileResultAmendment>();
     public Microsoft.EntityFrameworkCore.DbSet<CultureResult> CultureResults => Set<CultureResult>();
     public Microsoft.EntityFrameworkCore.DbSet<CultureAntibioticResult> CultureAntibioticResults => Set<CultureAntibioticResult>();
     public Microsoft.EntityFrameworkCore.DbSet<PaymentOperation> PaymentOperations => Set<PaymentOperation>();

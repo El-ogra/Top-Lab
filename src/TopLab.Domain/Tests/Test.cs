@@ -18,6 +18,9 @@ public sealed class Test : AuditableEntity<TestId>
 
     public bool IsActive { get; private set; }
 
+    /// <summary>Optional mapping of this simple test to its owning Analyte.</summary>
+    public AnalyteId? AnalyteId { get; private set; }
+
     public TestGroupId? TestGroupId { get; private set; }
 
     public string? Barcode { get; private set; }
@@ -132,6 +135,24 @@ public sealed class Test : AuditableEntity<TestId>
     public void Reactivate()
     {
         IsActive = true;
+    }
+
+    /// <summary>Maps this simple test to its owning Analyte. Simple tests only.</summary>
+    public void MapToAnalyte(AnalyteId analyteId)
+    {
+        ArgumentNullException.ThrowIfNull(analyteId);
+
+        if (ResultKind != ResultKind.Simple)
+        {
+            throw new InvalidOperationException("Only simple tests can be mapped to an analyte.");
+        }
+
+        AnalyteId = analyteId;
+    }
+
+    public void ClearAnalyteMapping()
+    {
+        AnalyteId = null;
     }
 
     private static void Guard(
