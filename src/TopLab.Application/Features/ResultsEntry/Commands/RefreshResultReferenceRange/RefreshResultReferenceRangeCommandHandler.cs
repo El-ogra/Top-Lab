@@ -43,30 +43,38 @@ public sealed class RefreshResultReferenceRangeCommandHandler
             return Result.Failure(Error.Conflict("النتيجة معتمدة؛ ألغِ الاعتماد أولاً."));
         }
 
-        var currentRanges = _db.Set<ReferenceRange>()
-            .Where(r => r.TestId.Value == pt.TestId.Value)
-            .ToList();
+        var test = _db.Set<Test>().FirstOrDefault(t => t.Id.Value == pt.TestId.Value);
+        var analyteBands = test is null
+            ? null
+            : ResultReferenceRangeSource.LoadAnalyteBands(_db, test);
+        IReadOnlyList<ReferenceRange> currentRanges = analyteBands is null
+            ? _db.Set<ReferenceRange>()
+                .Where(r => r.TestId.Value == pt.TestId.Value)
+                .ToList()
+            : Array.Empty<ReferenceRange>();
 
-        var match = ResultFlagComputer.SelectMatch(patient.Sex, patient.AgeUnit, patient.AgeValue, currentRanges);
+        var snapshotEntity = ResultReferenceRangeSource.Capture(
+            pt.Id, pt.TestId.Value, patient.Sex, patient.AgeUnit, patient.AgeValue, analyteBands, currentRanges);
         var existing = _db.Set<PatientTestReferenceRangeSnapshot>()
             .FirstOrDefault(s => s.PatientTestId.Value == pt.Id.Value);
 
-        if (match is not null)
+        if (snapshotEntity is not null)
         {
-            var entity = PatientTestReferenceRangeSnapshot.FromSnapshot(pt.Id, match.CaptureSnapshot());
             if (existing is not null)
             {
                 _db.Remove(existing);
             }
 
-            _db.Add(entity);
+            _db.Add(snapshotEntity);
         }
         else if (existing is not null)
         {
             _db.Remove(existing);
         }
 
-        var recomputed = ResultFlagComputer.Compute(pt.ResultValue, patient.Sex, patient.AgeUnit, patient.AgeValue, currentRanges);
+        var recomputed = analyteBands is not null
+            ? ResultFlagComputer.Compute(pt.ResultValue, patient.Sex, patient.AgeUnit, patient.AgeValue, analyteBands)
+            : ResultFlagComputer.Compute(pt.ResultValue, patient.Sex, patient.AgeUnit, patient.AgeValue, currentRanges);
         try
         {
             pt.EnterResult(pt.ResultValue, recomputed, pt.EnteredByUserId, pt.EnteredAtUtc, pt.Notes);

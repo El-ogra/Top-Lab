@@ -34,23 +34,42 @@ public sealed class GetResultEntryQueryHandler : IRequestHandler<GetResultEntryQ
 
         var test = _db.Set<Test>().FirstOrDefault(t => t.Id.Value == pt.TestId.Value);
 
-        var ranges = _db.Set<ReferenceRange>()
-            .Where(r => r.TestId.Value == pt.TestId.Value)
-            .OrderBy(r => r.AgeMin)
-            .ThenBy(r => r.AgeMax)
-            .ToList()
-            .Select(r => new ReferenceRangeDto(
-                r.Id.Value,
-                r.TestId.Value,
-                r.Sex,
-                r.AgeUnit,
-                r.AgeMin,
-                r.AgeMax,
-                r.MinValue,
-                r.MaxValue,
-                r.LowComment,
-                r.HighComment))
-            .ToList();
+        var analyzerBands = test is null ? null : ResultReferenceRangeSource.LoadAnalyteBands(_db, test);
+
+        var ranges = analyzerBands is not null
+            ? analyzerBands
+                .OrderBy(b => b.AgeMin)
+                .ThenBy(b => b.AgeMax)
+                .ThenBy(b => b.Id.Value)
+                .Select(b => new ReferenceRangeDto(
+                    b.Id.Value,
+                    pt.TestId.Value,
+                    b.Sex,
+                    b.AgeUnit,
+                    b.AgeMin,
+                    b.AgeMax,
+                    b.MinValue,
+                    b.MaxValue,
+                    b.LowComment,
+                    b.HighComment))
+                .ToList()
+            : _db.Set<ReferenceRange>()
+                .Where(r => r.TestId.Value == pt.TestId.Value)
+                .OrderBy(r => r.AgeMin)
+                .ThenBy(r => r.AgeMax)
+                .ToList()
+                .Select(r => new ReferenceRangeDto(
+                    r.Id.Value,
+                    r.TestId.Value,
+                    r.Sex,
+                    r.AgeUnit,
+                    r.AgeMin,
+                    r.AgeMax,
+                    r.MinValue,
+                    r.MaxValue,
+                    r.LowComment,
+                    r.HighComment))
+                .ToList();
 
         var snapshot = _db.Set<PatientTestReferenceRangeSnapshot>()
             .FirstOrDefault(s => s.PatientTestId.Value == pt.Id.Value);

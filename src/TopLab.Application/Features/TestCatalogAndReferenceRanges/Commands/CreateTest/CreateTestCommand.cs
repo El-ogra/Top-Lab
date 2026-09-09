@@ -18,7 +18,8 @@ public sealed record CreateTestCommand(
     string? Barcode,
     bool IsSentOut,
     decimal? SentOutCostPrice,
-    decimal? LabToLabPrice)
+    decimal? LabToLabPrice,
+    int? AnalyteId = null)
     : IRequest<Result<int>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

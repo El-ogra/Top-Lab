@@ -33,6 +33,12 @@ public sealed class CreateTestCommandHandler : IRequestHandler<CreateTestCommand
             return Result<int>.Failure(Error.NotFound("مجموعة التحاليل غير موجودة"));
         }
 
+        if (request.AnalyteId is int analyteId
+            && !_db.Set<Analyte>().Any(a => a.Id.Value == analyteId))
+        {
+            return Result<int>.Failure(Error.NotFound("المادة التحليلية غير موجودة"));
+        }
+
         var test = Test.Create(
             TestId.Create(0),
             request.Name,
@@ -48,6 +54,18 @@ public sealed class CreateTestCommandHandler : IRequestHandler<CreateTestCommand
             request.IsSentOut,
             request.SentOutCostPrice,
             request.LabToLabPrice);
+
+        if (request.AnalyteId is int mappedAnalyteId)
+        {
+            try
+            {
+                test.MapToAnalyte(AnalyteId.Create(mappedAnalyteId));
+            }
+            catch (InvalidOperationException)
+            {
+                return Result<int>.Failure(Error.Conflict("لا يمكن ربط المادة التحليلية إلا بتحليل بسيط."));
+            }
+        }
 
         _db.Add(test);
 

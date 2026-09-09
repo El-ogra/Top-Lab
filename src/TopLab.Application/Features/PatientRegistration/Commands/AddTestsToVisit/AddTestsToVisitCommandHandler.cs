@@ -4,6 +4,7 @@ using TopLab.Application.Common.Results;
 using TopLab.Application.Features.PatientRegistration.Common;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Queries.GetPriceListById;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetSystemSettings;
+using TopLab.Domain.Billing;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Common.Ids;
 using TopLab.Domain.ExternalEntities;
@@ -83,7 +84,7 @@ public sealed class AddTestsToVisitCommandHandler : IRequestHandler<AddTestsToVi
                 return Result<IReadOnlyList<int>>.Failure(Error.Conflict("التحليل غير موجود في قائمة أسعار الجهة المحال منها."));
             }
 
-            var price = TestPriceResolver.Resolve(
+            var resolvedPrice = TestPriceResolver.Resolve(
                 accountType,
                 test.PatientPrice,
                 test.LabToLabPrice,
@@ -91,6 +92,9 @@ public sealed class AddTestsToVisitCommandHandler : IRequestHandler<AddTestsToVi
                 priceListItems,
                 groupPrices,
                 testId);
+
+            // Decision 2: manual selection prices route through the central calculator.
+            var price = PatientAccountCalculator.ManualSelectionCharge(new[] { resolvedPrice });
 
             var pt = PatientTest.Create(
                 PatientTestId.Create(0),

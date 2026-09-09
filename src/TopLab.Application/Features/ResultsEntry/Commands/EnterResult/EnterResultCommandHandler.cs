@@ -61,14 +61,22 @@ public sealed class EnterResultCommandHandler : IRequestHandler<EnterResultComma
             return Result.Failure(Error.Validation("الرجاء إدخال قيمة النتيجة قبل الحفظ"));
         }
 
-        var currentRanges = _db.Set<ReferenceRange>()
-            .Where(r => r.TestId.Value == pt.TestId.Value)
-            .ToList();
+        var analyteBands = ResultReferenceRangeSource.LoadAnalyteBands(_db, test);
+        IReadOnlyList<ReferenceRange> currentRanges = analyteBands is null
+            ? _db.Set<ReferenceRange>()
+                .Where(r => r.TestId.Value == pt.TestId.Value)
+                .ToList()
+            : Array.Empty<ReferenceRange>();
 
         ResultFlag? flag;
         if (request.ResultFlag.HasValue)
         {
             flag = (ResultFlag)request.ResultFlag.Value;
+        }
+        else if (analyteBands is not null)
+        {
+            flag = ResultFlagComputer.Compute(
+                request.ResultValue, patient.Sex, patient.AgeUnit, patient.AgeValue, analyteBands);
         }
         else
         {
@@ -85,19 +93,19 @@ public sealed class EnterResultCommandHandler : IRequestHandler<EnterResultComma
             return Result.Failure(Error.Conflict(DomainFailureTranslator.Translate(ex)));
         }
 
-        var match = ResultFlagComputer.SelectMatch(patient.Sex, patient.AgeUnit, patient.AgeValue, currentRanges);
+        var snapshotEntity = ResultReferenceRangeSource.Capture(
+            pt.Id, pt.TestId.Value, patient.Sex, patient.AgeUnit, patient.AgeValue, analyteBands, currentRanges);
         var existing = _db.Set<PatientTestReferenceRangeSnapshot>()
             .FirstOrDefault(s => s.PatientTestId.Value == pt.Id.Value);
 
-        if (match is not null)
+        if (snapshotEntity is not null)
         {
-            var entity = PatientTestReferenceRangeSnapshot.FromSnapshot(pt.Id, match.CaptureSnapshot());
             if (existing is not null)
             {
                 _db.Remove(existing);
             }
 
-            _db.Add(entity);
+            _db.Add(snapshotEntity);
         }
         else if (existing is not null)
         {
