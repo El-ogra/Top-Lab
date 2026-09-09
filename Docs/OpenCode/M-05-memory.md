@@ -19,7 +19,7 @@ Verified HEAD has no Analyte/Profile/audit model; ProfileResultItem.AnalyteName 
 | 1 | Domain and schema foundation: analytes, profiles, snapshots, amendments, central pricing | [x] Done | VG-01 |
 | 2 | Catalog and ordering integration: authoritative analyte source and central selection pricing | [x] Done | VG-02 |
 | 3 | Profile entry, reporting, print, and post-print amendment surface | [x] Done | VG-03 |
-| 4 | Infrastructure proof and close-out | [ ] Not started | VG-04 |
+| 4 | Infrastructure proof and close-out | [x] Done | VG-04 |
 
 ## Slice 1: Domain and schema foundation
 
@@ -112,13 +112,32 @@ Prove migration, mapping, historical output, calculator, transaction and authori
 
 **VG-04:** Release build zero warnings/errors, full suite green, migration applies from HEAD with zero drift, all owner-decision tests pass, and no Presentation edits exist.
 
+### 10-Stage Progress — S4
+
+- [x] Stage 1 — Pre-Execution Verification: HEAD 5cf6946 green (1368/0); Slice 4 prerequisites list compiled (EF config tests, relational rollback proof, reprint persistence, central-calculator integration, ADR, tracking, handoff, Release 0/0, no drift, no Presentation).
+- [x] Stage 2 — Deep Understanding: re-read M-05.md §4.5 + VG-04; confirmed VG-03's deferred "relational rollback" item is the Slice 4 persistence proof; ADR next free = ADR-0036 (highest existing ADR-0035).
+- [x] Stage 3 — File Analysis: listed Infrastructure.Tests files; read InMemoryContextFactory (InMemory + AuditableEntitySaveChangesInterceptor, random db name per call → same-name helper needed for cross-context persistence), TopLab.Infrastructure.Tests.csproj (no Testcontainers), AddAnalyteProfileDomainMigrationTests (migration/backfill pattern), AddTestsToVisitPersistenceTests (persistence + PriceListItem pattern), FakeApplicationDbContext + UniqueViolationFakeApplicationDbContext (list-fake mutates in memory → cannot prove rollback), F5ConfigurationTests (config-assertion conventions), ResultLifecyclePersistenceTests (real-ctx InMemory lifecycle pattern), all M-05 entity configs (indexes/FKs/delete behaviors), the five ProfileResults query/command handlers, ProfileResultDtos (DTO property names, snapshot Create signature, Capture/FindProfile), AddProfileToVisitCommandHandler (profile central-charge path, `_db`-only deps), PatientAccountCalculator (Manual/ProfileSelectionCharge), AnalyteReferenceRangeBand (no update mutator → band swap via Remove+Add).
+- [x] Stage 4 — Planning: plan below; checklist recorded.
+- [x] Stage 5 — Execution: `M05ProfileDomainConfigurationTests` (7 F5-style assertions: Analyte unique Name + unique 1:1 range Cascade, Profile unique TestId 1:1 Cascade + Name index, ProfileAnalyte composite unique + cascade FKs, item→Analyte **Restrict** (negative pin), item→PatientTest Cascade + both indexes, snapshot 1:1 PK=ProfileResultItemId Cascade, amendment index + Cascade); `ProfileDomainPersistenceTests` (3 real-`ApplicationDbContext` InMemory proofs: AddProfileToVisit stores `PatientAccountCalculator.ProfileSelectionCharge(FixedPrice)` at order time; conditional atomic rollback — a deliberately failing `ISaveChangesInterceptor` (sync + async overloads, required because InMemory ignores transactions) aborts `AmendProfileResult`'s single save and a fresh context proves neither the active value nor the audit row persisted; reprint across three contexts — seed item+snapshot(1..5), swap the live band to 8..12 in a second context, then `GetProfileReportQueryHandler` in a third still renders the frozen 1..5). Initial rollback test failed (interceptor signature silently not wired) and the report test queried a hard-coded id — fixed by implementing both interceptor overloads and probing the stored id from a fresh context.
+- [x] Stage 6 — Post-Execution Verification: `dotnet build TopLab.sln` 0 warnings/0 errors; `dotnet ef migrations has-pending-model-changes` → "No changes... since the last migration" (zero drift; the Hosting validation noise is design-time-only).
+- [x] Stage 7 — Validation Gate VG-04: full suite green (357+904+117 = 1378 passed / 0 failed; +10 Infrastructure tests). ADR-0036 appended; Master Tracking Sheet M05 row → 🟩 Done (2026-09-09) + §9 change-log row; `Docs/Handoff_M05.md` created. VG-04 met.
+- [x] Stage 8 — Documentation update: stages + section below.
+- [x] Stage 9 — Memory Status update.
+- [x] Stage 10 — Git commit `[M-05] Slice 4/4: Infrastructure proof and close-out — loop-engineering`.
+
+**S4 Execution plan (Stage 5):**
+1. `tests/TopLab.Infrastructure.Tests/Persistence/Configurations/M05ProfileDomainConfigurationTests.cs` — config/FK matrix (unique indexes, 1:1 snapshot key, negative Restrict on item→Analyte, cascade behaviors).
+2. `tests/TopLab.Infrastructure.Tests/Persistence/ProfileDomainPersistenceTests.cs` — central-charge round-trip via `AddProfileToVisitCommandHandler` on a real context; amendment+audit rollback via a throwing `ISaveChangesInterceptor` with fresh-context assertion; reprint-after-live-range-change across three contexts reading the frozen snapshot.
+3. ADR-0036, Master Tracking Sheet M05 row + change-log, `Docs/Handoff_M05.md`.
+4. Verify Release 0/0, full suite, zero drift, no Presentation edits; commit.
+
 ## Current Status
 
-- Overall: **3/4 slices done — Slice 4 next (Infrastructure proof and close-out)**
+- Overall: **4/4 slices done — module closed out (VG-01..VG-04 all green)**
 - Slice 1: [x] Done — VG-01 green; committed `[M-05] Slice 1/4: Domain and schema foundation — loop-engineering`
 - Slice 2: [x] Done — VG-02 green; committed `[M-05] Slice 2/4: Catalog and ordering integration — loop-engineering`
 - Slice 3: [x] Done — VG-03 green; committed `[M-05] Slice 3/4: Profile entry, reporting, print, and post-print amendment surface — loop-engineering`
-- Slice 4: [ ] Not started
+- Slice 4: [x] Done — VG-04 green; committed `[M-05] Slice 4/4: Infrastructure proof and close-out — loop-engineering`
 - Blocking decisions: none
 
 ## Execution Log
@@ -130,6 +149,7 @@ Prove migration, mapping, historical output, calculator, transaction and authori
 | 2026-09-09 | 1 | 1–10 | Domain/schema foundation + backfill migration; full suite 1282 green; VG-01 met | Done | `[M-05] Slice 1/4: Domain and schema foundation — loop-engineering` |
 | 2026-09-09 | 2 | 1–10 | Catalog + ordering integration (analyte profile feature, M12 mapping, profile/manual central pricing, M04 band redirect); full suite 1328 green; VG-02 met | Done | `[M-05] Slice 2/4: Catalog and ordering integration — loop-engineering` |
 | 2026-09-09 | 3 | 1–10 | Profile entry/report/print/amendment surface (DTOs + capture helper, grid/report/amendments queries, save/verify/unverify/print/amend commands, feature-local failure translator); full suite 1368 green (904 Application, +40); VG-03 met | Done | `[M-05] Slice 3/4: Profile entry, reporting, print, and post-print amendment surface — loop-engineering` |
+| 2026-09-09 | 4 | 1–10 | Infrastructure proof + close-out: M05 config/FK matrix (7 tests), real-context InMemory proofs (central-charge round-trip, amendment+audit rollback via failing interceptor, reprint-after-live-range-change across contexts; 3 tests), ADR-0036, tracking M05 row → Done + change-log, Handoff_M05.md; Release 0/0, zero drift, no Presentation edits; full suite 1378 green (117 Infrastructure, +10); VG-04 met | Done | `[M-05] Slice 4/4: Infrastructure proof and close-out — loop-engineering` |
 
 ## Stop Report
 
