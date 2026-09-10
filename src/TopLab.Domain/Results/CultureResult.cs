@@ -33,11 +33,25 @@ public sealed class CultureResult
         string? colonyCount = null)
     {
         PatientTestId = patientTestId;
-        Sample = sample;
-        OrganismA = organismA;
-        OrganismB = organismB;
-        OrganismC = organismC;
-        CultureCondition = cultureCondition;
-        ColonyCount = colonyCount;
+        Update(sample, organismA, organismB, organismC, cultureCondition, colonyCount);
     }
+
+    public void Update(
+        string? sample,
+        string? organismA,
+        string? organismB,
+        string? organismC,
+        string? cultureCondition,
+        string? colonyCount)
+    {
+        Sample = Normalize(sample);
+        OrganismA = Normalize(organismA);
+        OrganismB = Normalize(organismB);
+        OrganismC = Normalize(organismC);
+        CultureCondition = Normalize(cultureCondition);
+        ColonyCount = Normalize(colonyCount);
+    }
+
+    private static string? Normalize(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
