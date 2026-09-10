@@ -22,6 +22,30 @@ public class F5ConfigurationTests
     }
 
     [Fact]
+    public void CultureResults_HavePinnedKeysAndForeignKeyMatrix()
+    {
+        var header = GetEntityType<CultureResult>();
+        Assert.Equal(new[] { nameof(CultureResult.PatientTestId) }, header.FindPrimaryKey()!.Properties.Select(x => x.Name));
+        var headerFk = Assert.Single(header.GetForeignKeys());
+        Assert.Equal(DeleteBehavior.Cascade, headerFk.DeleteBehavior);
+        Assert.Equal(typeof(PatientTest), headerFk.PrincipalEntityType.ClrType);
+
+        var sensitivity = GetEntityType<CultureAntibioticResult>();
+        Assert.Equal(ValueGenerated.OnAdd, sensitivity.FindPrimaryKey()!.Properties.Single().ValueGenerated);
+        Assert.Contains(sensitivity.GetForeignKeys(), x => x.PrincipalEntityType.ClrType == typeof(CultureResult) && x.DeleteBehavior == DeleteBehavior.Cascade);
+        Assert.Contains(sensitivity.GetForeignKeys(), x => x.PrincipalEntityType.ClrType == typeof(Antibiotic) && x.DeleteBehavior == DeleteBehavior.Restrict);
+        Assert.Contains(sensitivity.GetIndexes(), x => x.Properties.Any(p => p.Name == nameof(CultureAntibioticResult.PatientTestId)));
+    }
+
+    [Fact]
+    public void MedicalConditionType_SeedsPregnancyCatalogRow()
+    {
+        using var ctx = new ApplicationDbContext(InMemoryContextFactory.Create());
+        ctx.Database.EnsureCreated();
+        Assert.Contains(ctx.Set<MedicalConditionType>(), x => x.Name == "حمل" && x.Category == TopLab.Domain.Common.Enums.MedicalConditionCategory.Pregnancy);
+    }
+
+    [Fact]
     public void Patient_HasExpectedColumns()
     {
         var et = GetEntityType<Patient>();

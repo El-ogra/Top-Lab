@@ -807,3 +807,14 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 ---
 
 *End of document.*
+
+---
+
+### ADR-0037 — M-06: Culture result entry uses attached antibiotics and structural pregnancy indication
+
+- **Status:** Accepted
+- **Date:** 2026-09-11
+
+**Decision.** Culture entry accepts only antibiotics attached to the culture test; a submitted unattached ID is rejected. Entry-grid flags are display-time only and never suppress already recorded results. Pregnancy is represented by `MedicalConditionCategory.Pregnancy = 2` and the seeded «حمل» catalog row, evaluated structurally through attached condition categories. Culture sensitivity saves replace the list atomically; verification uses `MarkEntered` then `MarkReviewed`; printing uses the settled balance block.
+
+**Consequences.** The only migration is `AddPregnancyMedicalConditionTypeSeed`, which inserts the required catalog row. The existing `PatientTest.MarkEntered`/`Unreview` contract was already present, so the first-shipper contingency was not invoked. No Presentation content or permission-catalog change was added.
