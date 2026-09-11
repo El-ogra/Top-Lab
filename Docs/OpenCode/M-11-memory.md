@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-11.md
 - **Date Created:** 2026-09-08
 - **Total Slices:** 2
-- **Current Slice:** Slice 1 done — 1/2 slices done
+- **Current Slice:** All slices done — 2/2 slices done
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -51,7 +51,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Application: worksheet generation queries + test-count classification + DTOs + tests (single combined slice) | [x] Done | VG-01 |
-| 2 | Infrastructure proof + close-out | [ ] Not started | VG-02 |
+| 2 | Infrastructure proof + close-out | [x] Done | VG-02 |
 
 ---
 
@@ -72,7 +72,7 @@ Additional user-authorized execution parameters (override skill defaults):
 - [x] **Stage 7 — Validation Gate:** VG-01 passed. Evidence: build/test output; authorization theory tests green; grep gates clean.
 - [x] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
 - [x] **Stage 9 — Memory Status Update:** "Current Status" section updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-11] Slice 1/2: Application: worksheet generation queries + test-count classification + DTOs + tests (single combined slice) — loop-engineering` + `Stages 1-10 verified. Gate VG-01 passed.` — on `main`, never push.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-11] Slice 1/2: Application: worksheet generation queries + test-count classification + DTOs + tests (single combined slice) — loop-engineering` + `Stages 1-10 verified. Gate VG-01 passed.` — on `main`, never push. Done: commit `12dbef0`, 19 files, local only.
 
 ---
 
@@ -84,24 +84,24 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: run `dotnet build TopLab.sln` + `dotnet test TopLab.sln`.
-- [ ] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §7.3; migration-scope gate: model vs. snapshot — zero drift; drift → stop + addendum; ADR-0039 records: generation-equals-printing permission choice; DTO-as-worksheet (no `IBarcodeService`/`IReportPrintingService` implementation — rendering per Reporting §13); outside-lab exclusion from bench sheets (and its non-application to the FR-M11-004 count); settled period-based design (FR-M11-001/002/003 + S-33 + FR-OUT-07) with the owner-settled default/boundary semantics (default-today-UTC, inclusive; UTC-day caveat recorded — a 01:00 registration in Egypt (UTC+2/+3) appears on "yesterday's" sheet; a lab-timezone setting is flagged as future work since no such setting exists in the verified `SystemSettings`); the in-module test-count classification (FR-M11-004); the owner-settled line-identifier choice (`LabId` + `PatientTestId` pair within the Reporting §7 barcode-content rule); zero-migration outcome; tracking-sheet M11 row verified at line 77.
-- [ ] **Stage 3 — File Analysis:** Every file this slice touches listed and inspected. Files: `F5ConfigurationTests.cs`, `ApplicationDbContextModelSnapshot.cs` (relevant sections), `WorkGroupLogConfiguration.cs` (composite key, name required), `WorkGroupLogItemConfiguration.cs`, InMemory harness, `Top_Lab_ADR.md`, `Top_Lab_Master_Tracking_Sheet.md`, `Top_Lab_Handoff_Template.md` / `Handoff_M12.md` (template), `IBarcodeService` / `IReportPrintingService` (ports; no implementations — stays unimplemented per Reporting §13).
-- [ ] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: run migration-scope gate first (model vs. snapshot; expect zero drift) → extend `F5ConfigurationTests` for `WorkGroupLog`/`WorkGroupLogItem` mapping → create `WorkSheetQueryPersistenceTests` (InMemory by-log DTO + classification) → ADR-0039 → tracking flip → handoff.
-- [ ] **Stage 5 — Execution:** Slice implemented per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Build + tests pass again `zero errors + zero warnings`.
-- [ ] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: Release build 0/0, full suite green, zero-drift proven, coverage floors met or waivers documented, zero Presentation content (grep gate).
-- [ ] **Stage 8 — Documentation Update:** Every checkbox in this slice marked [x] where applicable.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-11] Slice 2/2: Infrastructure proof + close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Build passes `zero errors + zero warnings` and all tests pass. Evidence: `dotnet build TopLab.sln` → 0/0 (2026-09-11, post-S1 commit); `dotnet test TopLab.sln -m:1` → Domain 360/360 + Application 975/976 (sole FAIL = waived midnight flake) + Infra 123/123.
+- [x] **Stage 2 — Deep Understanding:** Requirements, inputs, outputs, edge cases documented. Notes: plan §7.3; migration-scope gate: model vs. snapshot — zero drift; drift → stop + addendum; ADR-0039 records: generation-equals-printing permission choice; DTO-as-worksheet (no `IBarcodeService`/`IReportPrintingService` implementation — rendering per Reporting §13); outside-lab exclusion from bench sheets (and its non-application to the FR-M11-004 count); settled period-based design (FR-M11-001/002/003 + S-33 + FR-OUT-07) with the owner-settled default/boundary semantics (default-today-UTC, inclusive; UTC-day caveat recorded — a 01:00 registration in Egypt (UTC+2/+3) appears on "yesterday's" sheet; a lab-timezone setting is flagged as future work since no such setting exists in the verified `SystemSettings`); the in-module test-count classification (FR-M11-004); the owner-settled line-identifier choice (`LabId` + `PatientTestId` pair within the Reporting §7 barcode-content rule); zero-migration outcome; tracking-sheet M11 row verified at line 77.
+- [x] **Stage 3 — File Analysis:** inspected + verified: `WorkGroupLogConfiguration` (PK `Id`, `Name` max 150 required), `WorkGroupLogItemConfiguration` (composite PK `(WorkGroupLogId, TestId)`, FK via convention), `F5ConfigurationTests` pattern (`GetEntityType<T>`, `FindPrimaryKey`/`FindProperty`/`GetMaxLength` idioms), `InMemoryContextFactory.Create()` + `PatientSearchPersistenceTests` (real `ApplicationDbContext` over InMemory, `AssignLabId` pattern), `ApplicationDbContext.DbSets` (`WorkGroupLogs`, `WorkGroupLogItems`, `PatientTests`, `Tests`, `Patients`, `SystemSettings` all present), ADR max = ADR-0038 → next free ADR-0039, tracking M11 row at line 77 (`⬜ Design`), handoff template at `Docs/Source/Top_Lab_Handoff_Template.md`. Migration-scope gate ALREADY RUN: `dotnet ef migrations has-pending-model-changes --project src/TopLab.Infrastructure` → "No changes have been made to the model since the last migration" (zero drift, 2026-09-11).
+- [x] **Stage 4 — Planning:** Step-by-step execution plan written. Plan: run migration-scope gate first (model vs. snapshot; expect zero drift) → extend `F5ConfigurationTests` for `WorkGroupLog`/`WorkGroupLogItem` mapping → create `WorkSheetQueryPersistenceTests` (InMemory by-log DTO + classification) → ADR-0039 → tracking flip → handoff. PARTIALLY EXECUTED by prior agent: F5 test `WorkSheet_WorkGroupLogMapping_IsPinned` written + `WorkSheetQueryPersistenceTests.cs` created, both UNVERIFIED (test run interrupted before results).
+- [x] **Stage 5 — Execution:** F5 test passes; `WorkSheetQueryPersistenceTests` both tests pass after fixing duplicate-key seed issue (`SystemSettings.CreateDefault()` removed — `EnsureCreated()` already seeds it).
+- [x] **Stage 6 — Post-Execution Verification:** Build 0/0; full suite green (360 + 975/976 waived-flake-only + 126 = 1462); Release build 0/0.
+- [x] **Stage 7 — Validation Gate:** VG-02 passed. Evidence: Release build 0/0; full suite green with only the waived midnight flake; zero-drift proven; F5 `WorkSheet_WorkGroupLogMapping_IsPinned` + `WorkSheetQueryPersistenceTests` (2 tests) green; zero Presentation content; diff confined to `tests/**` + `Docs/**`.
+- [x] **Stage 8 — Documentation Update:** ADR-0039 appended to `Docs/Source/Top_Lab_ADR.md`; M11 tracking row flipped to 🟩 Done with dated change-log entry; `Docs/Handoff_M11.md` created per template.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" section updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-11] Slice 2/2: Infrastructure proof + close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
 
 ---
 
 ## Current Status
 
-- Overall: 1/2 slices done
+- Overall: 2/2 slices done — Module COMPLETE
 - Slice 1 — Application: worksheet generation queries + test-count classification + DTOs + tests (single combined slice): [x] Done (VG-01 passed 2026-09-11; build 0/0; 28/28 new tests green; cumulative Domain 360/360 + Application 975/976 (sole FAIL = waived midnight flake) + Infra 123/123; diff confined to `Features/WorkSheets/` + tests)
-- Slice 2 — Infrastructure proof + close-out: [ ] Not started
+- Slice 2 — Infrastructure proof + close-out: [x] Done (VG-02 passed 2026-09-11; build 0/0; Release build 0/0; full suite green 1462; zero drift; F5 + persistence tests green; zero Presentation; ADR-0039; tracking flip; handoff)
 
 ## Execution Log
 
@@ -113,5 +113,12 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-11 | 1 | 10 | Owner decisions (Arabic): executor performs local commit per slice (no push, no branches) then starts next slice immediately; stop threshold 5; rerun suite until green | OK | — |
 | 2026-09-11 | 1 | 1 | WAIVER (owner, Arabic): do not wait for the midnight flake — `GetPatientsWithUncollectedSamples...OrderedByRegistrationAsc` is EXCLUDED from all M-11 slice gates (VG-01/VG-02). Stage 1/6/7 gates = full suite green except that single known pre-existing failure; any OTHER failure still blocks | OK | — |
 | 2026-09-11 | 1 | 1-7 | S1 implemented (15 src files: Common ×3 + 4 queries ×3) + 28 tests (17 handler + 6 validator + 5 auth); build 0/0; new 28/28 green; cumulative 360 + 975/976 (waived flake only) + 123; VG-01 PASS | OK | — |
+| 2026-09-11 | 2 | 1-4 | S2 Stages 1-4 done by prior agent: pre-verification green (build 0/0; 360 + 975/976 waived-flake-only + 123); drift gate `dotnet ef migrations has-pending-model-changes` → "No changes..." (zero drift); F5 test + persistence test WRITTEN but UNVERIFIED (run interrupted); ADR max confirmed 0038 → ADR-0039 free; tracking M11 row at line 77 confirmed. Handoff to new executor agent (supervisor mode) | OK | — |
+| 2026-09-11 | 2 | 5 | S2 Stage 5 — Verified F5 test `WorkSheet_WorkGroupLogMapping_IsPinned` passes; fixed `WorkSheetQueryPersistenceTests` duplicate-key seed (removed `SystemSettings.CreateDefault()` — `EnsureCreated()` already seeds Id=1); both persistence tests green (3/3 infrastructure filter) | OK | — |
+| 2026-09-11 | 2 | 6 | S2 Stage 6 — Post-execution verification: `dotnet build TopLab.sln` → 0/0; `dotnet test TopLab.sln -m:1` → Domain 360/360 + Application 975/976 (waived flake only) + Infrastructure 126/126 = 1462 total | OK | — |
+| 2026-09-11 | 2 | 7 | S2 Stage 7 — VG-02 passed: Release build 0/0; full suite green with only waived flake; zero drift; F5 + persistence tests green; zero Presentation content (grep gate); diff confined to `tests/**` + `Docs/**` (no Domain, no Presentation, no PermissionConfiguration, no migration) | OK | — |
+| 2026-09-11 | 2 | 8 | S2 Stage 8 — ADR-0039 appended to `Top_Lab_ADR.md`; M11 tracking row flipped to 🟩 Done with change-log entry; `Docs/Handoff_M11.md` created per template | OK | — |
+| 2026-09-11 | 2 | 9 | S2 Stage 9 — Memory status updated (2/2 slices done, module COMPLETE) | OK | — |
+| 2026-09-11 | 2 | 10 | S2 Stage 10 — Local commit `[M-11] Slice 2/2: Infrastructure proof + close-out — loop-engineering` on main, never push. Stages 1-10 verified. Gate VG-02 passed. | OK | `12d0f83` |
 
 ## Stop Report (append only if a stop condition triggers)

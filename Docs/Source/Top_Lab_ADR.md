@@ -806,6 +806,29 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 
 ---
 
+### ADR-0039 — M-11: Work Sheets — generation-equals-printing, DTO-as-worksheet, period-based design, and zero-migration infrastructure proof
+
+- **Status:** Accepted
+- **Date:** 2026-09-11
+
+**Context.** Module 11 delivers the backend for the period/range-based work sheets (FR-M11-001/002/003 + S-33 + FR-OUT-07) and the in-module period test-count classification (FR-M11-004). The module must not implement any rendering (`IBarcodeService`/`IReportPrintingService` remain unimplemented per Reporting §13), must not touch the Domain or add a migration, and must prove its EF Core consumption through infrastructure persistence tests.
+
+**Decision.**
+
+1. **Generation equals printing.** All four worksheet queries are gated on `PRINT_WORKSHEET` (FR-M17-004 item 8). The classification view lives on the M11 screen (S-33) and shares the worksheet grant — it does not require the `STATISTICS` permission. Generating a worksheet is treated as printing it; no separate `MarkWorkSheetPrinted` audit command ships, because no print-tracking columns exist for worksheets.
+2. **DTO-as-worksheet; no renderer implementation.** The worksheet deliverable is a set of DTOs (`WorkSheetDto`, `WorkSheetLineDto`, `WorkSheetSectionDto`, `WorkSheetSummaryRowDto`, `WorkSheetTestCountDto`). The `IBarcodeService` and `IReportPrintingService` ports are not implemented — rendering is the responsibility of the Reporting module (§13). The DTOs carry the owner-settled per-line scannable identity (`PatientTestId` + `LabId`) and `Test.Barcode` as the test classifier, plus the three system settings (`PrintFileExternalBarcode`, `PrintDateTimeOnTubeBarcode`, `PrintLabIdInsteadOfPatientId`) echoed for the future renderer.
+3. **Outside-lab exclusion from bench sheets; non-application to FR-M11-004 count.** `PatientTest` rows with `IsTakenOutsideLab = true` are excluded from the three worksheet queries (WorkGroupLog, TestGroup, Summary) — a bench sheet lists tests whose sample should be in the lab. The FR-M11-004 test-count classification counts **all** `PatientTest` rows for the period, including outside-lab rows, because it measures period activity, not bench workload. This intentional divergence is a stated, tested rule with a code comment.
+4. **Settled period-based design.** All worksheet modes operate over a selectable `DateOnly? From` / `DateOnly? To` range. Both default to the current UTC day when unspecified; `From > To` produces a Validation error (`"بداية الفترة يجب ألا تتجاوز نهايتها."`). Bounds are inclusive on UTC calendar days. A registration at 01:00 local Egypt time (UTC+2/+3) falls on the prior UTC day's sheet — this caveat is recorded here as a known limitation. A lab-timezone setting is flagged as future work since no such setting exists in the verified `SystemSettings`.
+5. **In-module test-count classification (FR-M11-004).** The period test-count query (`GetWorkSheetTestCountByPeriod`) counts `PatientTest` rows grouped by `TestId` over the same period, ordered by `Count desc` then `TestId`, with `TotalCount` as the sum. It shares the `PRINT_WORKSHEET` gate because the classification view sits on the M11 screen (S-33).
+6. **Owner-settled line-identifier pair.** Each worksheet line carries the `LabId` + `PatientTestId` pair as the scannable identity, within the Reporting §7 barcode-content rule (Code 128 carrying `PatientId` or `LabId` per `PrintLabIdInsteadOfPatientId`, plus print date/time when `PrintDateTimeOnTubeBarcode` is set).
+7. **Zero-migration outcome.** The module consumes only existing entities (`WorkGroupLog`, `WorkGroupLogItem`, `PatientTest`, `Patient`, `Test`, `TestGroup`, `SystemSettings`). No new tables, no schema changes, no `PermissionConfiguration` change. `dotnet ef migrations has-pending-model-changes` returns "No changes have been made to the model since the last migration".
+
+**Consequences.** Diff confined to `src/TopLab.Application/Features/WorkSheets/**` (15 source files: DTOs, access policy, 4 queries with handlers and validators), `tests/**` (28 Application handler/validator/authorization tests + 3 Infrastructure persistence tests), `Docs/**` (ADR, handoff, tracking). No Domain change, no migration, no `PermissionConfiguration` change, zero Presentation content. Full solution green (360 Domain + 975 Application (sole FAIL = waived midnight flake) + 126 Infrastructure); Release build 0/0. ADR-0039. Commits `12dbef0` (S1) + the S2 close-out commit.
+
+**Related.** M-11 Implementation Plan §7.2/§7.3; FR-M11-001/002/003/004; PRD §1.2 item 8 + §4 module map; FR-M17-004 item 8; S-33; FR-OUT-07; Reporting §7/§13; ADR-0018 (soft delete for `Patient.IsDeleted`); ADR-0020 (singleton settings); ADR-0032/0033 (permission-reuse precedent).
+
+---
+
 *End of document.*
 
 ---

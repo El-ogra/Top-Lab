@@ -135,6 +135,22 @@ public class F5ConfigurationTests
     }
 
     [Fact]
+    public void WorkSheet_WorkGroupLogMapping_IsPinned()
+    {
+        var log = GetEntityType<WorkGroupLog>();
+        Assert.Equal(new[] { nameof(WorkGroupLog.Id) }, log.FindPrimaryKey()!.Properties.Select(x => x.Name));
+        var name = log.FindProperty(nameof(WorkGroupLog.Name));
+        Assert.NotNull(name);
+        Assert.False(name!.IsNullable);
+        Assert.Equal(150, name.GetMaxLength());
+
+        var item = GetEntityType<WorkGroupLogItem>();
+        Assert.Equal(
+            new[] { nameof(WorkGroupLogItem.WorkGroupLogId), nameof(WorkGroupLogItem.TestId) },
+            item.FindPrimaryKey()!.Properties.Select(x => x.Name));
+    }
+
+    [Fact]
     public void PatientTest_HasCompositeIndex_OnPatientIdAndIsSampleDrawn()
     {
         var et = GetEntityType<TopLab.Domain.Results.PatientTest>();
