@@ -31,6 +31,16 @@ public sealed class SentOutSample : AuditableEntity<SentOutSampleId>
 
     public static SentOutSample Create(SentOutSampleId id, PatientTestId patientTestId, ExternalEntityId externalLabEntityId, decimal costPrice, decimal patientPrice, DateTime sentAtUtc)
     {
+        if (costPrice < 0)
+        {
+            throw new ArgumentException("CostPrice must be >= 0.", nameof(costPrice));
+        }
+
+        if (patientPrice < 0)
+        {
+            throw new ArgumentException("PatientPrice must be >= 0.", nameof(patientPrice));
+        }
+
         return new SentOutSample(id, patientTestId, externalLabEntityId, costPrice, patientPrice, sentAtUtc);
     }
 }

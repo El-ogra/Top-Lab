@@ -28,6 +28,11 @@ public sealed class SentOutSamplePayment : Entity<SentOutSamplePaymentId>
 
     public static SentOutSamplePayment Create(SentOutSamplePaymentId id, SentOutSampleId sentOutSampleId, decimal amountPaid, DateTime paidAtUtc, int performedByUserId)
     {
+        if (amountPaid <= 0)
+        {
+            throw new ArgumentException("AmountPaid must be > 0.", nameof(amountPaid));
+        }
+
         return new SentOutSamplePayment(id, sentOutSampleId, amountPaid, paidAtUtc, performedByUserId);
     }
 }
