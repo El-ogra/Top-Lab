@@ -921,3 +921,30 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 **Consequences.** Diff confined to `src/TopLab.Application/Features/ResultDelivery/**` (11 source files: DTOs, access policy, period helper, translator, 3 queries + 1 command with handlers and validators), `tests/**` (45 Application handler/validator/authorization/translator tests + 3 M09 validator-registration cases + 3 Infrastructure persistence tests), `Docs/**`. No `.csproj` changes, no new packages, zero Presentation content. Full suite green **1632** (378 Domain + 1109 Application + 145 Infrastructure); Release build 0/0. Coverage: per-slice gates passed (VG-01 Application S1 footprint line-rate 0.857–1.000, VG-02 handler 1.000/1.000 + validator 1.000 + translator both arms, VG-03 persistence 3/3 green).
 
 **Related.** M-09 Implementation Plan §2 (settled rules), §5 (S1/S2), §6 (S3 close-out), Appendix A (Arabic messages); ADR-0035 (M-04 lifecycle + `MarkDelivered` guard); ADR-0016 (M-03 computed figures, no negative clamp); ADR-0038 (M-08 visit rollup); ADR-0040 (M-07, consumed the previous number first).
+
+---
+
+### ADR-0042 — Sent-out samples: per-sample lab binding, settlement calculator, and guarded write surface over the existing schema
+
+**Status:** Accepted
+**Date:** 2026-09-15
+
+**Context.** M-16 delivers the sent-out-samples workflow: dispatching a patient test to an external partner lab, partial payments («ترسل إلى») against the test's cost price, full settlement («خلاص»), the period follow-up list, and the per-lab account. At HEAD the physical schema was already complete (`SentOutSamples`/`SentOutSamplePayments` tables, `SentOutSampleConfiguration`/`SentOutSamplePaymentConfiguration`, DbSets, the M-14 delete guard counting sent-out references) while the Domain entities were factory-only (no guards) and no Application surface existed. The module required decisions on lab binding, cancel/re-send scope, the permission gate, and price defaulting.
+
+**Decision.**
+
+1. **Per-sample lab binding + PRD-contradiction record (OD-16-A).** The external lab is chosen at each sample's dispatch (`SentOutSample.ExternalLabEntityId`); no `Test.DefaultExternalLabEntityId` column was added and no migration was created. FR-M16-001's phrasing (choose the external lab at test-definition time) contradicts the actual schema and is recorded here as a documented PRD-vs-code contradiction resolved in favor of code; the binding supports FR-M16-002/003 fully without change.
+
+2. **No cancel/re-send in v1 (OD-16-B).** No void/status mutator ships; nothing deletes or cancels a recorded sample. The schema has no void/status column and no migration was sanctioned. Deferred to a later decision (grep-pinned absence in the diff).
+
+3. **`CASH_DISBURSE_DEPOSIT` reuse (OD-16-C).** All three write commands (`SendSampleOut`, `RecordSentOutPayment`, `SettleSentOutInFull`) carry `IAuthorizedRequest` with the existing seeded permission (id=11) via the feature-local `SentOutSamplesAccessPolicy`. Read queries are open. No catalog change, no new permission seed, no migration.
+
+4. **Auto-capture-with-override pricing (OD-16-D).** Dispatch defaults `costPrice`/`patientPrice` from `Test.SentOutCostPrice`/`Test.PatientPrice` and accepts explicit overrides; Domain guards (`costPrice >= 0`, `patientPrice >= 0`, `amountPaid > 0`) remain authoritative with a feature-local translator to the Appendix A Arabic messages.
+
+5. **Single-sourced calculator.** The Data Model §8.3 settlement formula (`Remaining = TotalCost − TotalPaid`; `IsFullySettled = TotalPaid >= TotalCost`) lives only in the Domain static `SentOutAccountCalculator` and is never restated in Application (D5; grep-pinned).
+
+6. **Zero-drift outcome.** No migration, no `PermissionConfiguration` change: `dotnet ef migrations has-pending-model-changes` reports no changes; the model snapshot is untouched.
+
+**Consequences.** Diff confined to `src/TopLab.Domain/SentOutSamples/**` (additive guards + calculator), `src/TopLab.Application/Features/SentOutSamples/**` (18 source files: DTOs, access policy, translator, 3 commands + 2 queries with handlers and validators), `tests/**` (12 Domain + 43 Application handler/validator/authorization + 5 validator-registration cases + 4 Infrastructure persistence tests), `Docs/**`. No `.csproj` changes, no new packages, zero Presentation content. Full suite green **1696** (390 Domain + 1157 Application + 149 Infrastructure); Release build 0/0. Coverage: per-slice gates passed (VG-01 Domain SentOutSamples footprint, VG-02 Application S2 footprint 85.2%, VG-03 Application S3 footprint 100%, VG-04 persistence 4/4 green). One test-environment finding: the EF InMemory provider does not generate keys through strongly-typed-ID value converters on multi-add, so the persistence test uses explicit payment IDs (deviation recorded in the handoff, not a product change).
+
+**Related.** M-16 Implementation Plan §2 (settled rules), §5 (S1), §6 (S2/S3), §7 (S4 close-out), Appendix A (Arabic messages); ADR-0016 (M-03 computed figures, calculator precedent); Data Model §8.3 (settlement formula); ADR-0041 (M-09, consumed the previous number first).

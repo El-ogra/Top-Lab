@@ -48,6 +48,11 @@ using TopLab.Application.Features.ResultsEntry.Queries.GetResultWorklist;
 using TopLab.Application.Features.ResultDelivery.Commands.DeliverWithSettlement;
 using TopLab.Application.Features.ResultDelivery.Queries.GetDeliveryGrid;
 using TopLab.Application.Features.ResultDelivery.Queries.GetUndeliveredResults;
+using TopLab.Application.Features.SentOutSamples.Commands.RecordSentOutPayment;
+using TopLab.Application.Features.SentOutSamples.Commands.SendSampleOut;
+using TopLab.Application.Features.SentOutSamples.Commands.SettleSentOutInFull;
+using TopLab.Application.Features.SentOutSamples.Queries.GetSentOutLabAccount;
+using TopLab.Application.Features.SentOutSamples.Queries.GetSentOutSamples;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Commands.CreateTest;
 
 namespace TopLab.Application.Tests.DependencyInjection;
@@ -203,6 +208,23 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<GetDeliveryGridQuery>))]
     [InlineData(typeof(IValidator<DeliverWithSettlementCommand>))]
     public void HostBuiltLikeApp_ResolvesM09Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<SendSampleOutCommand>))]
+    [InlineData(typeof(IValidator<RecordSentOutPaymentCommand>))]
+    [InlineData(typeof(IValidator<SettleSentOutInFullCommand>))]
+    [InlineData(typeof(IValidator<GetSentOutSamplesQuery>))]
+    [InlineData(typeof(IValidator<GetSentOutLabAccountQuery>))]
+    public void HostBuiltLikeApp_ResolvesM16Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();

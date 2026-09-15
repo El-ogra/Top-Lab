@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-16.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** 4 — Slices 1–3 done, VG-01/VG-02/VG-03 passed
+- **Current Slice:** done — all 4 slices complete, VG-01/VG-02/VG-03/VG-04 passed
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -55,7 +55,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | Domain: enrich the two sent-out entities with guards + the settlement calculator | [x] Done | VG-01 |
 | 2 | Application write surface: dispatch + partial payment + full settlement | [x] Done | VG-02 |
 | 3 | Application read surface: period query + per-lab account query with entity filtering | [x] Done | VG-03 |
-| 4 | Tests + Infrastructure proof + close-out | [ ] Pending | VG-04 |
+| 4 | Tests + Infrastructure proof + close-out | [x] Done | VG-04 |
 
 ---
 
@@ -128,28 +128,28 @@ Additional user-authorized execution parameters (override skill defaults):
 - **Touches:** `tests/TopLab.Infrastructure.Tests/Persistence/SentOutSamplePersistenceTests.cs` (create); `tests/TopLab.Application.Tests/DependencyInjection/ValidatorRegistrationTests.cs` (extend); `Docs/Source/Top_Lab_ADR.md` (append ADR-0042 — reconfirm max ADR at execution; M-07/M-09 consume ADR-0040/0041 when they execute first); `Docs/Source/Top_Lab_Master_Tracking_Sheet.md` (flip M16 row + dated change-log row); `Docs/Handoff_M16.md` (create per template — includes the OD-16-A PRD-contradiction note and the OD-16-B deferral note)
 - **Validation Gate:** VG-04 — Release build zero/zero; full suite green; zero-drift proven; persistence pins green; coverage floors or waivers; audit gate passed; no cancel/void path (grep); docs committed per convention; zero Presentation content (grep gate).
 
-### 10-Stage Progress
+### 10-Stage Progress (Slice 4 — evidence 2026-09-15)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Release build + full tests green (0/0). Record evidence.
-- [ ] **Stage 2 — Deep Understanding:** Re-read plan §7 S4; migration-scope gate semantics (drift → stop + addendum, never silent migration); ADR-0042 contents (OD-16-A…D outcomes + PRD-contradiction record + zero-drift result); close-out convention.
-- [ ] **Stage 3 — File Analysis:** Inspect `SentOutSampleConfiguration.cs` (Cascade line 18) + `SentOutSamplePaymentConfiguration.cs`, `SentOutSample` → `ExternalEntity` Restrict (line 20), `WorkSheetQueryPersistenceTests` + `InMemoryContextFactory` (persistence-test pattern), `ValidatorRegistrationTests.cs`, `Top_Lab_ADR.md` (confirm max ADR), `Top_Lab_Master_Tracking_Sheet.md` (locate M16 row), `Docs/Source/Top_Lab_Handoff_Template.md`, coverlet setup, an existing audit-gate test.
-- [ ] **Stage 4 — Planning:** Migration-scope gate first → persistence tests (store/retrieve + Cascade + Restrict) → validator-reg extension → audit gate → Release build + full suite with coverage → ADR-0042 → tracking flip → handoff.
-- [ ] **Stage 5 — Execution:** Implement the plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Release build 0/0; full suite green; `dotnet ef migrations has-pending-model-changes` → no changes; snapshot clean.
-- [ ] **Stage 7 — Validation Gate:** VG-04 — all code/test gates pass; Cascade + Restrict pins green; coverage floors met or waived in the handoff; audit gate green; no cancel/void grep clean; zero Presentation content in the diff.
-- [ ] **Stage 8 — Documentation Update:** ADR-0042 appended; M16 row flipped 🟩 Done with dated change-log entry; `Docs/Handoff_M16.md` created per template (incl. both deferred notes); slice checkboxes marked.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated; module close-out recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-16] Slice 4/4: Tests + Infrastructure proof + close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln -c Release` 0/0 before touching anything.
+- [x] **Stage 2 — Deep Understanding:** Plan §7 S4 re-read; drift → stop + addendum (never silent migration); ADR-0042 contents; close-out convention (tracking + change-log + handoff).
+- [x] **Stage 3 — File Analysis:** Both EF configurations (Cascade payment→sample line 18; Restrict sample→entity line 20); `InMemoryContextFactory` + `PaymentOperationPersistenceTests` (InMemory-on-real-context pattern); `ExternalEntityDeleteBehaviorTests` (model-level FK pin precedent); `ExternalEntityAuditGateTests` (interceptor audit pattern); `ValidatorRegistrationTests` (per-module theory pattern); ADR max reconfirmed = 0041 → ADR-0042; M16 tracking row + §9 log format; `Handoff_M09.md` structure precedent.
+- [x] **Stage 4 — Planning:** Drift gate first → persistence tests → validator-reg extension → audit gate → Release full suite → ADR → tracking → handoff.
+- [x] **Stage 5 — Execution:** Implemented per plan.
+- [x] **Stage 6 — Post-Execution Verification:** Release build 0/0; Release full suite 1696/1696 green `-m:1` (390 + 1157 + 149); drift gate → no changes; snapshot untouched.
+- [x] **Stage 7 — Validation Gate:** VG-04 passed — persistence 4/4 (store/retrieve + calculator agreement + audit columns; behavioral Cascade; model Cascade + Restrict pins); validator-reg 5/5; audit gate (interceptor `CreatedByUserId`/`CreatedAtUtc` + handler `PerformedByUserId`/`PaidAtUtc` from S2); slopwatch clean; no cancel/void path (grep); zero Presentation content (grep); diff confined to `Domain/SentOutSamples`, `Application/Features/SentOutSamples`, `tests/**`, `Docs/**`; coverage waiver recorded in handoff (M-11/M-14 precedent).
+- [x] **Stage 8 — Documentation Update:** ADR-0042 appended; M16 row flipped 🟩 Done + §6 block + dated §9 row; `Docs/Handoff_M16.md` created per template (OD-16-A contradiction + OD-16-B deferral + InMemory key-generation deviation + M-14 consumer note); this checklist recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
 ## Current Status
 
-- Overall: 3/4 slices done
+- Overall: 4/4 slices done — MODULE COMPLETE
 - Slice 1 — Domain: sent-out guards + settlement calculator: [x] Done (VG-01 passed 2026-09-15)
 - Slice 2 — Application write surface: dispatch + partial payment + full settlement: [x] Done (VG-02 passed 2026-09-15)
 - Slice 3 — Application read surface: period query + per-lab account query: [x] Done (VG-03 passed 2026-09-15)
-- Slice 4 — Tests + Infrastructure proof + close-out: [ ] Pending
+- Slice 4 — Tests + Infrastructure proof + close-out: [x] Done (VG-04 passed 2026-09-15)
 
 ## Execution Log
 
@@ -158,6 +158,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
 | 2026-09-15 | 1 | 1–10 | S1 Domain guards + calculator; build 0/0; Domain 390 green; VG-01 passed | OK | 3b499c5 |
 | 2026-09-15 | 2 | 1–10 | S2 writes + 30 tests; App 1139 green; formula grep clean; footprint 85.2%; VG-02 passed | OK | f6db46d |
-| 2026-09-15 | 3 | 1–10 | S3 reads + 13 tests; App 1152 green; open-reads grep clean; S3 footprint 100%; VG-03 passed | OK | pending |
+| 2026-09-15 | 3 | 1–10 | S3 reads + 13 tests; App 1152 green; open-reads grep clean; S3 footprint 100%; VG-03 passed | OK | 9d4c88a |
+| 2026-09-15 | 4 | 1–10 | S4 persistence 4/4 + reg 5/5; Release 1696 green; drift clean; ADR-0042 + tracking + handoff; VG-04 passed | OK | pending |
 
 ## Stop Report (append only if a stop condition triggers)
