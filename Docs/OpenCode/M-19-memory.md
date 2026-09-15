@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-19.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S1 — completed; S2 next
+- **Current Slice:** S2 — completed; S3 next
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Patient statistics (FR-M19-001/005) | [x] Done | VG-01 PASS |
-| 2 | Test statistics (FR-M19-002/005) | [ ] Pending | VG-02 |
+| 2 | Test statistics (FR-M19-002/005) | [x] Done | VG-02 PASS |
 | 3 | Sent-out + user-productivity statistics (FR-M19-003/004) | [ ] Pending | VG-03 |
 | 4 | Tests + zero-drift proof + close-out | [ ] Pending | VG-04 |
 
@@ -88,16 +88,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build + full suite green.
-- [ ] **Stage 2 — Deep Understanding:** Plan §5 S2 re-read; SD-19-6; order-time = `CreatedAtUtc`.
-- [ ] **Stage 3 — File Analysis:** `PatientTest.cs` (audit `CreatedAtUtc`), `Test.cs` (`TestGroupId`, `Name`), `TestGroup.cs` (`Name`); S1 DTO file + theory.
-- [ ] **Stage 4 — Planning:** DTO additions → query + validator → handler → test class; extend the theory.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; S2 filter green; full Application suite green.
-- [ ] **Stage 7 — Validation Gate:** VG-02.
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** See Execution Log.
+- [x] **Stage 1 — Pre-Execution Verification:** App suite 1237/1237 after S1; re-verified before S2 edits.
+- [x] **Stage 2 — Deep Understanding:** Plan §5 S2; SD-19-6; order-time = PatientTest.CreatedAtUtc.
+- [x] **Stage 3 — File Analysis:** PatientTest attributions; Test.TestGroupId/Name; TestGroup.Name; S1 DTO file + theory.
+- [x] **Stage 4 — Planning:** DTO additions → query + validator → handler → test class; extend theory.
+- [x] **Stage 5 — Execution:** Created GetTestCountStatistics (query/handler/validator) + handler tests; extended theory.
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0; S2 filter 14/14; full Application suite 1248/1248.
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — zero Persistence/Domain diff; per-test/per-group number-for-number; group filter; deleted-patient exclusion; unknown group NotFound; empty-set; From>To frozen message.
+- [x] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -145,9 +145,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/4 slices done — S1 COMPLETE
+- Overall: 2/4 slices done — S1+S2 COMPLETE
 - Slice 1 — Patient statistics: [x] Done (VG-01 PASS)
-- Slice 2 — Test statistics: [ ] Pending
+- Slice 2 — Test statistics: [x] Done (VG-02 PASS)
 - Slice 3 — Sent-out + user-productivity statistics: [ ] Pending
 - Slice 4 — Tests + zero-drift proof + close-out: [ ] Pending
 
@@ -158,7 +158,10 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
 | 2026-09-15 | 1 | 1 | Pre-exec: build 0/0 + full suite 1789/1789 | OK | — |
 | 2026-09-15 | 1 | 2-5 | Implemented S1 Statistics patient-count surface | OK | — |
-| 2026-09-15 | 1 | 6-7 | App 0/0; S1 15/15; full App 1237/1237; VG-01 PASS | OK | — |
-| 2026-09-15 | 1 | 10 | Local commit Slice 1/4 | OK | (this commit) |
+| 2026-09-15 | 1 | 6-7 | App 0/0; S1 15/15; full App 1237/1237; VG-01 PASS | OK | c68e25c |
+| 2026-09-15 | 1 | 10 | Local commit Slice 1/4 | OK | c68e25c |
+| 2026-09-15 | 2 | 1-5 | Implemented S2 test-count statistics + theory extension | OK | — |
+| 2026-09-15 | 2 | 6-7 | App 0/0; S2 14/14; full App 1248/1248; VG-02 PASS | OK | — |
+| 2026-09-15 | 2 | 10 | Local commit Slice 2/4 | OK | (this commit) |
 
 ## Stop Report (append only if a stop condition triggers)

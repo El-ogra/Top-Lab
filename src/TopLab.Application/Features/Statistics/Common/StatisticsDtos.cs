@@ -26,3 +26,20 @@ public sealed record PatientCountStatisticsDto(
     IReadOnlyList<ClassificationCountDto> AccountTypeCounts,
     IReadOnlyList<MonthlyCountDto> MonthlyCounts,
     IReadOnlyList<MonthlyClassificationCountDto> MonthlySexCounts);
+
+public sealed record TestCountDto(
+    int TestId,
+    string TestName,
+    int Count);
+
+public sealed record TestGroupCountDto(
+    int TestGroupId,
+    string GroupName,
+    int Count);
+
+public sealed record TestCountStatisticsDto(
+    DateOnly From,
+    DateOnly To,
+    int TotalOrders,
+    IReadOnlyList<TestCountDto> Tests,
+    IReadOnlyList<TestGroupCountDto> Groups);
