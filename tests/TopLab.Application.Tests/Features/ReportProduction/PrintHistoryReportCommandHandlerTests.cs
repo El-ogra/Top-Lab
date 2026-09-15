@@ -2,7 +2,7 @@ using System.Text.Json;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ReportProduction.Commands.PrintHistoryReport;
 using TopLab.Application.Features.ReportProduction.Common;
-using TopLab.Application.Features.ReportProduction.Queries.GetPatientTestHistory;
+using TopLab.Application.Features.ReportProduction.Queries.GetSeparateHistoryReport;
 using TopLab.Application.Tests.Common.Fakes;
 using TopLab.Application.Tests.Features.ProfileResults;
 using TopLab.Domain.Common.Enums;
@@ -39,7 +39,7 @@ public class PrintHistoryReportCommandHandlerTests
 
         var sender = new FakeSender();
         sender.WithResponse(
-            new GetPatientTestHistoryQuery(1),
+            new GetSeparateHistoryReportQuery(1),
             Result<PatientHistoryDto>.Success(new PatientHistoryDto(
                 1,
                 "Ali",
@@ -88,7 +88,7 @@ public class PrintHistoryReportCommandHandlerTests
         var (db, sender, printing, user, clock) = Build();
         var noReviewed = new FakeSender();
         noReviewed.WithResponse(
-            new GetPatientTestHistoryQuery(1),
+            new GetSeparateHistoryReportQuery(1),
             Result<PatientHistoryDto>.Success(new PatientHistoryDto(
                 1,
                 "Ali",
@@ -178,7 +178,7 @@ public class PrintHistoryReportCommandHandlerTests
         var (db, _, printing, user, clock) = Build();
         var sender = new FakeSender();
         sender.WithResponse(
-            new GetPatientTestHistoryQuery(1),
+            new GetSeparateHistoryReportQuery(1),
             Result<PatientHistoryDto>.Failure(Error.Unexpected("فشل تحميل السجل.")));
 
         var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing)

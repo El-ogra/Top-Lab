@@ -2,7 +2,7 @@ using MediatR;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ReportProduction.Common;
-using TopLab.Application.Features.ReportProduction.Queries.GetPatientTestHistory;
+using TopLab.Application.Features.ReportProduction.Queries.GetSeparateHistoryReport;
 using BalanceProbe = TopLab.Application.Features.ResultsEntry.Common.BalanceProbe;
 using TopLab.Domain.Patients;
 using TopLab.Domain.Results;
@@ -46,7 +46,7 @@ public sealed class PrintHistoryReportCommandHandler : IRequestHandler<PrintHist
             return Result.Failure(Error.NotFound("المستخدم غير موجود."));
         }
 
-        var history = await _sender.Send(new GetPatientTestHistoryQuery(request.PatientId), cancellationToken);
+        var history = await _sender.Send(new GetSeparateHistoryReportQuery(request.PatientId), cancellationToken);
         if (!history.IsSuccess)
         {
             return Result.Failure(history.Error!);

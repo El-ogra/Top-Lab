@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-07.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 5
-- **Current Slice:** 4 — pending (Slice 3 completed — VG-03 PASS)
+- **Current Slice:** 5 — pending
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -56,7 +56,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | Domain rules: combined-report selection + patient-history resolver | [x] Done (VG-01 PASS) | VG-01 |
 | 2 | Application core surface: combinable list + combined/blank builders + history queries | [x] Done (VG-02 PASS) | VG-02 |
 | 3 | Infrastructure: PDF-first `IReportPrintingService` + print commands | [x] Done (VG-03 PASS) | VG-03 |
-| 4 | Application: automatic & manual history insertion + separate history report assembly | [ ] Pending | VG-04 |
+| 4 | Application: automatic & manual history insertion + separate history report assembly | [x] Done (VG-04 PASS) | VG-04 |
 | 5 | Hardening, documentation, module close-out | [ ] Pending | VG-05 |
 
 ---
@@ -136,7 +136,7 @@ Additional user-authorized execution parameters (override skill defaults):
 - [x] **Stage 7 — Validation Gate:** VG-03 PASS — build zero/zero; all new tests green (Infra 16 new: writer 8 + service 7 + DI resolution 1; App 32 new); BR-07 matrix pinned (combined blocked `يوجد رصيد متبقٍ على حساب المريض؛ لا يمكن الطباعة.` / history blocked / blank exempt / absolute bypass); `MarkPrinted` fields asserted (IsPrinted, PrintCount, LastPrintedByUserId, LastPrintedAtUtc, SaveChangesCallCount); grep gates — only the 3 print commands implement `IAuthorizedRequest` (zero under `Features/ReportProduction/Queries`), zero `PatientAccountCalculator` references in the feature (R-5), diff confined to allowed paths (A4: no Presentation/.csproj/migration).
 - [x] **Stage 8 — Coverage:** App S3 footprint (3 command triplets + `ReportPrintEnvelope`) 152/158 = 96.2% ≥ 80%; Infra `Printing` footprint 178/228 = 78.1% ≥ 70% (`ReportPrintingService` 86.8%, `ReportPdfWriter` 81.9%, `ShellPdfPrinterDispatcher` 0% — thin OS-print-shell adapter, excluded-by-design, floor still met without a waiver).
 - [x] **Stage 9 — Memory Status Update:** "Current Status" updated below (Slice 3 done).
-- [x] **Stage 10 — Git Commit (authorized local, never push):** staged after final memory touch (see execution log).
+- [x] **Stage 10 — Git Commit (authorized local, never push):** `[M-07] Slice 3/5: Infrastructure: PDF-first IReportPrintingService + print commands — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — committed on `main` as `664ed34` (memory checkbox confirmed after commit); never pushed.
 
 ---
 
@@ -148,16 +148,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build + full tests green (0/0). Record evidence.
-- [ ] **Stage 2 — Deep Understanding:** Re-read plan §6 S4; FR-M07-003/005/006/007; EC-09/10; insertion = copy-into-DTO only; reuse S2 history-reader internals via a shared private reader in `Common/`.
-- [ ] **Stage 3 — File Analysis:** Inspect the S2 history query handler internals to extract the shared reader; `ReportSettings.HistoryAutoDisplayEnabled` read pattern; validator conventions.
-- [ ] **Stage 4 — Planning:** Shared history reader → auto-insert command (switch gate) → manual insert command (identity check) → separate-report query → 2 test classes (incl. both pins).
-- [ ] **Stage 5 — Execution:** Implement the plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; Application tests all green.
-- [ ] **Stage 7 — Validation Gate:** VG-04 — build zero/zero; switch-false zero-insertion test green; manual-insert-with-switch-off green; wrong-identity `Conflict` green; source-row re-read unchanged green; coverlet ≥ 80%.
-- [ ] **Stage 8 — Documentation Update:** Mark this slice's checkboxes and record evidence.
-- [ ] **Stage 9 — Memory Status Update:** Update the "Current Status" section.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-07] Slice 4/5: Application: automatic & manual history insertion + separate history report — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings; `dotnet test TopLab.sln` → Domain 378 / Application 1038 / Infrastructure 142 (1558 total, 0 failed) — verified as S3 Stages 6–7 on this same tree (slice 3 commit `664ed34`).
+- [x] **Stage 2 — Deep Understanding:** Re-read plan §6 S4 + FR-M07-003/005/006/007 + EC-09/10. Insertion = copy-into-DTO only, never a stored-row mutation (no-mutation pin). `AutoInsertHistoryCommand(PatientTestId)` → `Result<CombinedReportDto>`; no-op (empty `Lines`) when `HistoryAutoDisplayEnabled == false`; when true copies prior results for the same `TestId` under the resolved identity into the report model DTO. `InsertHistoryResultCommand(PatientTestId, SourcePatientTestId)` → `Result<CombinedReportDto>`; manual, unconditional (works with switch off), source must belong to the resolved identity else `Error.Conflict("النتيجة المحددة لا تنتمي لهذا المريض.")` (EC-10). `GetSeparateHistoryReportQuery(PatientId)` assembles the P-04 standalone history DTO (2 files — no validator) and is consumed by S3's `PrintHistoryReportCommand` (plan line 249) → S4 re-points that handler's `ISender` target from `GetPatientTestHistoryQuery` to `GetSeparateHistoryReportQuery` (S3 print behavior unchanged; S3 handler test canned-response key updated accordingly).
+- [x] **Stage 3 — File Analysis:** `Common/PatientHistoryReader.cs` (`ResolveVisitPatients(db, patient, settings)` throws `ArgumentException` on unresolvable identity; `BuildEntries(db, visits)` returns `HistoryEntryDto` list ordered by `EnteredAtUtc desc` then `Id desc`); `GetPatientTestHistoryQueryHandler` (patient NotFound → settings `Unexpected("سجل إعدادات التقرير مفقود.")` → try/catch → translator Conflict → DTO); its test class seeding (`FakeApplicationDbContext.ReportSettings.Add(ReportSettings.CreateDefault())`, `Patient.Create(..., labId: LabId.Create("L-1"))`, `PatientTest` `Reviewed(...)` helper); `ReportSettings.CreateDefault()` History defaults (ByLabCode + auto=true) → switch-false pin must call `SetHistoryOptions(mode, false)`; validator style `GreaterThan(0)`; M-06 `NotFound("التحليل غير موجود")` precedent for missing PatientTest.
+- [x] **Stage 4 — Planning:** (1) `Common/HistoryInsertion.cs` (create, internal static): `LineFromEntry(HistoryEntryDto)` → `CombinedReportLineDto(PatientTestId, TestId, TestName, TestCode, ResultKind, ResultValue, ResultFlag, FrozenRangeText: null, ProfileLines: empty, Culture: null)` — persistence-free model line. (2) `Commands/AutoInsertHistory/` (3 files): validator `PatientTestId > 0`; handler — current `PatientTest` by id → `NotFound("التحليل غير موجود")`; patient (not deleted) → `NotFound("المريض غير موجود.")`; settings → `Unexpected("سجل إعدادات التقرير مفقود.")`; `!settings.HistoryAutoDisplayEnabled` → Success with patient header + empty `Lines`; else resolve identity visits (try/catch → translator Conflict), `BuildEntries`, filter `TestId == current.TestId.Value && PatientTestId != current.Id.Value` ordered `EnteredAtUtc desc`, map via `LineFromEntry`, Success. (3) `Commands/InsertHistoryResult/` (3 files): validator both `> 0`; handler — same NotFound/patient/settings/identity chain; load source `PatientTest` by `SourcePatientTestId` (`NotFound("التحليل غير موجود")`); `!visits.Any(p => p.Id.Value == source.PatientId.Value)` → `Conflict("النتيجة المحددة لا تنتمي لهذا المريض.")` (EC-10); entry via `BuildEntries(db, [sourcePatient])` filtered to the source id → `LineFromEntry`; Success — switch-agnostic. (4) `Queries/GetSeparateHistoryReport/` (2 files): mirror `GetPatientTestHistoryQueryHandler` → `PatientHistoryDto` via the shared reader. (5) Re-point `PrintHistoryReportCommandHandler` ISender from `GetPatientTestHistoryQuery` → `GetSeparateHistoryReportQuery` (+ update its two canned-`FakeSender` keys in the test class). (6) Two test classes: `AutoInsertHistoryCommandHandlerTests` (switch-false empty pin EC-09; switch-true same-test prior copied incl. different-test exclusion; source rows re-read unchanged — no-mutation pin; missing row/patient/settings; no-shared-identity → empty) and `InsertHistoryResultCommandHandlerTests` (works with switch off; wrong-identity `Conflict` EC-10; source Not Found; current row Not Found; source row re-read unchanged). (7) `ValidatorRegistrationTests` extension (2 new validators). No gate/print changes beyond the re-point.
+- [x] **Stage 5 — Execution:** Implemented `Common/HistoryInsertion.cs`, `Commands/AutoInsertHistory/` (3 files), `Commands/InsertHistoryResult/` (3 files), `Queries/GetSeparateHistoryReport/` (2 files), re-pointed `PrintHistoryReportCommandHandler` to `GetSeparateHistoryReportQuery`, updated S3 test canned-response keys. Fixed `HistorySortMode.All` → `HistorySortMode.ByLabCode` in test seed helper.
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings. `dotnet test TopLab.sln` → 1581 passed, 0 failed (Domain 378, App 1061, Infra 142).
+- [x] **Stage 7 — Validation Gate:** VG-04 PASS — build zero/zero; switch-false zero-insertion test green; manual-insert-with-switch-off green; wrong-identity `Conflict` green; source-row re-read unchanged green; coverlet S4 footprint 82/82 = 100% ≥ 80%.
+- [x] **Stage 8 — Documentation Update:** Memory file updated; evidence recorded above.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated below (Slice 4 done).
+- [x] **Stage 10 — Git Commit (authorized local, never push):** `[M-07] Slice 4/5: Application history insertion — loop-engineering` + `Stages 1-10 verified. Gate VG-04 passed.` — on `main`, never push.
 
 ---
 
@@ -184,11 +184,11 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 3/5 slices done — Slice 3 complete
+- Overall: 4/5 slices done — Slice 4 complete
 - Slice 1 — Domain rules: combined-report selection + patient-history resolver: [x] Done — VG-01 PASS
 - Slice 2 — Application core surface: combinable list + combined/blank builders + history queries: [x] Done — VG-02 PASS
 - Slice 3 — Infrastructure: PDF-first printing + print commands: [x] Done — VG-03 PASS
-- Slice 4 — Application: history insertion: [ ] Pending
+- Slice 4 — Application: history insertion: [x] Done — VG-04 PASS
 - Slice 5 — Hardening, documentation, module close-out: [ ] Pending
 
 ## Execution Log
@@ -216,5 +216,13 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 3 | 7 | VG-03: BR-07 matrix pinned; MarkPrinted audit asserted; grep gates clean (3 print `IAuthorizedRequest`, zero in Queries, zero `PatientAccountCalculator` in feature); diff A4-clean | PASS | — |
 | 2026-09-15 | 3 | 8 | Coverage: App S3 footprint 96.2% (152/158) ≥ 80%; Infra `Printing` 78.1% (178/228) ≥ 70% | PASS | — |
 | 2026-09-15 | 3 | 9 | Memory updated (header, slice index, S3 checklist, Current Status) | PASS | — |
+| 2026-09-15 | 3 | 10 | Local commit on `main` (S3 Stage 10 checkbox later confirmed `[x]`) | OK (`664ed34`) | — |
+| 2026-09-15 | 4 | 1 | Pre-exec: build 0/0; tests 1558/1558 green (Domain 378, App 1038, Infra 142) | PASS | — |
+| 2026-09-15 | 4 | 2-4 | Deep understanding + file analysis + planning recorded | PASS | — |
+| 2026-09-15 | 4 | 5 | Implemented HistoryInsertion, AutoInsertHistory, InsertHistoryResult, GetSeparateHistoryReport; re-pointed PrintHistoryReportHandler; fixed HistorySortMode.All → ByLabCode | PASS | — |
+| 2026-09-15 | 4 | 6 | Solution build 0/0; tests 1581/1581 green (Domain 378, App 1061, Infra 142) | PASS | — |
+| 2026-09-15 | 4 | 7 | VG-04: S4 footprint coverage 100% (82/82) ≥ 80% | PASS | — |
+| 2026-09-15 | 4 | 8-9 | Memory updated (S4 checklist, slice index, Current Status) | PASS | — |
+| 2026-09-15 | 4 | 10 | Local commit on `main` | OK (`<pending>`) | — |
 
 ## Stop Report (append only if a stop condition triggers)
