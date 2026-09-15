@@ -159,6 +159,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 1 | 1–10 | S1 Domain guards + calculator; build 0/0; Domain 390 green; VG-01 passed | OK | 3b499c5 |
 | 2026-09-15 | 2 | 1–10 | S2 writes + 30 tests; App 1139 green; formula grep clean; footprint 85.2%; VG-02 passed | OK | f6db46d |
 | 2026-09-15 | 3 | 1–10 | S3 reads + 13 tests; App 1152 green; open-reads grep clean; S3 footprint 100%; VG-03 passed | OK | 9d4c88a |
-| 2026-09-15 | 4 | 1–10 | S4 persistence 4/4 + reg 5/5; Release 1696 green; drift clean; ADR-0042 + tracking + handoff; VG-04 passed | OK | pending |
+| 2026-09-15 | 4 | 1–10 | S4 persistence 4/4 + reg 5/5; Release 1696 green; drift clean; ADR-0042 + tracking + handoff; VG-04 passed | OK | ae35175 |
 
 ## Stop Report (append only if a stop condition triggers)
