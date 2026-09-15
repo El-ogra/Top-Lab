@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-16.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** 3 — Slices 1–2 done, VG-01/VG-02 passed
+- **Current Slice:** 4 — Slices 1–3 done, VG-01/VG-02/VG-03 passed
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Domain: enrich the two sent-out entities with guards + the settlement calculator | [x] Done | VG-01 |
 | 2 | Application write surface: dispatch + partial payment + full settlement | [x] Done | VG-02 |
-| 3 | Application read surface: period query + per-lab account query with entity filtering | [ ] Pending | VG-03 |
+| 3 | Application read surface: period query + per-lab account query with entity filtering | [x] Done | VG-03 |
 | 4 | Tests + Infrastructure proof + close-out | [ ] Pending | VG-04 |
 
 ---
@@ -107,18 +107,18 @@ Additional user-authorized execution parameters (override skill defaults):
 - **Touches:** `src/TopLab.Application/Features/SentOutSamples/Queries/GetSentOutSamples/` (3 files, create); `.../Queries/GetSentOutLabAccount/` (3 files, create); `tests/TopLab.Application.Tests/Features/SentOutSamples/GetSentOutSamplesQueryHandlerTests.cs` (create); `.../GetSentOutLabAccountQueryHandlerTests.cs` (create)
 - **Validation Gate:** VG-03 — Application build zero/zero; S3 tests green; open-reads grep gate; coverage ≥ 80%.
 
-### 10-Stage Progress
+### 10-Stage Progress (Slice 3 — evidence 2026-09-15)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build + full tests green (0/0). Record evidence.
-- [ ] **Stage 2 — Deep Understanding:** Re-read plan §6 S3; FR-M16-002/004; EC-13/14/15; period bounds inclusive on UTC calendar days; default-today-UTC when omitted (M-11 precedent); open reads (no `IAuthorizedRequest`); totals via the Domain calculator only.
-- [ ] **Stage 3 — File Analysis:** Inspect `GetResultWorklistQueryHandler` (date filtering + join patterns), `SearchExternalEntitiesQueryHandler` (flat left-join projection, no `Include`), `GetVisitHistoryQueryHandler` (period idioms), validator conventions.
-- [ ] **Stage 4 — Planning:** `GetSentOutSamples` (+validator) → `GetSentOutLabAccount` (+validator) → 2 test classes (period/entity-filter/name-resolution/number-for-number matrices).
-- [ ] **Stage 5 — Execution:** Implement the plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; Application tests all green.
-- [ ] **Stage 7 — Validation Gate:** VG-03 — build zero/zero; period inclusive both ends; entity filter returns only that entity's samples; lab-account totals match the calculator number-for-number; unknown → NotFound / non-lab → Conflict; zero `IAuthorizedRequest` under Queries (grep); coverlet ≥ 80%.
-- [ ] **Stage 8 — Documentation Update:** Mark this slice's checkboxes and record evidence.
-- [ ] **Stage 9 — Memory Status Update:** Update the "Current Status" section.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-16] Slice 3/4: Application read surface: period query + per-lab account query — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln` 0/0; `dotnet test TopLab.sln` full suite green (Domain 390 + Infra 145 + App 1139).
+- [x] **Stage 2 — Deep Understanding:** Plan §6 S3 re-read; FR-M16-002/004; EC-13/14/15; inclusive UTC-calendar-day periods; default-today-UTC when omitted (M-11 precedent); open reads; totals via calculator only.
+- [x] **Stage 3 — File Analysis:** `GetVisitHistoryQueryHandler` (existence-guard + sync-Task pattern), `SearchExternalEntitiesQueryHandler` (IQueryable composition + Skip/Take + dictionary name resolution, no Include/AsNoTracking — fake-compatible), `SearchExternalEntitiesQueryValidator` (paging messages), `GetResultWorklistQuery/Handler` (DateOnly period + default-today idiom); `Patient.FullName`/`Test.Name`/`ExternalEntity.Name` verified.
+- [x] **Stage 4 — Planning:** `GetSentOutSamples` (+validator) → `GetSentOutLabAccount` (+validator) → 2 test classes. Periods as DateTime half-open bounds (SQL-translatable, fake-compatible, semantically inclusive); default-today via `IDateTimeProvider` (testable); per-sample paid via grouped payments + calculator.
+- [x] **Stage 5 — Execution:** Implemented per plan (6 source files + 2 test files).
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0; SentOutSamples filter 43/43 green; full Application suite 1152/1152 green.
+- [x] **Stage 7 — Validation Gate:** VG-03 passed — period inclusive both ends (+boundary instants); entity filter only-own; name resolution; empty-set; default-today; paging; lab-account number-for-number vs calculator; unknown → NotFound / non-lab → Conflict; zero `IAuthorizedRequest` under Queries (grep); no formula restatement (grep); coverlet S3 footprint 100% ≥ 80%.
+- [x] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -145,10 +145,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 2/4 slices done
+- Overall: 3/4 slices done
 - Slice 1 — Domain: sent-out guards + settlement calculator: [x] Done (VG-01 passed 2026-09-15)
 - Slice 2 — Application write surface: dispatch + partial payment + full settlement: [x] Done (VG-02 passed 2026-09-15)
-- Slice 3 — Application read surface: period query + per-lab account query: [ ] Pending
+- Slice 3 — Application read surface: period query + per-lab account query: [x] Done (VG-03 passed 2026-09-15)
 - Slice 4 — Tests + Infrastructure proof + close-out: [ ] Pending
 
 ## Execution Log
@@ -157,6 +157,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
 | 2026-09-15 | 1 | 1–10 | S1 Domain guards + calculator; build 0/0; Domain 390 green; VG-01 passed | OK | 3b499c5 |
-| 2026-09-15 | 2 | 1–10 | S2 writes + 30 tests; App 1139 green; formula grep clean; footprint 85.2%; VG-02 passed | OK | pending |
+| 2026-09-15 | 2 | 1–10 | S2 writes + 30 tests; App 1139 green; formula grep clean; footprint 85.2%; VG-02 passed | OK | f6db46d |
+| 2026-09-15 | 3 | 1–10 | S3 reads + 13 tests; App 1152 green; open-reads grep clean; S3 footprint 100%; VG-03 passed | OK | pending |
 
 ## Stop Report (append only if a stop condition triggers)
