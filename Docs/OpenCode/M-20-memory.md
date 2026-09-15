@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-20.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S1 — completed; S2 next
+- **Current Slice:** S2 — completed; S3 next
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | CashMovement domain guards + tests | [x] Done | VG-01 PASS |
-| 2 | Inventory read surface (FR-M20-001/002/003/004/005) | [ ] Pending | VG-02 |
+| 2 | Inventory read surface (FR-M20-001/002/003/004/005) | [x] Done | VG-02 PASS |
 | 3 | Cash writes + company/delegate accounts (FR-M20-001/006) | [ ] Pending | VG-03 |
 | 4 | Tests + zero-drift proof + close-out | [ ] Pending | VG-04 |
 
@@ -106,16 +106,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Full suite green after S1; re-verified before S2 edits.
-- [ ] **Stage 2 — Deep Understanding:** Plan §5 S2 + SD-20-1/3/5/6/7/8/10/11/12; Appendix A messages.
-- [ ] **Stage 3 — File Analysis:** `PatientAccountCalculator`, `SentOutAccountCalculator`, `BalanceProbe` (formula comment), `Patient`/`PaymentOperation`/`SentOutSample`/`CashMovement`/`ExternalEntity` columns, M-19 period helper + theory precedent, fake DB/clock/user services.
-- [ ] **Stage 4 — Planning:** DTOs → access policy → queries + validators → handlers → 4 test classes.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build src/TopLab.Application` 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-02 (incl. zero-drift).
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-20] Slice 2/4: Inventory read surface — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** Domain 420/420 after S1.
+- [x] **Stage 2 — Deep Understanding:** Plan §5 S2 + SD-20-1/3/5/6/7/8/10/11/12; Appendix A.
+- [x] **Stage 3 — File Analysis:** PatientAccountCalculator/SentOutAccountCalculator APIs; BalanceProbe comment; entity columns; M-19 period/auth precedent.
+- [x] **Stage 4 — Planning:** DTOs → access policy → 3 queries + validators → handlers → 4 test classes.
+- [x] **Stage 5 — Execution:** Implemented inventory read surface + tests.
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0.
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — S2 23/23; full App 1295/1295; zero Persistence/Domain diff; drift clean.
+- [x] **Stage 8 — Documentation Update:** checklist recorded.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -163,15 +163,17 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Slices complete: 1/4. Next action: begin S2 Stage 1.
+- Slices complete: 2/4. Next action: begin S3 Stage 1.
 - Dependency posture: M-20 ⇄ M-23 — no code-level dependency (verified); M-20 executes first by wave order, not by technical necessity.
-- S1 evidence (2026-09-15): VG-01 PASS; Domain 420/420; drift clean; commit pending this stage-10.
+- S1 evidence: VG-01 PASS; commit `7072143`.
+- S2 evidence (2026-09-15): VG-02 PASS; App 1295/1295; drift clean.
 
 ## Execution Log
 
 | Date | Slice | Stage | Action | Result |
 |---|---|---|---|---|
 | 2026-09-15 | 1 | 1-10 | CashMovement guards + CashMovementTests; VG-01 PASS | OK |
+| 2026-09-15 | 2 | 1-10 | Inventory read surface (3 queries) + tests; VG-02 PASS | OK |
 
 ## Stop Report
 
