@@ -38,6 +38,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<CashMovement> CashMovements { get; } = new();
     public List<ExternalEntity> ExternalEntities { get; } = new();
     public List<SentOutSample> SentOutSamples { get; } = new();
+    public List<SentOutSamplePayment> SentOutSamplePayments { get; } = new();
     public List<AttendanceRecord> AttendanceRecords { get; } = new();
     public List<SystemSettings> SystemSettings { get; } = new();
     public List<ReportSettings> ReportSettings { get; } = new();
@@ -182,6 +183,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)SentOutSamples.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(SentOutSamplePayment))
+        {
+            return (IQueryable<TEntity>)(object)SentOutSamplePayments.AsQueryable();
+        }
+
         if (typeof(TEntity) == typeof(AttendanceRecord))
         {
             return (IQueryable<TEntity>)(object)AttendanceRecords.AsQueryable();
@@ -306,6 +312,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is CashMovement cm) CashMovements.Add(cm);
         else if (entity is ExternalEntity ee) ExternalEntities.Add(ee);
         else if (entity is SentOutSample sos) SentOutSamples.Add(sos);
+        else if (entity is SentOutSamplePayment sosp) SentOutSamplePayments.Add(sosp);
         else if (entity is AttendanceRecord ar) AttendanceRecords.Add(ar);
         else if (entity is SystemSettings sys) SystemSettings.Add(sys);
         else if (entity is ReportSettings rep) ReportSettings.Add(rep);
@@ -359,6 +366,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is CashMovement cm) CashMovements.Remove(cm);
         else if (entity is ExternalEntity ee) ExternalEntities.Remove(ee);
         else if (entity is SentOutSample sos) SentOutSamples.Remove(sos);
+        else if (entity is SentOutSamplePayment sosp) SentOutSamplePayments.Remove(sosp);
         else if (entity is AttendanceRecord ar) AttendanceRecords.Remove(ar);
         else if (entity is SystemSettings sys) SystemSettings.Remove(sys);
         else if (entity is ReportSettings rep) ReportSettings.Remove(rep);

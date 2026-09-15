@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-16.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** 2 — Slice 1 done, VG-01 passed
+- **Current Slice:** 3 — Slices 1–2 done, VG-01/VG-02 passed
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain: enrich the two sent-out entities with guards + the settlement calculator | [x] Done | VG-01 |
-| 2 | Application write surface: dispatch + partial payment + full settlement | [ ] Pending | VG-02 |
+| 2 | Application write surface: dispatch + partial payment + full settlement | [x] Done | VG-02 |
 | 3 | Application read surface: period query + per-lab account query with entity filtering | [ ] Pending | VG-03 |
 | 4 | Tests + Infrastructure proof + close-out | [ ] Pending | VG-04 |
 
@@ -86,18 +86,18 @@ Additional user-authorized execution parameters (override skill defaults):
 - **Touches:** `src/TopLab.Application/Features/SentOutSamples/Common/SentOutSampleDtos.cs` (create); `.../Common/SentOutSamplesAccessPolicy.cs` (create or reuse `PatientBillingAccessPolicy.CashDisburseDeposit` — same code value either way); `.../Common/DomainFailureTranslator.cs` (create); `.../Commands/SendSampleOut/` (3 files, create); `.../Commands/RecordSentOutPayment/` (3 files, create); `.../Commands/SettleSentOutInFull/` (3 files, create); `tests/TopLab.Application.Tests/Features/SentOutSamples/SendSampleOutCommandHandlerTests.cs` (create); `.../RecordSentOutPaymentCommandHandlerTests.cs` (create); `.../SettleSentOutInFullCommandHandlerTests.cs` (create); `.../SentOutSamplesAuthorizationTests.cs` (create); `FakeApplicationDbContext` (verify-only / extend on proven gap)
 - **Validation Gate:** VG-02 — Application build zero/zero; S2 tests green; formula-single-source grep gate; coverage ≥ 80%.
 
-### 10-Stage Progress
+### 10-Stage Progress (Slice 2 — evidence 2026-09-15)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build + full tests green (0/0). Record evidence.
-- [ ] **Stage 2 — Deep Understanding:** Re-read plan §6 S2; FR-M16-001/003; EC-01…EC-12/17; OD-16-A/C/D as settled scope; verbatim messages per Appendix A (`هذا التحليل غير مهيأ للإرسال للخارج.`, `الجهة المختارة ليست معملًا خارجيًا.`, `تم إرسال هذه العينة مسبقًا.`, `مبلغ الدفع يتجاوز المتبقي.`, `لا يوجد رصيد مستحق للتسوية.`).
-- [ ] **Stage 3 — File Analysis:** Inspect `Test.cs` (`IsSentOut`/`SentOutCostPrice`/`PatientPrice` + guard lines 193-195), `EntityType.cs` (`PartnerLab = 2`), `ExternalEntity.cs`, `DeleteExternalEntityCommandHandler.cs` (lines 34-37 — schema-live proof), `PatientBillingAccessPolicy.cs` (line 12), `MarkCultureReportPrintedCommandHandler` / M-14 command handlers (authorization + translator patterns), `FakeApplicationDbContext` (`SentOutSamples` set presence — verify), `ICurrentUserService`/`IDateTimeProvider` fakes, `Error`/`Result` API.
-- [ ] **Stage 4 — Planning:** DTOs → access policy → translator → `SendSampleOut` (guard chain + price defaulting) → `RecordSentOutPayment` (remaining cap) → `SettleSentOutInFull` (exact remaining) → 4 test classes.
-- [ ] **Stage 5 — Execution:** Implement the plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; Application tests all green.
-- [ ] **Stage 7 — Validation Gate:** VG-02 — build zero/zero; dispatch guard matrix green with verbatim messages; default-capture + override tests green; over-remaining rejected; «خلاص» exact + nothing-due Conflict; audit fields asserted; formula grep gate clean; coverlet ≥ 80%.
-- [ ] **Stage 8 — Documentation Update:** Mark this slice's checkboxes and record evidence.
-- [ ] **Stage 9 — Memory Status Update:** Update the "Current Status" section.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-16] Slice 2/4: Application write surface: dispatch + partial payment + full settlement — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln` 0/0; `dotnet test TopLab.sln` full suite green (Domain 390 + Infra 145 + App 1109).
+- [x] **Stage 2 — Deep Understanding:** Plan §6 S2 re-read; FR-M16-001/003; EC-01…EC-12/17; OD-16-A/C/D settled; verbatim Appendix A messages.
+- [x] **Stage 3 — File Analysis:** `Test.cs` (IsSentOut/Cost/Price), `EntityType.cs` (PartnerLab=2), `DeleteExternalEntityCommandHandler.cs:34-37`, `PatientBillingAccessPolicy.cs:12`, `CreateAntibioticCommandHandler` (translator pattern), `FakeApplicationDbContext` (proven gap: no `SentOutSamplePayments` set — extended with List + Set/Add/Remove routing), `FakeCurrentUserService`/`FakeDateTimeProvider`, `Error`/`Result` API, `AuthorizationBehavior` + `ExternalEntitiesAuthorizationTests` precedent, `Create(0)` IDENTITY sentinel verified in both EF configurations.
+- [x] **Stage 4 — Planning:** DTOs (list + account) → access policy (feature-local const, same code value) → translator → SendSampleOut (guard chain + price defaulting) → RecordSentOutPayment (remaining cap) → SettleSentOutInFull (exact remaining) → 4 test classes.
+- [x] **Stage 5 — Execution:** Implemented per plan (U1 decided: new `SentOutSamplesAccessPolicy` class, identical code value).
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0; S2 filter 30/30 green; full Application suite 1139/1139 green.
+- [x] **Stage 7 — Validation Gate:** VG-02 passed — dispatch guard matrix verbatim (8 negatives); default-capture + override; over-remaining Conflict; «خلاص» exact + nothing-due Conflict; audit fields asserted; formula grep clean (calculator only); no cancel/void path (false-positive-free); coverlet footprint 85.2% ≥ 80%.
+- [x] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -145,9 +145,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/4 slices done
+- Overall: 2/4 slices done
 - Slice 1 — Domain: sent-out guards + settlement calculator: [x] Done (VG-01 passed 2026-09-15)
-- Slice 2 — Application write surface: dispatch + partial payment + full settlement: [ ] Pending
+- Slice 2 — Application write surface: dispatch + partial payment + full settlement: [x] Done (VG-02 passed 2026-09-15)
 - Slice 3 — Application read surface: period query + per-lab account query: [ ] Pending
 - Slice 4 — Tests + Infrastructure proof + close-out: [ ] Pending
 
@@ -156,6 +156,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | Date (YYYY-MM-DD) | Slice | Stage | Action | Result | Commit |
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
-| 2026-09-15 | 1 | 1–10 | S1 Domain guards + calculator; build 0/0; Domain 390 green; VG-01 passed | OK | pending |
+| 2026-09-15 | 1 | 1–10 | S1 Domain guards + calculator; build 0/0; Domain 390 green; VG-01 passed | OK | 3b499c5 |
+| 2026-09-15 | 2 | 1–10 | S2 writes + 30 tests; App 1139 green; formula grep clean; footprint 85.2%; VG-02 passed | OK | pending |
 
 ## Stop Report (append only if a stop condition triggers)
