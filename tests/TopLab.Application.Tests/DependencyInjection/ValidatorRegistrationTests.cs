@@ -8,6 +8,10 @@ using TopLab.Application.Features.Attendance.Queries.GetAttendanceRecords;
 using TopLab.Application.Features.Attendance.Queries.GetUserAttendanceSummary;
 using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientAudit;
 using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientTestAudit;
+using TopLab.Application.Features.Statistics.Queries.GetPatientCountStatistics;
+using TopLab.Application.Features.Statistics.Queries.GetSentOutStatistics;
+using TopLab.Application.Features.Statistics.Queries.GetTestCountStatistics;
+using TopLab.Application.Features.Statistics.Queries.GetUserProductivityStatistics;
 using TopLab.Application.Features.CultureAndAntibiotics.Commands.AttachAntibioticToCulture;
 using TopLab.Application.Features.CultureAndAntibiotics.Commands.CreateAntibiotic;
 using TopLab.Application.Features.CultureAndAntibiotics.Commands.DeleteAntibiotic;
@@ -265,6 +269,22 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<GetAttendanceRecordsQuery>))]
     [InlineData(typeof(IValidator<GetUserAttendanceSummaryQuery>))]
     public void HostBuiltLikeApp_ResolvesM18Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<GetPatientCountStatisticsQuery>))]
+    [InlineData(typeof(IValidator<GetTestCountStatisticsQuery>))]
+    [InlineData(typeof(IValidator<GetSentOutStatisticsQuery>))]
+    [InlineData(typeof(IValidator<GetUserProductivityStatisticsQuery>))]
+    public void HostBuiltLikeApp_ResolvesM19Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();

@@ -1002,3 +1002,32 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 **Consequences.** Diff confined to `src/TopLab.Domain/Attendance/**` (additive guards + calculator), `src/TopLab.Application/Features/Attendance/**` (20 source files: DTOs, translator, 4 commands + 2 queries with handlers and validators), `tests/**` (23 Domain + 40 Application handler/validator tests + 6 validator-registration cases + 5 Infrastructure persistence tests), `Docs/**`. No `.csproj` changes, no new packages, no `PermissionConfiguration` change, no `User` mutation, zero Presentation content. Full suite green **1789** (413 Domain + 1222 Application + 154 Infrastructure); Release build 0/0. Coverage: per-slice footprint gates passed (VG-01 Domain Attendance scope ≥90%; VG-02/VG-03 Application Attendance footprint ≥90% lines; VG-04 persistence 5/5 green; whole-project floors inapplicable per the M-11/M-14 waiver posture, recorded in the handoff). Slopwatch: zero issues in M-18 files (2 pre-existing findings in untouched files).
 
 **Related.** M-18 Implementation Plan §2 (settled rules), §5 (S1), §6 (S2/S3), §7 (S4 close-out), Appendix A (Arabic messages); ADR-0043 (M-10, consumed the previous number first); ADR-0042 (M-16 calculator/guard precedents); Data Model §9.4 (attendance columns + manager-only rule); PRD FR-M18-001/002.
+
+### ADR-0045 — Statistics: gated read-only projections over the existing schema
+
+**Status:** Accepted
+**Date:** 2026-09-15
+
+**Context.** M-19 delivers four statistics surfaces (FR-M19-001…005): patient counts classified by sex / referral entity / account type with optional monthly breakdown; test and test-group counts; sent-out-sample statistics by period and destination lab; and user productivity from `PatientTest` attributions. At HEAD the physical schema was already complete (Patient classification columns, PatientTest attributions + audit `CreatedAtUtc`, Test/TestGroup catalog, ExternalEntity names, SentOutSample + calculator, seeded `STATISTICS` permission id=12). No Domain entity, migration, or write surface was required. The module required decisions on storage, access gating, soft-delete semantics for operational reporting, productivity source coupling to same-wave M-18, single-sourced sent-out totals, and period-bound conventions.
+
+**Decision.**
+
+1. **Read-only projections; zero storage (SD-19-1).** No entity, column, table, index, configuration, or migration was created or modified. The feature folder `src/TopLab.Application/Features/Statistics/` holds DTOs, the access-policy const, and four query triples (query + handler + validator). No Domain type was added — the only computation (sent-out totals) already lives in `SentOutAccountCalculator`.
+
+2. **`STATISTICS` gate on all four queries (SD-19-2).** Every query implements `IAuthorizedRequest` with `RequiredPermissionCode => StatisticsAccessPolicy.Statistics` (`"STATISTICS"`, seeded id=12). Denial returns the shared pipeline Forbidden message verbatim; `IsAbsolutePermission` bypasses via the existing `AuthorizationBehavior`. This is the wave's second evidence-mandated authorized-read exception (with M-10). `PermissionConfiguration` was not modified.
+
+3. **Classifications + soft-delete exclusion (SD-19-3).** Period on `Patient.RegistrationDateUtc` (DateTime half-open UTC bounds, inclusive calendar days, default-today). Classifications: sex, referral entity (null → «بدون جهة إحالة»), account type. Soft-deleted patients are **excluded** from all patient/test statistics — operational-reporting semantics, deliberate contrast with M-10's audit surface.
+
+4. **Productivity from `PatientTest` attributions; no M-18 coupling (SD-19-4).** Four attribution counts per user over the period, each on its own timestamp column (`EnteredAtUtc`, `ReviewedAtUtc`, `LastPrintedAtUtc` + summed `PrintCount`, `DeliveredAtUtc`). Attendance data is not consumed; the tracking-sheet dependency is satisfied at planning level only (consistency-based choice, recorded here).
+
+5. **Sent-out totals via the existing calculator only (SD-19-5).** Period on `SentOutSample.SentAtUtc`; grouping by destination lab; counts + financial totals computed exclusively through `SentOutAccountCalculator` (grep-gated: no formula restatement in Application). M-16 D39 single-source principle.
+
+6. **Order-time = `PatientTest.CreatedAtUtc` (SD-19-6).** Test counts period-filter on the audit `CreatedAtUtc` (the only order timestamp on the row); counts per test and per test group (`Test.TestGroupId`), optional single-group filter; unknown group → `NotFound("مجموعة التحاليل غير موجودة.")`; soft-deleted patients' tests excluded.
+
+7. **Uniform period handling.** All four queries: `DateOnly? From/To` → half-open UTC bounds, default-today when omitted, validator rejects `From > To` with «بداية الفترة يجب ألا تتجاوز نهايتها.». Dictionary name resolution with raw-id fallback (M-16/M-03 precedents); no `Include`.
+
+8. **Zero-drift outcome.** No migration in any slice: `dotnet ef migrations has-pending-model-changes` reports no changes; the model snapshot is untouched.
+
+**Consequences.** Diff confined to `src/TopLab.Application/Features/Statistics/**` (Common DTOs + access policy + 4 query folders = 14 source files), `tests/**` (4 handler-test classes + authorization theory covering all four queries + 4 validator-registration cases), `Docs/**`. No `.csproj` changes, no new packages, zero Domain changes, zero writes, zero Presentation content, zero `PermissionConfiguration` change. Full suite green **1839** (413 Domain + 1272 Application + 154 Infrastructure); Release build 0/0. Coverage: per-slice footprint gates passed; whole-project floors inapplicable per the M-11/M-14 waiver posture, recorded in the handoff. Statistics printing is out of scope (later Reporting concern).
+
+**Related.** M-19 Implementation Plan §2 (settled rules), §5 (S1–S3), §6 (S4 close-out), Appendix A (Arabic messages); ADR-0044 (M-18, consumed the previous number first); ADR-0042 (M-16 calculator single-source); ADR-0043 (M-10 authorized-reads precedent); PRD FR-M17-004 item 12; Dependency Map M-19 row (read-only projections).
