@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-20.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S3 — completed; S4 next
+- **Current Slice:** S4 — completed; MODULE COMPLETE
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -55,7 +55,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | CashMovement domain guards + tests | [x] Done | VG-01 PASS |
 | 2 | Inventory read surface (FR-M20-001/002/003/004/005) | [x] Done | VG-02 PASS |
 | 3 | Cash writes + company/delegate accounts (FR-M20-001/006) | [x] Done | VG-03 PASS |
-| 4 | Tests + zero-drift proof + close-out | [ ] Pending | VG-04 |
+| 4 | Tests + zero-drift proof + close-out | [x] Done | VG-04 PASS |
 
 ---
 
@@ -148,26 +148,27 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 4)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Full suite green after S3.
-- [ ] **Stage 2 — Deep Understanding:** Plan §6; handoff template; ADR numbering re-checked.
-- [ ] **Stage 3 — File Analysis:** `ValidatorRegistrationTests.cs`, tracking sheet rows 84/102, ADR tail, `Docs/Source/Top_Lab_Handoff_Template.md`.
-- [ ] **Stage 4 — Planning:** Validator extension → gates → docs → final run.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln -c Release` 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-04 (zero-drift proof binding).
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated → MODULE COMPLETE.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-20] Slice 4/4: Tests + zero-drift proof + close-out — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** full suite green after S3.
+- [x] **Stage 2 — Deep Understanding:** Plan §6; ADR-0046; handoff template.
+- [x] **Stage 3 — File Analysis:** ValidatorRegistrationTests; tracking M20 row 84; ADR max 0045; Handoff template.
+- [x] **Stage 4 — Planning:** Validator extension → gates → docs → final run.
+- [x] **Stage 5 — Execution:** M20 validator theory (7 cases); ADR-0046; tracking flip; Handoff_M20.md.
+- [x] **Stage 6 — Post-Execution Verification:** build 0/0; full suite **1894/1894** green (420 Domain + 1320 Application + 154 Infrastructure).
+- [x] **Stage 7 — Validation Gate:** VG-04 PASS — drift clean; snapshot untouched; zero Persistence schema diff; zero Presentation.
+- [x] **Stage 8 — Documentation Update:** ADR-0046; M20 row 🟩; Wave 9 All Done; §9 change-log; Handoff_M20.md.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
 ## Current Status
 
-- Slices complete: 3/4. Next action: begin S4 Stage 1.
+- Slices complete: 4/4. **MODULE COMPLETE.**
 - Dependency posture: M-20 ⇄ M-23 — no code-level dependency (verified); M-20 executes first by wave order, not by technical necessity.
 - S1 evidence: VG-01 PASS; commit `7072143`.
 - S2 evidence: VG-02 PASS; commit `69b7712`.
-- S3 evidence (2026-09-15): VG-03 PASS; App 1313/1313; drift clean.
+- S3 evidence: VG-03 PASS; commit `764efb0`.
+- S4 evidence (2026-09-15): VG-04 PASS; full suite 1894/1894; drift clean; ADR-0046; Handoff_M20.md.
 
 ## Execution Log
 
@@ -176,6 +177,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 1 | 1-10 | CashMovement guards + CashMovementTests; VG-01 PASS | OK |
 | 2026-09-15 | 2 | 1-10 | Inventory read surface (3 queries) + tests; VG-02 PASS | OK |
 | 2026-09-15 | 3 | 1-10 | Cash writes + ListCashMovements + GetCompanyDelegateAccounts; VG-03 PASS | OK |
+| 2026-09-15 | 4 | 1-10 | Validator-reg + ADR-0046 + tracking + Handoff_M20; full suite 1894/1894; VG-04 PASS | OK |
 
 ## Stop Report
 

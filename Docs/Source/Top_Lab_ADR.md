@@ -1031,3 +1031,32 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 **Consequences.** Diff confined to `src/TopLab.Application/Features/Statistics/**` (Common DTOs + access policy + 4 query folders = 14 source files), `tests/**` (4 handler-test classes + authorization theory covering all four queries + 4 validator-registration cases), `Docs/**`. No `.csproj` changes, no new packages, zero Domain changes, zero writes, zero Presentation content, zero `PermissionConfiguration` change. Full suite green **1839** (413 Domain + 1272 Application + 154 Infrastructure); Release build 0/0. Coverage: per-slice footprint gates passed; whole-project floors inapplicable per the M-11/M-14 waiver posture, recorded in the handoff. Statistics printing is out of scope (later Reporting concern).
 
 **Related.** M-19 Implementation Plan §2 (settled rules), §5 (S1–S3), §6 (S4 close-out), Appendix A (Arabic messages); ADR-0044 (M-18, consumed the previous number first); ADR-0042 (M-16 calculator single-source); ADR-0043 (M-10 authorized-reads precedent); PRD FR-M17-004 item 12; Dependency Map M-19 row (read-only projections).
+
+### ADR-0046 — Inventory & Lab Accounting: gated computed aggregates and guarded cash-movement writes over the existing schema
+
+**Status:** Accepted
+**Date:** 2026-09-15
+
+**Context.** M-20 delivers the Accounts backend surface (FR-M20-001…006): the ten-figure cash-drawer inventory over a period, per-element inventories (user/referral/doctor/account-type/sent-out × four report types), the per-patient samples drill-down, cash deposit/disbursement commands persisting `CashMovement` rows, the movement history, and per-entity company/delegate accounts. At HEAD the physical schema was already complete (`CashMovement` entity + configuration + DbSet + baseline table; all patient/billing/sent-out sources). The module required decisions on storage, access gating, formula ownership, commission/safe-cash/net-profit formulas, cash-guard behavior, and the no-edit posture.
+
+**Decision.**
+
+1. **Computed aggregates; zero inventory storage (SD-20-1).** All inventory figures are computed at query time from `PatientTest`, `PaymentOperation`, `SentOutSample`/`SentOutSamplePayment`, and `CashMovement`. No inventory table, cache, or stored aggregate.
+
+2. **Schema-complete cash movements; guards only (SD-20-2/SD-20-13).** S1 adds three guards to `CashMovement.Create` (`amount > 0`, `notes ≤ 500` matching the mapped max length, `occurredAtUtc != default`) — behavior-only; the mapped property set, configuration, and snapshot are untouched. Zero migration for the whole module (per-slice + S4 zero-drift gates).
+
+3. **`CASH_DISBURSE_DEPOSIT` gate on every command and query (SD-20-3).** Feature-local `InventoryAndAccountingAccessPolicy.CashDisburseDeposit`; absolute bypass via the pipeline; no second gate in handlers; `PermissionConfiguration` untouched. Scope-reading mirrors M-03: FR-M17-004 item 11 covers cash disbursement/deposit **and** patient accounting **and** external-entity delegate accounts — the entire Accounts area. The secondary-password dialog is Presentation-side over the existing `VerifySecondaryPasswordQuery`.
+
+4. **Calculator reuse; formulas never restated (SD-20-5).** Period-filtered lists are passed into `PatientAccountCalculator` / `SentOutAccountCalculator`. Grep gate: no settlement/balance formula restated in Application.
+
+5. **Drawer-inventory formulas fixed (SD-20-8/SD-20-10).** TotalSamples = count + Σ `PriceAtOrderTime` of period tests of non-deleted patients; DiscountsValue = Σ discount of non-voided non-extra-charge ops; TotalAfterDiscount = TotalCharged − DiscountsValue; Collected = Σ amount of non-voided non-extra-charge ops; Uncollected = calculator Balance; CashSupplies/Disbursements = Σ CashMovement deposits/disbursements; SafeCash = Collected + Deposits − Disbursements; RemainingToLab = Uncollected; NetProfit = Collected − SentOutPaid − Disbursements; commissions = `DiscountOrCommissionPercent/100 × Σ referred PriceAtOrderTime` per entity.
+
+6. **Periods and soft-delete (SD-20-6/SD-20-7).** Uniform half-open UTC bounds, default-today, frozen inverted-period message «بداية الفترة يجب ألا تتجاوز نهايتها.»; soft-deleted patients excluded from all inventory figures (M-19 SD-19-3 precedent).
+
+7. **No edit/void of cash movements in v1.** No mutator beyond the guarded factory; correction discipline mirrors M-03's void-and-reissue posture — recorded here as a deliberate v1 boundary.
+
+8. **Zero-drift outcome.** No migration in any slice: `has-pending-model-changes` reports no changes; the model snapshot is untouched.
+
+**Consequences.** Diff confined to `src/TopLab.Domain/Accounting/CashMovement.cs` (guards only), `src/TopLab.Application/Features/InventoryAndAccounting/**`, `tests/**` (Domain CashMovement tests + Application inventory tests + 7 validator-registration cases), `Docs/**`. No `.csproj` changes, no new packages, no `PermissionConfiguration` change, zero Presentation content, zero Persistence changes. Full suite green; Release build 0/0. Coverage: per-slice footprint gates under the M-11/M-14/M-19 waiver posture.
+
+**Related.** M-20 Implementation Plan §2, §5 (S1–S3), §6 (S4), Appendix A; ADR-0045 (M-19, consumed the previous number first); ADR-0042 (M-16 calculator); ADR-0034 (M-03 balance formula / gating scope-reading); Data Model §11.2–11.3; PRD FR-M17-004 item 11, FR-M20-001…006.

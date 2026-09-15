@@ -8,6 +8,13 @@ using TopLab.Application.Features.Attendance.Queries.GetAttendanceRecords;
 using TopLab.Application.Features.Attendance.Queries.GetUserAttendanceSummary;
 using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientAudit;
 using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientTestAudit;
+using TopLab.Application.Features.InventoryAndAccounting.Commands.RecordCashDeposit;
+using TopLab.Application.Features.InventoryAndAccounting.Commands.RecordCashDisbursement;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.GetCashDrawerInventory;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.GetCompanyDelegateAccounts;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.GetElementInventory;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.GetPatientSamplesDetail;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.ListCashMovements;
 using TopLab.Application.Features.Statistics.Queries.GetPatientCountStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetSentOutStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetTestCountStatistics;
@@ -285,6 +292,25 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<GetSentOutStatisticsQuery>))]
     [InlineData(typeof(IValidator<GetUserProductivityStatisticsQuery>))]
     public void HostBuiltLikeApp_ResolvesM19Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<GetCashDrawerInventoryQuery>))]
+    [InlineData(typeof(IValidator<GetElementInventoryQuery>))]
+    [InlineData(typeof(IValidator<GetPatientSamplesDetailQuery>))]
+    [InlineData(typeof(IValidator<RecordCashDepositCommand>))]
+    [InlineData(typeof(IValidator<RecordCashDisbursementCommand>))]
+    [InlineData(typeof(IValidator<ListCashMovementsQuery>))]
+    [InlineData(typeof(IValidator<GetCompanyDelegateAccountsQuery>))]
+    public void HostBuiltLikeApp_ResolvesM20Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();
