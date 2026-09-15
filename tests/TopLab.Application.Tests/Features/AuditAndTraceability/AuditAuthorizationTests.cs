@@ -3,6 +3,7 @@ using TopLab.Application.Common.Behaviors;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.AuditAndTraceability.Common;
 using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientAudit;
+using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientTestAudit;
 using TopLab.Application.Tests.Common.Fakes;
 using Xunit;
 
@@ -12,10 +13,11 @@ public class AuditAuthorizationTests
 {
     private const string ExpectedDenial = "أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام";
 
-    // Theory shell: S2 completes this list with GetPatientTestAuditQuery (plan §5 S1).
+    // Theory shell completed in S2: both module queries are listed (plan §5 S1).
     public static TheoryData<IAuthorizedRequest> ModuleQueries => new()
     {
         { new GetPatientAuditQuery(1) },
+        { new GetPatientTestAuditQuery(1) },
     };
 
     [Theory]
@@ -50,6 +52,35 @@ public class AuditAuthorizationTests
         var response = await behavior.Handle(
             new GetPatientAuditQuery(1),
             _ => Task.FromResult(Result<PatientAuditDto>.Success(null!)),
+            CancellationToken.None);
+
+        Assert.True(response.IsSuccess);
+    }
+
+    [Fact]
+    public async Task PatientTestAudit_DeniedWithoutPermission_ReturnsStandardMessage()
+    {
+        var user = new FakeCurrentUserService { IsAbsolutePermission = false };
+        var behavior = new AuthorizationBehavior<GetPatientTestAuditQuery, Result<PatientTestAuditDto>>(user);
+
+        var response = await behavior.Handle(
+            new GetPatientTestAuditQuery(1),
+            _ => throw new Exception("handler must not run"),
+            CancellationToken.None);
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(ExpectedDenial, response.Error!.Message);
+    }
+
+    [Fact]
+    public async Task PatientTestAudit_AbsolutePermission_BypassesWithoutGrant()
+    {
+        var user = new FakeCurrentUserService { IsAbsolutePermission = true };
+        var behavior = new AuthorizationBehavior<GetPatientTestAuditQuery, Result<PatientTestAuditDto>>(user);
+
+        var response = await behavior.Handle(
+            new GetPatientTestAuditQuery(1),
+            _ => Task.FromResult(Result<PatientTestAuditDto>.Success(null!)),
             CancellationToken.None);
 
         Assert.True(response.IsSuccess);

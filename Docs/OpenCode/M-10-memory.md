@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-10.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 3
-- **Current Slice:** S2 — pending (S1 committed)
+- **Current Slice:** S3 — pending (S2 committed)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -52,7 +52,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Application read surface: the P view (patient-record audit) | [x] Done | VG-01 ✅ |
-| 2 | Application read surface: the T view (per-test lifecycle audit) | [ ] Pending | VG-02 |
+| 2 | Application read surface: the T view (per-test lifecycle audit) | [x] Done | VG-02 ✅ |
 | 3 | Tests + zero-drift proof + close-out | [ ] Pending | VG-03 |
 
 ---
@@ -86,16 +86,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build + full suite green.
-- [ ] **Stage 2 — Deep Understanding:** Plan §5 S2 re-read; SD-10-6; null-mapping rules.
-- [ ] **Stage 3 — File Analysis:** `PatientTest.cs` lifecycle columns + mutators; S1 DTO file; name-dictionary union pattern.
-- [ ] **Stage 4 — Planning:** DTO addition → query + validator → handler → test class; complete the theory.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0; S2 filter green; full Application suite green.
-- [ ] **Stage 7 — Validation Gate:** VG-02.
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** See Execution Log.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0 + full suite green (390+149+1167) before touching anything.
+- [x] **Stage 2 — Deep Understanding:** Plan §5 S2 re-read; SD-10-6; null-mapping rules.
+- [x] **Stage 3 — File Analysis:** `PatientTest.cs` lifecycle columns + mutators; S1 DTO file; name-dictionary union pattern; `Test` catalog name precedent (`PatientBillingReader.cs:50-62`).
+- [x] **Stage 4 — Planning:** DTO addition → query + validator → handler → test class; complete the theory.
+- [x] **Stage 5 — Execution:** Implemented per plan (DTO extended; 3 T-view files; 1 test class; auth theory completed with T-query denial + absolute-bypass facts).
+- [x] **Stage 6 — Post-Execution Verification:** build 0/0; S2 filter green (17/17); full Application suite green (1174/1174).
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — build 0/0; tests green; zero `Persistence/**` + zero `Domain/**` diff (grep gates); footprint coverage 125/133 = 94.0% ≥ 80%; migration none.
+- [x] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -122,9 +122,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/3 slices done — S1 committed, S2 in progress
+- Overall: 2/3 slices done — S2 committed, S3 in progress
 - Slice 1 — Application read surface: the P view: [x] Done (VG-01 pass 2026-09-15)
-- Slice 2 — Application read surface: the T view: [ ] Pending
+- Slice 2 — Application read surface: the T view: [x] Done (VG-02 pass 2026-09-15)
 - Slice 3 — Tests + zero-drift proof + close-out: [ ] Pending
 
 ## Execution Log
@@ -133,5 +133,6 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
 | 2026-09-15 | 1 | 1–7 | S1 P view: 5 Application files + 2 test classes; build 0/0; 10/10 S1 tests + 1167 full suite green; zero Persistence/Domain diff; coverage 93.1% (VG-01 PASS) | OK | — |
+| 2026-09-15 | 2 | 1–7 | S2 T view: DTO extended + 3 query files + 1 test class, auth theory completed; build 0/0; 17/17 + 1174 full suite green; zero Persistence/Domain diff; coverage 94.0% (VG-02 PASS) | OK | — |
 
 ## Stop Report (append only if a stop condition triggers)

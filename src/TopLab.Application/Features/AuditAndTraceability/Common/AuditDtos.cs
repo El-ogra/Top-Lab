@@ -26,3 +26,26 @@ public sealed record PatientAuditDto(
     string LastModifiedByUserName,
     DateTime LastModifiedAtUtc,
     IReadOnlyList<PaymentReceiverAuditDto> PaymentReceivers);
+
+/// <summary>
+/// T view (SD-10-6): per-test lifecycle audit — entered / reviewed /
+/// printed+count / delivered, each with user and UTC time. Lifecycle fields
+/// are null until the corresponding step completes.
+/// </summary>
+public sealed record PatientTestAuditDto(
+    int PatientTestId,
+    int PatientId,
+    string TestName,
+    int? EnteredByUserId,
+    string? EnteredByUserName,
+    DateTime? EnteredAtUtc,
+    int? ReviewedByUserId,
+    string? ReviewedByUserName,
+    DateTime? ReviewedAtUtc,
+    int? LastPrintedByUserId,
+    string? LastPrintedByUserName,
+    DateTime? LastPrintedAtUtc,
+    int PrintCount,
+    int? DeliveredByUserId,
+    string? DeliveredByUserName,
+    DateTime? DeliveredAtUtc);
