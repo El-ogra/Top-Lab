@@ -38,16 +38,41 @@ public sealed class AttendanceRecord : Entity<AttendanceRecordId>
 
     public void StartBreak(DateTime atUtc)
     {
+        if (BreakStartAtUtc is not null && BreakEndAtUtc is null)
+        {
+            throw new InvalidOperationException("Break is already started.");
+        }
+
+        if (CheckOutAtUtc is not null)
+        {
+            throw new InvalidOperationException("Already checked out.");
+        }
+
         BreakStartAtUtc = atUtc;
     }
 
     public void EndBreak(DateTime atUtc)
     {
+        if (BreakStartAtUtc is null || BreakEndAtUtc is not null)
+        {
+            throw new InvalidOperationException("No open break to end.");
+        }
+
         BreakEndAtUtc = atUtc;
     }
 
     public void CheckOut(DateTime atUtc, int? overtimeMinutes)
     {
+        if (BreakStartAtUtc is not null && BreakEndAtUtc is null)
+        {
+            throw new InvalidOperationException("Cannot check out with an open break.");
+        }
+
+        if (CheckOutAtUtc is not null)
+        {
+            throw new InvalidOperationException("Already checked out.");
+        }
+
         CheckOutAtUtc = atUtc;
         OvertimeMinutes = overtimeMinutes;
     }
