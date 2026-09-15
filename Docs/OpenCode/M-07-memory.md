@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-07.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 5
-- **Current Slice:** 2 — not started (Slice 1 complete, VG-01 passed)
+- **Current Slice:** 2 — complete (Slice 2 done, VG-02 passed)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain rules: combined-report selection + patient-history resolver | [x] Done (VG-01 PASS) | VG-01 |
-| 2 | Application core surface: combinable list + combined/blank builders + history queries | [ ] Pending | VG-02 |
+| 2 | Application core surface: combinable list + combined/blank builders + history queries | [x] Done (VG-02 PASS) | VG-02 |
 | 3 | Infrastructure: PDF-first `IReportPrintingService` + print commands | [ ] Pending | VG-03 |
 | 4 | Application: automatic & manual history insertion + separate history report assembly | [ ] Pending | VG-04 |
 | 5 | Hardening, documentation, module close-out | [ ] Pending | VG-05 |
@@ -78,7 +78,7 @@ Additional user-authorized execution parameters (override skill defaults):
 - [x] **Stage 7 — Validation Gate:** VG-01 PASS — every guard negative-pathed (`Add_NonReviewed_Throws`, `Add_Duplicate_Throws`, `ByLabCode_Null/EmptyLabId_Throws`, `ByPatientName_WhitespaceName_Throws`, `Move_UnknownId_Throws`); both modes covered; coverlet (cobertura) `Reports` scope: CombinedReportSelection 32/32 = 100.0%, PatientHistoryResolver 21/21 = 100.0% ≥ 90%. No analyzer suppressions; no new packages.
 - [x] **Stage 8 — Documentation Update:** This checklist marked; evidence recorded above.
 - [x] **Stage 9 — Memory Status Update:** "Current Status" updated below (Slice 1 done).
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-07] Slice 1/5: Domain rules: combined-report selection + patient-history resolver — loop-engineering` + `Stages 1-10 verified. Gate VG-01 passed.` — on `main`, never push.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-07] Slice 1/5: Domain rules: combined-report selection + patient-history resolver — loop-engineering` + `Stages 1-10 verified. Gate VG-01 passed.` — committed on `main` as `9e4c84e`; never pushed.
 
 ---
 
@@ -90,15 +90,15 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build + full tests green (0/0). Record evidence.
-- [ ] **Stage 2 — Deep Understanding:** Re-read plan §6 S2; FR-M07-001/002/004/008; EC-07/08/11/14/15/16; snapshot-only discipline; open reads policy; `ReportSettings` row read directly (Id == 1); missing row → `Error.Unexpected("سجل إعدادات التقرير مفقود.")`.
-- [ ] **Stage 3 — File Analysis:** Inspect `GetResultWorklistQueryHandler` (reviewed filter + `ToDictionary` join), `GetVisitHistoryQueryHandler` (LabId rollup + settings-missing pattern), `GetProfileReportQueryHandler` (snapshot-only reads), `GetCultureReportQueryHandler`, `Error`/`Result` API, `FakeApplicationDbContext` sets, validator conventions.
-- [ ] **Stage 4 — Planning:** DTOs → access policy → translator → combinable query → combined builder → blank builder → history queries → 5 test classes.
-- [ ] **Stage 5 — Execution:** Implement the plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; Application tests all green.
-- [ ] **Stage 7 — Validation Gate:** VG-02 — build zero/zero; tests green; both grep gates clean; coverlet ≥ 80% on the S2 footprint.
-- [ ] **Stage 8 — Documentation Update:** Mark this slice's checkboxes and record evidence.
-- [ ] **Stage 9 — Memory Status Update:** Update the "Current Status" section.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings. `dotnet test TopLab.sln` → Domain 378 / Application 976 / Infrastructure 126 (1480 total, 0 failed).
+- [x] **Stage 2 — Deep Understanding:** Plan §6 S2 + FR-M07-001/002/004/008 + EC-07/08/11/14/15/16 re-read. Snapshot-only discipline; open reads (no `IAuthorizedRequest` on queries); persistence-free build commands (no `SaveChanges`); `ReportSettings` read directly (Id == 1); missing row → `Error.Unexpected("سجل إعدادات التقرير مفقود.")`; missing patient → `Error.NotFound("المريض غير موجود.")`; unknown test → `Error.NotFound("التحليل غير موجود")`; identity-unresolvable → Conflict with `تعذر تحديد هوية المريض للتاريخ المرضي.`.
+- [x] **Stage 3 — File Analysis:** Inspected `GetResultWorklistQueryHandler` (reviewed filter + `ToDictionary` catalog join), `GetVisitHistoryQueryHandler` (LabId rollup + settings-missing `Unexpected`), `GetProfileReportQueryHandler` (snapshot-only reads), `GetCultureReportQueryHandler`, `Error`/`Result`/`ErrorType`, `ResultKind` enum (Simple=0/Profile=1/Culture=2), `Test`/`Patient`/`ExternalEntity`/`Analyte`/`ProfileResultItem`/`PatientTestReferenceRangeSnapshot`/`ProfileResultItemReferenceRangeSnapshot`/`CultureResult` shapes, `FakeApplicationDbContext` (all needed sets present — verify-only, no gap), validator conventions (`NotEmpty().WithMessage` precedents: `قائمة التحاليل مطلوبة.` / `قائمة المرضى مطلوبة.`), DI assembly-wide validator scan. Translator precedent confirmed = `ex.ParamName` switch.
+- [x] **Stage 4 — Planning:** (1) `Common/ReportDtos.cs` (CombinableTestDto, FrozenProfileRangeDto, ProfileReportLineDto, CultureReportSummaryDto, CombinedReportLineDto, CombinedReportDto, BlankReportDto, HistoryEntryDto, PatientHistoryDto, MultiPatientHistoryDto) → (2) `Common/ReportProductionAccessPolicy.cs` (`PrintResults = "PRINT_RESULTS"`) → (3) `Common/DomainFailureTranslator.cs` (param switch: `isReviewed`/`patientTestId`/`labId`/`fullName`) → (4) `Common/PatientHistoryReader.cs` (shared resolver: `ResolveVisitPatients` per mode + `BuildEntries`) → (5) `GetCombinableTestsQuery` (+Handler, +Validator) → (6) `BuildCombinedReportCommand` (+Handler via `CombinedReportSelection` in try/catch, +Validator non-empty) → (7) `BuildBlankReportCommand` (+Handler flat entity join, +Validator) → (8) `GetPatientTestHistoryQuery` (+Handler, +Validator) → (9) `GetMultiPatientHistoryQuery` (+Handler, +Validator) → (10) five handler-test classes.
+- [x] **Stage 5 — Execution:** Implemented the full plan: DTOs, access policy, `DomainFailureTranslator`, shared `PatientHistoryReader` (resolver + entries + identity ordering), 3 open queries + 2 persistence-free build commands (each with handler + validator), and 5 handler-test classes (30 tests). One compile fix: strongly-typed id `ExternalEntityId` exposes `.Value` directly, so the nullable unwrap `.Value.Value` was dropped in the blank-report handler.
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings. `dotnet test TopLab.sln` → Domain 378 / Application 1006 (+30 new) / Infrastructure 126 (1510 total, 0 failed).
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — build zero/zero; all S2 tests green; grep gates clean (zero `IAuthorizedRequest` under `Features/ReportProduction/Queries`, zero live `ReferenceRange`/`SaveChanges` matches in `Features/ReportProduction`); coverlet S2 footprint 383/441 = 86.8% ≥ 80% (handlers 100%, reader 96.7%, translator 88.9%; validators unexecuted because handlers are driven directly — behavior pipeline out of scope here).
+- [x] **Stage 8 — Documentation Update:** This checklist marked; evidence recorded above.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated below (Slice 2 done).
 - [ ] **Stage 10 — Git Commit (authorized local):** `[M-07] Slice 2/5: Application core surface: combinable list + combined/blank builders + history queries — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
 
 ---
@@ -168,9 +168,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/5 slices done — Slice 1 complete
+- Overall: 2/5 slices done — Slice 2 complete
 - Slice 1 — Domain rules: combined-report selection + patient-history resolver: [x] Done — VG-01 PASS
-- Slice 2 — Application core surface: [ ] Pending
+- Slice 2 — Application core surface: combinable list + combined/blank builders + history queries: [x] Done — VG-02 PASS
 - Slice 3 — Infrastructure: PDF-first printing + print commands: [ ] Pending
 - Slice 4 — Application: history insertion: [ ] Pending
 - Slice 5 — Hardening, documentation, module close-out: [ ] Pending
@@ -185,6 +185,11 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 1 | 5 | Created `CombinedReportSelection`, `PatientHistoryResolver`, 2 test classes | PASS | — |
 | 2026-09-15 | 1 | 6 | Domain build 0/0; Domain tests 378/378 green | PASS | — |
 | 2026-09-15 | 1 | 7 | VG-01: coverage 100% on `Reports` scope; all negative paths tested | PASS | — |
-| 2026-09-15 | 1 | 10 | Local commit on `main` | pending | — |
+| 2026-09-15 | 1 | 10 | Local commit on `main` | OK (`9e4c84e`) | — |
+| 2026-09-15 | 2 | 1 | Pre-exec: build 0/0; tests 1480/1480 green (Domain 378, App 976, Infra 126) | PASS | — |
+| 2026-09-15 | 2 | 2-4 | Deep understanding + file analysis + planning recorded | PASS | — |
+| 2026-09-15 | 2 | 5 | Created Common (DTOs/policy/translator/reader), 3 queries + 2 build commands + 5 test classes (30 tests) | PASS | — |
+| 2026-09-15 | 2 | 6 | Solution build 0/0; tests 1510/1510 green (Domain 378, App 1006, Infra 126) | PASS | — |
+| 2026-09-15 | 2 | 7 | VG-02: grep gates clean; S2 footprint coverage 86.8% (383/441) ≥ 80% | PASS | — |
 
 ## Stop Report (append only if a stop condition triggers)
