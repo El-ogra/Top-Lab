@@ -973,3 +973,32 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 **Consequences.** Diff confined to `src/TopLab.Application/Features/AuditAndTraceability/**` (8 source files: DTOs, access policy, 2 queries with handlers and validators), `tests/**` (2 handler-test classes + authorization theory + 2 validator-registration cases), `Docs/**`. No `.csproj` changes, no new packages, zero Domain changes, zero writes, zero Presentation content. Full suite green **1715** (390 Domain + 1176 Application + 149 Infrastructure); Release build 0/0. Coverage: per-slice footprint gates passed (VG-01 P footprint 93.1%, VG-02 P+T footprint 94.0%; whole-project floors inapplicable per the M-11/M-14 waiver posture, recorded in the handoff). Slopwatch pass on all touched files (0 issues).
 
 **Related.** M-10 Implementation Plan §2 (settled rules), §5 (S1/S2), §6 (S3 close-out), Appendix A (Arabic messages); ADR-0042 (M-16, consumed the previous number first); Data Model §10 (P/T mapping) and §7.1 (void preserves the audit trail); PRD FR-M17-008 (binding restriction).
+
+### ADR-0044 — Attendance & time tracking: guarded lifecycle and manager-only reads over the existing schema
+
+**Status:** Accepted
+**Date:** 2026-09-15
+
+**Context.** M-18 delivers attendance & time tracking: per-user check-in, break start/end, check-out with lateness/overtime, plus manager-only viewing of entry/exit times, overtime, and lateness (PRD FR-M18-001/002). At HEAD the physical schema was already complete (`AttendanceRecord` entity + `AttendanceRecordConfiguration` with Cascade FK to `User` and a `UserId` index + `AttendanceRecords` DbSet + baseline-migration table) while no Domain guards, calculator, or Application surface existed. The module required decisions on storage, write gating (no attendance code exists in the seeded 13-code catalog), read gating (Data Model §9.4 mandates manager-only viewing enforced at the application layer), the lateness/overtime computation point, the single-open-record invariant, break sequencing, and record immutability.
+
+**Decision.**
+
+1. **Zero-storage realization (SD-18-1).** The feature is pure behavior over existing columns; no entity, column, table, index, configuration, or migration was created or modified. The Domain folder `src/TopLab.Domain/Attendance/` holds the guarded `AttendanceRecord` and the single-sourced `AttendanceCalculator`; the feature folder `src/TopLab.Application/Features/Attendance/` holds DTOs, the translator, the four commands, and the two queries with handlers and validators.
+
+2. **Ungated session-bound writes (SD-18-2).** All four commands (`CheckIn`, `StartBreak`, `EndBreak`, `CheckOut`) carry no `IAuthorizedRequest` and record for `_currentUser.UserId` only; unauthenticated callers receive the shared `Error.Forbidden` message. The PRD restricts only the viewing (FR-M18-002), not the recording (FR-M18-001); M-03 ungated-writes precedent.
+
+3. **Handler-level absolute gate on reads (SD-18-3).** Both queries check `_currentUser.IsAbsolutePermission` in the handler and return `Error.Forbidden` with the verbatim shared pipeline message for anyone else — no permission code exists for attendance and none was added.
+
+4. **Event-time computation against configured hours; local wall-clock (SD-18-4/7).** Lateness is computed at check-in (`max(0, localCheckIn − WorkStartTime)`) and overtime at check-out (`max(0, localCheckOut − WorkEndTime)`), persisted on the record, and computed exactly once via `AttendanceCalculator` (grep-pinned single source). Local wall-clock conversion is `TimeOnly.FromDateTime(atUtc.ToLocalTime())` — a single-site LAN product. Missing configuration (or a missing user row) yields null lateness/overtime, never an error. Worked minutes exclude the recorded break span. Overnight shifts: overtime is measured against the same calendar day's `WorkEndTime` while worked minutes use raw instants (documented behavior, pinned by an S1 test).
+
+5. **Single open record, logical uniqueness (SD-18-5).** A second check-in while a record has `CheckOutAtUtc == null` is rejected `Error.Conflict("يوجد تسجيل حضور مفتوح لهذا المستخدم.")`; no new DB unique index (M-16 D40 precedent).
+
+6. **Additive Domain guards; English `InvalidOperationException`, Arabic via translator (SD-18-6).** `StartBreak` rejects an open break or a checked-out record; `EndBreak` rejects a missing open break; `CheckOut` rejects an open break or a double check-out (`PatientTest` mutator precedent). The feature-local `DomainFailureTranslator` renders the four Appendix A messages.
+
+7. **No edit/delete of records in v1 (SD-18-9).** No mutator beyond the lifecycle, no delete path (grep-pinned absence; M-16 OD-16-B deferral precedent).
+
+8. **Zero-drift outcome.** No migration in any slice: `dotnet ef migrations has-pending-model-changes` reports no changes; the model snapshot is untouched.
+
+**Consequences.** Diff confined to `src/TopLab.Domain/Attendance/**` (additive guards + calculator), `src/TopLab.Application/Features/Attendance/**` (20 source files: DTOs, translator, 4 commands + 2 queries with handlers and validators), `tests/**` (23 Domain + 40 Application handler/validator tests + 6 validator-registration cases + 5 Infrastructure persistence tests), `Docs/**`. No `.csproj` changes, no new packages, no `PermissionConfiguration` change, no `User` mutation, zero Presentation content. Full suite green **1789** (413 Domain + 1222 Application + 154 Infrastructure); Release build 0/0. Coverage: per-slice footprint gates passed (VG-01 Domain Attendance scope ≥90%; VG-02/VG-03 Application Attendance footprint ≥90% lines; VG-04 persistence 5/5 green; whole-project floors inapplicable per the M-11/M-14 waiver posture, recorded in the handoff). Slopwatch: zero issues in M-18 files (2 pre-existing findings in untouched files).
+
+**Related.** M-18 Implementation Plan §2 (settled rules), §5 (S1), §6 (S2/S3), §7 (S4 close-out), Appendix A (Arabic messages); ADR-0043 (M-10, consumed the previous number first); ADR-0042 (M-16 calculator/guard precedents); Data Model §9.4 (attendance columns + manager-only rule); PRD FR-M18-001/002.

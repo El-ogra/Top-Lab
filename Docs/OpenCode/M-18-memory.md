@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-18.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S4 — pending
+- **Current Slice:** S4 — complete (module done)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -55,7 +55,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | Domain: guards on AttendanceRecord + the AttendanceCalculator | [x] Done | VG-01 |
 | 2 | Application write surface: check-in + break + check-out | [x] Done | VG-02 |
 | 3 | Application read surface: manager-only period records + per-user summary | [x] Done | VG-03 |
-| 4 | Tests + Infrastructure proof + close-out | [ ] Pending | VG-04 |
+| 4 | Tests + Infrastructure proof + close-out | [x] Done | VG-04 |
 
 ---
 
@@ -130,26 +130,26 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 4)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln -c Release` 0/0 before touching anything.
-- [ ] **Stage 2 — Deep Understanding:** Plan §7 S4 re-read; drift → stop + addendum (never silent migration); ADR-0044 contents; close-out convention.
-- [ ] **Stage 3 — File Analysis:** `AttendanceRecordConfiguration.cs` (Cascade line 21, index line 22); `InMemoryContextFactory` + `SentOutSamplePersistenceTests` pattern; `ValidatorRegistrationTests` per-module theory; ADR max reconfirmed; M18 tracking row + §9 log format; `Handoff_M16.md` structure precedent.
-- [ ] **Stage 4 — Planning:** Drift gate first → persistence tests → validator-reg extension → Release full suite → ADR → tracking → handoff.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Release build 0/0; Release full suite green `-m:1`; drift gate → no changes; snapshot untouched.
-- [ ] **Stage 7 — Validation Gate:** VG-04.
-- [ ] **Stage 8 — Documentation Update:** ADR-0044 appended; M18 row flipped 🟩 Done + dated §9 row; `Docs/Handoff_M18.md` created per template; this checklist recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated; module close-out recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** See Execution Log.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln -c Release` 0/0 before touching anything.
+- [x] **Stage 2 — Deep Understanding:** Plan §7 S4 re-read; drift → stop + addendum (never silent migration); ADR-0044 contents; close-out convention.
+- [x] **Stage 3 — File Analysis:** `AttendanceRecordConfiguration.cs` (Cascade line 21, index line 22); `InMemoryContextFactory` + `SentOutSamplePersistenceTests` pattern; `ValidatorRegistrationTests` per-module theory (M16/M10 shape); ADR max reconfirmed at 0043 (M-10) → 0044 free; M18 tracking row 82 + §9 `| Date | Item | Change | By |` format; `Handoff_M16.md` 8-section structure precedent.
+- [x] **Stage 4 — Planning:** Drift gate first → persistence tests → validator-reg extension → Release full suite → ADR → tracking → handoff.
+- [x] **Stage 5 — Execution:** Per plan. `AttendanceRecordPersistenceTests` (5 tests: full-lifecycle store/retrieve, behavioral Cascade user→records, model Cascade FK pin on `UserId`, `UserId` index pin, not-auditable pin via `IAuditableEntity` + mapped-column assertions); M18 validator-registration theory (6 cases, `InternalsVisibleTo`-free public resolution); ADR-0044 appended; M18 row flipped 🟩 Done + dated §9 row; `Docs/Handoff_M18.md` created (8 sections).
+- [x] **Stage 6 — Post-Execution Verification:** Release build 0/0; Release full suite green `-m:1` (413 + 1222 + 154 = 1789); drift gate → "No changes have been made to the model since the last migration"; snapshot untouched (zero `Infrastructure/` status).
+- [x] **Stage 7 — Validation Gate:** VG-04 PASS — Release 0/0; 1789 green; persistence 5/5 green; drift proven; validator-registration 63 green (incl. 6 M18); coverlet footprints ≥90% lines (waiver posture per M-11/M-14 for whole-project floors); slopwatch zero issues in M-18 files (2 pre-existing findings in untouched files); ADR-0044 + tracking flip + handoff present; grep gates: zero edit/delete/void path in Attendance, zero `IAuthorizedRequest` in Attendance, zero Presentation content in diff.
+- [x] **Stage 8 — Documentation Update:** ADR-0044 appended; M18 row flipped 🟩 Done + dated §9 row; `Docs/Handoff_M18.md` created per template; this checklist recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
 ## Current Status
 
-- Overall: 3/4 slices done — S3 complete, S4 in progress
+- Overall: 4/4 slices done — M-18 COMPLETE
 - Slice 1 — Domain: guards + calculator: [x] Done (VG-01 pass, committed)
 - Slice 2 — Application write surface: [x] Done (VG-02 pass, committed)
 - Slice 3 — Application read surface: [x] Done (VG-03 pass, committed)
-- Slice 4 — Tests + Infrastructure proof + close-out: [ ] Pending
+- Slice 4 — Tests + Infrastructure proof + close-out: [x] Done (VG-04 pass, committed)
 
 ## Execution Log
 
@@ -159,5 +159,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | S1 | 1–10 | Domain guards + AttendanceCalculator; VG-01 pass (413 Domain green; Record 0.9318/Calc 1.0; zero Persistence diff) | OK | [M-18] Slice 1/4 |
 | 2026-09-15 | S2 | 1–10 | Write surface (DTOs/translator/4 commands) + 27 tests; VG-02 pass (1203 App green; single-source grep clean; zero Persistence diff) | OK | [M-18] Slice 2/4 |
 | 2026-09-15 | S3 | 1–10 | Read surface (2 absolute-gated queries + summary DTO) + 13 tests; VG-03 pass (1216 App green; absolute-check grep ×2; zero Persistence diff) | OK | [M-18] Slice 3/4 |
+| 2026-09-15 | S4 | 1–10 | Persistence proof (5 tests) + 6 validator registrations + zero-drift gate + ADR-0044 + tracking flip + handoff; VG-04 pass (Release 1789 green; slopwatch clean; zero edit/delete + zero Presentation greps) | OK | [M-18] Slice 4/4 |
 
 ## Stop Report (append only if a stop condition triggers)

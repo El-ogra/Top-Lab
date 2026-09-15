@@ -1,5 +1,11 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using TopLab.Application.Features.Attendance.Commands.CheckIn;
+using TopLab.Application.Features.Attendance.Commands.CheckOut;
+using TopLab.Application.Features.Attendance.Commands.EndBreak;
+using TopLab.Application.Features.Attendance.Commands.StartBreak;
+using TopLab.Application.Features.Attendance.Queries.GetAttendanceRecords;
+using TopLab.Application.Features.Attendance.Queries.GetUserAttendanceSummary;
 using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientAudit;
 using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientTestAudit;
 using TopLab.Application.Features.CultureAndAntibiotics.Commands.AttachAntibioticToCulture;
@@ -241,6 +247,24 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<GetPatientAuditQuery>))]
     [InlineData(typeof(IValidator<GetPatientTestAuditQuery>))]
     public void HostBuiltLikeApp_ResolvesM10Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<CheckInCommand>))]
+    [InlineData(typeof(IValidator<StartBreakCommand>))]
+    [InlineData(typeof(IValidator<EndBreakCommand>))]
+    [InlineData(typeof(IValidator<CheckOutCommand>))]
+    [InlineData(typeof(IValidator<GetAttendanceRecordsQuery>))]
+    [InlineData(typeof(IValidator<GetUserAttendanceSummaryQuery>))]
+    public void HostBuiltLikeApp_ResolvesM18Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();
