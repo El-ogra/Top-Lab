@@ -44,7 +44,9 @@ public sealed class GetUndeliveredResultsQueryHandler
         var undeliveredCounts = _db.Set<PatientTest>()
             .Where(pt => patientIds.Contains(pt.PatientId.Value) && !pt.IsDelivered)
             .GroupBy(pt => pt.PatientId.Value)
-            .ToDictionary(g => g.Key, g => g.Count());
+            .Select(g => new { PatientId = g.Key, Count = g.Count() })
+            .ToList()
+            .ToDictionary(x => x.PatientId, x => x.Count);
 
         var listed = patients
             .Where(p => undeliveredCounts.ContainsKey(p.Id.Value))

@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-09.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 3
-- **Current Slice:** 3 — not started (S2 committed)
+- **Current Slice:** — module complete (3/3 committed)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Application read surface: undelivered list + delivery grid + delivery account | [x] Done (VG-01 passed) | VG-01 |
 | 2 | Application: composite `DeliverWithSettlement` command | [x] Done (VG-02 passed) | VG-02 |
-| 3 | Tests + Infrastructure proof + close-out | [ ] Pending | VG-03 |
+| 3 | Tests + Infrastructure proof + close-out | [x] Done (VG-03 passed) | VG-03 |
 
 ---
 
@@ -107,25 +107,25 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Release build + full tests green (0/0). Record evidence.
-- [ ] **Stage 2 — Deep Understanding:** Re-read plan §6 S3; migration-scope gate semantics (drift → stop + addendum, never silent migration); ADR-0041 contents (OD-09-A/B/C outcomes, no-gate restatement, zero-drift result); close-out convention.
-- [ ] **Stage 3 — File Analysis:** Inspect `WorkSheetQueryPersistenceTests` (InMemory-on-real-context pattern), `InMemoryContextFactory`, `ApplicationDbContext.DbSets`, `Top_Lab_ADR.md` (confirm max ADR), `Top_Lab_Master_Tracking_Sheet.md` (locate M09 row), `Docs/Source/Top_Lab_Handoff_Template.md`, coverlet setup, an existing audit-gate test.
-- [ ] **Stage 4 — Planning:** Migration-scope gate first → persistence tests (period filter + IsDeleted + frozen price + audit columns) → audit gate → Release build + full suite with coverage → ADR-0041 → tracking flip → handoff.
-- [ ] **Stage 5 — Execution:** Implement the plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Release build 0/0; full suite green; `dotnet ef migrations has-pending-model-changes` → no changes; snapshot clean.
-- [ ] **Stage 7 — Validation Gate:** VG-03 — all code/test gates pass; persistence tests green; coverage floors met or waived in the handoff; audit gate green; zero Presentation content in the diff.
-- [ ] **Stage 8 — Documentation Update:** ADR-0041 appended; M09 row flipped 🟩 Done with dated change-log entry; `Docs/Handoff_M09.md` created per template; slice checkboxes marked.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated; module close-out recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-09] Slice 3/3: Tests + Infrastructure proof + close-out — loop-engineering` + `Stages 1-10 verified. Gate VG-03 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Release build 0/0; full suite green (App 1109, Infra 142, Domain 378) on `main` @ `025b2d0`.
+- [x] **Stage 2 — Deep Understanding:** Plan §6 S3 re-read; drift → stop + addendum (never silent migration); ADR-0041 contents; close-out convention (tracking + change-log + handoff).
+- [x] **Stage 3 — File Analysis:** `WorkSheetQueryPersistenceTests` + `InMemoryContextFactory` (real-ctx pattern), infra fakes (`FakeCurrentUserService`/`FakeDateTimeProvider`), ADR tail (max ADR-0040 → 0041 free), M09 tracking row (§4) + §9 log format, `Handoff_M07` template (8 sections), `PatientTest.Create`/`Test.Create` seed signatures.
+- [x] **Stage 4 — Planning:** Drift gate first → persistence tests → audit gate → Release + full suite → ADR → tracking → handoff.
+- [x] **Stage 5 — Execution:** `ResultDeliveryPersistenceTests` (3 tests) as planned. One genuine find: bare `GroupBy`→`ToDictionary` untranslatable on EF — fixed to aggregate-composed projection in `GetUndeliveredResultsQueryHandler` (attempt 1 fail → fixed → green).
+- [x] **Stage 6 — Post-Execution Verification:** Release build 0/0; full suite 1632/1632 green (378 + 1109 + 145); `has-pending-model-changes` → no changes; snapshot clean.
+- [x] **Stage 7 — Validation Gate:** VG-03 PASS — persistence 3/3; zero drift proven; audit gate (per-line `DeliveredByUserId`/`DeliveredAtUtc` after save + untouched-line null pin); slopwatch clean; no `.csproj`/Domain/Presentation touch; coverage waiver recorded in handoff (M-11/M-14 precedent).
+- [x] **Stage 8 — Documentation Update:** ADR-0041 appended; M09 row → 🟩 Done + dated §9 row; `Docs/Handoff_M09.md` per template; slice checkboxes marked.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-09] Slice 3/3: Tests + Infrastructure proof + close-out — loop-engineering` — on `main`, never pushed.
 
 ---
 
 ## Current Status
 
-- Overall: 2/3 slices done — S2 committed, S3 next
+- Overall: 3/3 slices done — MODULE COMPLETE
 - Slice 1 — Application read surface: undelivered list + delivery grid + delivery account: [x] Done (VG-01 passed, 26 tests, committed)
 - Slice 2 — Application: composite `DeliverWithSettlement` command: [x] Done (VG-02 passed, 17 tests + registration, committed)
-- Slice 3 — Tests + Infrastructure proof + close-out: [ ] Pending
+- Slice 3 — Tests + Infrastructure proof + close-out: [x] Done (VG-03 passed, 3 persistence tests + ADR-0041 + tracking + handoff, committed)
 
 ## Execution Log
 
@@ -134,5 +134,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
 | 2026-09-15 | 1 | 1–10 | S1 read surface implemented; VG-01 passed (build 0/0, 1087 app tests green incl. 26 new, grep gates clean, coverage 0.857–1.000) | OK | [M-09] Slice 1/3 |
 | 2026-09-15 | 2 | 1–10 | S2 composite command implemented; VG-02 passed (build 0/0, 45 ResultDelivery tests green, no-gate grep clean, handler 1.000/1.000) | OK | [M-09] Slice 2/3 |
+| 2026-09-15 | 3 | 1–10 | S3 persistence + close-out; VG-03 passed (Release 0/0, 1632 full-suite green, drift clean, ADR-0041 + tracking + handoff; 1 EF GroupBy fix) | OK | [M-09] Slice 3/3 |
 
 ## Stop Report (append only if a stop condition triggers)

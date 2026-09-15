@@ -896,3 +896,28 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 **Consequences.** Diff confined to `src/TopLab.Domain/Reports/**`, `src/TopLab.Application/Features/ReportProduction/**`, `src/TopLab.Infrastructure/Printing/**` + one DI registration line, `tests/**`, `Docs/**`. No `.csproj` changes, no new packages, no Presentation content. Full suite green **1581** (378 Domain + 1061 Application + 142 Infrastructure); Release build 0/0. Zero-drift verified: `ApplicationDbContextModelSnapshot.cs` unchanged, no new migrations. Coverage: per-slice gates passed (VG-01 Domain Reports ≥90%, VG-02 Application S2 ≥80%, VG-03 Infra S3 ≥70% + App S3 ≥80%, VG-04 Application S4 ≥80%).
 
 **Related.** M-07 Implementation Plan §2 (settled rules), §7 (S5 close-out), Appendix A (Arabic messages); ADR-0035 (M-04 lifecycle + `MarkPrinted` mutator); ADR-0036 (M-05 frozen snapshots); ADR-0037 (M-06 BR-07 precedent + culture print); ADR-0038 (M-08 visit rollup); ADR-0020 (singleton settings); ADR-0027 (M-22 settings surface).
+
+---
+
+### ADR-0041 — M-09: Result delivery surface — single operational gate, settlement-at-handover semantics, sign-derived position, and zero-migration outcome
+
+**Status:** Accepted
+**Date:** 2026-09-15
+
+**Context.** M-09 delivers the delivery-handover aggregation surface: the period-filtered undelivered-results list, the per-patient delivery grid with the price column, the financial position at handover, and the composite `DeliverWithSettlement` command. At HEAD, the atomic logic already exists (`PatientTest.MarkDelivered` guard + audit columns, the M-03 account calculator and settlement commands, `PatientStatusCalculator`, seeded `DELIVER_RESULTS`). The module required decisions on the permission gate for the read surface, the settlement shape at handover, and the derivation of the remaining amounts.
+
+**Decision.**
+
+1. **Single operational gate (OD-09-A).** `GetUndeliveredResults`, `GetDeliveryGrid`, `GetDeliveryAccount`, and `DeliverWithSettlement` all carry `IAuthorizedRequest` with `RequiredPermissionCode => "DELIVER_RESULTS"` (seeded id=6, reused via the feature-local `ResultDeliveryAccessPolicy`). The delivery screen is one operational surface; the 13-code catalog holds no general patient-read permission. No catalog change, no new permission code.
+
+2. **Settlement semantics (OD-09-B).** `settleAmount > 0` records a `Payment` operation through M-03's existing `PaymentOperation.Create` write path (no formula duplication); a "خلاص" full-settlement choice delegates to the existing `SettleAccountInFull` logic (`FullSettlement` operation with `Amount = balance`, rejecting with `Conflict("لا يوجد رصيد مستحق للتسوية.")` when balance ≤ 0). `SettleInFull` and `SettleAmount > 0` are mutually exclusive (validator). One handler, one `SaveChanges`.
+
+3. **Sign-derived position (OD-09-C).** `RemainingToLab` / `RemainingToPatient` derive from the sign of `Balance` exclusively (positive = to the lab, negative absolute = patient credit, zero = settled). The delivery account query delegates to `PatientBillingReader.ReadAccount` and never recomputes; the formula is never repeated. The grid's `Price` is the frozen `PatientTest.PriceAtOrderTime`, never a live catalog price.
+
+4. **No balance gate on delivery (BR-08 restated).** Delivery is the physical handover; the BR-07 block lives before printing upstream and is not re-applied at delivery time. Delivery with a remaining balance succeeds (pinned test). The command never reads `BlockPrintOnRemainingBalance`.
+
+5. **Zero-drift outcome.** No Domain change, no migration, no `PermissionConfiguration` change: `dotnet ef migrations has-pending-model-changes` reports no changes; the model snapshot is untouched.
+
+**Consequences.** Diff confined to `src/TopLab.Application/Features/ResultDelivery/**` (11 source files: DTOs, access policy, period helper, translator, 3 queries + 1 command with handlers and validators), `tests/**` (45 Application handler/validator/authorization/translator tests + 3 M09 validator-registration cases + 3 Infrastructure persistence tests), `Docs/**`. No `.csproj` changes, no new packages, zero Presentation content. Full suite green **1632** (378 Domain + 1109 Application + 145 Infrastructure); Release build 0/0. Coverage: per-slice gates passed (VG-01 Application S1 footprint line-rate 0.857–1.000, VG-02 handler 1.000/1.000 + validator 1.000 + translator both arms, VG-03 persistence 3/3 green).
+
+**Related.** M-09 Implementation Plan §2 (settled rules), §5 (S1/S2), §6 (S3 close-out), Appendix A (Arabic messages); ADR-0035 (M-04 lifecycle + `MarkDelivered` guard); ADR-0016 (M-03 computed figures, no negative clamp); ADR-0038 (M-08 visit rollup); ADR-0040 (M-07, consumed the previous number first).
