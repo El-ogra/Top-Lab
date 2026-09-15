@@ -37,3 +37,14 @@ public sealed record AttendanceRecordDto(
             worked);
     }
 }
+
+public sealed record UserAttendanceSummaryDto(
+    int UserId,
+    string UserName,
+    DateOnly From,
+    DateOnly To,
+    int DaysPresent,
+    int RecordsCount,
+    int TotalWorkedMinutes,
+    int TotalLatenessMinutes,
+    int TotalOvertimeMinutes);

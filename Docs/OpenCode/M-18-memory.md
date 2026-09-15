@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-18.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S3 — pending
+- **Current Slice:** S4 — pending
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Domain: guards on AttendanceRecord + the AttendanceCalculator | [x] Done | VG-01 |
 | 2 | Application write surface: check-in + break + check-out | [x] Done | VG-02 |
-| 3 | Application read surface: manager-only period records + per-user summary | [ ] Pending | VG-03 |
+| 3 | Application read surface: manager-only period records + per-user summary | [x] Done | VG-03 |
 | 4 | Tests + Infrastructure proof + close-out | [ ] Pending | VG-04 |
 
 ---
@@ -109,16 +109,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 3)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build + full suite green.
-- [ ] **Stage 2 — Deep Understanding:** Plan §6 S3 re-read; FR-M18-002; half-open bounds + default-today precedent.
-- [ ] **Stage 3 — File Analysis:** `GetSentOutSamplesQueryHandler` (period + dictionary name resolution precedent), `GetSentOutSamplesQueryValidator` (paging messages), `User.UserName` verified.
-- [ ] **Stage 4 — Planning:** `GetAttendanceRecords` (+validator) → `GetUserAttendanceSummary` (+validator) → 2 test classes.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; Attendance filter green; full Application suite green.
-- [ ] **Stage 7 — Validation Gate:** VG-03.
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** See Execution Log.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln` 0/0; `dotnet test TopLab.sln` full suite green (413 + 149 + 1203).
+- [x] **Stage 2 — Deep Understanding:** Plan §6 S3 re-read; FR-M18-002; half-open bounds + default-today precedent.
+- [x] **Stage 3 — File Analysis:** `GetSentOutSamplesQueryHandler` (half-open period + default-today + dictionary name resolution, no Include), `GetSentOutLabAccountQueryHandler` (per-account totals precedent), both query validators (frozen «بداية الفترة…» / «معاملات الترقيم…» messages), `AuthorizationBehavior` shared Forbidden literal, `User.UserName`.
+- [x] **Stage 4 — Planning:** `GetAttendanceRecords` (+validator) → `UserAttendanceSummaryDto` in Common + `GetUserAttendanceSummary` (+validator per plan file name `GetUserAttendanceSummaryValidator.cs`) → 2 test classes.
+- [x] **Stage 5 — Execution:** Per plan. Both queries: handler-level `IsAbsolutePermission` gate (no `IAuthorizedRequest` — no code exists); period on `CheckInAtUtc` via half-open bounds; default-today-UTC; user-filter (records) / required user + NotFound (summary); dictionary name resolution; totals via `AttendanceCalculator` only.
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0; Attendance filter 40 green; full solution build 0/0; full suite green (413 + 149 + 1216).
+- [x] **Stage 7 — Validation Gate:** VG-03 PASS — App build 0/0; 13 S3 tests green (non-absolute Forbidden verbatim ×2, period inclusive both ends, user filter, empty-set/zero-totals, default-today, unknown-user NotFound, summary number-for-number vs calculator, validators incl. null-period arms); grep gates: absolute check present in both query handlers (line 30 each), zero time-math outside calculator, zero `IAuthorizedRequest` in Attendance; coverlet S3 footprint: handlers 1.0/1.0, validators 1.0 lines, DTOs ≥0.93; zero `Persistence/**` diff. Migration: none.
+- [x] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -145,10 +145,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 2/4 slices done — S2 complete, S3 in progress
+- Overall: 3/4 slices done — S3 complete, S4 in progress
 - Slice 1 — Domain: guards + calculator: [x] Done (VG-01 pass, committed)
 - Slice 2 — Application write surface: [x] Done (VG-02 pass, committed)
-- Slice 3 — Application read surface: [ ] Pending
+- Slice 3 — Application read surface: [x] Done (VG-03 pass, committed)
 - Slice 4 — Tests + Infrastructure proof + close-out: [ ] Pending
 
 ## Execution Log
@@ -158,5 +158,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
 | 2026-09-15 | S1 | 1–10 | Domain guards + AttendanceCalculator; VG-01 pass (413 Domain green; Record 0.9318/Calc 1.0; zero Persistence diff) | OK | [M-18] Slice 1/4 |
 | 2026-09-15 | S2 | 1–10 | Write surface (DTOs/translator/4 commands) + 27 tests; VG-02 pass (1203 App green; single-source grep clean; zero Persistence diff) | OK | [M-18] Slice 2/4 |
+| 2026-09-15 | S3 | 1–10 | Read surface (2 absolute-gated queries + summary DTO) + 13 tests; VG-03 pass (1216 App green; absolute-check grep ×2; zero Persistence diff) | OK | [M-18] Slice 3/4 |
 
 ## Stop Report (append only if a stop condition triggers)
