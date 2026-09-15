@@ -83,3 +83,25 @@ public sealed record PatientSampleDetailDto(
     decimal Charged,
     decimal Paid,
     decimal Balance);
+
+public sealed record CashMovementDto(
+    int Id,
+    MovementType MovementType,
+    decimal Amount,
+    int? RelatedExternalEntityId,
+    string? RelatedExternalEntityName,
+    int PerformedByUserId,
+    string PerformedByName,
+    DateTime OccurredAtUtc,
+    string? Notes);
+
+public sealed record CompanyDelegateAccountDto(
+    int EntityId,
+    string EntityName,
+    decimal Deposits,
+    decimal Disbursements,
+    decimal Net,
+    int SentOutCount,
+    decimal SentOutTotalCost,
+    decimal SentOutTotalPaid,
+    decimal SentOutRemaining);

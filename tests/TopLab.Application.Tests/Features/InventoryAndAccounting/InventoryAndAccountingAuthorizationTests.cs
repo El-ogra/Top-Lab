@@ -1,10 +1,14 @@
 using TopLab.Application.Common.Authorization;
 using TopLab.Application.Common.Behaviors;
 using TopLab.Application.Common.Results;
+using TopLab.Application.Features.InventoryAndAccounting.Commands.RecordCashDeposit;
+using TopLab.Application.Features.InventoryAndAccounting.Commands.RecordCashDisbursement;
 using TopLab.Application.Features.InventoryAndAccounting.Common;
 using TopLab.Application.Features.InventoryAndAccounting.Queries.GetCashDrawerInventory;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.GetCompanyDelegateAccounts;
 using TopLab.Application.Features.InventoryAndAccounting.Queries.GetElementInventory;
 using TopLab.Application.Features.InventoryAndAccounting.Queries.GetPatientSamplesDetail;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.ListCashMovements;
 using TopLab.Application.Tests.Common.Fakes;
 using TopLab.Domain.Common.Enums;
 using Xunit;
@@ -20,6 +24,10 @@ public class InventoryAndAccountingAuthorizationTests
         { new GetCashDrawerInventoryQuery(null, null) },
         { new GetElementInventoryQuery(null, null, InventoryElementKind.User, 1, null, InventoryReportType.Summary) },
         { new GetPatientSamplesDetailQuery(null, null) },
+        { new RecordCashDepositCommand(1m, null, null) },
+        { new RecordCashDisbursementCommand(1m, null, null) },
+        { new ListCashMovementsQuery(null, null) },
+        { new GetCompanyDelegateAccountsQuery(null, null, null) },
     };
 
     [Theory]

@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-20.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S2 — completed; S3 next
+- **Current Slice:** S3 — completed; S4 next
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | CashMovement domain guards + tests | [x] Done | VG-01 PASS |
 | 2 | Inventory read surface (FR-M20-001/002/003/004/005) | [x] Done | VG-02 PASS |
-| 3 | Cash writes + company/delegate accounts (FR-M20-001/006) | [ ] Pending | VG-03 |
+| 3 | Cash writes + company/delegate accounts (FR-M20-001/006) | [x] Done | VG-03 PASS |
 | 4 | Tests + zero-drift proof + close-out | [ ] Pending | VG-04 |
 
 ---
@@ -127,16 +127,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 3)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Full suite green after S2.
-- [ ] **Stage 2 — Deep Understanding:** Plan §5 S3 + SD-20-2/3/9/13; Appendix A messages.
-- [ ] **Stage 3 — File Analysis:** `CashMovementConfiguration` (ValueGeneratedOnAdd), `ICurrentUserService`, `IDateTimeProvider`, M-03 command/handler/validator precedent.
-- [ ] **Stage 4 — Planning:** Commands + validators → handlers → queries → tests → theory extension.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build src/TopLab.Application` 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-03 (incl. zero-drift).
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-20] Slice 3/4: Cash writes + company/delegate accounts — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** App 1295/1295 after S2.
+- [x] **Stage 2 — Deep Understanding:** Plan §5 S3 + SD-20-2/3/9/13.
+- [x] **Stage 3 — File Analysis:** CashMovementConfiguration ValueGeneratedOnAdd; ICurrentUserService; IDateTimeProvider.
+- [x] **Stage 4 — Planning:** Commands + validators → handlers → queries → tests → theory extension.
+- [x] **Stage 5 — Execution:** Implemented 2 commands + ListCashMovements + GetCompanyDelegateAccounts + tests.
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0.
+- [x] **Stage 7 — Validation Gate:** VG-03 PASS — InventoryAndAccounting 41/41; full App 1313/1313; zero Persistence; drift clean.
+- [x] **Stage 8 — Documentation Update:** checklist recorded.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -163,10 +163,11 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Slices complete: 2/4. Next action: begin S3 Stage 1.
+- Slices complete: 3/4. Next action: begin S4 Stage 1.
 - Dependency posture: M-20 ⇄ M-23 — no code-level dependency (verified); M-20 executes first by wave order, not by technical necessity.
 - S1 evidence: VG-01 PASS; commit `7072143`.
-- S2 evidence (2026-09-15): VG-02 PASS; App 1295/1295; drift clean.
+- S2 evidence: VG-02 PASS; commit `69b7712`.
+- S3 evidence (2026-09-15): VG-03 PASS; App 1313/1313; drift clean.
 
 ## Execution Log
 
@@ -174,6 +175,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|---|---|---|---|
 | 2026-09-15 | 1 | 1-10 | CashMovement guards + CashMovementTests; VG-01 PASS | OK |
 | 2026-09-15 | 2 | 1-10 | Inventory read surface (3 queries) + tests; VG-02 PASS | OK |
+| 2026-09-15 | 3 | 1-10 | Cash writes + ListCashMovements + GetCompanyDelegateAccounts; VG-03 PASS | OK |
 
 ## Stop Report
 
