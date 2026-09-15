@@ -43,3 +43,30 @@ public sealed record TestCountStatisticsDto(
     int TotalOrders,
     IReadOnlyList<TestCountDto> Tests,
     IReadOnlyList<TestGroupCountDto> Groups);
+
+public sealed record SentOutLabStatisticsDto(
+    int LabId,
+    string LabName,
+    int SentCount,
+    decimal TotalCost,
+    decimal TotalPaid,
+    decimal Remaining);
+
+public sealed record SentOutStatisticsDto(
+    DateOnly From,
+    DateOnly To,
+    int TotalSent,
+    IReadOnlyList<SentOutLabStatisticsDto> Labs);
+
+public sealed record UserProductivityDto(
+    int UserId,
+    string UserName,
+    int EnteredCount,
+    int ReviewedCount,
+    int PrintedCount,
+    int DeliveredCount);
+
+public sealed record UserProductivityStatisticsDto(
+    DateOnly From,
+    DateOnly To,
+    IReadOnlyList<UserProductivityDto> Users);

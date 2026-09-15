@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-19.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S2 — completed; S3 next
+- **Current Slice:** S3 — completed; S4 next
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Patient statistics (FR-M19-001/005) | [x] Done | VG-01 PASS |
 | 2 | Test statistics (FR-M19-002/005) | [x] Done | VG-02 PASS |
-| 3 | Sent-out + user-productivity statistics (FR-M19-003/004) | [ ] Pending | VG-03 |
+| 3 | Sent-out + user-productivity statistics (FR-M19-003/004) | [x] Done | VG-03 PASS |
 | 4 | Tests + zero-drift proof + close-out | [ ] Pending | VG-04 |
 
 ---
@@ -109,16 +109,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 3)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build + full suite green.
-- [ ] **Stage 2 — Deep Understanding:** Plan §5 S3 re-read; SD-19-4/5; calculator reuse rule.
-- [ ] **Stage 3 — File Analysis:** `SentOutAccountCalculator` API, `SentOutSample`/`SentOutSamplePayment` shapes, `PatientTest` attribution columns, `GetSentOutLabAccountQueryHandler` (calculator-consumption precedent).
-- [ ] **Stage 4 — Planning:** DTO additions → 2 queries + validators → 2 handlers → 2 test classes; complete the theory.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; S3 filter green; full Application suite green.
-- [ ] **Stage 7 — Validation Gate:** VG-03.
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** See Execution Log.
+- [x] **Stage 1 — Pre-Execution Verification:** App suite 1248/1248 after S2.
+- [x] **Stage 2 — Deep Understanding:** Plan §5 S3; SD-19-4/5; calculator-only rule.
+- [x] **Stage 3 — File Analysis:** SentOutAccountCalculator API; SentOutSample/Payment; PatientTest attributions + lifecycle guards; GetSentOutLabAccountQueryHandler calculator-consumption precedent.
+- [x] **Stage 4 — Planning:** DTO additions → 2 queries + validators → 2 handlers → 2 test classes; complete theory.
+- [x] **Stage 5 — Execution:** Created GetSentOutStatistics + GetUserProductivityStatistics + tests; completed authorization theory for all four queries.
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0; S3 filter 26/26; full Application suite 1268/1268.
+- [x] **Stage 7 — Validation Gate:** VG-03 PASS — calculator-only grep (no formula restatement); zero Persistence/Domain diff; per-lab totals vs calculator; per-timestamp attribution; zero-activity omitted; raw-id fallback.
+- [x] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -145,10 +145,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 2/4 slices done — S1+S2 COMPLETE
+- Overall: 3/4 slices done — S1+S2+S3 COMPLETE
 - Slice 1 — Patient statistics: [x] Done (VG-01 PASS)
 - Slice 2 — Test statistics: [x] Done (VG-02 PASS)
-- Slice 3 — Sent-out + user-productivity statistics: [ ] Pending
+- Slice 3 — Sent-out + user-productivity statistics: [x] Done (VG-03 PASS)
 - Slice 4 — Tests + zero-drift proof + close-out: [ ] Pending
 
 ## Execution Log
@@ -162,6 +162,9 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 1 | 10 | Local commit Slice 1/4 | OK | c68e25c |
 | 2026-09-15 | 2 | 1-5 | Implemented S2 test-count statistics + theory extension | OK | — |
 | 2026-09-15 | 2 | 6-7 | App 0/0; S2 14/14; full App 1248/1248; VG-02 PASS | OK | — |
-| 2026-09-15 | 2 | 10 | Local commit Slice 2/4 | OK | (this commit) |
+| 2026-09-15 | 2 | 10 | Local commit Slice 2/4 | OK | cf8566e |
+| 2026-09-15 | 3 | 1-5 | Implemented S3 sent-out + productivity | OK | — |
+| 2026-09-15 | 3 | 6-7 | App 0/0; S3 26/26; full App 1268/1268; VG-03 PASS | OK | — |
+| 2026-09-15 | 3 | 10 | Local commit Slice 3/4 | OK | (this commit) |
 
 ## Stop Report (append only if a stop condition triggers)
