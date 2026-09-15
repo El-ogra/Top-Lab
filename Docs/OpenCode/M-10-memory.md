@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-10.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 3
-- **Current Slice:** S3 — pending (S2 committed)
+- **Current Slice:** S3 — done (module complete)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Application read surface: the P view (patient-record audit) | [x] Done | VG-01 ✅ |
 | 2 | Application read surface: the T view (per-test lifecycle audit) | [x] Done | VG-02 ✅ |
-| 3 | Tests + zero-drift proof + close-out | [ ] Pending | VG-03 |
+| 3 | Tests + zero-drift proof + close-out | [x] Done | VG-03 ✅ |
 
 ---
 
@@ -107,25 +107,25 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 3)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln -c Release` 0/0 before touching anything.
-- [ ] **Stage 2 — Deep Understanding:** Plan §6 S3 re-read; drift → stop + addendum (never silent migration); ADR-0043 contents; close-out convention.
-- [ ] **Stage 3 — File Analysis:** `ValidatorRegistrationTests` per-module theory pattern; ADR max reconfirmed; M10 tracking row + §9 log format; `Handoff_M16.md` structure precedent.
-- [ ] **Stage 4 — Planning:** Drift gate first → validator-reg extension → Release full suite → ADR → tracking → handoff.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Release build 0/0; Release full suite green `-m:1`; drift gate → no changes; snapshot untouched.
-- [ ] **Stage 7 — Validation Gate:** VG-03.
-- [ ] **Stage 8 — Documentation Update:** ADR-0043 appended; M10 row flipped 🟩 Done + dated §9 row; `Docs/Handoff_M10.md` created per template; this checklist recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated; module close-out recorded.
-- [ ] **Stage 10 — Git Commit (authorized local):** See Execution Log.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln -c Release` 0/0 before touching anything.
+- [x] **Stage 2 — Deep Understanding:** Plan §6 S3 re-read; drift → stop + addendum (never silent migration); ADR-0043 contents; close-out convention.
+- [x] **Stage 3 — File Analysis:** `ValidatorRegistrationTests` per-module theory pattern; ADR max reconfirmed at ADR-0042 → ADR-0043; M10 tracking row (line 81) + §6 block + §9 log format; `Handoff_M16.md` structure precedent.
+- [x] **Stage 4 — Planning:** Drift gate first → validator-reg extension → Release full suite → ADR → tracking → handoff.
+- [x] **Stage 5 — Execution:** Implemented per plan (drift clean; M10 registration theory 2 cases; ADR-0043; tracking flip + §6 + §9; `Handoff_M10.md`).
+- [x] **Stage 6 — Post-Execution Verification:** Release build 0/0; Release full suite green `-m:1` (390+1176+149 = 1715); drift gate → no changes; snapshot untouched.
+- [x] **Stage 7 — Validation Gate:** VG-03 PASS — Release 0/0; full suite green; zero-drift proven; validator-reg extension green (2/2); Slopwatch 0 issues on touched dirs; ADR-0043 + tracking flip + handoff present; zero writes / zero Domain / zero Presentation (grep gates).
+- [x] **Stage 8 — Documentation Update:** ADR-0043 appended; M10 row flipped 🟩 Done + §6 block + dated §9 row; `Docs/Handoff_M10.md` created per template; this checklist recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
 ## Current Status
 
-- Overall: 2/3 slices done — S2 committed, S3 in progress
+- Overall: 3/3 slices done — MODULE COMPLETE
 - Slice 1 — Application read surface: the P view: [x] Done (VG-01 pass 2026-09-15)
 - Slice 2 — Application read surface: the T view: [x] Done (VG-02 pass 2026-09-15)
-- Slice 3 — Tests + zero-drift proof + close-out: [ ] Pending
+- Slice 3 — Tests + zero-drift proof + close-out: [x] Done (VG-03 pass 2026-09-15)
 
 ## Execution Log
 
@@ -134,5 +134,6 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
 | 2026-09-15 | 1 | 1–7 | S1 P view: 5 Application files + 2 test classes; build 0/0; 10/10 S1 tests + 1167 full suite green; zero Persistence/Domain diff; coverage 93.1% (VG-01 PASS) | OK | — |
 | 2026-09-15 | 2 | 1–7 | S2 T view: DTO extended + 3 query files + 1 test class, auth theory completed; build 0/0; 17/17 + 1174 full suite green; zero Persistence/Domain diff; coverage 94.0% (VG-02 PASS) | OK | — |
+| 2026-09-15 | 3 | 1–7 | S3 close-out: drift clean (no changes); M10 validator-reg theory 2/2; Release 0/0 + full suite 1715 green (-m:1); Slopwatch 0 issues; ADR-0043 + tracking flip + Handoff_M10 (VG-03 PASS) | OK | — |
 
 ## Stop Report (append only if a stop condition triggers)

@@ -948,3 +948,28 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 **Consequences.** Diff confined to `src/TopLab.Domain/SentOutSamples/**` (additive guards + calculator), `src/TopLab.Application/Features/SentOutSamples/**` (18 source files: DTOs, access policy, translator, 3 commands + 2 queries with handlers and validators), `tests/**` (12 Domain + 43 Application handler/validator/authorization + 5 validator-registration cases + 4 Infrastructure persistence tests), `Docs/**`. No `.csproj` changes, no new packages, zero Presentation content. Full suite green **1696** (390 Domain + 1157 Application + 149 Infrastructure); Release build 0/0. Coverage: per-slice gates passed (VG-01 Domain SentOutSamples footprint, VG-02 Application S2 footprint 85.2%, VG-03 Application S3 footprint 100%, VG-04 persistence 4/4 green). One test-environment finding: the EF InMemory provider does not generate keys through strongly-typed-ID value converters on multi-add, so the persistence test uses explicit payment IDs (deviation recorded in the handoff, not a product change).
 
 **Related.** M-16 Implementation Plan §2 (settled rules), §5 (S1), §6 (S2/S3), §7 (S4 close-out), Appendix A (Arabic messages); ADR-0016 (M-03 computed figures, calculator precedent); Data Model §8.3 (settlement formula); ADR-0041 (M-09, consumed the previous number first).
+
+### ADR-0043 — P/T audit & traceability: zero-storage restricted read views gated on PT_AUDIT_ACCESS
+
+**Status:** Accepted
+**Date:** 2026-09-15
+
+**Context.** M-10 delivers the restricted P/T audit & traceability read surface: a patient-level P view (registering user, modification count, last modifying user, payment-receiving users with timestamps) and a per-test T view (entered / reviewed / printed+count / delivered, each with user and UTC time). At HEAD the physical schema was already complete (`Patient` inherited audit columns via `AuditableEntity`, `PaymentOperation.ReceivedByUserId`/`OperationAtUtc`/`IsVoided`, `PatientTest` lifecycle columns, the seeded `PT_AUDIT_ACCESS` permission id=13) while no Application read surface existed. The module required decisions on storage, the access gate, name resolution, voided-row handling, and soft-deleted-patient auditability.
+
+**Decision.**
+
+1. **Zero-storage P/T realization (SD-10-1).** Both views are pure queries over existing columns; no entity, column, table, index, configuration, or migration was created or modified. The feature folder `src/TopLab.Application/Features/AuditAndTraceability/` holds DTOs, the access-policy const, and the two queries with handlers and validators.
+
+2. **`PT_AUDIT_ACCESS` gate + authorized-reads exception (SD-10-2/3).** Both queries implement `IAuthorizedRequest` with `RequiredPermissionCode => "PT_AUDIT_ACCESS"` (seeded id=13) via the feature-local `AuditAccessPolicy.PtAuditAccess`; absolute-permission users bypass via the existing `AuthorizationBehavior`. No new permission row, no `PermissionConfiguration` change. This is the evidence-mandated exception to the open-read default (FR-M17-008 is binding and non-configurable; M-19 statistics deliberately does not read this data).
+
+3. **Dictionary name resolution + raw-id fallback (SD-10-4).** User names resolve via a single `Users` dictionary read (no `Include`); a deleted/missing user id renders as the raw id string (M-16 dictionary precedent; M-03 deleted-user rule).
+
+4. **Voided-operations inclusion (SD-10-5).** The P-view receiver rollup covers all payment operations of the patient including voided rows (void-and-reissue exists precisely to preserve the audit trail): distinct `ReceivedByUserId` with the latest `OperationAtUtc` per receiver, ordered ascending by time.
+
+5. **Soft-deleted-patient auditability (SD-10-7).** The P query deliberately applies no `IsDeleted` filter — soft-delete exists so rows remain queryable for audit purposes — while unknown ids return `NotFound("المريض غير موجود.")` / `NotFound("التحليل غير موجود")` per the frozen Appendix A table.
+
+6. **Zero-drift outcome.** No migration in any slice: `dotnet ef migrations has-pending-model-changes` reports no changes; the model snapshot is untouched.
+
+**Consequences.** Diff confined to `src/TopLab.Application/Features/AuditAndTraceability/**` (8 source files: DTOs, access policy, 2 queries with handlers and validators), `tests/**` (2 handler-test classes + authorization theory + 2 validator-registration cases), `Docs/**`. No `.csproj` changes, no new packages, zero Domain changes, zero writes, zero Presentation content. Full suite green **1715** (390 Domain + 1176 Application + 149 Infrastructure); Release build 0/0. Coverage: per-slice footprint gates passed (VG-01 P footprint 93.1%, VG-02 P+T footprint 94.0%; whole-project floors inapplicable per the M-11/M-14 waiver posture, recorded in the handoff). Slopwatch pass on all touched files (0 issues).
+
+**Related.** M-10 Implementation Plan §2 (settled rules), §5 (S1/S2), §6 (S3 close-out), Appendix A (Arabic messages); ADR-0042 (M-16, consumed the previous number first); Data Model §10 (P/T mapping) and §7.1 (void preserves the audit trail); PRD FR-M17-008 (binding restriction).

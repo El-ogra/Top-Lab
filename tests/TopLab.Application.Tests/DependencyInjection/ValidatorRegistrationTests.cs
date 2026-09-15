@@ -1,5 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientAudit;
+using TopLab.Application.Features.AuditAndTraceability.Queries.GetPatientTestAudit;
 using TopLab.Application.Features.CultureAndAntibiotics.Commands.AttachAntibioticToCulture;
 using TopLab.Application.Features.CultureAndAntibiotics.Commands.CreateAntibiotic;
 using TopLab.Application.Features.CultureAndAntibiotics.Commands.DeleteAntibiotic;
@@ -225,6 +227,20 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<GetSentOutSamplesQuery>))]
     [InlineData(typeof(IValidator<GetSentOutLabAccountQuery>))]
     public void HostBuiltLikeApp_ResolvesM16Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<GetPatientAuditQuery>))]
+    [InlineData(typeof(IValidator<GetPatientTestAuditQuery>))]
+    public void HostBuiltLikeApp_ResolvesM10Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();
