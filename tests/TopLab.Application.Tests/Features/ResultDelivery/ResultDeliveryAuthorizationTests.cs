@@ -2,6 +2,7 @@ using TopLab.Application.Common.Authorization;
 using TopLab.Application.Common.Behaviors;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ResultDelivery.Common;
+using TopLab.Application.Features.ResultDelivery.Commands.DeliverWithSettlement;
 using TopLab.Application.Features.ResultDelivery.Queries.GetDeliveryAccount;
 using TopLab.Application.Features.ResultDelivery.Queries.GetDeliveryGrid;
 using TopLab.Application.Features.ResultDelivery.Queries.GetUndeliveredResults;
@@ -28,6 +29,30 @@ public class ResultDeliveryAuthorizationTests
 
         Assert.Equal("DELIVER_RESULTS", authorized.RequiredPermissionCode);
         Assert.Equal(ResultDeliveryAccessPolicy.DeliverResults, authorized.RequiredPermissionCode);
+    }
+
+    [Fact]
+    public void Command_Requires_DeliverResults()
+    {
+        IAuthorizedRequest authorized = new DeliverWithSettlementCommand(1, new[] { 100 });
+
+        Assert.Equal("DELIVER_RESULTS", authorized.RequiredPermissionCode);
+    }
+
+    [Fact]
+    public async Task Command_WithoutPermission_ReturnsForbidden()
+    {
+        var user = new FakeCurrentUserService { IsAbsolutePermission = false, GrantedPermissions = { } };
+        var behavior = new AuthorizationBehavior<DeliverWithSettlementCommand, Result>(user);
+
+        var response = await behavior.Handle(
+            new DeliverWithSettlementCommand(1, new[] { 100 }),
+            _ => throw new Exception("handler must not run"),
+            CancellationToken.None);
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(ErrorType.Forbidden, response.Error!.Type);
+        Assert.Equal("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام", response.Error.Message);
     }
 
     [Fact]

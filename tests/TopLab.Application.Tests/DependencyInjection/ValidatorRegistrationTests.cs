@@ -45,6 +45,9 @@ using TopLab.Application.Features.ResultsEntry.Commands.UnreviewResult;
 using TopLab.Application.Features.ResultsEntry.Queries.GetPatientResultSheet;
 using TopLab.Application.Features.ResultsEntry.Queries.GetResultEntry;
 using TopLab.Application.Features.ResultsEntry.Queries.GetResultWorklist;
+using TopLab.Application.Features.ResultDelivery.Commands.DeliverWithSettlement;
+using TopLab.Application.Features.ResultDelivery.Queries.GetDeliveryGrid;
+using TopLab.Application.Features.ResultDelivery.Queries.GetUndeliveredResults;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Commands.CreateTest;
 
 namespace TopLab.Application.Tests.DependencyInjection;
@@ -185,6 +188,21 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<ExecuteBulkPrintCommand>))]
     [InlineData(typeof(IValidator<ExportPatientReportPdfCommand>))]
     public void HostBuiltLikeApp_ResolvesM04Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<GetUndeliveredResultsQuery>))]
+    [InlineData(typeof(IValidator<GetDeliveryGridQuery>))]
+    [InlineData(typeof(IValidator<DeliverWithSettlementCommand>))]
+    public void HostBuiltLikeApp_ResolvesM09Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();

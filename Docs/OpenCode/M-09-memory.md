@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-09.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 3
-- **Current Slice:** 2 — not started (S1 committed)
+- **Current Slice:** 3 — not started (S2 committed)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -52,7 +52,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Application read surface: undelivered list + delivery grid + delivery account | [x] Done (VG-01 passed) | VG-01 |
-| 2 | Application: composite `DeliverWithSettlement` command | [ ] Pending | VG-02 |
+| 2 | Application: composite `DeliverWithSettlement` command | [x] Done (VG-02 passed) | VG-02 |
 | 3 | Tests + Infrastructure proof + close-out | [ ] Pending | VG-03 |
 
 ---
@@ -86,16 +86,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Build + full tests green (0/0). Record evidence.
-- [ ] **Stage 2 — Deep Understanding:** Re-read plan §5 S2; FR-M09-003/004; BR-08 (no gate at delivery); EC-05/06/07/08/09/11/12/13; OD-09-B (Payment default + خلاص delegation) as settled scope; mutual-exclusion validator (`SettleInFull` vs `SettleAmount > 0`); verbatim messages (`النتيجة غير مطبوعة.`, `لا يوجد رصيد مستحق للتسوية.`).
-- [ ] **Stage 3 — File Analysis:** Inspect `MarkResultDeliveredCommandHandler` (translator pattern lines 46-53; no-gate comment), `PatientTest.MarkDelivered` (guard), `RecordPaymentCommand` + handler (payment construction path to reuse), `SettleAccountInFullCommand` + handler (delegation target; `FullSettlement` operation with `Amount = balance`), `PatientAccountCalculator` (assertion oracle), `ICurrentUserService`/`IDateTimeProvider` fakes.
-- [ ] **Stage 4 — Planning:** Translator → command record (`IAuthorizedRequest<Result>`, `DeliverResults`) → validator (non-empty list, positive amount, mutual exclusion) → handler (load → guard-translate → per-line deliver with audit → optional settle → single save) → test class (9+ cases per plan).
-- [ ] **Stage 5 — Execution:** Implement the plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; Application tests all green.
-- [ ] **Stage 7 — Validation Gate:** VG-02 — build zero/zero; unprinted-line Conflict; audit fields asserted; partial payment reduces `Balance` exactly; settle-in-full zeroes; settle-in-full on balance ≤ 0 → Conflict; delivery-with-balance succeeds (no-gate pin); unauthorized → Forbidden; coverlet ≥ 80%.
-- [ ] **Stage 8 — Documentation Update:** Mark this slice's checkboxes and record evidence.
-- [ ] **Stage 9 — Memory Status Update:** Update the "Current Status" section.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-09] Slice 2/3: Application: composite DeliverWithSettlement command — loop-engineering` + `Stages 1-10 verified. Gate VG-02 passed.` — on `main`, never push.
+- [x] **Stage 1 — Pre-Execution Verification:** Solution build 0/0; full suite green (App 1087 incl. S1's 26; Infra 142; Domain 378) on `main` @ `be21e9e`.
+- [x] **Stage 2 — Deep Understanding:** Plan §5 S2 re-read; BR-08 no-gate; OD-09-B (Payment-default + خلاص delegation); mutual-exclusion validator; frozen messages (`النتيجة غير مطبوعة.` ≠ ResultsEntry translator wording → own translator).
+- [x] **Stage 3 — File Analysis:** `MarkResultDeliveredCommandHandler` (translator pattern + no-gate comment), `PatientTest.MarkDelivered` guard, `RecordPayment` handler (`Create(0)` sentinel + `_db.Add` write path), `SettleAccountInFull` handler (balance ≤ 0 → Conflict; `FullSettlement` op), `PatientAccountCalculator` oracle, fakes, `ValidatorRegistrationTests` M04-theory pattern.
+- [x] **Stage 4 — Planning:** Translator → command (`IAuthorizedRequest<Result>`) → validator (non-empty list, positive amount, mutual exclusion) → handler (load → guard-translate → audit → optional settle → single save) → 15-case test class + translator tests + auth extension + M09 validator-registration theory.
+- [x] **Stage 5 — Execution:** 4 source files + 1 test class (15 cases) + translator tests + auth/registration extensions as planned. Settlement reuses M-03 `PaymentOperation.Create` path; no formula duplication; no `BlockPrintOnRemainingBalance` read.
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0; full Application suite 1107+/1107 green (45 ResultDelivery incl. 2 translator tests).
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — unprinted Conflict + translated message; audit fields asserted; partial payment exact reduction; settle-in-full zeroing + zero/negative Conflict; no-settlement no-change; no-gate pin; unauthorized Forbidden; coverlet handler 1.000/1.000, validator 1.000, translator both arms.
+- [x] **Stage 8 — Documentation Update:** This memory file updated with evidence.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated (S2 Done).
+- [x] **Stage 10 — Git Commit (authorized local):** `[M-09] Slice 2/3: Application: composite DeliverWithSettlement command — loop-engineering` — on `main`, never pushed.
 
 ---
 
@@ -122,9 +122,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/3 slices done — S1 committed, S2 next
+- Overall: 2/3 slices done — S2 committed, S3 next
 - Slice 1 — Application read surface: undelivered list + delivery grid + delivery account: [x] Done (VG-01 passed, 26 tests, committed)
-- Slice 2 — Application: composite `DeliverWithSettlement` command: [ ] Pending
+- Slice 2 — Application: composite `DeliverWithSettlement` command: [x] Done (VG-02 passed, 17 tests + registration, committed)
 - Slice 3 — Tests + Infrastructure proof + close-out: [ ] Pending
 
 ## Execution Log
@@ -133,5 +133,6 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
 | 2026-09-15 | 1 | 1–10 | S1 read surface implemented; VG-01 passed (build 0/0, 1087 app tests green incl. 26 new, grep gates clean, coverage 0.857–1.000) | OK | [M-09] Slice 1/3 |
+| 2026-09-15 | 2 | 1–10 | S2 composite command implemented; VG-02 passed (build 0/0, 45 ResultDelivery tests green, no-gate grep clean, handler 1.000/1.000) | OK | [M-09] Slice 2/3 |
 
 ## Stop Report (append only if a stop condition triggers)
