@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-18.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S2 — pending
+- **Current Slice:** S3 — pending
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain: guards on AttendanceRecord + the AttendanceCalculator | [x] Done | VG-01 |
-| 2 | Application write surface: check-in + break + check-out | [ ] Pending | VG-02 |
+| 2 | Application write surface: check-in + break + check-out | [x] Done | VG-02 |
 | 3 | Application read surface: manager-only period records + per-user summary | [ ] Pending | VG-03 |
 | 4 | Tests + Infrastructure proof + close-out | [ ] Pending | VG-04 |
 
@@ -88,16 +88,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build + full suite green.
-- [ ] **Stage 2 — Deep Understanding:** Plan §6 S2 re-read; FR-M18-001; EC-01…EC-08; verbatim Appendix A messages.
-- [ ] **Stage 3 — File Analysis:** `AttendanceRecordConfiguration.cs` (`Create(0)` IDENTITY sentinel), `ICurrentUserService`, `FakeCurrentUserService`/`FakeDateTimeProvider`, `SendSampleOutCommandHandler` (guard-chain precedent), `Error`/`Result` API.
-- [ ] **Stage 4 — Planning:** DTOs → translator → CheckIn → StartBreak/EndBreak → CheckOut → 3 test classes.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application build 0/0; S2 filter green; full Application suite green.
-- [ ] **Stage 7 — Validation Gate:** VG-02.
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** See Execution Log.
+- [x] **Stage 1 — Pre-Execution Verification:** `dotnet build TopLab.sln` 0/0; `dotnet test TopLab.sln` full suite green (413 + 149 + 1176).
+- [x] **Stage 2 — Deep Understanding:** Plan §6 S2 re-read; FR-M18-001; EC-01…EC-08; verbatim Appendix A messages.
+- [x] **Stage 3 — File Analysis:** `AttendanceRecordConfiguration.cs` (`Create(0)` IDENTITY sentinel), `ICurrentUserService` (+`AuthorizationBehavior` shared Forbidden literal), `FakeCurrentUserService`/`FakeDateTimeProvider`/`FakeApplicationDbContext` (AttendanceRecords+Users already supported — verify-only, no extension), `SendSampleOut`/`RecordSentOutPayment`/`DeliverWithSettlement` handler precedents, `Error`/`Result` API, `InternalsVisibleTo` for translator tests.
+- [x] **Stage 4 — Planning:** DTOs → translator → CheckIn → StartBreak/EndBreak → CheckOut → 3 test classes.
+- [x] **Stage 5 — Execution:** Per plan. All 4 commands parameterless, no `IAuthorizedRequest` (SD-18-2); unauthenticated → shared Forbidden; CheckIn enforces single-open-record Conflict + computes lateness; Start/EndBreak resolve open record (NotFound) + translate Domain guards; CheckOut computes overtime; single `SaveChanges`; `AttendanceRecordDto.FromRecord` (WorkedMinutes null until checkout, else via calculator).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build src/TopLab.Application` 0/0; S2 filter 27 green; full solution build 0/0; full suite green (413 + 149 + 1203).
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — App build 0/0; 27 S2 tests green (Conflict, session-bound UserId, lateness/overtime computed + null-when-unconfigured + null-when-missing-user, guard-to-message translation incl. direct translator arm test, unauthenticated Forbidden, validators valid, DTO mapping); grep gate: no time math outside `AttendanceCalculator` (3 refs only); zero `Persistence/**` diff (0 files); coverlet S2 footprint: handlers 1.0 lines, translator 1.0/1.0, DTO 0.903/1.0 (≥80%). Migration: none.
+- [x] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
+- [x] **Stage 9 — Memory Status Update:** "Current Status" updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -145,9 +145,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/4 slices done — S1 complete, S2 in progress
+- Overall: 2/4 slices done — S2 complete, S3 in progress
 - Slice 1 — Domain: guards + calculator: [x] Done (VG-01 pass, committed)
-- Slice 2 — Application write surface: [ ] Pending
+- Slice 2 — Application write surface: [x] Done (VG-02 pass, committed)
 - Slice 3 — Application read surface: [ ] Pending
 - Slice 4 — Tests + Infrastructure proof + close-out: [ ] Pending
 
@@ -156,5 +156,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | Date (YYYY-MM-DD) | Slice | Stage | Action | Result | Commit |
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-15 | 0 | — | Memory file created | OK | — |
+| 2026-09-15 | S1 | 1–10 | Domain guards + AttendanceCalculator; VG-01 pass (413 Domain green; Record 0.9318/Calc 1.0; zero Persistence diff) | OK | [M-18] Slice 1/4 |
+| 2026-09-15 | S2 | 1–10 | Write surface (DTOs/translator/4 commands) + 27 tests; VG-02 pass (1203 App green; single-source grep clean; zero Persistence diff) | OK | [M-18] Slice 2/4 |
 
 ## Stop Report (append only if a stop condition triggers)
