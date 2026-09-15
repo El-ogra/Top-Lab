@@ -11,6 +11,7 @@ using TopLab.Infrastructure.Identity;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Persistence.Interceptors;
 using TopLab.Infrastructure.Persistence.Maintenance;
+using TopLab.Infrastructure.Printing;
 using TopLab.Infrastructure.Services;
 
 namespace TopLab.Infrastructure;
@@ -59,6 +60,13 @@ public static class DependencyInjection
         services.AddSingleton<IEntityIdCodeGenerator, SecureEntityIdCodeGenerator>();
         services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddScoped<IPatientReportPdfExporter, PatientReportPdfExporter>();
+
+        // Report printing: PDF-first local writer + OS shell dispatch, routed
+        // through PrinterAssignment (OutputType = Reports). Scoped, matching the
+        // exporters (depend on the Scoped ApplicationDbContext).
+        services.AddScoped<IReportPrintingService, ReportPrintingService>();
+        services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
+        services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
 
         // M-01 redacted connection descriptor: stateless, depends only on
         // IConfiguration, so Singleton is appropriate. The full

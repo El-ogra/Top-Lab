@@ -12,4 +12,13 @@ internal static class DomainFailureTranslator
             _ => "بيانات غير صالحة."
         };
     }
+
+    internal static string Translate(InvalidOperationException ex)
+    {
+        return ex.Message switch
+        {
+            "Result not reviewed." => "لا يمكن طباعة نتيجة غير معتمدة.",
+            _ => "بيانات غير صالحة."
+        };
+    }
 }

@@ -16,6 +16,9 @@ using TopLab.Application.Features.PatientRegistration.Commands.ClearAllTests;
 using TopLab.Application.Features.PatientRegistration.Commands.CreatePatient;
 using TopLab.Application.Features.PatientRegistration.Commands.RemoveTestFromVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.UpdatePatientTestSampleFlags;
+using TopLab.Application.Features.ReportProduction.Commands.PrintBlankReport;
+using TopLab.Application.Features.ReportProduction.Commands.PrintCombinedReport;
+using TopLab.Application.Features.ReportProduction.Commands.PrintHistoryReport;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.CreateCustomGroup;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.CreatePriceList;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.CreateTestComment;
@@ -81,6 +84,21 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<DeleteExternalEntityCommand>))]
     [InlineData(typeof(IValidator<GenerateEntityIdCodeCommand>))]
     public void HostBuiltLikeApp_ResolvesExternalEntityValidators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<PrintCombinedReportCommand>))]
+    [InlineData(typeof(IValidator<PrintBlankReportCommand>))]
+    [InlineData(typeof(IValidator<PrintHistoryReportCommand>))]
+    public void HostBuiltLikeApp_ResolvesM07PrintValidators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();

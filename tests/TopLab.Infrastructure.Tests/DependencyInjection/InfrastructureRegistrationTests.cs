@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Features.ExternalEntities.Common.Interfaces;
+using TopLab.Infrastructure.Printing;
 using TopLab.Infrastructure.Services;
 using Xunit;
 
@@ -33,6 +35,20 @@ public class InfrastructureRegistrationTests
         Assert.NotNull(first);
         Assert.IsType<SecureEntityIdCodeGenerator>(first);
         Assert.Same(first, second);
+    }
+
+    [Fact]
+    public void AddInfrastructure_RegistersReportPrintingPipeline()
+    {
+        using var provider = BuildProvider();
+
+        var service = provider.GetService<IReportPrintingService>();
+        var writer = provider.GetService<IReportPdfWriter>();
+        var dispatcher = provider.GetService<IPdfPrinterDispatcher>();
+
+        Assert.NotNull(service);
+        Assert.NotNull(writer);
+        Assert.NotNull(dispatcher);
     }
 
     [Fact]
