@@ -865,3 +865,34 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 **Consequences.** Diff is confined to `src/TopLab.Application/Features/PatientSearch/**`, `tests/**`, `Docs/**`. No Domain stubs, no migrations, no `PermissionConfiguration`, no DI wiring change, zero Presentation content. The Application suite pins: search hit aggregate-status/test-count with the {3,4,1}→S2 truth set, the exact-trimmed LabId/NationalId channels, the worked-example balance (Charged 170 / Paid 90 / Balance 80), visit grouping/ordering/rollup, `!IsDeleted` sibling exclusion, the settings echo and the asymmetric missing-settings policy, and the null-LabId single-visit convention with the empty-string LabId. Infrastructure proofs: an InMemory persistence test on the real `ApplicationDbContext` (two registrations sharing a LabId plus an unrelated one — the history query returns the two and excludes the unrelated row), the existing index re-assertions, and the authorization-shape theory over all four queries. Full suite green **1431** (360 Domain + 948 Application + 123 Infrastructure); Release build 0/0.
 
 **Related.** M-08 Implementation Plan §6.4; FR-M08-007; ADR-0015 (computed status) + ADR-0016 (computed figures); ADR-0018 (soft delete); ADR-0032 (M-02 `IsDeleted` index owner + permission reuse); ADR-0020 (singleton settings) + ADR-0027 (M-22 settings surface); ADR-0035 (status calculator posture + worked example).
+
+---
+
+### ADR-0040 — M-07: Report production — PDF-first printing, ephemeral combined selection, history-identity resolution, and zero-migration outcome
+
+**Status:** Accepted
+**Date:** 2026-09-15
+
+**Context.** M-07 delivers the four report types (combined, blank, patient-history, separate/multi-patient history) across Domain, Application, and Infrastructure. At HEAD, the logical dependencies exist in code (M-04 lifecycle, M-05 snapshots, M-06 BR-07 precedent, M-08 visit rollup, M-22 settings), but `IReportPrintingService` has no Infrastructure implementation. The module required decisions on printing mechanism, combined-report persistence, history-identity resolution, feature-folder naming, and balance-gate scope.
+
+**Decision.**
+
+1. **PDF-first printing (OD-07-A).** `IReportPrintingService` is implemented in Infrastructure as PDF generation (extending the tested `PatientReportPdfExporter` writer family) followed by dispatch to the assigned printer. All report settings are read **at print time, never cached** (Blueprint §6). Failures cross the Application boundary as `Error.Unexpected`.
+
+2. **Ephemeral combined selection (OD-07-B).** The user's ordered pick of `PatientTest` lines lives in a Domain ValueObject (`CombinedReportSelection`) validated in memory; nothing is persisted. No `CombinedReport` table, no migration. The S5 gate proves zero drift.
+
+3. **Exact-normalized-name history identity (OD-07-C).** `HistorySortMode.ByLabCode` resolves history by shared `Patient.LabId` (the M-08 `GetVisitHistoryQueryHandler` rollup pattern); `ByPatientName` resolves by **exact normalized full name** (trim + case-fold) only — no fuzzy matching under any outcome (patient-safety risk). `ByLabCode` is the default per `ReportSettings.CreateDefault()`.
+
+4. **Feature folder naming (OD-07-D).** `Features/ReportProduction/` per the module dependency map.
+
+5. **BR-07 scope (OD-07-E).** The balance gate applies to combined-report printing and history-report printing; the blank report (patient data only, no results) is exempt. The verbatim BR-07 message from M-06 is reused.
+
+6. **History lines are copies.** Auto/manual history insertion copies prior result values into the report DTO; no original `PatientTest` row is ever modified by a report operation (pinned by tests re-reading source rows).
+
+7. **Print audit.** Every actual print updates `MarkPrinted` per printed line via the existing `PatientTest` mutator (`PrintCount` increment + `LastPrintedByUserId`/`LastPrintedAtUtc`).
+
+8. **Permission gate.** Every print command carries `IAuthorizedRequest` with `RequiredPermissionCode => "PRINT_RESULTS"`. Read queries are open (no `IAuthorizedRequest`).
+
+**Consequences.** Diff confined to `src/TopLab.Domain/Reports/**`, `src/TopLab.Application/Features/ReportProduction/**`, `src/TopLab.Infrastructure/Printing/**` + one DI registration line, `tests/**`, `Docs/**`. No `.csproj` changes, no new packages, no Presentation content. Full suite green **1581** (378 Domain + 1061 Application + 142 Infrastructure); Release build 0/0. Zero-drift verified: `ApplicationDbContextModelSnapshot.cs` unchanged, no new migrations. Coverage: per-slice gates passed (VG-01 Domain Reports ≥90%, VG-02 Application S2 ≥80%, VG-03 Infra S3 ≥70% + App S3 ≥80%, VG-04 Application S4 ≥80%).
+
+**Related.** M-07 Implementation Plan §2 (settled rules), §7 (S5 close-out), Appendix A (Arabic messages); ADR-0035 (M-04 lifecycle + `MarkPrinted` mutator); ADR-0036 (M-05 frozen snapshots); ADR-0037 (M-06 BR-07 precedent + culture print); ADR-0038 (M-08 visit rollup); ADR-0020 (singleton settings); ADR-0027 (M-22 settings surface).
