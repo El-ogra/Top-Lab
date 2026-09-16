@@ -1,4 +1,5 @@
 using TopLab.Presentation.Common;
+using TopLab.Presentation.Common.Navigation;
 
 namespace TopLab.Presentation.ViewModels.Patients;
 
@@ -17,11 +18,21 @@ public sealed class PatientsHubViewModel : ViewModelBase
     private bool _searchPatientEnabled;
     private bool _deliverResultsEnabled;
 
-    public PatientsHubViewModel()
+    public PatientsHubViewModel(INavigationService navigation)
     {
-        // Disabled in S5 by design: no destination screen exists yet.
-        // S6 wires OpenAddEditPatientCommand to the unified editor.
-        OpenAddEditPatientCommand = new RelayCommand(_ => { });
+        // S6: the unified editor is live — the entry button is enabled and
+        // navigates to it (mirrors the vm.LoadAsync() idiom at
+        // ShellViewModel.cs:140–144). The other three buttons stay disabled
+        // until their workstreams land.
+        AddEditPatientEnabled = true;
+        OpenAddEditPatientCommand = new RelayCommand(_ =>
+        {
+            navigation.NavigateTo<PatientEditorViewModel>();
+            if (navigation.CurrentViewModel is PatientEditorViewModel vm)
+            {
+                _ = vm.LoadCatalogAsync();
+            }
+        });
         OpenEnterResultsCommand = new RelayCommand(_ => { });
         OpenSearchPatientCommand = new RelayCommand(_ => { });
         OpenDeliverResultsCommand = new RelayCommand(_ => { });

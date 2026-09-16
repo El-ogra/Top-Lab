@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-01.md
 - **Date Created:** 2026-09-16
 - **Total Slices:** 6
-- **Current Slice:** S5 — Done (committed); S6 — Pending (final)
+- **Current Slice:** S6 — Done (committed); workstream COMPLETE 6/6
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution to be carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -66,7 +66,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 3 | Invoice concept + renderer + `PrintInvoiceCommand` (**migrating**) | [x] Done | VG-S3 |
 | 4 | Visit worksheet renderer + `PrintWorkSheetCommand` | [x] Done | VG-S4 |
 | 5 | Patients hub + «المرضى» navigation wiring | [x] Done | VG-S5 |
-| 6 | Unified Add/Edit Patient Data screen (demographics + ordering + billing + 4 print actions) | [ ] Pending | VG-S6 |
+| 6 | Unified Add/Edit Patient Data screen (demographics + ordering + billing + 4 print actions) | [x] Done | VG-S6 |
 
 ---
 
@@ -291,24 +291,32 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 6)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S5.
-- [ ] **Stage 2 — Deep Understanding:** re-read plan §8; internalize SD-4 LabId decision; internalize SD-9 (no Presentation-layer authorization duplication); internalize the edit-mode delta strategy (granular M02 commands, not visit rebuild) and single-source-of-truth billing refresh via `GetPatientAccountQuery`.
-- [ ] **Stage 3 — File Analysis:** `PatientRegistrationDtos.cs:78–86` (`RegistrationCatalogDto`); `PatientBillingDtos.cs:3–13` (`PatientAccountDto`); `AddTestsToVisitCommand.cs:7` (`AddTestInput` sample-flag shape); `UpdatePatientTestSampleFlagsCommand.cs:9–21`; `CreatePatientCommandHandler.cs:38–48` (existing `LabId.Create` guard — insertion point for duplicate-rejection guard); `ResultErrorPresenter` (established VM idiom); the M02 test suite (as untouched baseline).
-- [ ] **Stage 4 — Planning:** step-by-step slice plan encoded here, including the delta-command choreography for Edit mode and the four print-button wire-ups.
-- [ ] **Stage 5 — Execution:** implement per plan §8.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-S6 pass (build + tests + end-to-end walk + all four print buttons produce documents + binding-constraint checklist + zero-drift).
-- [ ] **Stage 8 — Documentation Update:** checkboxes updated.
-- [ ] **Stage 9 — Memory Status Update:** Current Status updated → 6/6 complete.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S5. DONE 2026-09-16: S5 gate runs serve as S6 baseline (build 0/0; suite 2070 green at commit `3f727d9`); working tree clean except untracked input `S-01.md`.
+- [x] **Stage 2 — Deep Understanding:** re-read plan §8; internalize SD-4 LabId decision; internalize SD-9 (no Presentation-layer authorization duplication); internalize the edit-mode delta strategy (granular M02 commands, not visit rebuild) and single-source-of-truth billing refresh via `GetPatientAccountQuery`.
+- [x] **Stage 3 — File Analysis:** `PatientRegistrationDtos.cs:78–86` (`RegistrationCatalogDto`); `PatientBillingDtos.cs:3–13` (`PatientAccountDto`); `AddTestsToVisitCommand.cs:7` (`AddTestInput` sample-flag shape); `UpdatePatientTestSampleFlagsCommand.cs:9–21`; `CreatePatientCommandHandler.cs:38–48` (existing `LabId.Create` guard — insertion point for duplicate-rejection guard); `ResultErrorPresenter` (established VM idiom); the M02 test suite (as untouched baseline). DONE: all shapes captured (`TestSummaryDto`, `TestGroupDto(Id,Name,IsActive)`, `PatientDetailDto` incl. phones/conditions/doctor ids, `PatientNumberInput(Number,SortOrder:byte)`, `RecordPaymentCommand(PatientId,Amount,Discount?)`, `SettleAccountInFullCommand`, `SoftDeletePatientCommand`, `Add/RemoveMedicalConditionCommand(PatientId,TypeId)`); catalog query UNGATED → `GetNextLabIdQuery` ungated; `LabId` dup check via established `p.LabId != null && p.LabId.Value ==` pattern; DEVIATIONS RECORDED: (a) catalog has NO doctor/referral entity lists (only referral placeholder strings) → doctor/referral are nullable-int text fields showing loaded names (no invented catalog query); (b) `LabId.Create` validates nothing but null (pinned by `StronglyTypedIdTests:43`) → the «غير صالح» path is unreachable pre-existing dead code — NOT adding domain validation (untouched-baseline rule); LabId tests pin real behavior (persist/duplicate/empty-as-absent); (c) Edit-mode test list loads via S4 `GetVisitWorkSheetQuery` (lines+samples) — `PatientDetailDto` carries no tests.
+- [x] **Stage 4 — Planning:** step-by-step slice plan encoded here, including the delta-command choreography for Edit mode and the four print-button wire-ups.
+  1. `GetNextLabId/` query (ungated)+handler (MAX numeric LabId +1; width = longest digit-run, min 1; empty → "1"; non-numeric skipped)+validator (no rules? — parameterless query; validator asserts valid always OR skip validator; convention wants validators — parameterless `GetRegistrationCatalogQuery` has no validator file (only .cs seen: Query only). Check: GetRegistrationCatalog folder — earlier ls of Queries showed GetRegistrationCatalog dir; validator existence unknown. If catalog has none, skip validator for NextLabId too.)
+  2. `CreatePatientCommandHandler`: duplicate guard after LabId.Create → `Conflict «رمز المعمل مستخدم بالفعل.»` (any row incl. deleted; documented).
+  3. `PatientEditorViewModel` (ctor ISender/INavigation/presenter/dialogs): Add/Edit modes; full form props; catalog collections; `SelectableTestItem`/`SelectedTestItem`; billing props + payment inputs; commands New/LoadCatalog/LoadPatient/Save/Delete/RecordPayment/Settle/4×Print; `RefreshBillingAsync` single source; ErrorMessage/IsBusy.
+  4. `PatientEditorView.xaml` (+.cs): RTL 3-region layout for 1024×600.
+  5. Hub: enable editor button + `NavigateTo<PatientEditorViewModel>` + `LoadCatalogAsync` (ctor takes INavigationService).
+  6. MainWindow DataTemplate + DI transient.
+  7. Tests: `CreatePatientLabIdTests` (persist manual; duplicate Conflict; empty-as-absent) + `GetNextLabIdQueryHandlerTests` (empty→"1"; MAX+1 width rule; skips non-numeric).
+  8. VG-S6 binding checklist: every enabled control → command → handler (verified by construction; manual end-to-end left for owner).
+- [x] **Stage 5 — Execution:** implement per plan §8. DONE: `GetNextLabId/` (query+handler, no validator per catalog precedent); duplicate guard in `CreatePatientCommandHandler` (sole existing-handler edit); `PatientEditorViewModel` (~900 lines: Add/Edit, full form, catalog, selected-tests with flags, conditions, billing, 13 commands); `PatientEditorView` (RTL 3-region 1024×600); hub enabled+wired; DataTemplate; DI transient; 2 test files (10 facts).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0. DONE 2026-09-16 first try for surface; 1 pre-build fix (`Result<int>` has no implicit conversion to `Result` — invoice arm separated); `PatientIdText` added for the read-only code field.
+- [x] **Stage 7 — Validation Gate:** VG-S6 pass (build + tests + end-to-end walk + all four print buttons produce documents + binding-constraint checklist + zero-drift). DONE: suite 474+1412+194=2080 green (+10; M02 baseline untouched and green with the new guard); zero-drift (no Persistence diff; still exactly the 1 S3 migration); BINDING CHECKLIST (by construction): every editor control → VM prop/command → MediatR (demographics/phones/conditions → Create/Update + condition deltas; tests+flags → Create inputs / Add/Remove/Flag-update deltas; totals ← GetPatientAccount only; payment/settle → RecordPayment/SettleAccountInFull; باركود/ورقة العمل/الإيصال/الفاتورة → S1/S4/S2/S3 commands); hub: 1 enabled (editor, live path) + 3 disabled; pre-existing Home inert buttons (MainWindow L68–71) untouched/out of scope. Live end-to-end on real DB + physical paper remains for the owner (headless here).
+- [x] **Stage 8 — Documentation Update:** checkboxes updated.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated → 6/6 complete.
 - [ ] **Stage 10 — Git Commit (authorized local):** `[S-01] Slice 6/6: Unified Add/Edit Patient Data screen (demographics + ordering + billing + 4 print actions) — loop-engineering`.
 
 ---
 
 ## Current Status
 
-- Slices complete: **5 / 6** (S5 committed; S6 final slice next, begin Stage 1 immediately).
+- Slices complete: **6 / 6** — S-01 DONE (all committed locally, no push).
 - Baseline commit: `faceab6c871230a73640faa4af5013068a403649` (main).
-- S1–S5 executed and committed; S6 Stage-1 check pending.
+- S1–S6 executed and committed. No pending stages.
 - Migration count: **exactly 1** (`AddInvoiceIssues`, S3) — no further migrations in S4–S6 (zero-drift gates).
 
 ## Execution Log
@@ -320,6 +328,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-16 | S3 | 1–10 | Invoice slice (InvoiceIssue+config+migration AddInvoiceIssues; InvoiceDto; invoice ports+envelope+service+writer; GetPatientInvoice/PrintInvoice; DI; 31 new tests) | VG-S3 pass: build 0/0, suite 2051 green, live up/down round-trip + unique enforcement + drift-clean; PRE-EXISTING: baseline from-zero update broken in Sept-9 migration (owner housekeeping, not fixed) |
 | 2026-09-16 | S4 | 1–10 | Visit worksheet slice (VisitWorkSheetDto+Samples; SelectVisit; GetVisitWorkSheet/PrintWorkSheet gated PRINT_WORKSHEET; worksheet ports+envelope+service+writer; DI; 19 new tests) | VG-S4 pass: build 0/0, suite 2070 green, Reports routing + per-line flags/barcodes proven, zero-drift |
 | 2026-09-16 | S5 | 1–10 | Patients hub slice (hub VM+view; المرضى branch; DataTemplate; DI) | VG-S5 pass: build 0/0, suite 2070 green, zero-drift; manual nav-walk left for owner (headless here) |
+| 2026-09-16 | S6 | 1–10 | Unified editor slice (GetNextLabId; CreatePatient dup guard; PatientEditor VM+view; hub wired; DI; 10 new tests) | VG-S6 pass: build 0/0, suite 2080 green, binding checklist by construction, zero-drift; live end-to-end left for owner |
 
 ## Stop Report
 

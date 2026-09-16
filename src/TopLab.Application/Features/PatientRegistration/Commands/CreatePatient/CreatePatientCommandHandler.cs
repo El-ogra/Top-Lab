@@ -45,6 +45,15 @@ public sealed class CreatePatientCommandHandler : IRequestHandler<CreatePatientC
             {
                 return Result<int>.Failure(Error.Validation("رمز المعمل غير صالح."));
             }
+
+            // SD-4 duplicate rejection: the only existing-handler modification in
+            // S-01. Any row holding the code (including soft-deleted visits)
+            // blocks reuse, keeping LabId-keyed history unambiguous. No DB unique
+            // index (preserves the zero-drift promise).
+            if (_db.Set<Patient>().Any(p => p.LabId != null && p.LabId.Value == labId.Value))
+            {
+                return Result<int>.Failure(Error.Conflict("رمز المعمل مستخدم بالفعل."));
+            }
         }
 
         ExternalEntityId? treatingDoctorId = null;
