@@ -95,6 +95,17 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        using (var loginScope = _host.Services.CreateScope())
+        {
+            var loginWindow = loginScope.ServiceProvider.GetRequiredService<LoginWindow>();
+            var loginResult = loginWindow.ShowDialog();
+            if (loginResult != true)
+            {
+                Shutdown(1);
+                return;
+            }
+        }
+
         var main = _host.Services.GetRequiredService<MainWindow>();
         main.Show();
 

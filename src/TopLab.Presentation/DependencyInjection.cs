@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddTransient<HomeViewModel>();
         services.AddTransient<DatabaseSetupViewModel>();
         services.AddTransient<FirstRunAdminViewModel>();
+        services.AddTransient<LoginViewModel>();
         services.AddTransient<UserManagementViewModel>();
         services.AddTransient<SettingsDashboardViewModel>();
         services.AddTransient<SystemSettingsViewModel>();
@@ -41,6 +42,7 @@ public static class DependencyInjection
 
         // Windows
         services.AddTransient<FirstRunAdminWindow>();
+        services.AddTransient<LoginWindow>();
         services.AddSingleton<MainWindow>();
 
         return services;
