@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-01.md
 - **Date Created:** 2026-09-16
 - **Total Slices:** 6
-- **Current Slice:** S1 — Done (committed); S2 — Pending
+- **Current Slice:** S2 — Done (committed); S3 — Pending (migrating slice)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution to be carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -62,7 +62,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|---|-------------|--------|-----------------|
 | 1 | Barcode service (`IBarcodeService` impl, Code-128, printer routing) | [x] Done | VG-S1 |
-| 2 | Receipt printing (`IReceiptPrintingService` port + impl + `PrintReceiptCommand`) | [ ] Pending | VG-S2 |
+| 2 | Receipt printing (`IReceiptPrintingService` port + impl + `PrintReceiptCommand`) | [x] Done | VG-S2 |
 | 3 | Invoice concept + renderer + `PrintInvoiceCommand` (**migrating**) | [ ] Pending | VG-S3 |
 | 4 | Visit worksheet renderer + `PrintWorkSheetCommand` | [ ] Pending | VG-S4 |
 | 5 | Patients hub + «المرضى» navigation wiring | [ ] Pending | VG-S5 |
@@ -141,15 +141,24 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S1.
-- [ ] **Stage 2 — Deep Understanding:** re-read plan §4; internalize SD-2 QuestPDF decision; note the ASCII-only limitation of `ReportPdfWriter` that motivated a separate renderer.
-- [ ] **Stage 3 — File Analysis:** `ReportPrintEnvelope.cs:14–27` (token idiom); `IReportPrintingService.cs`; `ReportPrintingService.cs` (structural precedent); `GetPatientReceiptQueryHandler.cs` (data source); `ReceiptSettings.cs` (`TopMarginCm`, `Currency`, `PickupTimeDefault`, `PrintOnce`, `TestDetailDisplayMode`, `CashierPrinterEnabled`, `HeaderFooterMode`); `ILabPrintTextStore` registration in Presentation DI.
-- [ ] **Stage 4 — Planning:** step-by-step slice plan encoded here.
-- [ ] **Stage 5 — Execution:** implement per plan §4.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-S2 pass.
-- [ ] **Stage 8 — Documentation Update:** checkboxes updated.
-- [ ] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S1. DONE 2026-09-16: S1 gate runs serve as S2 baseline (build 0/0; suite 2006 green at commit `f074f3e`); `git status` clean except untracked input `S-01.md`.
+- [x] **Stage 2 — Deep Understanding:** re-read plan §4; internalize SD-2 QuestPDF decision; note the ASCII-only limitation of `ReportPdfWriter` that motivated a separate renderer.
+- [x] **Stage 3 — File Analysis:** `ReportPrintEnvelope.cs:14–27` (token idiom); `IReportPrintingService.cs`; `ReportPrintingService.cs` (structural precedent); `GetPatientReceiptQueryHandler.cs` (data source); `ReceiptSettings.cs` (`TopMarginCm`, `Currency`, `PickupTimeDefault`, `PrintOnce`, `TestDetailDisplayMode`, `CashierPrinterEnabled`, `HeaderFooterMode`); `ILabPrintTextStore` registration in Presentation DI. DONE: `ReceiptDto` carries everything (ChargedTests+totals+Currency); `RecordPayment` ungated → `PrintReceiptCommand` ungated; `PrintOnce` display-only (no behavioral wiring anywhere in `src/`); `TestDetailDisplayMode` Hide/Show/ShowWithCode; `HeaderFooterMode` None/Words/Images; lab-text store returns empty-string defaults on missing file (writer falls back to Arial/12pt); `ILabPrintTextStore` is already an Application port (Presentation-implemented) → no new port needed.
+- [x] **Stage 4 — Planning:** step-by-step slice plan encoded here.
+  1. `Directory.Packages.props`: pin `QuestPDF` 2026.9.0 (+license comment, SD-2 owner-confirmed); Infra csproj versionless `PackageReference`.
+  2. `Application/Common/Interfaces/IReceiptPrintingService.cs`: `PrintReceiptAsync(string receiptToken, CT)`.
+  3. `Application/Common/Interfaces/IReceiptPdfWriter.cs`: `WritePdfAsync(path, ReceiptDto, ReceiptSettings, LabPrintTextDto, CT)`.
+  4. `PatientBilling/Common/ReceiptPrintEnvelope.cs`: `record ReceiptPrintEnvelope(string ReceiptJson)` + `CreateToken(ReceiptDto)`.
+  5. `Infrastructure/Printing/ReceiptPrintingService.cs`: mirror `ReportPrintingService` — bad token→«بيانات الإيصال غير صالحة.»; missing ReceiptSettings→«سجل إعدادات الإيصال مفقود.»; missing Receipt assignment→«لم يتم تعيين طابعة للإيصالات.»; lab text via `ILabPrintTextStore` (failure propagates); dispatch; catch-all→«تعذر طباعة الإيصال.». `PrintOnce` documented display-only in XML doc.
+  6. `Infrastructure/Printing/ReceiptPdfWriter.cs` (QuestPDF, `Settings.License=Community` static init): A5 portrait RTL; Words/None header-footer (Images→words fallback, documented); patient block; itemized tests per display mode; totals block with Currency; TopMarginCm; pickup line when set; `FileMode.CreateNew`; public static `BuildTextLines` for content assertions.
+  7. `PatientBilling/Commands/PrintReceipt/` command (ungated `IRequest<Result>`) + handler (via `ISender GetPatientReceiptQuery`; propagate; token; service) + validator (PatientId>0).
+  8. DI: `AddScoped<IReceiptPrintingService, ReceiptPrintingService>` + `AddScoped<IReceiptPdfWriter, ReceiptPdfWriter>`.
+  9. Tests: `ReceiptPrintingServiceTests` (InMemory + fake lab-text store + recording dispatcher: happy %PDF+Receipt routing; 2 missing-row messages; invalid token; dispatch-throw never-throws; display-mode Hide/Show line-count via `BuildTextLines`) + `PrintReceiptCommandHandlerTests` (NotFound propagation; token-verbatim round-trip; service-failure propagation; validator class).
+- [x] **Stage 5 — Execution:** implement per plan §4. DONE: QuestPDF 2026.9.0 pinned+restored; ports (`IReceiptPrintingService`, `IReceiptPdfWriter`); `ReceiptPrintEnvelope`; `ReceiptPrintingService`; `ReceiptPdfWriter` (QuestPDF A5 RTL); `PrintReceipt/` trio (ungated); DI wiring; 2 new test files (9 infra + 5 app facts).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0. DONE 2026-09-16 (2 intermediate errors fixed: `Settings` needs `using QuestPDF;`; `ContentFromRightToLeft()` returns void — call on `page`, then `page.Content()`).
+- [x] **Stage 7 — Validation Gate:** VG-S2 pass. DONE: full suite 467+177+1376=2020 green (+14 vs S1); Receipt-printer routing proven by dispatcher capture (printer "Receipt"); totals/content proven by `BuildTextLines` verbatim-Arabic test + token round-trip test; zero-drift (`git diff --stat Persistence/` empty). Arabic-rendering acceptance: automated proof = generation succeeds with Arabic-capable system font + `ContentFromRightToLeft` + RTL text style; KEY PITFALL FOUND: QuestPDF 2026+ disables system fonts by default — `Settings.UseSystemFonts=true` is mandatory (without it generation throws "font families not available: Arial"; S3/S4 writers must copy the same static init). Physical-paper visual check remains for the owner.
+- [x] **Stage 8 — Documentation Update:** checkboxes updated.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
 - [ ] **Stage 10 — Git Commit (authorized local):** `[S-01] Slice 2/6: Receipt printing (IReceiptPrintingService + PrintReceiptCommand) — loop-engineering`.
 
 ---
@@ -274,9 +283,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Slices complete: **1 / 6** (S1 committed; S2 next, begin Stage 1 immediately).
+- Slices complete: **2 / 6** (S2 committed; S3 migrating slice next, begin Stage 1 immediately).
 - Baseline commit: `faceab6c871230a73640faa4af5013068a403649` (main).
-- S1 executed and committed; S2–S6 Stage-1 checks pending in sequence.
+- S1–S2 executed and committed; S3–S6 Stage-1 checks pending in sequence.
 - Migration count expected: **exactly 1** (`AddInvoiceIssues`, S3). All other slices carry the zero-drift gate.
 
 ## Execution Log
@@ -284,6 +293,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | Date | Slice | Stage | Action | Result |
 |---|---|---|---|---|
 | 2026-09-16 | S1 | 1–10 | Barcode service slice (ZXing.Net 0.16.11; `Barcode/`; `PrintBarcode/`; DI; 18 new tests) | VG-S1 pass: build 0/0, suite 2006 green, scan-back + routing proven, zero-drift |
+| 2026-09-16 | S2 | 1–10 | Receipt printing slice (QuestPDF 2026.9.0; receipt ports+envelope+service+writer; `PrintReceipt/`; DI; 14 new tests) | VG-S2 pass: build 0/0, suite 2020 green, Receipt routing + totals proven, zero-drift; pitfall: QuestPDF needs `UseSystemFonts=true` |
 
 ## Stop Report
 

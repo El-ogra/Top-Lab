@@ -14,6 +14,8 @@
     <PackageVersion Include="MediatR" Version="12.5.0" />
     <!-- ZXing.Net: Code-128 barcode rendering for tube labels (S-01 SD-1). Apache-2.0, no internet dependency. -->
     <PackageVersion Include="ZXing.Net" Version="0.16.11" />
+    <!-- QuestPDF: Arabic/RTL document rendering for receipts/invoices/worksheets (S-01 SD-2, owner-confirmed license fit). -->
+    <PackageVersion Include="QuestPDF" Version="2026.9.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.30" />

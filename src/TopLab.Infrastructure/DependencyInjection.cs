@@ -67,10 +67,12 @@ public static class DependencyInjection
         // exporters (depend on the Scoped ApplicationDbContext).
         services.AddScoped<IReportPrintingService, ReportPrintingService>();
         // Barcode printing: Code-128 label renderer + routed dispatch (S-01 S1).
-        // Scoped, matching the M-22 printing services (depends on the Scoped
-        // ApplicationDbContext).
         services.AddScoped<IBarcodeService, BarcodeService>();
         services.AddScoped<BarcodeLabelRenderer>();
+        // Receipt printing: cashier receipt document (S-01 S2). Scoped, matching
+        // the M-22 printing services (depends on the Scoped ApplicationDbContext).
+        services.AddScoped<IReceiptPrintingService, ReceiptPrintingService>();
+        services.AddScoped<IReceiptPdfWriter, ReceiptPdfWriter>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
 
