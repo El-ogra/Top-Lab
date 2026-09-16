@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-01.md
 - **Date Created:** 2026-09-16
 - **Total Slices:** 6
-- **Current Slice:** S2 — Done (committed); S3 — Pending (migrating slice)
+- **Current Slice:** S3 — Done (committed); S4 — Pending
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution to be carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -63,7 +63,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|---|-------------|--------|-----------------|
 | 1 | Barcode service (`IBarcodeService` impl, Code-128, printer routing) | [x] Done | VG-S1 |
 | 2 | Receipt printing (`IReceiptPrintingService` port + impl + `PrintReceiptCommand`) | [x] Done | VG-S2 |
-| 3 | Invoice concept + renderer + `PrintInvoiceCommand` (**migrating**) | [ ] Pending | VG-S3 |
+| 3 | Invoice concept + renderer + `PrintInvoiceCommand` (**migrating**) | [x] Done | VG-S3 |
 | 4 | Visit worksheet renderer + `PrintWorkSheetCommand` | [ ] Pending | VG-S4 |
 | 5 | Patients hub + «المرضى» navigation wiring | [ ] Pending | VG-S5 |
 | 6 | Unified Add/Edit Patient Data screen (demographics + ordering + billing + 4 print actions) | [ ] Pending | VG-S6 |
@@ -183,15 +183,25 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 3)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S2.
-- [ ] **Stage 2 — Deep Understanding:** re-read plan §5; internalize SD-3 (Receipt vs Invoice) and SD-8 (route via `OutputType=Receipt`); note the no-FK convention (application-level reference; M-15 precedent).
-- [ ] **Stage 3 — File Analysis:** existing EF configurations under `src/TopLab.Infrastructure/Persistence/Configurations/` (fluent style, decimal(18,2), datetime2, unique/index conventions); latest migrations `AddAnalyteProfileDomain` + `AddPregnancyMedicalConditionTypeSeed` (structural reference); `PatientTest.PriceAtOrderTime` (frozen-price contract); `PatientBillingReader`/`PatientAccountCalculator` (invoice DTO source).
-- [ ] **Stage 4 — Planning:** step-by-step slice plan encoded here.
-- [ ] **Stage 5 — Execution:** implement per plan §5, including EF migration `AddInvoiceIssues`.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0; migration `dotnet ef migrations add AddInvoiceIssues` succeeds; `dotnet ef database update` on a copy succeeds; `dotnet ef migrations remove --force` reverses cleanly (dry-run).
-- [ ] **Stage 7 — Validation Gate:** VG-S3 pass (build + tests + **migration up/down** + two-print manual + Arabic RTL).
-- [ ] **Stage 8 — Documentation Update:** checkboxes updated.
-- [ ] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S2. DONE 2026-09-16: S2 gate runs serve as S3 baseline (build 0/0; suite 2020 green at commit `a88f130`); working tree clean except untracked input `S-01.md`.
+- [x] **Stage 2 — Deep Understanding:** re-read plan §5; internalize SD-3 (Receipt vs Invoice) and SD-8 (route via `OutputType=Receipt`); note the no-FK convention (application-level reference; M-15 precedent).
+- [x] **Stage 3 — File Analysis:** existing EF configurations under `src/TopLab.Infrastructure/Persistence/Configurations/` (fluent style, decimal(18,2), datetime2, unique/index conventions); latest migrations `AddAnalyteProfileDomain` + `AddPregnancyMedicalConditionTypeSeed` (structural reference); `PatientTest.PriceAtOrderTime` (frozen-price contract); `PatientBillingReader`/`PatientAccountCalculator` (invoice DTO source). DONE: unique-index idiom `HasIndex().IsUnique()` (PermissionConfiguration); strong-id conversion idiom (PatientConfiguration/PatientPhoneNumberConfiguration); no-FK negative-test idiom (`Assert.DoesNotContain(et.GetForeignKeys(), ...)`); `PatientBillingReader.ReadAccount` gives account+charged tests in one call; `IApplicationDbContext` exposes no EF types and Application has no EF reference → the plan's "DbUpdateException retry" is implemented via the established M-12 `IsUniqueViolation` message-sniff (`CreateTestCommandHandler:76-88`); `UniqueViolationFake` precedent exists for the retry test; dotnet-ef 8.0.30 + working SQL Server (`.\SQLEXPRESS`, LocalDB) available for up/down proof; design-time factory targets localdb — scratch DB `TopLab_S01_Verify` via `--connection` override.
+- [x] **Stage 4 — Planning:** step-by-step slice plan encoded here.
+  1. `Domain/Common/Ids/InvoiceIssueId.cs` (StronglyTypedId-int) + `Domain/Billing/InvoiceIssue.cs` (`Entity<InvoiceIssueId>`; PatientId app-level ref no nav; guards number≥1, totals≥0, itemCount≥0; immutable).
+  2. `InvoiceIssueConfiguration.cs` (key conversion ValueGeneratedOnAdd; PatientId conversion; unique index InvoiceNumber; index PatientId; datetime2; decimal(18,2); no nav → no FK).
+  3. `PatientBillingDtos.cs`: add `InvoiceDto` (PatientId, LabId?, FullName, `int? InvoiceNumber` null=preview, `DateTime? IssuedAtUtc`, ChargedTests, totals, Currency).
+  4. `GetPatientInvoice/` query+handler+validator: patient (NotFound incl. deleted) → `ReadAccount` → latest issue (MAX number) or preview(null,null).
+  5. `PrintInvoice/` command (ungated)+handler+validator: patient check; `ReadAccount`; allocate MAX+1 → Add → SaveChanges with retry-once on `IsUniqueViolation` (M-12 idiom, `Remove` failed instance); second failure/any error → Unexpected «تعذر إصدار الفاتورة.» (never-throws; cancellation rethrown); IssuedByUserId from `ICurrentUserService`; token → `IInvoicePrintingService`.
+  6. `IInvoicePrintingService` + `InvoicePrintEnvelope` + `IInvoicePdfWriter` (Application ports/common).
+  7. `InvoicePrintingService` (routes Receipt per SD-8; «بيانات الفاتورة غير صالحة.»/«لم يتم تعيين طابعة للإيصالات.»/«تعذر طباعة الفاتورة.») + `InvoicePdfWriter` (QuestPDF A5 RTL, same License+UseSystemFonts static init; `BuildTextLines` for tests).
+  8. DI wiring. FakeApplicationDbContext: add `InvoiceIssues` list + Set/Add/Remove branches.
+  9. Tests: Domain `InvoiceIssueTests`; App `PrintInvoiceCommandHandlerTests` (N,N+1 / retry via `UniqueViolation`-style wrapper fake / NotFound / frozen prices) + `GetPatientInvoiceQueryHandlerTests` (totals=account; preview; latest); Infra `InvoiceIssueConfigurationTests` (unique index + no-FK-to-Patient per M-15 convention).
+  10. Migration `AddInvoiceIssues` (`--project Infrastructure --startup-project Presentation`); `has-pending-model-changes` clean; up/down proof on scratch localdb `TopLab_S01_Verify` (update → table+index exist; downgrade to `AddPregnancyMedicalConditionTypeSeed` → table gone; re-upgrade).
+- [x] **Stage 5 — Execution:** implement per plan §5, including EF migration `AddInvoiceIssues`. DONE: `InvoiceIssueId`+`InvoiceIssue` (Domain); `InvoiceIssueConfiguration` (+`DbSets.InvoiceIssues` → plural `InvoiceIssues` table, re-scaffolded once); `InvoiceDto`; ports (`IInvoicePrintingService`, `IInvoicePdfWriter`) + `InvoicePrintEnvelope`; `GetPatientInvoice/` + `PrintInvoice/` trios (M-12 `IsUniqueViolation` retry-once; never-throws); `InvoicePrintingService` (Receipt routing SD-8) + `InvoicePdfWriter` (QuestPDF, same static init); DI; fake extended; 4 test files (7 Domain + 13 App + 11 Infra).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0; migration `dotnet ef migrations add AddInvoiceIssues` succeeds; `dotnet ef database update` on a copy succeeds; `dotnet ef migrations remove --force` reverses cleanly (dry-run). DONE 2026-09-16 with one adaptation (see Stage 7): `add` succeeded; isolated round-trip substituted for the blocked full-baseline copy.
+- [x] **Stage 7 — Validation Gate:** VG-S3 pass (build + tests + **migration up/down** + two-print manual + Arabic RTL). DONE: suite 474+1389+188=2051 green (+31); up/down via REAL EF applier on SQL Server scratch `TopLab_S01_InvoiceRT` (UP: table+PK+unique `IX_InvoiceIssues_InvoiceNumber`+`IX_InvoiceIssues_PatientId` present; unique enforced live Msg 2601 on duplicate; DOWN to `AddPregnancyMedicalConditionTypeSeed`: table+history gone; re-UP clean); `has-pending-model-changes` → "No changes"; sequential numbering proven (`TwoPrints` → 1,2); reprint=new-issue by construction; Arabic RTL via `BuildTextLines` verbatim test + S2-proven QuestPDF pipeline. ADAPTATION (pre-existing defect, NOT this slice): full-baseline from-zero `database update` fails in committed `20260909033414_AddAnalyteProfileDomain` (`ALTER COLUMN AnalyteId NOT NULL` after `IX_ProfileResultItems_AnalyteId` creation → Msg 5074; file last touched M-06, predates S-01) → full "copy of baseline" impossible until owner fixes that migration (DO NOT fix here — rewriting shared history is unauthorized). Scratch DBs `TopLab_S01_Verify` (partial) + `TopLab_S01_InvoiceRT` left on localdb for owner cleanup. Physical-paper two-print check remains for the owner.
+- [x] **Stage 8 — Documentation Update:** checkboxes updated.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
 - [ ] **Stage 10 — Git Commit (authorized local):** `[S-01] Slice 3/6: Invoice (InvoiceIssue + renderer + PrintInvoiceCommand + migration) — loop-engineering`.
 
 ---
@@ -283,10 +293,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Slices complete: **2 / 6** (S2 committed; S3 migrating slice next, begin Stage 1 immediately).
+- Slices complete: **3 / 6** (S3 committed; S4 next, begin Stage 1 immediately).
 - Baseline commit: `faceab6c871230a73640faa4af5013068a403649` (main).
-- S1–S2 executed and committed; S3–S6 Stage-1 checks pending in sequence.
-- Migration count expected: **exactly 1** (`AddInvoiceIssues`, S3). All other slices carry the zero-drift gate.
+- S1–S3 executed and committed; S4–S6 Stage-1 checks pending in sequence.
+- Migration count: **exactly 1** (`AddInvoiceIssues`, S3) — no further migrations in S4–S6 (zero-drift gates).
 
 ## Execution Log
 
@@ -294,6 +304,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|---|---|---|---|
 | 2026-09-16 | S1 | 1–10 | Barcode service slice (ZXing.Net 0.16.11; `Barcode/`; `PrintBarcode/`; DI; 18 new tests) | VG-S1 pass: build 0/0, suite 2006 green, scan-back + routing proven, zero-drift |
 | 2026-09-16 | S2 | 1–10 | Receipt printing slice (QuestPDF 2026.9.0; receipt ports+envelope+service+writer; `PrintReceipt/`; DI; 14 new tests) | VG-S2 pass: build 0/0, suite 2020 green, Receipt routing + totals proven, zero-drift; pitfall: QuestPDF needs `UseSystemFonts=true` |
+| 2026-09-16 | S3 | 1–10 | Invoice slice (InvoiceIssue+config+migration AddInvoiceIssues; InvoiceDto; invoice ports+envelope+service+writer; GetPatientInvoice/PrintInvoice; DI; 31 new tests) | VG-S3 pass: build 0/0, suite 2051 green, live up/down round-trip + unique enforcement + drift-clean; PRE-EXISTING: baseline from-zero update broken in Sept-9 migration (owner housekeeping, not fixed) |
 
 ## Stop Report
 

@@ -41,6 +41,7 @@ public partial class ApplicationDbContext
     public Microsoft.EntityFrameworkCore.DbSet<CultureResult> CultureResults => Set<CultureResult>();
     public Microsoft.EntityFrameworkCore.DbSet<CultureAntibioticResult> CultureAntibioticResults => Set<CultureAntibioticResult>();
     public Microsoft.EntityFrameworkCore.DbSet<PaymentOperation> PaymentOperations => Set<PaymentOperation>();
+    public Microsoft.EntityFrameworkCore.DbSet<InvoiceIssue> InvoiceIssues => Set<InvoiceIssue>();
     public Microsoft.EntityFrameworkCore.DbSet<PriceList> PriceLists => Set<PriceList>();
     public Microsoft.EntityFrameworkCore.DbSet<PriceListItem> PriceListItems => Set<PriceListItem>();
     public Microsoft.EntityFrameworkCore.DbSet<ExternalEntity> ExternalEntities => Set<ExternalEntity>();

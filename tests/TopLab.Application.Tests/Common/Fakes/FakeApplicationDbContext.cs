@@ -58,6 +58,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<ProfileResultItemReferenceRangeSnapshot> ProfileResultItemReferenceRangeSnapshots { get; } = new();
     public List<ProfileResultAmendment> ProfileResultAmendments { get; } = new();
     public List<CultureResult> CultureResults { get; } = new();
+    public List<InvoiceIssue> InvoiceIssues { get; } = new();
 
     public int SaveChangesCallCount { get; private set; }
 
@@ -283,6 +284,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)CultureResults.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(InvoiceIssue))
+        {
+            return (IQueryable<TEntity>)(object)InvoiceIssues.AsQueryable();
+        }
+
         return Enumerable.Empty<TEntity>().AsQueryable();
     }
 
@@ -332,6 +338,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is ProfileResultItemReferenceRangeSnapshot pris) ProfileResultItemReferenceRangeSnapshots.Add(pris);
         else if (entity is ProfileResultAmendment pra) ProfileResultAmendments.Add(pra);
         else if (entity is CultureResult cr) CultureResults.Add(cr);
+        else if (entity is InvoiceIssue ii) InvoiceIssues.Add(ii);
         else throw new NotSupportedException($"Add not supported for {typeof(TEntity).Name}");
     }
 
@@ -386,6 +393,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is ProfileResultItemReferenceRangeSnapshot pris) ProfileResultItemReferenceRangeSnapshots.Remove(pris);
         else if (entity is ProfileResultAmendment pra) ProfileResultAmendments.Remove(pra);
         else if (entity is CultureResult cr) CultureResults.Remove(cr);
+        else if (entity is InvoiceIssue ii) InvoiceIssues.Remove(ii);
         else throw new NotSupportedException($"Remove not supported for {typeof(TEntity).Name}");
     }
 

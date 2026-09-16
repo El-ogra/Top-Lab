@@ -40,3 +40,16 @@ public sealed record ReceiptDto(
     decimal TotalPaid,
     decimal Balance,
     string Currency);
+
+public sealed record InvoiceDto(
+    int PatientId,
+    string PatientFullName,
+    string? LabId,
+    int? InvoiceNumber,
+    DateTime? IssuedAtUtc,
+    IReadOnlyList<ChargedTestDto> ChargedTests,
+    decimal TotalCharged,
+    decimal TotalDiscount,
+    decimal TotalPaid,
+    decimal Balance,
+    string Currency);

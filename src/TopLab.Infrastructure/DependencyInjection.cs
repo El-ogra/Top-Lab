@@ -73,6 +73,9 @@ public static class DependencyInjection
         // the M-22 printing services (depends on the Scoped ApplicationDbContext).
         services.AddScoped<IReceiptPrintingService, ReceiptPrintingService>();
         services.AddScoped<IReceiptPdfWriter, ReceiptPdfWriter>();
+        // Invoice printing: itemized numbered statement of services (S-01 S3).
+        services.AddScoped<IInvoicePrintingService, InvoicePrintingService>();
+        services.AddScoped<IInvoicePdfWriter, InvoicePdfWriter>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
 
