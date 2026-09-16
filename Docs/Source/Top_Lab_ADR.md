@@ -1060,3 +1060,30 @@ Adding an ADR in a reserved range does not require reorganizing the log; sequent
 **Consequences.** Diff confined to `src/TopLab.Domain/Accounting/CashMovement.cs` (guards only), `src/TopLab.Application/Features/InventoryAndAccounting/**`, `tests/**` (Domain CashMovement tests + Application inventory tests + 7 validator-registration cases), `Docs/**`. No `.csproj` changes, no new packages, no `PermissionConfiguration` change, zero Presentation content, zero Persistence changes. Full suite green; Release build 0/0. Coverage: per-slice footprint gates under the M-11/M-14/M-19 waiver posture.
 
 **Related.** M-20 Implementation Plan §2, §5 (S1–S3), §6 (S4), Appendix A; ADR-0045 (M-19, consumed the previous number first); ADR-0042 (M-16 calculator); ADR-0034 (M-03 balance formula / gating scope-reading); Data Model §11.2–11.3; PRD FR-M17-004 item 11, FR-M20-001…006.
+
+### ADR-0047 — Utilities (Tools): pure Domain computation services and workstation-local JSON lists
+
+**Status:** Accepted
+**Date:** 2026-09-15
+
+**Context.** M-23 delivers the Tools backend: measurement-unit converter, arithmetic calculator, stopwatch math, Test Library catalog read, Requirements & Purchases list, and Phone Book. No business-schema storage exists for these utilities; the permission catalog has no utilities code; Image Library and Shortcut Library have no useful backend surface.
+
+**Decision.**
+
+1. **Pure computation in Domain (SD-23-1).** `MeasurementUnitConverter`, `ArithmeticCalculator`, `StopwatchCalculator` are stateless static services in `src/TopLab.Domain/Utilities/` with thin Application wrappers — matching `PatientAccountCalculator` / `AttendanceCalculator`.
+
+2. **Workstation-local JSON lists (SD-23-2).** `IPurchasesListStore` / `IPhoneBookStore` ports with `JsonPurchasesListStore` / `JsonPhoneBookStore` under `%ProgramData%\TopLab` (`purchases-list.json`, `phone-book.json`). No EF entity, table, or migration. Precedent: `ILabPrintTextStore` / ADR-0027 / ADR-0021 locality.
+
+3. **Ungated surface (SD-23-3).** Every member is a plain `IRequest<Result<…>>` mirroring `CheckDatabaseConnectivityQuery`. `PermissionConfiguration` is untouched.
+
+4. **Fail-closed computation.** Unknown unit pair → `ArgumentException` → `Error.Validation("زوج الوحدات غير مدعوم.")`; malformed expression → «التعبير الحسابي غير صالح.»; division by zero → `CalculatorException` → «لا يمكن القسمة على صفر.»; inverted stopwatch → «وقت النهاية يسبق وقت البداية.». The calculator is a hand-written recursive-descent parser — never `DataTable.Compute`.
+
+5. **Image Library / Shortcut Library backends excluded (SD-23-6/SD-23-7).** Presentation/OS concerns; ADR-0027 no-images precedent; recorded decisions, not open points.
+
+6. **Phone-book separation (SD-23-11).** The Tools Phone Book never references `Patient` or patient phone numbers.
+
+7. **Zero-drift outcome.** No EF migration in any slice: `has-pending-model-changes` reports no changes; snapshot untouched.
+
+**Consequences.** Diff confined to `src/TopLab.Domain/Utilities/**`, `src/TopLab.Application/Features/Utilities/**`, two Application ports, two Infrastructure JSON stores + two DI registrations, `tests/**`, `Docs/**`. No `.csproj` changes, no new packages, no `PermissionConfiguration` change, zero Presentation content. Full suite green; Release build 0/0.
+
+**Related.** M-23 Implementation Plan §2, §5–§6, Appendix A; ADR-0046 (M-20, consumed the previous number first); ADR-0027 (workstation-local JSON store precedent); ADR-0008 (Result error mapping); PRD FR-M23-001/002.

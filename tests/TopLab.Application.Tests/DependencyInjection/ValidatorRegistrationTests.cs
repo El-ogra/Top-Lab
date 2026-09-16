@@ -16,6 +16,17 @@ using TopLab.Application.Features.InventoryAndAccounting.Queries.GetElementInven
 using TopLab.Application.Features.InventoryAndAccounting.Queries.GetPatientSamplesDetail;
 using TopLab.Application.Features.InventoryAndAccounting.Queries.ListCashMovements;
 using TopLab.Application.Features.Statistics.Queries.GetPatientCountStatistics;
+using TopLab.Application.Features.Utilities.Commands.AddPhoneBookEntry;
+using TopLab.Application.Features.Utilities.Commands.AddPurchaseItem;
+using TopLab.Application.Features.Utilities.Commands.RemovePhoneBookEntry;
+using TopLab.Application.Features.Utilities.Commands.RemovePurchaseItem;
+using TopLab.Application.Features.Utilities.Commands.TogglePurchaseItemDone;
+using TopLab.Application.Features.Utilities.Queries.ComputeStopwatchElapsed;
+using TopLab.Application.Features.Utilities.Queries.ConvertMeasurementUnit;
+using TopLab.Application.Features.Utilities.Queries.EvaluateCalculation;
+using TopLab.Application.Features.Utilities.Queries.GetPhoneBook;
+using TopLab.Application.Features.Utilities.Queries.GetPurchasesList;
+using TopLab.Application.Features.Utilities.Queries.GetTestLibrary;
 using TopLab.Application.Features.Statistics.Queries.GetSentOutStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetTestCountStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetUserProductivityStatistics;
@@ -311,6 +322,29 @@ public class ValidatorRegistrationTests
     [InlineData(typeof(IValidator<ListCashMovementsQuery>))]
     [InlineData(typeof(IValidator<GetCompanyDelegateAccountsQuery>))]
     public void HostBuiltLikeApp_ResolvesM20Validators(System.Type validatorType)
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        var validator = provider.GetService(validatorType);
+
+        Assert.NotNull(validator);
+    }
+
+    [Theory]
+    [InlineData(typeof(IValidator<ConvertMeasurementUnitQuery>))]
+    [InlineData(typeof(IValidator<EvaluateCalculationQuery>))]
+    [InlineData(typeof(IValidator<ComputeStopwatchElapsedQuery>))]
+    [InlineData(typeof(IValidator<GetTestLibraryQuery>))]
+    [InlineData(typeof(IValidator<AddPurchaseItemCommand>))]
+    [InlineData(typeof(IValidator<RemovePurchaseItemCommand>))]
+    [InlineData(typeof(IValidator<TogglePurchaseItemDoneCommand>))]
+    [InlineData(typeof(IValidator<GetPurchasesListQuery>))]
+    [InlineData(typeof(IValidator<AddPhoneBookEntryCommand>))]
+    [InlineData(typeof(IValidator<RemovePhoneBookEntryCommand>))]
+    [InlineData(typeof(IValidator<GetPhoneBookQuery>))]
+    public void HostBuiltLikeApp_ResolvesM23Validators(System.Type validatorType)
     {
         var services = new ServiceCollection();
         services.AddApplication();

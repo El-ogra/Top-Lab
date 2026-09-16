@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-23.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S3 — completed; S4 next
+- **Current Slice:** S4 — completed; MODULE COMPLETE
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -55,7 +55,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | Domain computation services + tests | [x] Done | VG-01 PASS |
 | 2 | Application computation queries + Test Library | [x] Done | VG-02 PASS |
 | 3 | Purchases list + phone book (workstation-local stores) | [x] Done | VG-03 PASS |
-| 4 | Tests + zero-drift proof + close-out | [ ] Pending | VG-04 |
+| 4 | Tests + zero-drift proof + close-out | [x] Done | VG-04 PASS |
 
 ---
 
@@ -146,26 +146,27 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 4)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Full suite green after S3.
-- [ ] **Stage 2 — Deep Understanding:** Plan §6; handoff template; ADR numbering re-checked.
-- [ ] **Stage 3 — File Analysis:** `ValidatorRegistrationTests.cs`, tracking sheet rows 85/103, ADR tail, `Docs/Source/Top_Lab_Handoff_Template.md`.
-- [ ] **Stage 4 — Planning:** Validator extension → gates → docs → final run.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln -c Release` 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-04 (zero-drift proof binding).
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated → MODULE COMPLETE.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-23] Slice 4/4: Tests + zero-drift proof + close-out — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** App 1343/1343 + Infra 160/160 after S3.
+- [x] **Stage 2 — Deep Understanding:** Plan §6; ADR-0047; handoff template.
+- [x] **Stage 3 — File Analysis:** ValidatorRegistrationTests; tracking M23 row; ADR max 0046.
+- [x] **Stage 4 — Planning:** Validator extension → gates → docs → final run.
+- [x] **Stage 5 — Execution:** M23 validator theory (11 cases); ADR-0047; tracking flip; Handoff_M23.md.
+- [x] **Stage 6 — Post-Execution Verification:** build 0/0; full suite **1981/1981** green (467 Domain + 1354 Application + 160 Infrastructure).
+- [x] **Stage 7 — Validation Gate:** VG-04 PASS — drift clean; snapshot untouched; zero Persistence schema diff; zero Presentation.
+- [x] **Stage 8 — Documentation Update:** ADR-0047; M23 row 🟩; Wave 10 All Done; §9 change-log; Handoff_M23.md.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated; module close-out recorded.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
 ## Current Status
 
-- Slices complete: 3/4. Next action: begin S4 Stage 1.
+- Slices complete: 4/4. **MODULE COMPLETE.**
 - Dependency posture: M-23 ⇄ M-20 — no code-level dependency (verified); M-23's only code dependency (M-01 pipeline) is satisfied at the audited commit.
 - S1 evidence: VG-01 PASS; commit `1fd8263`.
 - S2 evidence: VG-02 PASS; commit `2ac7ea9`.
-- S3 evidence (2026-09-15): VG-03 PASS; App 1343/1343; Infra 160/160; drift clean.
+- S3 evidence: VG-03 PASS; commit `07a22b0`.
+- S4 evidence (2026-09-15): VG-04 PASS; full suite 1981/1981; drift clean; ADR-0047; Handoff_M23.md.
 
 ## Execution Log
 
@@ -174,6 +175,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-15 | 1 | 1-10 | Domain computation services + tests; VG-01 PASS | OK |
 | 2026-09-15 | 2 | 1-10 | Computation queries + test library; VG-02 PASS | OK |
 | 2026-09-15 | 3 | 1-10 | Purchases list + phone book stores; VG-03 PASS | OK |
+| 2026-09-15 | 4 | 1-10 | Validator-reg + ADR-0047 + tracking + Handoff_M23; full suite 1981/1981; VG-04 PASS | OK |
 
 ## Stop Report
 
