@@ -1,6 +1,7 @@
 using TopLab.Application.Common.Behaviors;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.WorkSheets.Common;
+using TopLab.Application.Features.WorkSheets.Queries.GetVisitWorkSheet;
 using TopLab.Application.Features.WorkSheets.Queries.GetWorkSheetByTestGroup;
 using TopLab.Application.Features.WorkSheets.Queries.GetWorkSheetByWorkGroupLog;
 using TopLab.Application.Features.WorkSheets.Queries.GetWorkSheetSummary;
@@ -21,6 +22,7 @@ public class WorkSheetsAuthorizationTests
         Assert.Equal("PRINT_WORKSHEET", new GetWorkSheetByTestGroupQuery().RequiredPermissionCode);
         Assert.Equal("PRINT_WORKSHEET", new GetWorkSheetSummaryQuery().RequiredPermissionCode);
         Assert.Equal("PRINT_WORKSHEET", new GetWorkSheetTestCountByPeriodQuery().RequiredPermissionCode);
+        Assert.Equal("PRINT_WORKSHEET", new GetVisitWorkSheetQuery(7).RequiredPermissionCode);
     }
 
     [Fact]

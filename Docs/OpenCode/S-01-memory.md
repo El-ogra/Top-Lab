@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-01.md
 - **Date Created:** 2026-09-16
 - **Total Slices:** 6
-- **Current Slice:** S3 — Done (committed); S4 — Pending
+- **Current Slice:** S4 — Done (committed); S5 — Pending
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution to be carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -64,7 +64,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | Barcode service (`IBarcodeService` impl, Code-128, printer routing) | [x] Done | VG-S1 |
 | 2 | Receipt printing (`IReceiptPrintingService` port + impl + `PrintReceiptCommand`) | [x] Done | VG-S2 |
 | 3 | Invoice concept + renderer + `PrintInvoiceCommand` (**migrating**) | [x] Done | VG-S3 |
-| 4 | Visit worksheet renderer + `PrintWorkSheetCommand` | [ ] Pending | VG-S4 |
+| 4 | Visit worksheet renderer + `PrintWorkSheetCommand` | [x] Done | VG-S4 |
 | 5 | Patients hub + «المرضى» navigation wiring | [ ] Pending | VG-S5 |
 | 6 | Unified Add/Edit Patient Data screen (demographics + ordering + billing + 4 print actions) | [ ] Pending | VG-S6 |
 
@@ -222,15 +222,23 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 4)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S3.
-- [ ] **Stage 2 — Deep Understanding:** re-read plan §6; internalize SD-7 (dedicated worksheet port) and the `OutputType=Reports` routing choice.
-- [ ] **Stage 3 — File Analysis:** `WorkSheetDtos.cs` (`WorkSheetLineDto` shape — `Barcode`, `IsSampleDrawn`, `CompletionDurationMinutes`, test name/code); `WorkSheetsAccessPolicy.cs` (ungated reads); `SystemSettings` flags consumed (`PrintFileExternalBarcode`, `PrintDateTimeOnTubeBarcode`, `PrintLabIdInsteadOfPatientId`); the four existing worksheet queries as structural precedent (`GetWorkSheetByTestGroup`, `GetWorkSheetByWorkGroupLog`, …).
-- [ ] **Stage 4 — Planning:** step-by-step slice plan encoded here.
-- [ ] **Stage 5 — Execution:** implement per plan §6.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-S4 pass.
-- [ ] **Stage 8 — Documentation Update:** checkboxes updated.
-- [ ] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S3. DONE 2026-09-16: S3 gate runs serve as S4 baseline (build 0/0; suite 2051 green at commit `19681a1`); working tree clean except untracked input `S-01.md`.
+- [x] **Stage 2 — Deep Understanding:** re-read plan §6; internalize SD-7 (dedicated worksheet port) and the `OutputType=Reports` routing choice.
+- [x] **Stage 3 — File Analysis:** `WorkSheetDtos.cs` (`WorkSheetLineDto` shape — `Barcode`, `IsSampleDrawn`, `CompletionDurationMinutes`, test name/code); `WorkSheetsAccessPolicy.cs` (ungated reads); `SystemSettings` flags consumed (`PrintFileExternalBarcode`, `PrintDateTimeOnTubeBarcode`, `PrintLabIdInsteadOfPatientId`); the four existing worksheet queries as structural precedent (`GetWorkSheetByTestGroup`, `GetWorkSheetByWorkGroupLog`, …). DONE with two corrections: (a) ALL FOUR existing queries are GATED on `PRINT_WORKSHEET` via `IAuthorizedRequest` — the plan's "ungated" label is factually wrong; its rationale ("consistent with WorkSheets queries") is honored by GATING the new query+command on `PRINT_WORKSHEET` (recorded deviation, not an SD change). (b) `WorkSheetLineDto` carries NO sample-kind flags (only `IsSampleDrawn`) — reused verbatim per plan; kinds travel in a parallel `VisitWorkSheetSampleDto(PatientTestId+6 flags)` list joined by `PatientTestId` in the writer. Line projection copied from `WorkSheetHelpers.WorkSheetLines.Select` (period/testIds filters dropped, outside-lab rows INCLUDED with flags shown); new internal `SelectVisit` helper in same file.
+- [x] **Stage 4 — Planning:** step-by-step slice plan encoded here.
+  1. `WorkSheetDtos.cs`: add `VisitWorkSheetDto` (patient header + `Sections` of `WorkSheetSectionDto` + `Samples` of new `VisitWorkSheetSampleDto` + `TotalTests` + 3 settings echoes) — `WorkSheetLineDto` untouched.
+  2. `WorkSheetHelpers`: add internal `SelectVisit(db, patient)` returning lines+samples.
+  3. `GetVisitWorkSheet/` query (GATED `PRINT_WORKSHEET`)+handler (NotFound incl. deleted; settings missing → «سجل الإعدادات العامة مفقود.»; sections = active groups by name + ungrouped; empty visit → empty sections, still success)+validator.
+  4. `IWorkSheetPrintingService` + `IWorkSheetPdfWriter` ports; `WorkSheetPrintEnvelope` (`Features/WorkSheets/Common`, `CreateToken(VisitWorkSheetDto)`).
+  5. `WorkSheetPrintingService` (Reports routing, «بيانات ورقة العمل غير صالحة.»/reports-printer message/«تعذر طباعة ورقة العمل.»; lab text via store) + `WorkSheetPdfWriter` (QuestPDF A4 RTL, same static init; sections; textual `Test.Barcode`; kind letters U/S/B/Se/CSF + خارج; draw [ ]/[X]; identifier LabId-vs-PatientId + datetime line; `BuildTextLines` for tests).
+  6. `PrintWorkSheet/` command (GATED `PRINT_WORKSHEET`)+handler (via ISender; token; service)+validator.
+  7. DI wiring.
+  8. Tests: `GetVisitWorkSheetQueryHandlerTests` (mixed flags assembly; soft-deleted NotFound; empty visit printable; gate) + `PrintWorkSheetCommandHandlerTests` (token round-trip; missing Reports assignment; never-throws; gate) + `WorkSheetPrintingServiceTests` (happy %PDF + Reports routing; invalid token; dispatch-throw; `BuildTextLines` letters).
+- [x] **Stage 5 — Execution:** implement per plan §6. DONE: `VisitWorkSheetDto`+`VisitWorkSheetSampleDto` (WorkSheetLineDto untouched); `WorkSheetVisitLines.SelectVisit`; `GetVisitWorkSheet/` trio (GATED PRINT_WORKSHEET — recorded deviation); ports (`IWorkSheetPrintingService`, `IWorkSheetPdfWriter`) + `WorkSheetPrintEnvelope`; `WorkSheetPrintingService` (Reports routing) + `WorkSheetPdfWriter` (QuestPDF A4 RTL, kind letters, draw checkbox); `PrintWorkSheet/` trio (GATED); DI; 3 test files +1 auth assertion (13 App + 6 Infra facts).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0. DONE 2026-09-16 (1 intermediate error fixed: test-only `SampleKinds` needed `public` — no InternalsVisibleTo for Infra tests).
+- [x] **Stage 7 — Validation Gate:** VG-S4 pass. DONE: suite 474+1402+194=2070 green (+19); Reports-printer routing proven by dispatcher capture; per-line flags + textual barcodes proven by `BuildTextLines` test (`BC-10`+`U B`+`[X]` vs `—`+`خارج`+`[ ]`); zero-drift (no Persistence diff; model untouched since S3's clean check). Physical-paper check remains for the owner.
+- [x] **Stage 8 — Documentation Update:** checkboxes updated.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
 - [ ] **Stage 10 — Git Commit (authorized local):** `[S-01] Slice 4/6: Visit worksheet renderer + PrintWorkSheetCommand — loop-engineering`.
 
 ---
@@ -293,9 +301,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Slices complete: **3 / 6** (S3 committed; S4 next, begin Stage 1 immediately).
+- Slices complete: **4 / 6** (S4 committed; S5 hub next, begin Stage 1 immediately).
 - Baseline commit: `faceab6c871230a73640faa4af5013068a403649` (main).
-- S1–S3 executed and committed; S4–S6 Stage-1 checks pending in sequence.
+- S1–S4 executed and committed; S5–S6 Stage-1 checks pending in sequence.
 - Migration count: **exactly 1** (`AddInvoiceIssues`, S3) — no further migrations in S4–S6 (zero-drift gates).
 
 ## Execution Log
@@ -305,6 +313,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-16 | S1 | 1–10 | Barcode service slice (ZXing.Net 0.16.11; `Barcode/`; `PrintBarcode/`; DI; 18 new tests) | VG-S1 pass: build 0/0, suite 2006 green, scan-back + routing proven, zero-drift |
 | 2026-09-16 | S2 | 1–10 | Receipt printing slice (QuestPDF 2026.9.0; receipt ports+envelope+service+writer; `PrintReceipt/`; DI; 14 new tests) | VG-S2 pass: build 0/0, suite 2020 green, Receipt routing + totals proven, zero-drift; pitfall: QuestPDF needs `UseSystemFonts=true` |
 | 2026-09-16 | S3 | 1–10 | Invoice slice (InvoiceIssue+config+migration AddInvoiceIssues; InvoiceDto; invoice ports+envelope+service+writer; GetPatientInvoice/PrintInvoice; DI; 31 new tests) | VG-S3 pass: build 0/0, suite 2051 green, live up/down round-trip + unique enforcement + drift-clean; PRE-EXISTING: baseline from-zero update broken in Sept-9 migration (owner housekeeping, not fixed) |
+| 2026-09-16 | S4 | 1–10 | Visit worksheet slice (VisitWorkSheetDto+Samples; SelectVisit; GetVisitWorkSheet/PrintWorkSheet gated PRINT_WORKSHEET; worksheet ports+envelope+service+writer; DI; 19 new tests) | VG-S4 pass: build 0/0, suite 2070 green, Reports routing + per-line flags/barcodes proven, zero-drift |
 
 ## Stop Report
 

@@ -47,3 +47,30 @@ public sealed record WorkSheetTestCountDto(
     DateOnly To,
     IReadOnlyList<WorkSheetTestCountRowDto> Rows,
     int TotalCount);
+
+/// <summary>
+/// Per-visit worksheet (S-01 slice S4): the current patient's ordered tests.
+/// Reuses <see cref="WorkSheetLineDto"/> verbatim for the bench lines;
+/// per-line sample-kind flags travel in the parallel <see cref="VisitWorkSheetSampleDto"/>
+/// list (joined by <c>PatientTestId</c>) because the shared line DTO carries
+/// only <c>IsSampleDrawn</c>.
+/// </summary>
+public sealed record VisitWorkSheetDto(
+    int PatientId,
+    string PatientFullName,
+    string? LabId,
+    IReadOnlyList<WorkSheetSectionDto> Sections,
+    IReadOnlyList<VisitWorkSheetSampleDto> Samples,
+    int TotalTests,
+    bool PrintFileExternalBarcode,
+    bool PrintDateTimeOnTubeBarcode,
+    bool PrintLabIdInsteadOfPatientId);
+
+public sealed record VisitWorkSheetSampleDto(
+    int PatientTestId,
+    bool IsUrine,
+    bool IsStool,
+    bool IsBlood,
+    bool IsSemen,
+    bool IsCsf,
+    bool IsTakenOutsideLab);

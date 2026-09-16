@@ -76,6 +76,9 @@ public static class DependencyInjection
         // Invoice printing: itemized numbered statement of services (S-01 S3).
         services.AddScoped<IInvoicePrintingService, InvoicePrintingService>();
         services.AddScoped<IInvoicePdfWriter, InvoicePdfWriter>();
+        // Visit-worksheet printing: per-visit bench sheet (S-01 S4).
+        services.AddScoped<IWorkSheetPrintingService, WorkSheetPrintingService>();
+        services.AddScoped<IWorkSheetPdfWriter, WorkSheetPdfWriter>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
 

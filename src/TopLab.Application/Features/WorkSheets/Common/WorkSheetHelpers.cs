@@ -28,6 +28,57 @@ internal static class WorkSheetPeriod
 }
 
 /// <summary>
+/// Per-visit bench-sheet selector (S-01 slice S4): ALL of one patient's ordered
+/// tests (outside-lab rows included — their flags show where each sample comes
+/// from), ordered by line id. Same line projection as <see cref="WorkSheetLines.Select"/>
+/// plus the parallel sample-kind flags.
+/// </summary>
+internal static class WorkSheetVisitLines
+{
+    public static (IReadOnlyList<WorkSheetLineDto> Lines, IReadOnlyList<VisitWorkSheetSampleDto> Samples) SelectVisit(
+        IApplicationDbContext db,
+        Patient patient)
+    {
+        var tests = db.Set<Test>().ToDictionary(t => t.Id.Value);
+
+        var rows = db.Set<PatientTest>()
+            .Where(pt => pt.PatientId.Value == patient.Id.Value)
+            .OrderBy(pt => pt.Id.Value)
+            .ToList();
+
+        var lines = new List<WorkSheetLineDto>(rows.Count);
+        var samples = new List<VisitWorkSheetSampleDto>(rows.Count);
+        foreach (var pt in rows)
+        {
+            tests.TryGetValue(pt.TestId.Value, out var test);
+            lines.Add(new WorkSheetLineDto(
+                pt.Id.Value,
+                patient.Id.Value,
+                patient.FullName,
+                patient.LabId == null ? null : patient.LabId.Value,
+                test?.Name ?? string.Empty,
+                test?.TestCode ?? string.Empty,
+                test?.Barcode,
+                pt.IsSampleDrawn,
+                pt.SampleDrawnAtUtc,
+                pt.EnteredAtUtc != null,
+                pt.IsReviewed,
+                test?.CompletionDurationMinutes ?? 0));
+            samples.Add(new VisitWorkSheetSampleDto(
+                pt.Id.Value,
+                pt.IsUrine,
+                pt.IsStool,
+                pt.IsBlood,
+                pt.IsSemen,
+                pt.IsCsf,
+                pt.IsTakenOutsideLab));
+        }
+
+        return (lines, samples);
+    }
+}
+
+/// <summary>
 /// Shared bench-sheet row selector: <see cref="PatientTest"/> rows for the period
 /// whose sample should be in the lab (<c>!IsTakenOutsideLab</c>), ordered by
 /// patient registration then line id. Each line carries the owner-settled
