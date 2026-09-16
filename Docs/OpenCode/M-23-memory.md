@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-23.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S2 — completed; S3 next
+- **Current Slice:** S3 — completed; S4 next
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -54,7 +54,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 1 | Domain computation services + tests | [x] Done | VG-01 PASS |
 | 2 | Application computation queries + Test Library | [x] Done | VG-02 PASS |
-| 3 | Purchases list + phone book (workstation-local stores) | [ ] Pending | VG-03 |
+| 3 | Purchases list + phone book (workstation-local stores) | [x] Done | VG-03 PASS |
 | 4 | Tests + zero-drift proof + close-out | [ ] Pending | VG-04 |
 
 ---
@@ -125,16 +125,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 3)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Full suite green after S2.
-- [ ] **Stage 2 — Deep Understanding:** Plan §5 S3 + SD-23-2/11; Appendix A messages.
-- [ ] **Stage 3 — File Analysis:** `ILabPrintTextStore.cs` port shape, M-22 `JsonLabPrintTextStore` (Handoff_M22 §3), `src/TopLab.Infrastructure/DependencyInjection.cs` registration style.
-- [ ] **Stage 4 — Planning:** Ports → DTO usage → commands/queries → stores → DI → tests.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** Application + Infrastructure builds 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-03 (incl. zero-drift).
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-23] Slice 3/4: Purchases list + phone book stores — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** App 1335/1335 after S2.
+- [x] **Stage 2 — Deep Understanding:** Plan §5 S3 + SD-23-2/11; Appendix A.
+- [x] **Stage 3 — File Analysis:** ILabPrintTextStore port shape; JsonLabPrintTextStore pattern; Infrastructure DI.
+- [x] **Stage 4 — Planning:** Ports → commands/queries → JSON stores → DI → tests.
+- [x] **Stage 5 — Execution:** Implemented both list surfaces + stores + DI + tests (23 App + 6 Infra).
+- [x] **Stage 6 — Post-Execution Verification:** Application + Infrastructure builds 0/0.
+- [x] **Stage 7 — Validation Gate:** VG-03 PASS — full App 1343/1343; Infra 160/160; zero Persistence; drift clean.
+- [x] **Stage 8 — Documentation Update:** checklist recorded.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -161,10 +161,11 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Slices complete: 2/4. Next action: begin S3 Stage 1.
+- Slices complete: 3/4. Next action: begin S4 Stage 1.
 - Dependency posture: M-23 ⇄ M-20 — no code-level dependency (verified); M-23's only code dependency (M-01 pipeline) is satisfied at the audited commit.
 - S1 evidence: VG-01 PASS; commit `1fd8263`.
-- S2 evidence (2026-09-15): VG-02 PASS; App 1335/1335; drift clean; midnight-UTC flake stabilized in SampleCollection tests.
+- S2 evidence: VG-02 PASS; commit `2ac7ea9`.
+- S3 evidence (2026-09-15): VG-03 PASS; App 1343/1343; Infra 160/160; drift clean.
 
 ## Execution Log
 
@@ -172,6 +173,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|---|---|---|---|
 | 2026-09-15 | 1 | 1-10 | Domain computation services + tests; VG-01 PASS | OK |
 | 2026-09-15 | 2 | 1-10 | Computation queries + test library; VG-02 PASS | OK |
+| 2026-09-15 | 3 | 1-10 | Purchases list + phone book stores; VG-03 PASS | OK |
 
 ## Stop Report
 

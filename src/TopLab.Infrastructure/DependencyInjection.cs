@@ -80,6 +80,11 @@ public static class DependencyInjection
         // Daily backup hook runs in the background independently of any UI.
         services.AddHostedService<DailyBackupHostedService>();
 
+        // M-23 workstation-local utility lists (SD-23-2): no database table,
+        // no migration — JSON files under %ProgramData%\TopLab.
+        services.AddSingleton<IPurchasesListStore, JsonPurchasesListStore>();
+        services.AddSingleton<IPhoneBookStore, JsonPhoneBookStore>();
+
         return services;
     }
 }
