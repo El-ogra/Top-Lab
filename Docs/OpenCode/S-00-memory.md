@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-00.md
 - **Date Created:** 2026-09-16
 - **Total Slices:** 2
-- **Current Slice:** S2 — In Progress (S1 complete, committed; begin S2 Stage 1 next)
+- **Current Slice:** S2 — Complete (both slices done; final commit pending)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -58,7 +58,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Login screen (LoginWindow + LoginViewModel) and startup gate | [x] Complete | VG-01 — PASS |
-| 2 | FirstRunAdminWindow UX: independent show/hide toggles + post-creation success confirmation | [ ] Pending | VG-02 — NOT RUN |
+| 2 | FirstRunAdminWindow UX: independent show/hide toggles + post-creation success confirmation | [x] Complete | VG-02 — PASS |
 
 ---
 
@@ -112,25 +112,29 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S1.
-- [ ] **Stage 2 — Deep Understanding:** Plan §4 (S2) + Appendix A.
-- [ ] **Stage 3 — File Analysis:** `FirstRunAdminWindow.xaml:L1-L56` (four `PasswordBox` at L35/L38/L41/L44); code-behind `L17-L31`; VM `SetProperty` pattern `L28-L68`.
-- [ ] **Stage 4 — Planning:** step-by-step slice plan encoded here.
-- [ ] **Stage 5 — Execution:** implement per plan §4.
-- [ ] **Stage 6 — Post-Execution Verification:** solution build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-02 (incl. manual UX verification + zero-drift gate).
-- [ ] **Stage 8 — Documentation Update:** checklist recorded.
-- [ ] **Stage 9 — Memory Status Update:** Current Status updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-00] Slice 2/2: FirstRunAdminWindow UX fixes — loop-engineering` (record hash in Execution Log).
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S1. Evidence 2026-09-16 (post-commit `868eb85`): `dotnet build TopLab.sln` → 0 Warning(s), 0 Error(s); `dotnet test` → Domain 467/467, Infrastructure 160/160, Application 1361/1361 (1988 total, 0 failed).
+- [x] **Stage 2 — Deep Understanding:** Plan §4 (S2) + Appendix A re-read. Settled: four independent per-field toggles (Audit C-2, not two, not global); success MessageBox verbatim «تم إنشاء حساب مدير النظام بنجاح. سيتم الآن عرض شاشة تسجيل الدخول.» then existing close (`DialogResult=true; Close()`); no restart wording — next screen is Login (S1 gate); wire-only none; no UI tests (manual verification).
+- [x] **Stage 3 — File Analysis:** `FirstRunAdminWindow.xaml:L1-L56` (four `PasswordBox` at L35/L38/L41/L44 confirmed in Stage-1 read; 2-col grid rows 3–6); code-behind L17-L31 (`CreateButton_Click` copies `.Password` at L20-L23, success silent close L26-L30); VM `SetProperty` pattern L28-L68, `CreateAsync` L70-L140 (untouched). S1 `LoginWindow` toggle pattern (paired reveal `TextBox` + «إظهار» `CheckBox` + visibility-sync handler) reused as in-repo precedent.
+- [x] **Stage 4 — Planning:** step-by-step slice plan encoded here (completed 2026-09-16):
+  1. VM (`FirstRunAdminViewModel.cs`): add four `bool` fields + properties (`ShowPassword`, `ShowConfirmPassword`, `ShowSecondaryPassword`, `ShowConfirmSecondaryPassword`) via `SetProperty`; no other VM change (`CreateAsync` untouched).
+  2. XAML: add third `Auto` column; per secret row add paired reveal `TextBox` (`Visibility=Collapsed`) in Column 1 + «إظهار» `CheckBox` in Column 2 bound `IsChecked` to the matching VM boolean; wire `Checked`/`Unchecked` to per-field handlers; header/footer rows span 3 columns.
+  3. Code-behind: `CreateButton_Click` reads each secret from the currently-visible control (revealed → paired `TextBox.Text`, else `PasswordBox.Password`); on `success == true` show verbatim success `MessageBox` then `DialogResult=true; Close()`; add four visibility-sync handlers (+ tiny helper).
+  4. Must-NOT-change respected: `CreateUserCommand`/Handler, `HasAnyAbsoluteUserQuery`, admin-gate block `App.xaml.cs:L73-L96` (now shifted by S1 insert — content untouched), validation rules, four-field model.
+- [x] **Stage 5 — Execution:** implement per plan §4. Done 2026-09-16: VM +4 `bool` properties via `SetProperty` (`ShowPassword`, `ShowConfirmPassword`, `ShowSecondaryPassword`, `ShowConfirmSecondaryPassword`), `CreateAsync` untouched; XAML third `Auto` column + 4 paired reveal `TextBox` (`Collapsed`) + 4 «إظهار» `CheckBox` bound to VM bools with per-field handlers, spans 2→3; code-behind reads each secret from the visible control, verbatim success `MessageBox` before preserved `DialogResult=true; Close()`, four sync handlers + `SyncSecretVisibility` helper. Must-NOT-change respected (only the 3 intended files modified).
+- [x] **Stage 6 — Post-Execution Verification:** solution build 0/0. Evidence: `dotnet build TopLab.sln` → Build succeeded, 0 Warning(s), 0 Error(s).
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS. (1) Build 0/0 ✓. (2) Full suite green: 467 + 160 + 1361 = 1988/1988, 0 failed ✓. (3) Exit criteria structurally verified (manual window interaction per plan — no UI harness exists, none invented): four independent `CheckBox`/handler pairs each syncing only its own controls ✓; toggle sync copies both ways so revealed text == what `CreateAsync` receives (creation identical on/off) ✓; success `MessageBox` verbatim per Appendix A, then close, then S1 login gate (`App.xaml.cs` L98+) is next — no `MainWindow`, no restart prompt ✓. (4) Zero-drift: `has-pending-model-changes` → "No changes have been made to the model since the last migration."; Persistence diff empty ✓.
+- [x] **Stage 8 — Documentation Update:** checklist recorded.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-00] Slice 2/2: FirstRunAdminWindow UX fixes — loop-engineering` (record hash in Execution Log).
 
 ---
 
 ## Current Status
 
-- Slices complete: 1/2.
+- Slices complete: 2/2.
 - Baseline commit: `f0d6457594b6b6fcfff1f4bbc277566dfb3854c2` (main).
-- S1 evidence: build 0/0; tests 1988/1988 (467 Domain + 160 Infra + 1361 App incl. 7 new validator tests); state-machine (a)–(e) structurally verified; zero-drift "No changes" + empty Persistence diff. VG-01 PASS.
-- S2 evidence: — (pending).
+- S1 evidence: build 0/0; tests 1988/1988 (467 Domain + 160 Infra + 1361 App incl. 7 new validator tests); state-machine (a)–(e) structurally verified; zero-drift "No changes" + empty Persistence diff. VG-01 PASS. Commit `868eb85`.
+- S2 evidence: build 0/0; tests 1988/1988; four independent toggles + identical creation on/off + verbatim success message → Login next, structurally verified; zero-drift "No changes" + empty Persistence diff. VG-02 PASS.
 
 ## Execution Log
 
@@ -140,6 +144,12 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-16 | S1 | 2–4 | Re-read plan §3 + App.A; file analysis; step-by-step plan encoded | Done |
 | 2026-09-16 | S1 | 5 | Created LoginViewModel/LoginWindow.xaml(.cs)/SignInCommandValidatorTests; modified DI + App.xaml.cs gate | Done, Must-NOT-change respected |
 | 2026-09-16 | S1 | 6–7 | Post-build 0/0; full suite 1988/1988; state-machine (a)–(e); zero-drift gate | VG-01 PASS |
+| 2026-09-16 | S1 | 10 | Local commit on `main` (no push, no new branch) | `868eb85` — `[S-00] Slice 1/2: Login screen + startup gate — loop-engineering` |
+| 2026-09-16 | S2 | 1 | Pre-execution post-S1: `dotnet build` + `dotnet test` | Build 0/0; 1988/1988 green |
+| 2026-09-16 | S2 | 2–4 | Re-read plan §4 + App.A; file analysis; step-by-step plan encoded | Done |
+| 2026-09-16 | S2 | 5 | VM +4 bools; XAML 4 paired TextBox + toggles; code-behind visible-reads + success MessageBox | Done, Must-NOT-change respected |
+| 2026-09-16 | S2 | 6–7 | Post-build 0/0; full suite 1988/1988; exit criteria; zero-drift gate | VG-02 PASS |
+| 2026-09-16 | S2 | 10 | Local commit on `main` (no push, no new branch), then `--amend --no-edit` solely to fold this log row in (same message, still one S2 commit) | `82ec367` → amended `80a3a1c` — `[S-00] Slice 2/2: FirstRunAdminWindow UX fixes — loop-engineering` (definitive final hash in completion report) |
 
 ## Stop Report
 

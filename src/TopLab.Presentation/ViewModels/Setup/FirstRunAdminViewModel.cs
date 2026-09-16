@@ -18,6 +18,10 @@ public sealed class FirstRunAdminViewModel : ViewModelBase
     private string _confirmSecondaryPassword = string.Empty;
     private string _errorMessage = string.Empty;
     private bool _isBusy;
+    private bool _showPassword;
+    private bool _showConfirmPassword;
+    private bool _showSecondaryPassword;
+    private bool _showConfirmSecondaryPassword;
 
     public FirstRunAdminViewModel(ISender mediator, ResultErrorPresenter presenter)
     {
@@ -65,6 +69,30 @@ public sealed class FirstRunAdminViewModel : ViewModelBase
     {
         get => _isBusy;
         set => SetProperty(ref _isBusy, value);
+    }
+
+    public bool ShowPassword
+    {
+        get => _showPassword;
+        set => SetProperty(ref _showPassword, value);
+    }
+
+    public bool ShowConfirmPassword
+    {
+        get => _showConfirmPassword;
+        set => SetProperty(ref _showConfirmPassword, value);
+    }
+
+    public bool ShowSecondaryPassword
+    {
+        get => _showSecondaryPassword;
+        set => SetProperty(ref _showSecondaryPassword, value);
+    }
+
+    public bool ShowConfirmSecondaryPassword
+    {
+        get => _showConfirmSecondaryPassword;
+        set => SetProperty(ref _showConfirmSecondaryPassword, value);
     }
 
     public async Task<bool> CreateAsync()
