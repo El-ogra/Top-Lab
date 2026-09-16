@@ -85,6 +85,29 @@ public class AddAnalyteProfileDomainMigrationTests
     }
 
     [Fact]
+    public void Up_DropsProfileResultItemsAnalyteIndexBeforeTighteningAndRecreatesAfter()
+    {
+        var ops = RunUp();
+        var alter = RequireSql(ops, s => s.Contains("ALTER TABLE ProfileResultItems ALTER COLUMN AnalyteId int NOT NULL"));
+        var guard = Sqls(ops).Single(o => o.Sql.Contains("THROW 50001"));
+        var drop = ops.OfType<DropIndexOperation>().Single(o =>
+            o.Table == "ProfileResultItems" && o.Name == "IX_ProfileResultItems_AnalyteId");
+        var recreates = ops.OfType<CreateIndexOperation>()
+            .Where(o => o.Table == "ProfileResultItems" && o.Name == "IX_ProfileResultItems_AnalyteId").ToList();
+        // One initial create (with the other new-model indexes) + one recreate after the tighten.
+        Assert.Equal(2, recreates.Count);
+        var recreate = recreates.Last();
+        var dropAnalyteName = ops.OfType<DropColumnOperation>().Single(o => o.Name == "AnalyteName");
+        Assert.True(
+            GetIndex(ops, guard) < GetIndex(ops, drop)
+            && GetIndex(ops, drop) < GetIndex(ops, alter)
+            && GetIndex(ops, alter) < GetIndex(ops, recreate)
+            && GetIndex(ops, recreate) < GetIndex(ops, dropAnalyteName),
+            "SQL Server (Msg 5074) refuses ALTER COLUMN under a dependent index: " +
+            "the index must be dropped before the tighten and recreated after.");
+    }
+
+    [Fact]
     public void Up_BackfillCreatesAnalytePerSimpleTestAndProfilesPerSpecialisedTest()
     {
         var ops = RunUp();

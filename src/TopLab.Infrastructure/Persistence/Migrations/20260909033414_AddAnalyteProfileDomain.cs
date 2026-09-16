@@ -352,8 +352,17 @@ JOIN Analytes a ON a.Name = pri.AnalyteName;");
 IF EXISTS (SELECT 1 FROM ProfileResultItems WHERE AnalyteId IS NULL)
     THROW 50001, N'M-05 backfill stopped: legacy ProfileResultItem rows have no deterministic configured Analyte match. An execution addendum is required; no clinical identity was guessed.', 1;");
 
+            migrationBuilder.DropIndex(
+                name: "IX_ProfileResultItems_AnalyteId",
+                table: "ProfileResultItems");
+
             migrationBuilder.Sql(@"
 ALTER TABLE ProfileResultItems ALTER COLUMN AnalyteId int NOT NULL;");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProfileResultItems_AnalyteId",
+                table: "ProfileResultItems",
+                column: "AnalyteId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Analytes_Name",
