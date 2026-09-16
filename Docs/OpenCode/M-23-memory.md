@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/M-23.md
 - **Date Created:** 2026-09-15
 - **Total Slices:** 4
-- **Current Slice:** S1 — completed; S2 next
+- **Current Slice:** S2 — completed; S3 next
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -53,7 +53,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Domain computation services + tests | [x] Done | VG-01 PASS |
-| 2 | Application computation queries + Test Library | [ ] Pending | VG-02 |
+| 2 | Application computation queries + Test Library | [x] Done | VG-02 PASS |
 | 3 | Purchases list + phone book (workstation-local stores) | [ ] Pending | VG-03 |
 | 4 | Tests + zero-drift proof + close-out | [ ] Pending | VG-04 |
 
@@ -104,16 +104,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** Full suite green after S1; re-verified before S2 edits.
-- [ ] **Stage 2 — Deep Understanding:** Plan §5 S2 + SD-23-3/5; Appendix A messages.
-- [ ] **Stage 3 — File Analysis:** `CheckDatabaseConnectivityQuery` (ungated shape), `IDateTimeProvider`, `Test.cs`/`TestGroup.cs` columns, M-19 dictionary/NotFound precedent, fake clock/DB services.
-- [ ] **Stage 4 — Planning:** DTOs → queries + validators → handlers → 4 test classes.
-- [ ] **Stage 5 — Execution:** Implement per plan.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build src/TopLab.Application` 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-02 (incl. zero-drift).
-- [ ] **Stage 8 — Documentation Update:** This checklist + evidence recorded.
-- [ ] **Stage 9 — Memory Status Update:** "Current Status" updated.
-- [ ] **Stage 10 — Git Commit (authorized local):** `[M-23] Slice 2/4: Computation queries + test library — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** Domain 467/467 after S1.
+- [x] **Stage 2 — Deep Understanding:** Plan §5 S2 + SD-23-3/5; Appendix A.
+- [x] **Stage 3 — File Analysis:** CheckDatabaseConnectivityQuery ungated shape; Error.Validation; Test/TestGroup columns.
+- [x] **Stage 4 — Planning:** DTOs → 4 queries + validators → handlers → 4 test classes.
+- [x] **Stage 5 — Execution:** Implemented conversion/calculation/stopwatch/test-library queries + tests (15). Also stabilized a pre-existing midnight-UTC flake in SampleCollection tests (unrelated to M-23; required for G0).
+- [x] **Stage 6 — Post-Execution Verification:** Application build 0/0.
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — Utilities 15/15; full App 1335/1335; zero Persistence; drift clean.
+- [x] **Stage 8 — Documentation Update:** checklist recorded.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 10 — Git Commit (authorized local):** See Execution Log.
 
 ---
 
@@ -161,15 +161,17 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Slices complete: 1/4. Next action: begin S2 Stage 1.
+- Slices complete: 2/4. Next action: begin S3 Stage 1.
 - Dependency posture: M-23 ⇄ M-20 — no code-level dependency (verified); M-23's only code dependency (M-01 pipeline) is satisfied at the audited commit.
-- S1 evidence (2026-09-15): VG-01 PASS; Domain 467/467; drift clean.
+- S1 evidence: VG-01 PASS; commit `1fd8263`.
+- S2 evidence (2026-09-15): VG-02 PASS; App 1335/1335; drift clean; midnight-UTC flake stabilized in SampleCollection tests.
 
 ## Execution Log
 
 | Date | Slice | Stage | Action | Result |
 |---|---|---|---|---|
 | 2026-09-15 | 1 | 1-10 | Domain computation services + tests; VG-01 PASS | OK |
+| 2026-09-15 | 2 | 1-10 | Computation queries + test library; VG-02 PASS | OK |
 
 ## Stop Report
 

@@ -31,9 +31,10 @@ public class GetPatientsWithUncollectedSamplesQueryHandlerTests
     public async Task Returns_PatientsWithUndrawnInLabTests_OrderedByRegistrationAsc()
     {
         var db = new FakeApplicationDbContext();
-        var now = DateTime.UtcNow;
-        var early = MakePatient(1, "Early", now.AddHours(-3));
-        var late = MakePatient(2, "Late", now.AddHours(-1));
+        // Stable noon-UTC day so the test is not midnight-sensitive.
+        var noon = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var early = MakePatient(1, "Early", noon.AddHours(-3));
+        var late = MakePatient(2, "Late", noon.AddHours(-1));
         db.Patients.Add(early);
         db.Patients.Add(late);
         db.PatientTests.Add(MakeTest(11, 2));
@@ -42,7 +43,7 @@ public class GetPatientsWithUncollectedSamplesQueryHandlerTests
 
         var handler = new GetPatientsWithUncollectedSamplesQueryHandler(db);
         var result = await handler.Handle(
-            new GetPatientsWithUncollectedSamplesQuery(null), CancellationToken.None);
+            new GetPatientsWithUncollectedSamplesQuery(DateOnly.FromDateTime(noon)), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.Count);
