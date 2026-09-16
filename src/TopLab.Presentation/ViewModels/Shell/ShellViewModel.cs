@@ -147,6 +147,10 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                     {
                         _navigation.NavigateTo<ViewModels.Settings.SettingsDashboardViewModel>();
                     }
+                    else if (t == "المرضى")
+                    {
+                        _navigation.NavigateTo<ViewModels.Patients.PatientsHubViewModel>();
+                    }
                     else
                     {
                         // Future: navigate to feature

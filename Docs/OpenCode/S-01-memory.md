@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-01.md
 - **Date Created:** 2026-09-16
 - **Total Slices:** 6
-- **Current Slice:** S4 — Done (committed); S5 — Pending
+- **Current Slice:** S5 — Done (committed); S6 — Pending (final)
 - **Current Branch:** main
 - **Author:** loop-engineering skill (execution to be carried out by the executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
 
@@ -65,7 +65,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2 | Receipt printing (`IReceiptPrintingService` port + impl + `PrintReceiptCommand`) | [x] Done | VG-S2 |
 | 3 | Invoice concept + renderer + `PrintInvoiceCommand` (**migrating**) | [x] Done | VG-S3 |
 | 4 | Visit worksheet renderer + `PrintWorkSheetCommand` | [x] Done | VG-S4 |
-| 5 | Patients hub + «المرضى» navigation wiring | [ ] Pending | VG-S5 |
+| 5 | Patients hub + «المرضى» navigation wiring | [x] Done | VG-S5 |
 | 6 | Unified Add/Edit Patient Data screen (demographics + ordering + billing + 4 print actions) | [ ] Pending | VG-S6 |
 
 ---
@@ -256,15 +256,20 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 5)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S4.
-- [ ] **Stage 2 — Deep Understanding:** re-read plan §7; internalize SD-6 (disabled placeholder idiom); no secondary-password gate.
-- [ ] **Stage 3 — File Analysis:** `ShellViewModel.cs:115–159` incl. the `// Future: navigate to feature` fall-through at L152; `MainWindow.xaml:64–95` DataTemplate block + Home placeholder (L64–74); `Presentation/DependencyInjection.cs` ViewModels block; `Views/Settings/*` for RTL UserControl styling precedent.
-- [ ] **Stage 4 — Planning:** step-by-step slice plan encoded here.
-- [ ] **Stage 5 — Execution:** implement per plan §7.
-- [ ] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-S5 pass.
-- [ ] **Stage 8 — Documentation Update:** checkboxes updated.
-- [ ] **Stage 9 — Memory Status Update:** Current Status updated.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after S4. DONE 2026-09-16: S4 gate runs serve as S5 baseline (build 0/0; suite 2070 green at commit `94c9eec`); working tree clean except untracked input `S-01.md`.
+- [x] **Stage 2 — Deep Understanding:** re-read plan §7; internalize SD-6 (disabled placeholder idiom); no secondary-password gate.
+- [x] **Stage 3 — File Analysis:** `ShellViewModel.cs:115–159` incl. the `// Future: navigate to feature` fall-through at L152; `MainWindow.xaml:64–95` DataTemplate block + Home placeholder (L64–74); `Presentation/DependencyInjection.cs` ViewModels block; `Views/Settings/*` for RTL UserControl styling precedent. DONE: «المرضى» currently falls in `else` (L150–153); «الإعدادات» branch (L146–149) is the copy template; `SettingsDashboardViewModel`/`SettingsDashboardView` is the hub precedent (launcher VM + RTL UserControl, `RelayCommand(_ => navigation.NavigateTo<T>())`); DI ViewModels block at L29–41; window is RTL 1024×600.
+- [x] **Stage 4 — Planning:** step-by-step slice plan encoded here.
+  1. `ViewModels/Patients/PatientsHubViewModel.cs`: `ViewModelBase`; 4 `RelayCommand`s (no-op bodies — buttons disabled) + 4 bool flags default false (`AddEditPatientEnabled` etc.); help text property. S6 flips the editor flag + wires navigation.
+  2. `Views/Patients/PatientsHubView.xaml` (+.cs): RTL `UserControl`, 2×2 button grid bound to commands+flags, help `TextBlock`; styling per Settings views.
+  3. `ShellViewModel`: `else if (t == "المرضى") _navigation.NavigateTo<PatientsHubViewModel>()` before `else` (no password gate).
+  4. `MainWindow.xaml`: `patientsVm`/`patientsView` xmlns + `DataTemplate` for hub.
+  5. Presentation DI: `AddTransient<PatientsHubViewModel>()` (+`using ViewModels.Patients`).
+- [x] **Stage 5 — Execution:** implement per plan §7. DONE: `PatientsHubViewModel` (4 no-op commands + 4 false flags + help text); `PatientsHubView` (RTL 2×2 grid + help, Settings-view styling); «المرضى» branch (no password gate); `DataTemplate` + xmlns; `AddTransient<PatientsHubViewModel>`.
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0/0. DONE 2026-09-16 (XAML compiles; 1 patch retry on non-unique match — no code error).
+- [x] **Stage 7 — Validation Gate:** VG-S5 pass. DONE: suite 474+1402+194=2070 green; zero-drift (Presentation-only, no Persistence diff). Manual navigation walk cannot run headless here — wiring is the verbatim A.5 recipe (DI registration + DataTemplate + title branch), compile-verified; OWNER MANUAL: click «المرضى» → hub renders RTL with 4 disabled buttons; «المستخدمون»/«الإعدادات» still navigate; status bar unaffected.
+- [x] **Stage 8 — Documentation Update:** checkboxes updated.
+- [x] **Stage 9 — Memory Status Update:** Current Status updated.
 - [ ] **Stage 10 — Git Commit (authorized local):** `[S-01] Slice 5/6: Patients hub + المرضى navigation wiring — loop-engineering`.
 
 ---
@@ -301,9 +306,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Slices complete: **4 / 6** (S4 committed; S5 hub next, begin Stage 1 immediately).
+- Slices complete: **5 / 6** (S5 committed; S6 final slice next, begin Stage 1 immediately).
 - Baseline commit: `faceab6c871230a73640faa4af5013068a403649` (main).
-- S1–S4 executed and committed; S5–S6 Stage-1 checks pending in sequence.
+- S1–S5 executed and committed; S6 Stage-1 check pending.
 - Migration count: **exactly 1** (`AddInvoiceIssues`, S3) — no further migrations in S4–S6 (zero-drift gates).
 
 ## Execution Log
@@ -314,6 +319,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-16 | S2 | 1–10 | Receipt printing slice (QuestPDF 2026.9.0; receipt ports+envelope+service+writer; `PrintReceipt/`; DI; 14 new tests) | VG-S2 pass: build 0/0, suite 2020 green, Receipt routing + totals proven, zero-drift; pitfall: QuestPDF needs `UseSystemFonts=true` |
 | 2026-09-16 | S3 | 1–10 | Invoice slice (InvoiceIssue+config+migration AddInvoiceIssues; InvoiceDto; invoice ports+envelope+service+writer; GetPatientInvoice/PrintInvoice; DI; 31 new tests) | VG-S3 pass: build 0/0, suite 2051 green, live up/down round-trip + unique enforcement + drift-clean; PRE-EXISTING: baseline from-zero update broken in Sept-9 migration (owner housekeeping, not fixed) |
 | 2026-09-16 | S4 | 1–10 | Visit worksheet slice (VisitWorkSheetDto+Samples; SelectVisit; GetVisitWorkSheet/PrintWorkSheet gated PRINT_WORKSHEET; worksheet ports+envelope+service+writer; DI; 19 new tests) | VG-S4 pass: build 0/0, suite 2070 green, Reports routing + per-line flags/barcodes proven, zero-drift |
+| 2026-09-16 | S5 | 1–10 | Patients hub slice (hub VM+view; المرضى branch; DataTemplate; DI) | VG-S5 pass: build 0/0, suite 2070 green, zero-drift; manual nav-walk left for owner (headless here) |
 
 ## Stop Report
 

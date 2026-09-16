@@ -1,0 +1,20 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.PatientsHubView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <StackPanel Margin="20" MaxWidth="640" HorizontalAlignment="Center">
+        <TextBlock Text="المرضى" FontSize="20" Margin="0,0,0,4" />
+        <TextBlock Text="{Binding HelpText}" Foreground="#666666" TextWrapping="Wrap" Margin="0,0,0,16" />
+
+        <UniformGrid Columns="2">
+            <Button Content="إضافة وتعديل بيانات المرضى" Height="64" Margin="4" Padding="16,8"
+                    Command="{Binding OpenAddEditPatientCommand}" IsEnabled="{Binding AddEditPatientEnabled}" />
+            <Button Content="إدخال نتائج التحاليل" Height="64" Margin="4" Padding="16,8"
+                    Command="{Binding OpenEnterResultsCommand}" IsEnabled="{Binding EnterResultsEnabled}" />
+            <Button Content="بحث عن مريض" Height="64" Margin="4" Padding="16,8"
+                    Command="{Binding OpenSearchPatientCommand}" IsEnabled="{Binding SearchPatientEnabled}" />
+            <Button Content="تسليم نتائج المرضى" Height="64" Margin="4" Padding="16,8"
+                    Command="{Binding OpenDeliverResultsCommand}" IsEnabled="{Binding DeliverResultsEnabled}" />
+        </UniformGrid>
+    </StackPanel>
+</UserControl>

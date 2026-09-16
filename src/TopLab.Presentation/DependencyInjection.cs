@@ -8,6 +8,7 @@ using TopLab.Presentation.ViewModels.Shell;
 using TopLab.Presentation.ViewModels.Setup;
 using TopLab.Presentation.ViewModels.Settings;
 using TopLab.Presentation.ViewModels.Users;
+using TopLab.Presentation.ViewModels.Patients;
 using TopLab.Presentation.Views.Setup;
 
 namespace TopLab.Presentation;
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddTransient<FirstRunAdminViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<UserManagementViewModel>();
+        services.AddTransient<PatientsHubViewModel>();
         services.AddTransient<SettingsDashboardViewModel>();
         services.AddTransient<SystemSettingsViewModel>();
         services.AddTransient<ReportSettingsViewModel>();

@@ -8,6 +8,8 @@
          xmlns:usersView="clr-namespace:TopLab.Presentation.Views.Users"
          xmlns:settingsVm="clr-namespace:TopLab.Presentation.ViewModels.Settings"
          xmlns:settingsView="clr-namespace:TopLab.Presentation.Views.Settings"
+         xmlns:patientsVm="clr-namespace:TopLab.Presentation.ViewModels.Patients"
+         xmlns:patientsView="clr-namespace:TopLab.Presentation.Views.Patients"
          mc:Ignorable="d"
          Title="Top-Lab — نظام توب لاب" Height="600" Width="1024"
          FlowDirection="RightToLeft"
@@ -71,6 +73,9 @@
                                 <Button Content="تسليم نتائج المرضى" Margin="4" Padding="16,8"/>
                             </WrapPanel>
                         </StackPanel>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type patientsVm:PatientsHubViewModel}">
+                        <patientsView:PatientsHubView/>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type usersVm:UserManagementViewModel}">
                         <usersView:UserManagementView/>
