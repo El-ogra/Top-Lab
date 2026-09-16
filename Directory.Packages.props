@@ -12,6 +12,8 @@
       EF Core 8.x = matches the net8.0 / net8.0-windows TFMs; do NOT move to 9.x/10.x.
     -->
     <PackageVersion Include="MediatR" Version="12.5.0" />
+    <!-- ZXing.Net: Code-128 barcode rendering for tube labels (S-01 SD-1). Apache-2.0, no internet dependency. -->
+    <PackageVersion Include="ZXing.Net" Version="0.16.11" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.30" />

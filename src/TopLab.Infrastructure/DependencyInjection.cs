@@ -7,6 +7,7 @@ using TopLab.Application.Features.AccessAndNavigation.Common.Interfaces;
 using TopLab.Application.Features.ExternalEntities.Common.Interfaces;
 using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Infrastructure.Backup;
+using TopLab.Infrastructure.Barcode;
 using TopLab.Infrastructure.Identity;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Persistence.Interceptors;
@@ -65,6 +66,11 @@ public static class DependencyInjection
         // through PrinterAssignment (OutputType = Reports). Scoped, matching the
         // exporters (depend on the Scoped ApplicationDbContext).
         services.AddScoped<IReportPrintingService, ReportPrintingService>();
+        // Barcode printing: Code-128 label renderer + routed dispatch (S-01 S1).
+        // Scoped, matching the M-22 printing services (depends on the Scoped
+        // ApplicationDbContext).
+        services.AddScoped<IBarcodeService, BarcodeService>();
+        services.AddScoped<BarcodeLabelRenderer>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
 

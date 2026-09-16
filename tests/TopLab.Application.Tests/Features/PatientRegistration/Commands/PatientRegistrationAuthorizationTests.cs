@@ -6,6 +6,7 @@ using TopLab.Application.Features.PatientRegistration.Commands.AddMedicalConditi
 using TopLab.Application.Features.PatientRegistration.Commands.AddTestsToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.ClearAllTests;
 using TopLab.Application.Features.PatientRegistration.Commands.CreatePatient;
+using TopLab.Application.Features.PatientRegistration.Commands.PrintBarcode;
 using TopLab.Application.Features.PatientRegistration.Commands.RemoveMedicalCondition;
 using TopLab.Application.Features.PatientRegistration.Commands.RemoveTestFromVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.SoftDeletePatient;
@@ -71,6 +72,10 @@ public class PatientRegistrationAuthorizationTests
         {
             return new ClearAllTestsCommand(1);
         }
+        if (commandType == typeof(PrintBarcodeCommand))
+        {
+            return new PrintBarcodeCommand(1);
+        }
         throw new InvalidOperationException($"Unhandled command type {commandType.Name}.");
     }
 
@@ -84,6 +89,7 @@ public class PatientRegistrationAuthorizationTests
     [InlineData(typeof(RemoveTestFromVisitCommand))]
     [InlineData(typeof(UpdatePatientTestSampleFlagsCommand))]
     [InlineData(typeof(ClearAllTestsCommand))]
+    [InlineData(typeof(PrintBarcodeCommand))]
     public void EveryWriteCommand_Requires_AddEditPatient(System.Type commandType)
     {
         var authorized = (IAuthorizedRequest)CreateInstance(commandType);
