@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-03.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — P2» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 1 — Next (Slice 0 complete + committed).
+- **Current Slice:** 2 — Next (Slices 0–1 complete + committed).
 - **Current Branch:** main
 - **Baseline Commit:** `ef99502051d9405632915915c0c214beec8c84d6` ("[S-02] Slice 7/8: record final commit hash in memory file — loop-engineering", 2026-09-17 13:26:35 +0300) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -65,7 +65,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 0 | Patient editor state surfacing (loading + empty states) | [x] Complete (committed) | VG-01 PASS |
-| 1 | Patient search-to-edit section in editor | [ ] Not started | VG-02 |
+| 1 | Patient search-to-edit section in editor | [x] Complete (committed) | VG-02 PASS |
 | 2 | Visit-history section in patient editor | [ ] Not started | VG-03 |
 | 3 | Editor wiring for profile / custom-group / clear-all | [ ] Not started | VG-04 |
 | 4 | Patient account screen | [ ] Not started | VG-05 |
@@ -108,11 +108,11 @@ Additional user-authorized execution parameters (override skill defaults):
 | ID | Item | Class | Resolution |
 |----|------|-------|-----------|
 | U-01 | `CreatePatient.DomainFailureTranslator` physical location + verbatim texts | Uncertain (carried from P2 plan) | RESOLVED Slice 0 Stage 3 — NOT a standalone file: `internal static class DomainFailureTranslator` at the bottom of `src/TopLab.Application/Features/PatientRegistration/Commands/CreatePatient/CreatePatientCommandHandler.cs:215-227`. Verbatim texts: fullName→«اسم المريض مطلوب.»; ageValue→«العمر يجب أن يكون صفرًا أو أكثر.»; fastingHours→«ساعات الصيام تتطلب تحديد الصيام.»; default→«بيانات المريض غير صالحة.». Surfaced via handlers through `ResultErrorPresenter` — no UI action needed. |
-| U-02 | `SearchPatientsQueryHandler` exact filter channels | Uncertain (handler unopened in P2 plan) | OPEN — verify at Slice 1 Stage 3; adapt UI hints only, never the handler |
+| U-02 | `SearchPatientsQueryHandler` exact filter channels | Uncertain (handler unopened in P2 plan) | RESOLVED Slice 1 Stage 3 — `SearchPatientsQueryHandler.cs:25-47`: base excludes deleted (`!p.IsDeleted`); term channels = `FullName`, `NationalId`, `LabId.Value`, phone via `PatientPhoneNumber` contains; ordered `RegistrationDateUtc` desc; paging `Skip/Take`, no total count. UI hints record these channels verbatim («الاسم / الرقم القومي / Lab.ID / الهاتف»); handler untouched. Consequence: `IsDeleted` rows can never arrive — the flagged/refuse path is defensive only (VM refuses with «المريض محذوف.», button disabled via trigger). |
 | U-03 | Busy-indicator idiom (existing converter/control precedent) | Inference | RESOLVED Slice 0 Stage 3 — repo idiom = collapsed-by-default + `DataTrigger` on a bool VM property (precedents: `TestCatalogView.xaml:15-26` `ShowFilteredEmpty`, `AnalytesView.xaml:12-23` `ShowEmpty`; VM pattern `TestCatalogViewModel.cs:109-140` computed `Show*Empty` + `RefreshEmptyStates()`). App-wide `BoolToVis` resource exists (`App.xaml:6`; resolves to WPF built-in converter) but NO view bound `IsBusy` before Slice 0 (grep `IsBusy` over `*.xaml` = 0 hits) — Slice 0 is the first consumer, using the dominant DataTrigger idiom. |
 | U-04 | Profiles/custom-groups picker source inside the registration catalog | Inference | OPEN — resolve at Slice 3 Stage 3; if no catalog surface exists → STOP-and-report |
 | U-05 | Account-screen navigation idiom (`LoadAsync(patientId)` after parameterless `NavigateTo<T>`) | Inference (structural, per P2 plan) | ADOPTED unless contradicted at Slice 4 Stage 3; record outcome |
-| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slice 0 created+recorded: «لا توجد تحاليل مختارة.» (plan-verbatim, `PatientEditorView.xaml:162`) + «لا توجد تحاليل في الكتالوج.» (created at execution — the P2 plan's proposed catalog text is not quoted in `S-03.md` and the P2 plan file is absent from the repo; parallel phrasing adopted and recorded here, `PatientEditorView.xaml:193`). Remaining texts still open for their slices. |
+| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slice 0: «لا توجد تحاليل مختارة.», «لا توجد تحاليل في الكتالوج.» (created). Slice 1: «لا نتائج مطابقة.» (plan-verbatim, `PatientEditorView.xaml` search section) + hint «الاسم / الرقم القومي / Lab.ID / الهاتف» (created from U-02 channels). Remaining texts open for later slices. |
 
 ---
 
@@ -145,16 +145,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 1)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; tree clean.
-- [ ] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 1 + P2 M02 §4 S-M02-3 read in full.
-- [ ] **Stage 3 — File Analysis:** `SearchPatientsQuery(.Handler/Validator)` — resolve U-02 (record actual filter channels); `PatientSummaryDto`; `LoadPatientAsync`; paging precedent.
-- [ ] **Stage 4 — Planning:**
-- [ ] **Stage 5 — Execution:**
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-02 (record evidence).
-- [ ] **Stage 8 — Documentation Update:**
-- [ ] **Stage 9 — Memory Status Update:**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 1/8: Patient search-to-edit section in editor — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** post-Slice-0 commit `66a40e8`, tree clean; build 0/0; suite green 474+195+1419=2088.
+- [x] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 1 + P2 M02 §4 S-M02-3 requirements read (placement Inference → right-column header area adopted).
+- [x] **Stage 3 — File Analysis:** `SearchPatientsQuery.cs` (term/page/size), Handler (U-02 resolved — name/national/lab/phone channels, deleted excluded, no total count), Validator (200-char + paging verbatim messages, surfaced via `ResultErrorPresenter` Validation→verbatim), `PatientSummaryDto` 12 fields, `LoadPatientAsync:417`, `RelayCommand`/`AsyncRelayCommand` signatures.
+- [x] **Stage 4 — Planning:** VM: `SearchTerm`/`SearchResults`/`SearchPage`(=1)/`SearchPageSize`(fixed 20)/`SearchExecuted`/`ShowSearchEmpty` + 5 commands (search/next/prev/clear/open); raw term sent so backend messages surface verbatim; open = `LoadPatientAsync` only, IsDeleted refused with «المريض محذوف.». XAML: section at top of right column; disabled «فتح» + red «(محذوف)» flag via triggers; «لا نتائج مطابقة.» via `ShowSearchEmpty`.
+- [x] **Stage 5 — Execution:** VM — 2 usings, 4 fields, 5 props, 5 command props, `SearchPatientsAsync`/`ClearSearch`/`OpenSearchResultAsync` (+1 `CollectionChanged` subscription). XAML — full search section (header/hint/search row/empty text/results list/paging row). One build error (CS8323 named-arg order) fixed immediately — single occurrence, not a stop-rule event.
+- [x] **Stage 6 — Post-Execution Verification:** build 0 errors / 0 warnings.
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS — (1) build 0/0 + suite 2088 green; (2) zero-drift: Persistence diff empty + EF «No changes»; (3) grep: `SearchPatientsQuery` consumed at VM:922 (non-test); no new files anywhere (`git status` = 2 modified Presentation files only); open path = `LoadPatientAsync` only (VM:971); `ShowConfirmationAsync` still single pre-existing delete occurrence (VM:853) — no confirmation on open; (4) manual walk RECORDED AS INSPECTION (no live DB/UI session): term≤200 → paged rows; >200 chars → validator message via presenter; prev at page 1 is a no-op; IsDeleted row disabled+flagged, VM refuses; empty result → «لا نتائج مطابقة.»; open overwrites form with no dialog per `OpenSearchResultAsync`.
+- [x] **Stage 8 — Documentation Update:** this section + register (U-02 resolved, U-06 extended) + status updated.
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 1/8: Patient search-to-edit section in editor — loop-engineering`.
 
 ---
 
@@ -286,17 +286,17 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slice 0/8 complete).
-- **Completed slices:** Slice 0 (VG-01 pass, committed) — 1/8.
+- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–1/8 complete).
+- **Completed slices:** Slice 0 (VG-01), Slice 1 (VG-02) — 2/8.
 - **Blocked slices:** none.
-- **Exact next action:** Slice 1, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-0 commit), then read S-03.md §4 Slice 1.
-- **Conditions before proceeding:** G0 green on the Slice-0 commit.
-- **Open uncertainties:** U-02, U-04, U-05 (+ U-06 remainder for later slices).
+- **Exact next action:** Slice 2, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-1 commit), then read S-03.md §4 Slice 2.
+- **Conditions before proceeding:** G0 green on the Slice-1 commit.
+- **Open uncertainties:** U-04, U-05 (+ U-06 remainder for later slices).
 - **Owner-pending (never silently decide):** `BLOCK_PRINT_ON_BALANCE` enforcement; LabId visit-worksheet entry; group/log worksheet print path.
-- **Evidence collected (Slice 0):** build 0/0 (pre+post); tests 474+195+1419=2088 green (pre+post); EF «No changes»; IsBusy trigger line 12, empty texts lines 162/193; single pre-existing delete confirmation line 817.
-- **Changed files (Slice 0):** `src/TopLab.Presentation/ViewModels/Patients/PatientEditorViewModel.cs`, `src/TopLab.Presentation/Views/Patients/PatientEditorView.xaml` (+ `Docs/OpenCode/S-03.md`, `Docs/OpenCode/S-03-memory.md` newly tracked).
-- **Deviations:** (1) P2 plan file absent from repo — S-03.md used as requirements surface; (2) catalog empty text created at execution («لا توجد تحاليل في الكتالوج.») as S-03.md quotes no verbatim for it — recorded in U-06; (3) manual walk by inspection (no live DB/UI session) — explicitly recorded, not claimed as interactive.
-- **Lessons learned:** `BoolToVis` app resource resolves to the WPF built-in converter; the dominant empty-state idiom is `Show*Empty` + DataTrigger (not BoolToVis); `CreatePatient.DomainFailureTranslator` lives inside its handler file.
+- **Evidence collected (Slice 1):** build 0/0 (pre+post, 1×CS8323 fixed at once); tests 2088 green (pre+post); EF «No changes»; `SearchPatientsQuery` consumer VM:922; open path VM:971; single delete confirmation VM:853; empty text «لا نتائج مطابقة.».
+- **Changed files (Slice 1):** same editor pair (`PatientEditorViewModel.cs`, `PatientEditorView.xaml`).
+- **Deviations:** (1) PageSize fixed at 20, no UI editor — backend range [1,500] respected, keeps invalid-states unreachable from UI; (2) manual walk by inspection (no live DB/UI session) — recorded, not claimed interactive.
+- **Lessons learned:** C# named-arg ordering (CS8323) — all-named or positional-first in `AsyncRelayCommand` lambdas.
 
 ## Stop Report
 

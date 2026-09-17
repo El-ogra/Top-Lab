@@ -60,6 +60,78 @@
             <!-- Right: demographics form -->
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="8,4">
                 <StackPanel>
+                    <!-- S-03 Slice 1: search-to-edit section (consumes SearchPatientsQuery). -->
+                    <TextBlock Text="بحث عن مريض" FontSize="16" Margin="0,0,0,8" />
+                    <WrapPanel>
+                        <TextBox Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="2" />
+                        <Button Content="بحث" Margin="2" Padding="14,2" Command="{Binding SearchPatientsCommand}" />
+                        <Button Content="مسح" Margin="2" Padding="14,2" Command="{Binding ClearSearchCommand}" />
+                    </WrapPanel>
+                    <TextBlock Text="الاسم / الرقم القومي / Lab.ID / الهاتف" Foreground="#666666" Margin="2,0,2,4" />
+                    <TextBlock Text="لا نتائج مطابقة." Foreground="#666666" Margin="2,0,2,4">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowSearchEmpty}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ListView ItemsSource="{Binding SearchResults}" Height="120" Margin="0,0,0,4">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="فتح" Margin="2" Padding="8,0"
+                                            Command="{Binding DataContext.OpenSearchResultCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDeleted}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <TextBlock Text="{Binding FullName}" Margin="4,2" VerticalAlignment="Center" FontWeight="Bold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDeleted}" Value="True">
+                                                        <Setter Property="Foreground" Value="Gray" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="(محذوف)" Margin="4,2" VerticalAlignment="Center" Foreground="Red">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDeleted}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding LabId}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                    <TextBlock Text="{Binding PrimaryPhone}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <WrapPanel>
+                        <Button Content="السابق" Margin="2" Padding="10,2" Command="{Binding PrevSearchPageCommand}" />
+                        <TextBlock Text="{Binding SearchPage}" Margin="6,2" VerticalAlignment="Center" />
+                        <Button Content="التالي" Margin="2" Padding="10,2" Command="{Binding NextSearchPageCommand}" />
+                    </WrapPanel>
+                    <Separator Margin="0,8" />
                     <TextBlock Text="بيانات المريض" FontSize="16" Margin="0,0,0,8" />
                     <Grid>
                         <Grid.ColumnDefinitions>

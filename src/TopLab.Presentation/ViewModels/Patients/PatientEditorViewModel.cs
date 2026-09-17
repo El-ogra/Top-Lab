@@ -17,9 +17,11 @@ using TopLab.Application.Features.PatientRegistration.Commands.RemoveTestFromVis
 using TopLab.Application.Features.PatientRegistration.Commands.SoftDeletePatient;
 using TopLab.Application.Features.PatientRegistration.Commands.UpdatePatient;
 using TopLab.Application.Features.PatientRegistration.Commands.UpdatePatientTestSampleFlags;
+using TopLab.Application.Features.PatientRegistration.Common;
 using TopLab.Application.Features.PatientRegistration.Queries.GetNextLabId;
 using TopLab.Application.Features.PatientRegistration.Queries.GetPatientById;
 using TopLab.Application.Features.PatientRegistration.Queries.GetRegistrationCatalog;
+using TopLab.Application.Features.PatientRegistration.Queries.SearchPatients;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Common;
 using TopLab.Application.Features.WorkSheets.Commands.PrintWorkSheet;
 using TopLab.Application.Features.WorkSheets.Queries.GetVisitWorkSheet;
@@ -76,6 +78,10 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
+    private string _searchTerm = string.Empty;
+    private int _searchPage = 1;
+    private int _searchPageSize = 20;
+    private bool _searchExecuted;
 
     public PatientEditorViewModel(
         ISender mediator,
@@ -115,10 +121,16 @@ public sealed class PatientEditorViewModel : ViewModelBase
         });
         PickTreatingDoctorCommand = new AsyncRelayCommand(_ => PickTreatingDoctorAsync());
         PickReferralEntityCommand = new AsyncRelayCommand(_ => PickReferralEntityAsync());
+        SearchPatientsCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: true, cancellationToken: ct));
+        NextSearchPageCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: false, cancellationToken: ct, nextPage: true));
+        PrevSearchPageCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: false, cancellationToken: ct));
+        ClearSearchCommand = new RelayCommand(ClearSearch);
+        OpenSearchResultCommand = new AsyncRelayCommand(async (param, ct) => await OpenSearchResultAsync(param as PatientSummaryDto, ct));
 
         // S-03 Slice 0: empty-state visibility follows the S-01/S-02 Show*Empty idiom.
         SelectedTests.CollectionChanged += (_, _) => RefreshEmptyStates();
         CatalogTests.CollectionChanged += (_, _) => RefreshEmptyStates();
+        SearchResults.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowSearchEmpty));
     }
 
     public sealed class SelectedTestItem : ViewModelBase
@@ -300,6 +312,20 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     public string StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
 
+    /// <summary>S-03 Slice 1: patient search-to-edit state (consumes SearchPatientsQuery).</summary>
+    public string SearchTerm { get => _searchTerm; set => SetProperty(ref _searchTerm, value); }
+
+    public ObservableCollection<PatientSummaryDto> SearchResults { get; } = new();
+
+    public int SearchPage { get => _searchPage; private set => SetProperty(ref _searchPage, value); }
+
+    public int SearchPageSize { get => _searchPageSize; private set => SetProperty(ref _searchPageSize, value); }
+
+    public bool SearchExecuted { get => _searchExecuted; private set => SetProperty(ref _searchExecuted, value); }
+
+    /// <summary>S-03 Slice 1: empty-state flag (S-01/S-02 Show*Empty idiom).</summary>
+    public bool ShowSearchEmpty => SearchExecuted && SearchResults.Count == 0;
+
     public AsyncRelayCommand NewPatientCommand { get; }
 
     public AsyncRelayCommand SaveCommand { get; }
@@ -323,6 +349,16 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public RelayCommand AddTestToSelectionCommand { get; }
 
     public RelayCommand RemoveSelectedTestCommand { get; }
+
+    public AsyncRelayCommand SearchPatientsCommand { get; }
+
+    public AsyncRelayCommand NextSearchPageCommand { get; }
+
+    public AsyncRelayCommand PrevSearchPageCommand { get; }
+
+    public RelayCommand ClearSearchCommand { get; }
+
+    public AsyncRelayCommand OpenSearchResultCommand { get; }
 
     public async Task LoadCatalogAsync(CancellationToken cancellationToken = default)
     {
@@ -851,6 +887,88 @@ public sealed class PatientEditorViewModel : ViewModelBase
             ResetForm();
             await LoadCatalogAsync(cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// S-03 Slice 1: search-to-edit. Sends the raw term so backend validation
+    /// messages («نص البحث…», «معاملات الترقيم…») surface verbatim via the presenter.
+    /// </summary>
+    private async Task SearchPatientsAsync(bool resetPage, CancellationToken cancellationToken, bool nextPage = false)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        if (resetPage)
+        {
+            SearchPage = 1;
+        }
+        else if (nextPage)
+        {
+            SearchPage += 1;
+        }
+        else
+        {
+            if (SearchPage <= 1)
+            {
+                return;
+            }
+
+            SearchPage -= 1;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new SearchPatientsQuery(SearchTerm, SearchPage, SearchPageSize), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            SearchResults.Clear();
+            foreach (var row in result.Value!)
+            {
+                SearchResults.Add(row);
+            }
+
+            SearchExecuted = true;
+            OnPropertyChanged(nameof(ShowSearchEmpty));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void ClearSearch()
+    {
+        SearchTerm = string.Empty;
+        SearchResults.Clear();
+        SearchExecuted = false;
+        SearchPage = 1;
+        OnPropertyChanged(nameof(ShowSearchEmpty));
+    }
+
+    /// <summary>
+    /// S-03 Slice 1 + D8: opening a result loads it via <c>LoadPatientAsync</c> only,
+    /// discarding any unsaved edits immediately with no confirmation. Deleted rows
+    /// are refused with the backend-verbatim «المريض محذوف.».
+    /// </summary>
+    private async Task OpenSearchResultAsync(PatientSummaryDto? row, CancellationToken cancellationToken)
+    {
+        if (row is null)
+        {
+            return;
+        }
+
+        if (row.IsDeleted)
+        {
+            ErrorMessage = "المريض محذوف.";
+            return;
+        }
+
+        await LoadPatientAsync(row.PatientId, cancellationToken);
     }
 
     private async Task RecordPaymentAsync(CancellationToken cancellationToken)
