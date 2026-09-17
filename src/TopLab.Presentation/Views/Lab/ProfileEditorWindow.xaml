@@ -1,0 +1,50 @@
+<Window x:Class="TopLab.Presentation.Views.Lab.ProfileEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="بروفايل — التركيب" Height="600" Width="700"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Content="حفظ" Width="100" Margin="0,0,8,0" Command="{Binding SaveCommand}" IsDefault="True" />
+            <Button Content="إغلاق" Width="90" Click="CloseButton_Click" IsCancel="True" />
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" VerticalAlignment="Center" Margin="16,0,0,0" />
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="الاسم:" Margin="0,4,0,2" />
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+
+                <TextBlock Text="التحليل المتخصص:" Margin="0,4,0,2" />
+                <ComboBox ItemsSource="{Binding CatalogTests}" SelectedValuePath="Id"
+                          SelectedValue="{Binding SpecializedTestId}" DisplayMemberPath="Name" Margin="0,0,0,8" />
+
+                <TextBlock Text="السعر الثابت:" Margin="0,4,0,2" />
+                <TextBox Text="{Binding FixedPrice, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+
+                <TextBlock Text="المكوّنات:" FontWeight="Bold" Margin="0,8,0,4" />
+                <ItemsControl ItemsSource="{Binding Components}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,2">
+                                <Button DockPanel.Dock="Right" Content="إزالة" Width="70" Margin="8,0,0,0"
+                                        Command="{Binding DataContext.RemoveComponentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}" />
+                                <CheckBox Content="{Binding Analyte.Name}" IsChecked="{Binding IsChecked}" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="إضافة مكوّن:" Margin="0,12,0,2" />
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox Width="300" Margin="0,0,8,0" ItemsSource="{Binding AllAnalytes}"
+                              SelectedItem="{Binding PickedAnalyte}" DisplayMemberPath="Name" />
+                    <Button Content="إضافة" Width="90" Command="{Binding AddComponentCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

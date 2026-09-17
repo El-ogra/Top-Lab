@@ -44,6 +44,10 @@ public static class DependencyInjection
         services.AddTransient<TestEditorViewModel>();
         services.AddTransient<TestGroupsViewModel>();
         services.AddTransient<WorkGroupLogsViewModel>();
+        services.AddTransient<AnalytesViewModel>();
+        services.AddTransient<AnalyteEditorViewModel>();
+        services.AddTransient<ProfilesViewModel>();
+        services.AddTransient<ProfileEditorViewModel>();
         services.AddTransient<SettingsDashboardViewModel>();
         services.AddTransient<SystemSettingsViewModel>();
         services.AddTransient<ReportSettingsViewModel>();

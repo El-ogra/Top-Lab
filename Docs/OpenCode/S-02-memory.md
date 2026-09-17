@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-02.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — التمريرة P1» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 4 — Next (Stage 1 on resume)
+- **Current Slice:** 5 — Next (Stage 1 on resume)
 - **Current Branch:** main
 - **Baseline Commit:** `09c304c54b4e9836564f9b1f66410ec622c4599c` ("تحديثات القاعدة", 2026-09-16) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -68,7 +68,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | UsersAndPermissions (M17) completion + D7 self-change-password | [x] Done (VG-02 pass) | VG-02 |
 | 2 | SystemAndPrintSettings (M22) completion + D1 LabPrintText tab | [x] Done (VG-03 pass) | VG-03 |
 | 3 | TestCatalogAndReferenceRanges (M12) + lab hub activation | [x] Done (VG-04 pass) | VG-04 |
-| 4 | AnalyteProfiles (Analytes + Bands + Profiles tabs) | [ ] Not started | VG-05 |
+| 4 | AnalyteProfiles (Analytes + Bands + Profiles tabs) | [x] Done (VG-05 pass) | VG-05 |
 | 5 | CultureAndAntibiotics (M15) dictionary + D9 attachment + D6 delete block | [ ] Not started | VG-06 |
 | 6 | ExternalEntities (M14) list/editor/picker + D3 routing | [ ] Not started | VG-07 |
 | 7 | PriceListsCommentsAndCustomGroups (M13) three tabs | [ ] Not started | VG-08 |
@@ -200,16 +200,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 4)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; record counts.
-- [ ] **Stage 2 — Deep Understanding:** re-read S-02.md §3 Slice 4 + P1 §6.3–§6.4.4, §6.6.
-- [ ] **Stage 3 — File Analysis:** `AnalyteProfileDtos.cs` (`AnalyteBandDto` columns resolved here — record them), the 3 validators (verbatim messages), `Analyte.cs`/`Profile.cs`, `SaveAnalyteReferenceRangeCommandValidator`, `SearchTestCatalogQuery` (profile picker source).
-- [ ] **Stage 4 — Planning:** step-by-step plan here.
-- [ ] **Stage 5 — Execution:** implement.
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-05 with evidence.
-- [ ] **Stage 8 — Documentation Update.**
-- [ ] **Stage 9 — Memory Status Update.**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 4/8: Analytes + bands + profiles tabs — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green at `52149f0` (474+195+1419=2088); tree clean.
+- [x] **Stage 2 — Deep Understanding:** S-02.md §3 Slice 4 read in full (P1 absent per U-01; S-02.md binding).
+- [x] **Stage 3 — File Analysis:** `AnalyteProfileDtos` (Band 8 props — columns resolved; Definition(Id,Name,ReportName,IsActive,Bands); ProfileDefinition(Id,Name,SpecializedTestId/Name,FixedPrice,IsActive,AnalyteIds)); `CreateAnalyte(Name,ReportName)` validator messages MATCH plan quotes; `UpdateAnalyte(AnalyteId,Name,ReportName)`; `DeactivateAnalyte(AnalyteId)` (no reactivate/delete commands — gap preserved); `SaveAnalyteReferenceRange(AnalyteId,Bands[])` bulk-replace, domain per-band guards surfaced as Validation, NO overlap/gap rule; `CreateProfile(Name,SpecializedTestId,FixedPrice,AnalyteIds)` (handler: specialized-only «البروفايل يُنشأ فقط لتحليل متخصص.», one-profile-per-test, analyte must be active + ranged); `AddProfileAnalyte(Pid,Aid)` duplicate → «المادة التحليلية مرتبطة بالبروفايل بالفعل.»; `RemoveProfileAnalyte(Pid,Aid)`; NO UpdateProfile/DeleteProfile commands; `GetAnalyteDefinitions()` (bands included) + `GetProfileDefinitions()`; `Profile` HAS FixedPrice+SpecializedTestId (shown).
+- [x] **Stage 4 — Planning:** (U-12: plan's «المكوّن مضاف بالفعل» vs code «المادة التحليلية مرتبطة بالبروفايل بالفعل.» → plan quote as UI pre-guard, backend message as fallback; plan's «النطاقات متداخلة أو بها فراغات» absent → backend messages only. U-13: `TestSummaryDto` carries no ResultKind/IsCultureType → kind pickers (specialized here, culture in S5) list catalog tests while validity is backend-enforced; no per-test N+1 invented.) CREATE `AnalytesViewModel` (search client-side, grid Name/ReportName/IsActive NO unit, empty «لا مكوّنات معرَّفة بعد — أنشئ أول Analyte», deactivate-only) + `AnalyteEditorViewModel` (Name/ReportName + bands bulk editor, AddBand pre-fills from=prev-to) + modal `AnalyteEditorWindow` (tabs بيانات/نطاقات); CREATE `ProfilesViewModel` (list name/count/test/price, create + components add/remove + «المكوّن مضاف بالفعل» pre-guard, removal confirm, NO delete) + `ProfileEditorViewModel/Window` (Name + specialized-test picker + FixedPrice + checklist; existing = read-only header + components mgmt). MODIFY `LabHubView(Model)` (+«المكوّنات»/«البروفايلات» tabs — the only out-of-folder touch), DI + 2 DataTemplates. No backend touch; no migration.
+- [x] **Stage 5 — Execution:** implemented per Stage-4 plan (1 fix: missing `GetProfileDefinitions` using).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings.
+- [x] **Stage 7 — Validation Gate:** VG-05 PASS. (1) build 0/0; suite 474+195+1419=2088 green. (2) zero-drift: Persistence diff empty + ef → "No changes…". (3) inspection: AnalytesView columns = Name/ReportName/الحالة/إجراءات only (no unit anywhere in analyte UI — `AgeUnit` hits are the confirmed enum in band editors); AnalytesView buttons = تعديل/تعطيل only (no reactivate/delete); ProfilesView buttons = المكوّنات only (no delete); `FixedPrice` + `SpecializedTestId` picker in `ProfileEditorWindow`. (4) manual walk RECORDED: analyte create/edit/deactivate with code validator messages («اسم المادة التحليلية مطلوب.»/«…على التقرير مطلوب.»); bands bulk save + AddBand from=prev-to convenience, backend/domain errors surfaced; profile create with specialized-test picker + fixed price (backend specialized-only/one-profile rules surface); add/remove components with «المكوّن مضاف بالفعل» pre-guard + removal confirm; tabs inside Slice-3 hub, RTL. Live run reserved for owner.
+- [x] **Stage 8 — Documentation Update:** this section + evidence above (+U-12/U-13).
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 4/8: Analytes + bands + profiles tabs — loop-engineering`.
 
 ---
 
@@ -278,11 +278,12 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 4/8 slices done
+- Overall: 5/8 slices done
 - Slice 0 — AccessAndNavigation completion: [x] Done (VG-01 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [x] Done (VG-02 pass, committed)
 - Slice 2 — SystemAndPrintSettings (M22) completion: [x] Done (VG-03 pass, committed)
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [x] Done (VG-04 pass, committed)
+- Slice 4 — AnalyteProfiles: [x] Done (VG-05 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [ ] Not started
 - Slice 2 — SystemAndPrintSettings (M22) completion: [ ] Not started
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [ ] Not started
@@ -292,7 +293,8 @@ Additional user-authorized execution parameters (override skill defaults):
 - Slice 7 — PriceListsCommentsAndCustomGroups (M13): [ ] Not started
 - Migration count: **exactly 0** expected (zero-drift gate on every slice)
 - New backend artifacts expected: **exactly 1** (D7 ChangeOwnPassword command trio, Slice 1)
-- Next action: begin Slice 4, Stage 1 (build 0/0 + suite green after Slice 3).
+- Next action: begin Slice 5, Stage 1 (build 0/0 + suite green after Slice 4).
+- Slice 4 — completed 2026-09-17: Analytes tab + editor/bands + Profiles tab + composition editor as hub tabs; CREATE 4 VMs + 4 views; hub touch only; no backend; no migration.
 - Slice 3 — completed 2026-09-17: lab hub («المعمل» + U-11 Navigated fix) + catalog/groups/worklogs tabs + test editor (13 fields, ranges + permanent note, single-link mapping); CREATE 5 VMs + 5 views; no backend touch; no migration.
 - Slice 2 — completed 2026-09-17: D1 LabPrintText tab in SystemSettingsView + early backup-path check + .bak guard + restore text + report colour preview; MODIFY only (2 VMs + 2 views); no migration.
 - Slice 0 — completed 2026-09-17: shell «قفل المحطة»/About/exit-confirm/connection rules/login identity; files: CREATE UnlockViewModel + Views/Shell/{UnlockWindow,AboutWindow}(.xaml.cs); MODIFY ShellViewModel/MainWindow/LoginWindow/LoginViewModel/DI.
@@ -310,6 +312,8 @@ Additional user-authorized execution parameters (override skill defaults):
 - **U-09 (Slice 3):** no duplicate-test-group-name backend rule exists → UI saves and surfaces the result; «يوجد مجموعة بهذا الاسم» N/A-per-code.
 - **U-10 (Slice 3):** work-log name code message is «اسم مجموعة العمل مطلوب.» (not plan's «اسم السجل مطلوب») → code binding.
 - **U-11 (Slice 3):** `ShellViewModel` never subscribes to `INavigationService.Navigated`, so navigated content never displays (baseline shell bug). Minimal fix (subscribe in ctor) required for the «المعمل» hub; also repairs المرضى/المستخدمون/الإعدادات display — intended navigation, justified.
+- **U-12 (Slice 4):** plan's «المكوّن مضاف بالفعل» vs code «المادة التحليلية مرتبطة بالبروفايل بالفعل.» → plan quote as UI pre-guard, backend message as fallback. Plan's «النطاقات متداخلة أو بها فراغات» has no backend rule → bands editor surfaces backend/domain messages only. (Analyte/profile validator quotes verified to match code.)
+- **U-13 (Slices 4–5):** `TestSummaryDto` carries no ResultKind/IsCultureType → kind pickers (specialized-test, culture-test) list catalog tests while validity stays backend-enforced; no invented query surface, no per-test N+1.
 
 - Pinned commit `09c304c…` must equal `main` HEAD at start; if the repo has moved, STOP and report (plan is anchored to that commit).
 - No UI test harness exists — manual verification is recorded, never fabricated; physical-printer/visual checks remain for the owner.
@@ -324,7 +328,8 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-17 | 0 | 1–9 | Slice 0 executed, VG-01 pass (build 0/0, tests 2081 green, zero-drift, grep gates, manual walk recorded) | OK | `72992ef` |
 | 2026-09-17 | 1 | 1–10 | Slice 1 executed, VG-02 pass (build 0/0, tests 2088 green incl. 7 new, zero-drift, grep gates, manual walk recorded) | OK | `034a45d` |
 | 2026-09-17 | 2 | 1–10 | Slice 2 executed, VG-03 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `60956c2` |
-| 2026-09-17 | 3 | 1–10 | Slice 3 executed, VG-04 pass (build 0/0, tests 2088 green, zero-drift, grep gates, manual walk recorded) | OK | pending Stage 10 |
+| 2026-09-17 | 3 | 1–10 | Slice 3 executed, VG-04 pass (build 0/0, tests 2088 green, zero-drift, grep gates, manual walk recorded) | OK | `52149f0` |
+| 2026-09-17 | 4 | 1–10 | Slice 4 executed, VG-05 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
 
 ## Stop Report (append only if a stop condition triggers)
 

@@ -1,0 +1,30 @@
+<UserControl x:Class="TopLab.Presentation.Views.Lab.ProfilesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="بروفايل جديد" Width="110" Command="{Binding OpenCreateCommand}" />
+        </StackPanel>
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+        <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,8,0,0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="الاسم" Binding="{Binding Profile.Name}" Width="*" />
+                <DataGridTextColumn Header="التحليل المتخصص" Binding="{Binding Profile.SpecializedTestName}" Width="*" />
+                <DataGridTextColumn Header="السعر الثابت" Binding="{Binding Profile.FixedPrice}" Width="100" />
+                <DataGridTextColumn Header="المكوّنات" Binding="{Binding ComponentCount}" Width="80" />
+                <DataGridTemplateColumn Header="" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="المكوّنات" Width="80" Margin="2"
+                                    Command="{Binding DataContext.OpenManageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

@@ -14,6 +14,12 @@
             <TabItem Header="سجلات العمل">
                 <ContentControl Content="{Binding WorkLogs}" Margin="8" />
             </TabItem>
+            <TabItem Header="المكوّنات">
+                <ContentControl Content="{Binding Analytes}" Margin="8" />
+            </TabItem>
+            <TabItem Header="البروفايلات">
+                <ContentControl Content="{Binding Profiles}" Margin="8" />
+            </TabItem>
         </TabControl>
     </DockPanel>
 </UserControl>

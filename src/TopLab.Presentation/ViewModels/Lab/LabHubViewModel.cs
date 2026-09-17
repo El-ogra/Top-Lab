@@ -11,11 +11,15 @@ public sealed class LabHubViewModel : ViewModelBase
     public LabHubViewModel(
         TestCatalogViewModel catalog,
         TestGroupsViewModel groups,
-        WorkGroupLogsViewModel workLogs)
+        WorkGroupLogsViewModel workLogs,
+        AnalytesViewModel analytes,
+        ProfilesViewModel profiles)
     {
         Catalog = catalog;
         Groups = groups;
         WorkLogs = workLogs;
+        Analytes = analytes;
+        Profiles = profiles;
     }
 
     public TestCatalogViewModel Catalog { get; }
@@ -24,10 +28,16 @@ public sealed class LabHubViewModel : ViewModelBase
 
     public WorkGroupLogsViewModel WorkLogs { get; }
 
+    public AnalytesViewModel Analytes { get; }
+
+    public ProfilesViewModel Profiles { get; }
+
     public async Task LoadAsync()
     {
         await Catalog.LoadAsync();
         await Groups.LoadAsync();
         await WorkLogs.LoadAsync();
+        await Analytes.LoadAsync();
+        await Profiles.LoadAsync();
     }
 }

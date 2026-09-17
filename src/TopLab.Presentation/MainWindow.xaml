@@ -106,6 +106,12 @@
                     <DataTemplate DataType="{x:Type labVm:WorkGroupLogsViewModel}">
                         <labView:WorkGroupLogsView/>
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:AnalytesViewModel}">
+                        <labView:AnalytesView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:ProfilesViewModel}">
+                        <labView:ProfilesView/>
+                    </DataTemplate>
                     <DataTemplate DataType="{x:Type usersVm:UserManagementViewModel}">
                         <usersView:UserManagementView/>
                     </DataTemplate>
