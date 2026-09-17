@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-02.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — التمريرة P1» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 5 — Next (Stage 1 on resume)
+- **Current Slice:** 6 — Next (Stage 1 on resume)
 - **Current Branch:** main
 - **Baseline Commit:** `09c304c54b4e9836564f9b1f66410ec622c4599c` ("تحديثات القاعدة", 2026-09-16) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -69,7 +69,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2 | SystemAndPrintSettings (M22) completion + D1 LabPrintText tab | [x] Done (VG-03 pass) | VG-03 |
 | 3 | TestCatalogAndReferenceRanges (M12) + lab hub activation | [x] Done (VG-04 pass) | VG-04 |
 | 4 | AnalyteProfiles (Analytes + Bands + Profiles tabs) | [x] Done (VG-05 pass) | VG-05 |
-| 5 | CultureAndAntibiotics (M15) dictionary + D9 attachment + D6 delete block | [ ] Not started | VG-06 |
+| 5 | CultureAndAntibiotics (M15) dictionary + D9 attachment + D6 delete block | [x] Done (VG-06 pass) | VG-06 |
 | 6 | ExternalEntities (M14) list/editor/picker + D3 routing | [ ] Not started | VG-07 |
 | 7 | PriceListsCommentsAndCustomGroups (M13) three tabs | [ ] Not started | VG-08 |
 
@@ -221,16 +221,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 5)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; record counts.
-- [ ] **Stage 2 — Deep Understanding:** re-read S-02.md §3 Slice 5 + P1 §7.3–§7.4.3, D6/D9.
-- [ ] **Stage 3 — File Analysis:** `AntibioticDtos.cs`, `CreateAntibioticCommandValidator`, `CultureAntibioticDisplay`, `DomainFailureTranslator`, Attach/Detach signatures `(int TestId, int AntibioticId)`, `SearchTestCatalogQuery` + `ResultKind`/`IsCultureType` filter basis.
-- [ ] **Stage 4 — Planning:** step-by-step plan here.
-- [ ] **Stage 5 — Execution:** implement.
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-06 with evidence.
-- [ ] **Stage 8 — Documentation Update.**
-- [ ] **Stage 9 — Memory Status Update.**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 5/8: Antibiotics dictionary + culture attachment (D6/D9) — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green at `87b8fab` (195+1419 + 474 prior at same commit); tree clean.
+- [x] **Stage 2 — Deep Understanding:** S-02.md §3 Slice 5 read in full (P1 absent per U-01; S-02.md binding).
+- [x] **Stage 3 — File Analysis:** `AntibioticDto(Id,Name,IsPregnancyFlagged,IsChildrenFlagged)` — exactly 3 columns, no Symb/Sensitivity; `AttachedAntibioticDto` + `CultureAntibioticListDto(TestId,TestName,AttachedCount,Antibiotics)`; `CreateAntibiotic(Name,flags)` validator messages MATCH plan quotes; `UpdateAntibiotic(Id,Name,flags)`; `DeleteAntibiotic(id)` refusals PINNED by tests («تعذر حذف المضاد الحيوي لارتباطه بمزرعة.» / «…لوجود نتائج مسجلة به.») → backend untouched, D6 message is Presentation surfacing; feature `DomainFailureTranslator` (internal) covers create/update `ArgumentException` only — delete Conflict translated at the presentation boundary (recorded); `Attach/Detach(TestId,AntibioticId)` single-item (D9 — no bulk command exists); attach validates culture («التحليل المحدد ليس مزرعة.») + duplicate («المضاد الحيوي مضاف بالفعل لهذه المزرعة.»); `GetCultureAntibiotics(TestId)` → list+count; `GetAntibiotics(term?)`.
+- [x] **Stage 4 — Planning:** (U-13 resolution for culture picker: kind info absent from `TestSummaryDto` → resolve per-test via existing `GetTestByIdQuery` on tab load, cached in VM; no invented surface.) CREATE `AntibioticsViewModel` (search, 3-col grid, empty «لا مضادات في القاموس», delete+confirm naming antibiotic, D6 mapping + permanent guidance hint beside delete) + `AntibioticEditorViewModel/Window` (Name + «معلَّم للحوامل»/«معلَّم للأطفال» only); CREATE `CultureAttachmentViewModel` (culture-only picker, «اختر تحليل مزرعة أولاً», attached/available lists, «عدد المضادات المرتبطة: ن», immediate per-item attach/detach + reload-after-op, per-item failure without screen stop; detach without confirm). MODIFY `LabHubView(Model)` (+«المضادات»/«ربط المزرعة»), DI + 2 DataTemplates. No backend touch; no migration.
+- [x] **Stage 5 — Execution:** implemented per Stage-4 plan (1 cleanup: removed dead inline-save helper).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings.
+- [x] **Stage 7 — Validation Gate:** VG-06 PASS. (1) build 0/0; suite 474+195+1419=2088 green. (2) zero-drift: Persistence diff empty + ef → "No changes…". (3) inspection: editor exposes exactly `(Name, IsPregnancyFlagged, IsChildrenFlagged)`; no bulk command created (status proves Presentation-only diff; attach/detach stay single-item); delete Conflict containing «لارتباطه بمزرعة» → D6 verbatim «لا يمكن حذف هذا المضاد لارتباطه بمزرعة — افكك الربط أولاً من شاشة الربط» at the presentation boundary (feature `DomainFailureTranslator` is internal + covers create/update only — recorded, backend refusal tests untouched). (4) manual walk RECORDED: dictionary CRUD with code messages; attached delete → exact D6 + permanent guidance hint beside delete; attach/detach per-item immediate with «عدد المضادات المرتبطة: ن» + both lists reloaded; culture picker only culture tests (per-test `GetTestById` resolution, U-13); «اختر تحليل مزرعة أولاً»; dictionary empty «لا مضادات في القاموس»; detach without confirm; per-item failure shown, screen continues. Live run reserved for owner.
+- [x] **Stage 8 — Documentation Update:** this section + evidence above.
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 5/8: Antibiotics dictionary + culture attachment (D6/D9) — loop-engineering`.
 
 ---
 
@@ -278,12 +278,13 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 5/8 slices done
+- Overall: 6/8 slices done
 - Slice 0 — AccessAndNavigation completion: [x] Done (VG-01 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [x] Done (VG-02 pass, committed)
 - Slice 2 — SystemAndPrintSettings (M22) completion: [x] Done (VG-03 pass, committed)
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [x] Done (VG-04 pass, committed)
 - Slice 4 — AnalyteProfiles: [x] Done (VG-05 pass, committed)
+- Slice 5 — CultureAndAntibiotics (M15): [x] Done (VG-06 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [ ] Not started
 - Slice 2 — SystemAndPrintSettings (M22) completion: [ ] Not started
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [ ] Not started
@@ -293,7 +294,8 @@ Additional user-authorized execution parameters (override skill defaults):
 - Slice 7 — PriceListsCommentsAndCustomGroups (M13): [ ] Not started
 - Migration count: **exactly 0** expected (zero-drift gate on every slice)
 - New backend artifacts expected: **exactly 1** (D7 ChangeOwnPassword command trio, Slice 1)
-- Next action: begin Slice 5, Stage 1 (build 0/0 + suite green after Slice 4).
+- Next action: begin Slice 6, Stage 1 (build 0/0 + suite green after Slice 5).
+- Slice 5 — completed 2026-09-17: antibiotics dictionary + editor + D9 attachment tab + D6 surfacing as hub tabs; CREATE 3 VMs + 3 views; hub touch only; no backend; no migration.
 - Slice 4 — completed 2026-09-17: Analytes tab + editor/bands + Profiles tab + composition editor as hub tabs; CREATE 4 VMs + 4 views; hub touch only; no backend; no migration.
 - Slice 3 — completed 2026-09-17: lab hub («المعمل» + U-11 Navigated fix) + catalog/groups/worklogs tabs + test editor (13 fields, ranges + permanent note, single-link mapping); CREATE 5 VMs + 5 views; no backend touch; no migration.
 - Slice 2 — completed 2026-09-17: D1 LabPrintText tab in SystemSettingsView + early backup-path check + .bak guard + restore text + report colour preview; MODIFY only (2 VMs + 2 views); no migration.
@@ -313,7 +315,7 @@ Additional user-authorized execution parameters (override skill defaults):
 - **U-10 (Slice 3):** work-log name code message is «اسم مجموعة العمل مطلوب.» (not plan's «اسم السجل مطلوب») → code binding.
 - **U-11 (Slice 3):** `ShellViewModel` never subscribes to `INavigationService.Navigated`, so navigated content never displays (baseline shell bug). Minimal fix (subscribe in ctor) required for the «المعمل» hub; also repairs المرضى/المستخدمون/الإعدادات display — intended navigation, justified.
 - **U-12 (Slice 4):** plan's «المكوّن مضاف بالفعل» vs code «المادة التحليلية مرتبطة بالبروفايل بالفعل.» → plan quote as UI pre-guard, backend message as fallback. Plan's «النطاقات متداخلة أو بها فراغات» has no backend rule → bands editor surfaces backend/domain messages only. (Analyte/profile validator quotes verified to match code.)
-- **U-13 (Slices 4–5):** `TestSummaryDto` carries no ResultKind/IsCultureType → kind pickers (specialized-test, culture-test) list catalog tests while validity stays backend-enforced; no invented query surface, no per-test N+1.
+- **U-13 (Slices 4–5):** `TestSummaryDto` carries no ResultKind/IsCultureType → Slice 4's specialized-test picker lists catalog tests with backend-enforced validity; Slice 5's culture picker filters client-side by resolving each summary via the existing `GetTestByIdQuery` on tab load (cached in VM) — existing surface only, no invented query, no per-test N+1 beyond this load.
 
 - Pinned commit `09c304c…` must equal `main` HEAD at start; if the repo has moved, STOP and report (plan is anchored to that commit).
 - No UI test harness exists — manual verification is recorded, never fabricated; physical-printer/visual checks remain for the owner.
@@ -329,7 +331,8 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-17 | 1 | 1–10 | Slice 1 executed, VG-02 pass (build 0/0, tests 2088 green incl. 7 new, zero-drift, grep gates, manual walk recorded) | OK | `034a45d` |
 | 2026-09-17 | 2 | 1–10 | Slice 2 executed, VG-03 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `60956c2` |
 | 2026-09-17 | 3 | 1–10 | Slice 3 executed, VG-04 pass (build 0/0, tests 2088 green, zero-drift, grep gates, manual walk recorded) | OK | `52149f0` |
-| 2026-09-17 | 4 | 1–10 | Slice 4 executed, VG-05 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
+| 2026-09-17 | 4 | 1–10 | Slice 4 executed, VG-05 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `87b8fab` |
+| 2026-09-17 | 5 | 1–10 | Slice 5 executed, VG-06 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
 
 ## Stop Report (append only if a stop condition triggers)
 

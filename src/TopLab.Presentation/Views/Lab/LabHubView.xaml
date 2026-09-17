@@ -20,6 +20,12 @@
             <TabItem Header="البروفايلات">
                 <ContentControl Content="{Binding Profiles}" Margin="8" />
             </TabItem>
+            <TabItem Header="المضادات">
+                <ContentControl Content="{Binding Antibiotics}" Margin="8" />
+            </TabItem>
+            <TabItem Header="ربط المزرعة">
+                <ContentControl Content="{Binding CultureAttachment}" Margin="8" />
+            </TabItem>
         </TabControl>
     </DockPanel>
 </UserControl>

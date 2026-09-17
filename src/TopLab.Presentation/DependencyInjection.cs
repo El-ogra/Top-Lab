@@ -48,6 +48,9 @@ public static class DependencyInjection
         services.AddTransient<AnalyteEditorViewModel>();
         services.AddTransient<ProfilesViewModel>();
         services.AddTransient<ProfileEditorViewModel>();
+        services.AddTransient<AntibioticsViewModel>();
+        services.AddTransient<AntibioticEditorViewModel>();
+        services.AddTransient<CultureAttachmentViewModel>();
         services.AddTransient<SettingsDashboardViewModel>();
         services.AddTransient<SystemSettingsViewModel>();
         services.AddTransient<ReportSettingsViewModel>();

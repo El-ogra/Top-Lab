@@ -13,13 +13,17 @@ public sealed class LabHubViewModel : ViewModelBase
         TestGroupsViewModel groups,
         WorkGroupLogsViewModel workLogs,
         AnalytesViewModel analytes,
-        ProfilesViewModel profiles)
+        ProfilesViewModel profiles,
+        AntibioticsViewModel antibiotics,
+        CultureAttachmentViewModel cultureAttachment)
     {
         Catalog = catalog;
         Groups = groups;
         WorkLogs = workLogs;
         Analytes = analytes;
         Profiles = profiles;
+        Antibiotics = antibiotics;
+        CultureAttachment = cultureAttachment;
     }
 
     public TestCatalogViewModel Catalog { get; }
@@ -32,6 +36,10 @@ public sealed class LabHubViewModel : ViewModelBase
 
     public ProfilesViewModel Profiles { get; }
 
+    public AntibioticsViewModel Antibiotics { get; }
+
+    public CultureAttachmentViewModel CultureAttachment { get; }
+
     public async Task LoadAsync()
     {
         await Catalog.LoadAsync();
@@ -39,5 +47,7 @@ public sealed class LabHubViewModel : ViewModelBase
         await WorkLogs.LoadAsync();
         await Analytes.LoadAsync();
         await Profiles.LoadAsync();
+        await Antibiotics.LoadAsync();
+        await CultureAttachment.LoadAsync();
     }
 }

@@ -112,6 +112,12 @@
                     <DataTemplate DataType="{x:Type labVm:ProfilesViewModel}">
                         <labView:ProfilesView/>
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:AntibioticsViewModel}">
+                        <labView:AntibioticsView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:CultureAttachmentViewModel}">
+                        <labView:CultureAttachmentView/>
+                    </DataTemplate>
                     <DataTemplate DataType="{x:Type usersVm:UserManagementViewModel}">
                         <usersView:UserManagementView/>
                     </DataTemplate>

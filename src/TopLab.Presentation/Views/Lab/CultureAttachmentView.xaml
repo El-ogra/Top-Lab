@@ -1,0 +1,68 @@
+<UserControl x:Class="TopLab.Presentation.Views.Lab.CultureAttachmentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="تحليل المزرعة:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ComboBox Width="260" ItemsSource="{Binding CultureTests}"
+                      SelectedItem="{Binding SelectedCulture}" DisplayMemberPath="Name" />
+            <TextBlock Text="{Binding AttachedCount, StringFormat=عدد المضادات المرتبطة: {0}}"
+                       FontWeight="Bold" VerticalAlignment="Center" Margin="16,0,0,0" />
+        </StackPanel>
+
+        <TextBlock DockPanel.Dock="Top" Text="اختر تحليل مزرعة أولاً" Foreground="#666666" Margin="0,8,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasSelectedCulture}" Value="False">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+        <Grid Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <DockPanel Grid.Column="0" Margin="0,0,4,0">
+                <TextBlock DockPanel.Dock="Top" Text="مرتبطة بالمزرعة" FontWeight="Bold" Margin="0,0,0,4" />
+                <ListBox ItemsSource="{Binding Attached}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="2">
+                                <Button DockPanel.Dock="Right" Content="فك" Width="50" Margin="8,0,0,0"
+                                        Command="{Binding DataContext.DetachCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <DockPanel Grid.Column="1" Margin="4,0,0,0">
+                <TextBlock DockPanel.Dock="Top" Text="متاحة من القاموس" FontWeight="Bold" Margin="0,0,0,4" />
+                <ListBox ItemsSource="{Binding Available}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="2">
+                                <Button DockPanel.Dock="Right" Content="ربط" Width="50" Margin="8,0,0,0"
+                                        Command="{Binding DataContext.AttachCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>
