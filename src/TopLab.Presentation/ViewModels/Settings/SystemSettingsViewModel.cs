@@ -1,10 +1,12 @@
 using MediatR;
+using TopLab.Application.Features.SystemAndPrintSettings.Commands.SaveLabPrintText;
 using TopLab.Application.Features.SystemAndPrintSettings.Commands.SavePrinterAssignments;
 using TopLab.Application.Features.SystemAndPrintSettings.Commands.UpdateDatabaseServerSettings;
 using TopLab.Application.Features.SystemAndPrintSettings.Commands.UpdateSystemSettings;
 using TopLab.Application.Features.SystemAndPrintSettings.Common;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.CheckBackupPath;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetDatabaseServerSettings;
+using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetLabPrintText;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetPrinterAssignments;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetSystemSettings;
 using TopLab.Application.Common.Interfaces;
@@ -57,6 +59,14 @@ public sealed class SystemSettingsViewModel : ViewModelBase
     private string _password = string.Empty;
     private bool _integratedSecurity = true;
 
+    private LabPrintTextScope _labPrintTextScope = LabPrintTextScope.Report;
+    private string _labName = string.Empty;
+    private string _labAddress = string.Empty;
+    private string _labPhone = string.Empty;
+    private string _labFontFamily = "Arial";
+    private int _labFontSizePt = 12;
+    private bool _isLabPrintTextEmpty = true;
+
     public SystemSettingsViewModel(
         ISender mediator,
         IPrinterCatalogService printers,
@@ -82,18 +92,24 @@ public sealed class SystemSettingsViewModel : ViewModelBase
 
         AccountTypeOptions = new List<AccountType> { AccountType.Individual, AccountType.LabToLab, AccountType.Contracts, AccountType.Free };
         DisplayModeOptions = new List<ResultScreenAccountDisplayMode> { ResultScreenAccountDisplayMode.Hidden, ResultScreenAccountDisplayMode.Summary, ResultScreenAccountDisplayMode.Detailed };
+        LabPrintTextScopeOptions = new List<LabPrintTextScope> { LabPrintTextScope.Report, LabPrintTextScope.Receipt, LabPrintTextScope.Envelope };
+        LabFontFamilyOptions = new List<string> { "Arial", "Tahoma", "Calibri", "Times New Roman", "Palatino Linotype" };
 
         LoadCommand = new AsyncRelayCommand(_ => LoadAsync());
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
         CheckBackupPathCommand = new AsyncRelayCommand(_ => CheckBackupPathAsync());
         TestDatabaseServerCommand = new AsyncRelayCommand(_ => TestDatabaseServerAsync());
         SaveDatabaseServerCommand = new AsyncRelayCommand(_ => SaveDatabaseServerAsync());
+        LoadPrintTextCommand = new AsyncRelayCommand(_ => LoadLabPrintTextAsync());
+        SavePrintTextCommand = new AsyncRelayCommand(_ => SaveLabPrintTextAsync());
         BackToDashboardCommand = new RelayCommand(_ => _navigation.NavigateTo<SettingsDashboardViewModel>());
     }
 
     public IReadOnlyList<string> InstalledPrinters { get; }
     public IReadOnlyList<AccountType> AccountTypeOptions { get; }
     public IReadOnlyList<ResultScreenAccountDisplayMode> DisplayModeOptions { get; }
+    public IReadOnlyList<LabPrintTextScope> LabPrintTextScopeOptions { get; }
+    public IReadOnlyList<string> LabFontFamilyOptions { get; }
 
     public string ErrorMessage { get => _errorMessage; private set => SetProperty(ref _errorMessage, value); }
     public string StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
@@ -104,6 +120,8 @@ public sealed class SystemSettingsViewModel : ViewModelBase
     public AsyncRelayCommand CheckBackupPathCommand { get; }
     public AsyncRelayCommand TestDatabaseServerCommand { get; }
     public AsyncRelayCommand SaveDatabaseServerCommand { get; }
+    public AsyncRelayCommand LoadPrintTextCommand { get; }
+    public AsyncRelayCommand SavePrintTextCommand { get; }
     public RelayCommand BackToDashboardCommand { get; }
 
     public AccountType DefaultAccountType { get => _defaultAccountType; set => SetProperty(ref _defaultAccountType, value); }
@@ -129,6 +147,25 @@ public sealed class SystemSettingsViewModel : ViewModelBase
     public string Login { get => _login; set => SetProperty(ref _login, value); }
     public string Password { get => _password; set => SetProperty(ref _password, value); }
     public bool IntegratedSecurity { get => _integratedSecurity; set => SetProperty(ref _integratedSecurity, value); }
+
+    public LabPrintTextScope LabPrintTextScope
+    {
+        get => _labPrintTextScope;
+        set
+        {
+            if (SetProperty(ref _labPrintTextScope, value) && _hasLoaded)
+            {
+                _ = LoadLabPrintTextAsync();
+            }
+        }
+    }
+
+    public string LabName { get => _labName; set => SetProperty(ref _labName, value); }
+    public string LabAddress { get => _labAddress; set => SetProperty(ref _labAddress, value); }
+    public string LabPhone { get => _labPhone; set => SetProperty(ref _labPhone, value); }
+    public string LabFontFamily { get => _labFontFamily; set => SetProperty(ref _labFontFamily, value); }
+    public int LabFontSizePt { get => _labFontSizePt; set => SetProperty(ref _labFontSizePt, value); }
+    public bool IsLabPrintTextEmpty { get => _isLabPrintTextEmpty; private set => SetProperty(ref _isLabPrintTextEmpty, value); }
 
     public async Task LoadAsync()
     {
@@ -191,7 +228,74 @@ public sealed class SystemSettingsViewModel : ViewModelBase
                 IntegratedSecurity = dbServer.Value.IntegratedSecurity;
             }
 
+            await LoadLabPrintTextAsync();
+
             _hasLoaded = true;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task LoadLabPrintTextAsync()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var lab = await _mediator.Send(new GetLabPrintTextQuery { Scope = LabPrintTextScope });
+            if (lab.IsSuccess && lab.Value is not null)
+            {
+                LabName = lab.Value.LabName;
+                LabAddress = lab.Value.Address;
+                LabPhone = lab.Value.Phone;
+                if (!string.IsNullOrWhiteSpace(lab.Value.FontFamily))
+                {
+                    LabFontFamily = lab.Value.FontFamily;
+                }
+
+                if (lab.Value.FontSizePt > 0)
+                {
+                    LabFontSizePt = lab.Value.FontSizePt;
+                }
+
+                IsLabPrintTextEmpty = string.IsNullOrWhiteSpace(lab.Value.LabName)
+                    && string.IsNullOrWhiteSpace(lab.Value.Address)
+                    && string.IsNullOrWhiteSpace(lab.Value.Phone);
+            }
+            else if (lab.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(lab.Error);
+            }
+        }
+        catch
+        {
+            IsLabPrintTextEmpty = true;
+        }
+    }
+
+    public async Task SaveLabPrintTextAsync()
+    {
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        try
+        {
+            var result = await _mediator.Send(new SaveLabPrintTextCommand(
+                LabPrintTextScope,
+                LabName,
+                LabAddress,
+                LabPhone,
+                LabFontFamily,
+                LabFontSizePt));
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;
+                return;
+            }
+
+            IsLabPrintTextEmpty = false;
+            StatusMessage = "تم حفظ نص الطباعة بنجاح.";
         }
         finally
         {

@@ -3,7 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FlowDirection="RightToLeft">
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="20" MaxWidth="760" HorizontalAlignment="Center">
+        <TabControl Margin="20" MaxWidth="780" HorizontalAlignment="Center">
+            <TabItem Header="الإعدادات العامة">
+        <StackPanel Margin="12" MaxWidth="760" HorizontalAlignment="Center">
 
             <DockPanel>
                 <Button DockPanel.Dock="Right" Content="القائمة الرئيسية" Width="110" Margin="8,0,0,0"
@@ -111,5 +113,65 @@
                 <Button Content="حفظ الإعدادات" Width="120" Command="{Binding SaveCommand}" />
             </StackPanel>
         </StackPanel>
+            </TabItem>
+            <TabItem Header="نص الطباعة">
+                <StackPanel Margin="12" MaxWidth="760" HorizontalAlignment="Center">
+                    <TextBlock Text="نص الطباعة (بيانات المعمل)" FontSize="16" Margin="0,0,0,8" />
+
+                    <TextBlock Text="النطاق:" Margin="0,4,0,2" />
+                    <ComboBox ItemsSource="{Binding LabPrintTextScopeOptions}" SelectedItem="{Binding LabPrintTextScope}" Margin="0,0,0,8" />
+
+                    <TextBlock Text="لا توجد نصوص طباعة مخصصة بعد" Foreground="#666666" Margin="0,0,0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLabPrintTextEmpty}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="اسم المعمل:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                        <TextBox Grid.Row="0" Grid.Column="1" Margin="0,4" Text="{Binding LabName, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="العنوان:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4" Text="{Binding LabAddress, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="الهاتف (فارغ = يُخفى من المطبوعات):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4" Text="{Binding LabPhone, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="الخط:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                        <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,4" ItemsSource="{Binding LabFontFamilyOptions}"
+                                  SelectedItem="{Binding LabFontFamily}" />
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="حجم الخط (نقطة):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                        <TextBox Grid.Row="4" Grid.Column="1" Margin="0,4" Text="{Binding LabFontSizePt, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+                    <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                        <Button Content="حفظ نص الطباعة" Width="140" Command="{Binding SavePrintTextCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
     </ScrollViewer>
 </UserControl>

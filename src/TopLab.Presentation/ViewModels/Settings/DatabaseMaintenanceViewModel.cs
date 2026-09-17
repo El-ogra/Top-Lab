@@ -2,6 +2,7 @@ using MediatR;
 using TopLab.Application.Features.SystemAndPrintSettings.Commands.ApplyDatabaseUpdates;
 using TopLab.Application.Features.SystemAndPrintSettings.Commands.BackupDatabaseNow;
 using TopLab.Application.Features.SystemAndPrintSettings.Commands.RestoreDatabase;
+using TopLab.Application.Features.SystemAndPrintSettings.Queries.CheckBackupPath;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetSystemSettings;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
@@ -92,6 +93,13 @@ public sealed class DatabaseMaintenanceViewModel : ViewModelBase
         IsBusy = true;
         try
         {
+            var pathCheck = await _mediator.Send(new CheckBackupPathQuery(folder));
+            if (!pathCheck.IsSuccess)
+            {
+                ErrorMessage = pathCheck.Error is not null ? _presenter.Present(pathCheck.Error) : ErrorMessage;
+                return;
+            }
+
             var result = await _mediator.Send(new BackupDatabaseNowCommand(folder));
             if (result.IsSuccess && !string.IsNullOrWhiteSpace(result.Value))
             {
@@ -119,9 +127,15 @@ public sealed class DatabaseMaintenanceViewModel : ViewModelBase
             return;
         }
 
+        if (!file.EndsWith(".bak", StringComparison.OrdinalIgnoreCase))
+        {
+            ErrorMessage = "اختر ملف نسخة احتياطية (.bak) صالحاً";
+            return;
+        }
+
         bool confirm = await _dialogs.ShowConfirmationAsync(
             "استعادة النسخة الاحتياطية",
-            "سيتم عمل نسخة احتياطية احترازية قبل الاستعادة، ويجب إعادة تشغيل النظام بعدها. هل تريد المتابعة؟");
+            "سيتم عمل نسخة احتياطية احترازية قبل الاستعادة، وسيتم استبدال البيانات الحالية ببيانات النسخة، ويجب إعادة تشغيل النظام بعدها. هل تريد المتابعة؟");
         if (!confirm)
         {
             return;

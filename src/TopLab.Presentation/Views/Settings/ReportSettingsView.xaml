@@ -78,6 +78,22 @@
                 <TextBox Grid.Row="4" Grid.Column="1" Margin="0,4" Text="{Binding FontSizePt, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
 
+            <TextBlock Text="معاينة التقرير" FontWeight="Bold" Margin="0,20,0,8" />
+            <Border BorderBrush="#1E3A5F" BorderThickness="1" Padding="12" Background="#F4F6FA">
+                <StackPanel>
+                    <TextBlock Text="{Binding LabName}" Foreground="#1E3A5F" FontWeight="Bold"
+                               FontFamily="{Binding FontFamily}" FontSize="{Binding FontSizePt}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding LabAddress}" Foreground="#1E3A5F"
+                               FontFamily="{Binding FontFamily}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding LabPhone}" Foreground="#1E3A5F"
+                               FontFamily="{Binding FontFamily}" TextWrapping="Wrap" />
+                    <Separator Margin="0,8" />
+                    <TextBlock Text="نموذج تذييل التقرير — معاينة حية للخط والبيانات المختارة" Foreground="#5A6B85"
+                               FontStyle="Italic" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding HeaderFooterMode}" Foreground="#5A6B85" />
+                </StackPanel>
+            </Border>
+
             <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
             <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="0,4,0,0" />
 

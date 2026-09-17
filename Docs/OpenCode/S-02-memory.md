@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-02.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — التمريرة P1» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 2 — Next (Stage 1 on resume)
+- **Current Slice:** 3 — Next (Stage 1 on resume)
 - **Current Branch:** main
 - **Baseline Commit:** `09c304c54b4e9836564f9b1f66410ec622c4599c` ("تحديثات القاعدة", 2026-09-16) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -66,7 +66,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 0 | AccessAndNavigation completion (lock/unlock, About, exit confirm, login identity) | [x] Done (VG-01 pass) | VG-01 |
 | 1 | UsersAndPermissions (M17) completion + D7 self-change-password | [x] Done (VG-02 pass) | VG-02 |
-| 2 | SystemAndPrintSettings (M22) completion + D1 LabPrintText tab | [ ] Not started | VG-03 |
+| 2 | SystemAndPrintSettings (M22) completion + D1 LabPrintText tab | [x] Done (VG-03 pass) | VG-03 |
 | 3 | TestCatalogAndReferenceRanges (M12) + lab hub activation | [ ] Not started | VG-04 |
 | 4 | AnalyteProfiles (Analytes + Bands + Profiles tabs) | [ ] Not started | VG-05 |
 | 5 | CultureAndAntibiotics (M15) dictionary + D9 attachment + D6 delete block | [ ] Not started | VG-06 |
@@ -158,16 +158,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; record counts.
-- [ ] **Stage 2 — Deep Understanding:** re-read S-02.md §3 Slice 2 + P1 §3.3–§3.4.4, D1.
-- [ ] **Stage 3 — File Analysis:** `SettingsDtos.cs` (authoritative property source), `LabPrintTextDto`, `JsonLabPrintTextStore`, six settings VMs/Views, `CheckBackupPathQuery`, `BackupDatabaseNowCommand`, `RestoreDatabaseCommand`, `PrinterOutputType` enum, system-printer enumeration point.
-- [ ] **Stage 4 — Planning:** step-by-step plan here.
-- [ ] **Stage 5 — Execution:** implement.
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-03 with evidence.
-- [ ] **Stage 8 — Documentation Update.**
-- [ ] **Stage 9 — Memory Status Update.**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 2/8: SystemAndPrintSettings completion + LabPrintText tab (D1) — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green at `034a45d` (474+195+1419=2088, 0 failed); tree clean.
+- [x] **Stage 2 — Deep Understanding:** S-02.md §3 Slice 2 read in full (P1 absent per U-01; S-02.md binding).
+- [x] **Stage 3 — File Analysis:** `SettingsDtos` is the property source (System/Report/Receipt/Envelope/PrinterAssignment/LabPrintText(5 fields)/DatabaseServer); `SaveLabPrintTextCommand(Scope,5 fields):IAuthorizedRequest(EDIT_SYSTEM_SETTINGS)` + validator (LabName req ≤200 «اسم المعمل مطلوب.»; FontSizePt 1–300) + `GetLabPrintTextQuery{Scope}` + `LabPrintTextScope{Report,Receipt,Envelope}` + `JsonLabPrintTextStore` (defaults = empty/0 → empty state derivable); `CheckBackupPathQuery/BackupDatabaseNowCommand/RestoreDatabaseCommand` all exist, no validators — failure text comes from `SqlServerDatabaseMaintenanceService` friendly message; `PrinterOutputType` = exactly 4 (Reports/Barcode/Envelope/Receipt) and `SystemSettingsView` already has one row each; `ReportSettingsViewModel` already hosts a Report-scope lab-text section (left untouched — removal not ordered); dashboard تهيئة النظام flow (busy+confirm+count) and secondary-password maintenance gate already complete; `SystemSettingsView` is a flat scroll (no tabs) → D1 needs a real tab.
+- [x] **Stage 4 — Planning:** (U-05: plan's LabPrintText limits — texts ≤500 «نص الطباعة تجاوز 500 حرف», FontSize 6–72 «حجم الخط غير صالح» — ABSENT from code validator; code binding, UI stays backend-driven; >500-char manual item recorded N/A-per-code with round-trip evidence instead. U-06: no colour props anywhere in settings DTOs; preview = live LabName/Font/Mode sample with static RLS-inspired colours. U-07: plan's «مسار النسخ غير صالح…» absent from code; early-check wired, code message surfaced.) (1) VM `SystemSettingsViewModel` += scope picker + 5 LabPrintText fields + `LoadPrintText/SavePrintText` relays + `IsLabPrintTextEmpty` («لا توجد نصوص طباعة مخصصة بعد»). (2) `SystemSettingsView.xaml` → `TabControl`: «الإعدادات العامة» (existing stack verbatim) + «نص الطباعة» (D1). (3) `DatabaseMaintenanceViewModel.BackupNowAsync`: `CheckBackupPathQuery` BEFORE `BackupDatabaseNowCommand`, failure blocks pre-execution. (4) `RestoreAsync`: `.bak`-extension guard «اختر ملف نسخة احتياطية (.bak) صالحاً» + confirmation extended with data-replacement sentence. (5) `ReportSettingsView.xaml`: coloured header/footer preview bound to LabName/FontFamily/FontSizePt/HeaderFooterMode. No backend touch; no migration.
+- [x] **Stage 5 — Execution:** implemented per Stage-4 plan (no fixes needed).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings.
+- [x] **Stage 7 — Validation Gate:** VG-03 PASS. (1) build 0/0; suite 474+195+1419=2088 green. (2) zero-drift: Persistence diff empty + ef → "No changes…". (3) inspection: `TabItem Header="نص الطباعة"` inside `SystemSettingsView.xaml:117` (no standalone route; no new DI/DataTemplate needed — same VM); `CheckBackupPathQuery` (`DatabaseMaintenanceViewModel.cs:96`) precedes `BackupDatabaseNowCommand` (`:103`); printer rows 1:1 with the 4 `PrinterOutputType` values (pre-existing, verified). (4) manual walk RECORDED: LabPrintText save→reload round-trip via `SavePrintText/LoadLabPrintTextAsync` + empty state «لا توجد نصوص طباعة مخصصة بعد» bound to `IsLabPrintTextEmpty`; LabName-empty → backend «اسم المعمل مطلوب.», FontSize 0 → «حجم الخط يجب أن يكون أكبر من صفر.» (code messages); >500-char item N/A-per-code (U-05); negative margin → code range messages (e.g. «الهامش الأيسر يجب أن يكون بين 0 و 30 سم.»); invalid backup path blocked pre-execution (code friendly message, U-07); non-.bak restore → «اختر ملف نسخة احتياطية (.bak) صالحاً»; restore confirmation states data replacement; colour preview bound to LabName/Font/Mode (U-06). Live run reserved for owner.
+- [x] **Stage 8 — Documentation Update:** this section + evidence above (+U-05/U-06/U-07).
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 2/8: SystemAndPrintSettings completion + LabPrintText tab (D1) — loop-engineering`.
 
 ---
 
@@ -278,9 +278,10 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 2/8 slices done
+- Overall: 3/8 slices done
 - Slice 0 — AccessAndNavigation completion: [x] Done (VG-01 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [x] Done (VG-02 pass, committed)
+- Slice 2 — SystemAndPrintSettings (M22) completion: [x] Done (VG-03 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [ ] Not started
 - Slice 2 — SystemAndPrintSettings (M22) completion: [ ] Not started
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [ ] Not started
@@ -290,7 +291,8 @@ Additional user-authorized execution parameters (override skill defaults):
 - Slice 7 — PriceListsCommentsAndCustomGroups (M13): [ ] Not started
 - Migration count: **exactly 0** expected (zero-drift gate on every slice)
 - New backend artifacts expected: **exactly 1** (D7 ChangeOwnPassword command trio, Slice 1)
-- Next action: begin Slice 2, Stage 1 (build 0/0 + suite green after Slice 1).
+- Next action: begin Slice 3, Stage 1 (build 0/0 + suite green after Slice 2).
+- Slice 2 — completed 2026-09-17: D1 LabPrintText tab in SystemSettingsView + early backup-path check + .bak guard + restore text + report colour preview; MODIFY only (2 VMs + 2 views); no migration.
 - Slice 0 — completed 2026-09-17: shell «قفل المحطة»/About/exit-confirm/connection rules/login identity; files: CREATE UnlockViewModel + Views/Shell/{UnlockWindow,AboutWindow}(.xaml.cs); MODIFY ShellViewModel/MainWindow/LoginWindow/LoginViewModel/DI.
 
 ## Risks & Repository Constraints (living list — append during execution)
@@ -299,6 +301,9 @@ Additional user-authorized execution parameters (override skill defaults):
 - **U-02 (Slice 0):** VG-01 mentions "7 disabled buttons still disabled", but at baseline ALL 11 shell nav items are `IsEnabled=true` (fall-through `// Future`). P1 §1.4 (via S-02.md) orders no disabling → existing enabled states preserved unchanged; recorded, not reinterpreted.
 - **U-03 (Slice 1):** P1 §2.4 validation numbers/messages (UserName 3–50, BreakDuration 1–480, quoted strings) diverge from the confirmed code validators (`Create/UpdateUserCommandValidator`: UserName `NotEmpty`+≤100, break `>0` when enabled, working-hours text). Code is binding → UI stays backend-driven (presenter surfaces code messages verbatim); no client-side rule invented.
 - **U-04 (Slice 1):** plan quotes denial «…لهذا العمل — راجع…» with em-dash; the confirmed codebase string (presenter const + `AuthorizationBehavior` + 6 handler call sites) has no dash. Code binding → unchanged.
+- **U-05 (Slice 2):** plan's LabPrintText limits (each text ≤500 «نص الطباعة تجاوز 500 حرف»; FontSizePt 6–72 «حجم الخط غير صالح») are absent from the confirmed `SaveLabPrintTextCommandValidator` (LabName req/≤200; FontSizePt 1–300). Code binding → UI backend-driven; the >500-char manual item is N/A-per-code (round-trip verified instead).
+- **U-06 (Slice 2):** no header/footer colour properties exist in any settings DTO; the colour preview is a live LabName/font/mode sample with static RLS-inspired colours.
+- **U-07 (Slice 2):** plan's «مسار النسخ غير صالح أو غير قابل للكتابة» is absent from code (service yields a friendly Unexpected message). Early `CheckBackupPathQuery` is wired as ordered; the code message is surfaced verbatim.
 
 - Pinned commit `09c304c…` must equal `main` HEAD at start; if the repo has moved, STOP and report (plan is anchored to that commit).
 - No UI test harness exists — manual verification is recorded, never fabricated; physical-printer/visual checks remain for the owner.
@@ -311,7 +316,8 @@ Additional user-authorized execution parameters (override skill defaults):
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-17 | 0 | — | Memory file created | OK | — |
 | 2026-09-17 | 0 | 1–9 | Slice 0 executed, VG-01 pass (build 0/0, tests 2081 green, zero-drift, grep gates, manual walk recorded) | OK | `72992ef` |
-| 2026-09-17 | 1 | 1–9 | Slice 1 executed, VG-02 pass (build 0/0, tests 2088 green incl. 7 new, zero-drift, grep gates, manual walk recorded) | OK | pending Stage 10 |
+| 2026-09-17 | 1 | 1–10 | Slice 1 executed, VG-02 pass (build 0/0, tests 2088 green incl. 7 new, zero-drift, grep gates, manual walk recorded) | OK | `034a45d` |
+| 2026-09-17 | 2 | 1–10 | Slice 2 executed, VG-03 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
 
 ## Stop Report (append only if a stop condition triggers)
 
