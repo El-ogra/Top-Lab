@@ -1,0 +1,17 @@
+<Window x:Class="TopLab.Presentation.Views.Lab.SampleDrawBoardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:TopLab.Presentation.Common.Converters"
+        Title="سحب العينات — المريض" Height="560" Width="900"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+    </Window.Resources>
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Content="إغلاق" Width="90" Click="CloseButton_Click" IsCancel="True" />
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+        <ContentControl Content="{Binding}" Margin="0,0,0,8" />
+    </DockPanel>
+</Window>

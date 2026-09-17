@@ -6,18 +6,21 @@ using TopLab.Application.Features.SampleCollection.Queries.GetPatientsWithUncoll
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
+using TopLab.Presentation.Views.Lab;
 
 namespace TopLab.Presentation.ViewModels.Lab;
 
 /// <summary>
 /// S-04 Slice 0: Sample Collection worklist tab (S1) inside the «المعمل» hub.
 /// Read-only grid of today's (or selected day's) patients with undrawn samples.
-/// Open-patient affordance ships disabled — wired in Slice 1.
+/// Open-patient affordance wires to the patient draw board (Slice 1).
 /// </summary>
 public sealed class SampleCollectionViewModel : ViewModelBase
 {
     private readonly ISender _mediator;
+    private readonly IDialogService _dialogs;
     private readonly ResultErrorPresenter _presenter;
+    private readonly IServiceProvider _services;
 
     private DateTime? _dayDateTime = DateTime.UtcNow.Date;
     private int _page = 1;
@@ -29,13 +32,16 @@ public sealed class SampleCollectionViewModel : ViewModelBase
     public SampleCollectionViewModel(
         ISender mediator,
         IDialogService dialogs,
-        ResultErrorPresenter presenter)
+        ResultErrorPresenter presenter,
+        IServiceProvider services)
     {
         _mediator = mediator;
+        _dialogs = dialogs;
         _presenter = presenter;
+        _services = services;
 
         RefreshCommand = new AsyncRelayCommand(_ => LoadAsync());
-        OpenPatientCommand = new AsyncRelayCommand(async _ => await Task.CompletedTask);
+        OpenPatientCommand = new AsyncRelayCommand(async p => await OpenPatientAsync(p));
     }
 
     public DateTime? DayDateTime
@@ -72,7 +78,7 @@ public sealed class SampleCollectionViewModel : ViewModelBase
     public bool HasResults => Items.Count > 0;
     public bool ShowEmpty => Items.Count == 0;
 
-    public bool OpenPatientEnabled { get; set; } = false;
+    public bool OpenPatientEnabled { get; set; } = true;
 
     public bool IsBusy
     {
@@ -110,6 +116,25 @@ public sealed class SampleCollectionViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    private async Task OpenPatientAsync(object? parameter)
+    {
+        var dto = parameter as PatientWithUndrawnTestsDto;
+        if (dto is null)
+        {
+            return;
+        }
+
+        var vm = new SampleDrawBoardViewModel(_mediator, _dialogs, _presenter);
+        await vm.InitializeAsync(dto.PatientId);
+
+        var window = new SampleDrawBoardWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        window.ShowDialog();
+        await LoadAsync();
     }
 
     private static DateOnly? ToDateOnly(DateTime? value)
