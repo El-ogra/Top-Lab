@@ -164,7 +164,11 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
             list.Add(new NavigationItem
             {
                 Title = t,
-                IsEnabled = true,
+                // D3 (S-02 Slice 6): the official ExternalEntities entry lives
+                // under «الحسابات», which stays disabled until P5. A temporary
+                // explicitly-tagged route via the Settings dashboard covers
+                // the gap until then.
+                IsEnabled = t != "الحسابات",
                 Command = new RelayCommand(async _ =>
                 {
                     if (t == "خروج")

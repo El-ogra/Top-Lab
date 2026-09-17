@@ -1,0 +1,40 @@
+<Window x:Class="TopLab.Presentation.Views.External.ExternalEntityEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="بيانات الجهة" Height="560" Width="600"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="20">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Content="حفظ" Width="90" Margin="0,0,8,0" Click="SaveButton_Click" IsDefault="True" />
+            <Button Content="إلغاء" Width="80" Click="CancelButton_Click" IsCancel="True" />
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding StatusMessage}" Foreground="#1E3A5F" Margin="0,4,0,0" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="النوع:" Margin="0,0,0,2" />
+                <ComboBox ItemsSource="{Binding TypeOptions}" SelectedValuePath="Value"
+                          SelectedValue="{Binding EntityType}" DisplayMemberPath="Label"
+                          IsEnabled="{Binding IsTypeEditable}" Margin="0,0,0,8" />
+                <TextBlock Text="الكود (تلقائي، للقراءة فقط):" Margin="0,0,0,2" />
+                <TextBox Text="{Binding Code, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8" />
+                <TextBlock Text="الاسم:" Margin="0,0,0,2" />
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                <TextBlock Text="المدينة:" Margin="0,0,0,2" />
+                <TextBox Text="{Binding City, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                <TextBlock Text="العنوان:" Margin="0,0,0,2" />
+                <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                <TextBlock Text="الهاتف:" Margin="0,0,0,2" />
+                <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                <TextBlock Text="الفاكس:" Margin="0,0,0,2" />
+                <TextBox Text="{Binding Fax, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                <TextBlock Text="اسم المسؤول:" Margin="0,0,0,2" />
+                <TextBox Text="{Binding ResponsiblePersonName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                <TextBlock Text="هاتف المسؤول:" Margin="0,0,0,2" />
+                <TextBox Text="{Binding ResponsiblePersonPhone, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

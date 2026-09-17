@@ -105,6 +105,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -113,9 +114,11 @@
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="طبيب (رقم):" Margin="2" VerticalAlignment="Center" />
                         <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding TreatingDoctorIdText, UpdateSourceTrigger=PropertyChanged}" Margin="2" />
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding TreatingDoctorName}" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <Button Grid.Row="0" Grid.Column="3" Content="اختيار طبيب" Margin="2" Padding="8,2" Command="{Binding PickTreatingDoctorCommand}" />
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="إحالة (رقم):" Margin="2" VerticalAlignment="Center" />
                         <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ReferralEntityIdText, UpdateSourceTrigger=PropertyChanged}" Margin="2" />
                         <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding ReferralEntityName}" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <Button Grid.Row="1" Grid.Column="3" Content="اختيار جهة" Margin="2" Padding="8,2" Command="{Binding PickReferralEntityCommand}" />
                     </Grid>
 
                     <TextBlock Text="الصيام / الحالة الصحية" FontWeight="Bold" Margin="0,8,0,4" />

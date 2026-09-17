@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.PatientBilling.Commands.PrintInvoice;
 using TopLab.Application.Features.PatientBilling.Commands.PrintReceipt;
@@ -43,6 +44,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private readonly ISender _mediator;
     private readonly ResultErrorPresenter _presenter;
     private readonly IDialogService _dialogs;
+    private readonly IServiceProvider _services;
 
     private bool _isEditMode;
     private int? _patientId;
@@ -79,11 +81,13 @@ public sealed class PatientEditorViewModel : ViewModelBase
         ISender mediator,
         INavigationService navigation,
         ResultErrorPresenter presenter,
-        IDialogService dialogs)
+        IDialogService dialogs,
+        IServiceProvider services)
     {
         _mediator = mediator;
         _presenter = presenter;
         _dialogs = dialogs;
+        _services = services;
 
         NewPatientCommand = new AsyncRelayCommand(async (_, ct) => await NewPatientAsync());
         SaveCommand = new AsyncRelayCommand(async (_, ct) => await SaveAsync(ct));
@@ -109,6 +113,8 @@ public sealed class PatientEditorViewModel : ViewModelBase
                 SelectedTests.Remove(item);
             }
         });
+        PickTreatingDoctorCommand = new AsyncRelayCommand(_ => PickTreatingDoctorAsync());
+        PickReferralEntityCommand = new AsyncRelayCommand(_ => PickReferralEntityAsync());
     }
 
     public sealed class SelectedTestItem : ViewModelBase
@@ -203,6 +209,54 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public string? ReferralEntityIdText { get => _referralEntityIdText; set => SetProperty(ref _referralEntityIdText, value); }
 
     public string? ReferralEntityName { get => _referralEntityName; private set => SetProperty(ref _referralEntityName, value); }
+
+    public AsyncRelayCommand PickTreatingDoctorCommand { get; }
+    public AsyncRelayCommand PickReferralEntityCommand { get; }
+
+    /// <summary>S-02 Slice 6: fills the doctor fields from the entity picker.</summary>
+    public void SetTreatingDoctor(int id, string name)
+    {
+        TreatingDoctorIdText = id.ToString(CultureInfo.InvariantCulture);
+        TreatingDoctorName = name;
+    }
+
+    /// <summary>S-02 Slice 6: fills the referral fields from the entity picker.</summary>
+    public void SetReferralEntity(int id, string name)
+    {
+        ReferralEntityIdText = id.ToString(CultureInfo.InvariantCulture);
+        ReferralEntityName = name;
+    }
+
+    private async Task PickTreatingDoctorAsync()
+    {
+        var vm = _services.GetRequiredService<ViewModels.External.ExternalEntityPickerViewModel>();
+        vm.PresetType(Domain.Common.Enums.EntityType.TreatingDoctor);
+        await vm.LoadAsync();
+        var window = new Views.External.ExternalEntityPickerWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        bool? picked = window.ShowDialog();
+        if (picked == true && vm.SelectedEntity is not null)
+        {
+            SetTreatingDoctor(vm.SelectedEntity.Id, vm.SelectedEntity.Name);
+        }
+    }
+
+    private async Task PickReferralEntityAsync()
+    {
+        var vm = _services.GetRequiredService<ViewModels.External.ExternalEntityPickerViewModel>();
+        await vm.LoadAsync();
+        var window = new Views.External.ExternalEntityPickerWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        bool? picked = window.ShowDialog();
+        if (picked == true && vm.SelectedEntity is not null)
+        {
+            SetReferralEntity(vm.SelectedEntity.Id, vm.SelectedEntity.Name);
+        }
+    }
 
     public bool IsFastingIndicated { get => _isFastingIndicated; set => SetProperty(ref _isFastingIndicated, value); }
 

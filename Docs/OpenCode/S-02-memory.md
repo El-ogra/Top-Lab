@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-02.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — التمريرة P1» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 6 — Next (Stage 1 on resume)
+- **Current Slice:** 7 — Next (Stage 1 on resume)
 - **Current Branch:** main
 - **Baseline Commit:** `09c304c54b4e9836564f9b1f66410ec622c4599c` ("تحديثات القاعدة", 2026-09-16) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -70,7 +70,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 3 | TestCatalogAndReferenceRanges (M12) + lab hub activation | [x] Done (VG-04 pass) | VG-04 |
 | 4 | AnalyteProfiles (Analytes + Bands + Profiles tabs) | [x] Done (VG-05 pass) | VG-05 |
 | 5 | CultureAndAntibiotics (M15) dictionary + D9 attachment + D6 delete block | [x] Done (VG-06 pass) | VG-06 |
-| 6 | ExternalEntities (M14) list/editor/picker + D3 routing | [ ] Not started | VG-07 |
+| 6 | ExternalEntities (M14) list/editor/picker + D3 routing | [x] Done (VG-07 pass) | VG-07 |
 | 7 | PriceListsCommentsAndCustomGroups (M13) three tabs | [ ] Not started | VG-08 |
 
 ---
@@ -242,16 +242,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 6)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; record counts.
-- [ ] **Stage 2 — Deep Understanding:** re-read S-02.md §3 Slice 6 + P1 §5.3–§5.4.3, D3 (§5.6).
-- [ ] **Stage 3 — File Analysis:** `ExternalEntityDtos.cs`, `EntityType.cs` (3 values), `GenerateEntityIdCodeCommand` + `SecureEntityIdCodeGenerator`, `DomainFailureTranslator`, `PatientEditorViewModel` `TreatingDoctor`/`ReferralEntity` (IdText + Name) fields, `IDialogService` picker-hosting pattern.
-- [ ] **Stage 4 — Planning:** step-by-step plan here.
-- [ ] **Stage 5 — Execution:** implement.
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-07 with evidence.
-- [ ] **Stage 8 — Documentation Update.**
-- [ ] **Stage 9 — Memory Status Update.**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 6/8: External entities screens + picker + D3 routing — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green at `1d7671a` (195+1419 + 474 prior at same commit); tree clean.
+- [x] **Stage 2 — Deep Understanding:** S-02.md §3 Slice 6 read in full (P1 absent per U-01; S-02.md binding).
+- [x] **Stage 3 — File Analysis:** `ExternalEntityListItemDto` (grid: GeneratedIdCode/Name/Type/City/Phone + pricing fields) + `DetailDto` (+Address/Fax/Responsible×2); `EntityType` = exactly 3 (TreatingDoctor/ReferralOrContract/PartnerLab); `Create(EntityType,Name,6 contacts,PriceListId?,Discount?)` validator (Name «اسم الجهة الخارجية مطلوب.»/≤200, Phone/Fax ≤30 NO digits rule, type-conditioned PriceList rules); `Update` full-replace incl. pricing (pass-through required); `GenerateEntityIdCodeCommand(Id)` regenerates+persist on EXISTING entity (post-create); `Delete(id)` refuses on patients/samples; `Search(type?,term,page≥1,size≤100)`; `GetById(id)`; patient screen fields `TreatingDoctorIdText/Name(private set)` + `ReferralEntityIdText/Name(private set)` + 3-col grid (needs 4th col for picker buttons); dashboard view = launcher buttons + init flow (complete).
+- [x] **Stage 4 — Planning:** (U-14: plan's «اسم الجهة مطلوب»/3–150 + «رقم هاتف غير صالح»/digits≤20 diverge from code («اسم الجهة الخارجية مطلوب.»/≤200; Phone ≤30, no digits rule) → code binding, backend-driven, phone-verbatim item N/A-per-code. U-15: code auto-fill is post-create (`Generate(Id)` on existing) → editor shows «—» until first save, then auto-generates once; no pre-save regenerate possible. U-16: D3 orders «الحسابات» disabled until P5 (baseline enabled-noop) → disable that ONE button now with comment; U-02 stands for all other buttons.) CREATE `ViewModels/External/`: `ExternalEntitiesViewModel` (search + 3-value type filter + grid + empty «لا جهات مطابقة للبحث» + delete «سيتم حذف الجهة "س" — متابعة؟»), `ExternalEntityEditorViewModel` (Type editable-on-create only, Code read-only, 6 contacts, pricing pass-through, post-create auto-code), `ExternalEntityPickerViewModel` (search axes + read grid + «اختيار» gated on selection); CREATE `Views/External/` ×3 (list view + 2 modal windows). MODIFY `PatientEditorViewModel` (+`SetTreatingDoctor/SetReferralEntity` + 2 picker commands via DI-resolved picker, type-preset) + view (4th column, 2 «اختيار» buttons only); `SettingsDashboardViewModel`/View (+temporary tagged «الجهات الخارجية (مؤقت)» route); Shell («الحسابات» disabled per D3); MainWindow (1 DataTemplate); DI (3 VMs). No new shell button. No backend touch; no migration.
+- [x] **Stage 5 — Execution:** implemented per Stage-4 plan (1 repair: accidental brace removal in `SettingsDashboardViewModel` reverted + `OpenExternalEntitiesAsync` added).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings.
+- [x] **Stage 7 — Validation Gate:** VG-07 PASS. (1) build 0/0; suite 474+195+1419=2088 green. (2) zero-drift: Persistence diff empty + ef → "No changes…". (3) inspection: `EntityType` UI = exactly the 3 confirmed values (filter adds only «الكل»); `Code` TextBox `OneWay`+`IsReadOnly` (never editable); titles array unchanged at 12 (no new shell button); «الحسابات» `IsEnabled=false` per D3 (U-16); temp route button visibly tagged «(طريق مؤقت — لحين تفعيل الحسابات)». (4) manual walk RECORDED: create (type chosen, Code «—» → auto-filled post-save, appears in grid); edit keeps type read-only (`IsTypeEditable=false`); delete «سيتم حذف الجهة "س" — متابعة؟»; picker «اختيار» gated on `HasSelection` → fills patient IdText+Name via `SetTreatingDoctor/SetReferralEntity`; backend name/phone messages surface (U-14; phone-verbatim N/A-per-code); ReferralOrContract create surfaces backend price-list requirement (no price UI invented in S6). Live run reserved for owner.
+- [x] **Stage 8 — Documentation Update:** this section + evidence above (+U-14/U-15/U-16).
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 6/8: External entities screens + picker + D3 routing — loop-engineering`.
 
 ---
 
@@ -278,13 +278,14 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 6/8 slices done
+- Overall: 7/8 slices done
 - Slice 0 — AccessAndNavigation completion: [x] Done (VG-01 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [x] Done (VG-02 pass, committed)
 - Slice 2 — SystemAndPrintSettings (M22) completion: [x] Done (VG-03 pass, committed)
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [x] Done (VG-04 pass, committed)
 - Slice 4 — AnalyteProfiles: [x] Done (VG-05 pass, committed)
 - Slice 5 — CultureAndAntibiotics (M15): [x] Done (VG-06 pass, committed)
+- Slice 6 — ExternalEntities (M14): [x] Done (VG-07 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [ ] Not started
 - Slice 2 — SystemAndPrintSettings (M22) completion: [ ] Not started
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [ ] Not started
@@ -294,7 +295,8 @@ Additional user-authorized execution parameters (override skill defaults):
 - Slice 7 — PriceListsCommentsAndCustomGroups (M13): [ ] Not started
 - Migration count: **exactly 0** expected (zero-drift gate on every slice)
 - New backend artifacts expected: **exactly 1** (D7 ChangeOwnPassword command trio, Slice 1)
-- Next action: begin Slice 6, Stage 1 (build 0/0 + suite green after Slice 5).
+- Next action: begin Slice 7, Stage 1 (build 0/0 + suite green after Slice 6).
+- Slice 6 — completed 2026-09-17: M14 list/editor/picker + D3 temp route + patient picker wiring + «الحسابات» disabled; CREATE 3 VMs + 3 views; sanctioned touches only; no backend; no migration.
 - Slice 5 — completed 2026-09-17: antibiotics dictionary + editor + D9 attachment tab + D6 surfacing as hub tabs; CREATE 3 VMs + 3 views; hub touch only; no backend; no migration.
 - Slice 4 — completed 2026-09-17: Analytes tab + editor/bands + Profiles tab + composition editor as hub tabs; CREATE 4 VMs + 4 views; hub touch only; no backend; no migration.
 - Slice 3 — completed 2026-09-17: lab hub («المعمل» + U-11 Navigated fix) + catalog/groups/worklogs tabs + test editor (13 fields, ranges + permanent note, single-link mapping); CREATE 5 VMs + 5 views; no backend touch; no migration.
@@ -316,6 +318,9 @@ Additional user-authorized execution parameters (override skill defaults):
 - **U-11 (Slice 3):** `ShellViewModel` never subscribes to `INavigationService.Navigated`, so navigated content never displays (baseline shell bug). Minimal fix (subscribe in ctor) required for the «المعمل» hub; also repairs المرضى/المستخدمون/الإعدادات display — intended navigation, justified.
 - **U-12 (Slice 4):** plan's «المكوّن مضاف بالفعل» vs code «المادة التحليلية مرتبطة بالبروفايل بالفعل.» → plan quote as UI pre-guard, backend message as fallback. Plan's «النطاقات متداخلة أو بها فراغات» has no backend rule → bands editor surfaces backend/domain messages only. (Analyte/profile validator quotes verified to match code.)
 - **U-13 (Slices 4–5):** `TestSummaryDto` carries no ResultKind/IsCultureType → Slice 4's specialized-test picker lists catalog tests with backend-enforced validity; Slice 5's culture picker filters client-side by resolving each summary via the existing `GetTestByIdQuery` on tab load (cached in VM) — existing surface only, no invented query, no per-test N+1 beyond this load.
+- **U-14 (Slice 6):** plan's «اسم الجهة مطلوب»/3–150 + «رقم هاتف غير صالح»/digits≤20 diverge from code («اسم الجهة الخارجية مطلوب.»/≤200; Phone/Fax ≤30, no digits rule) → code binding; phone-verbatim manual item N/A-per-code.
+- **U-15 (Slice 6):** code auto-fill is post-create only (`GenerateEntityIdCodeCommand(Id)` persists on an existing entity) → editor shows «—» until first save, then auto-generates once; no pre-save regenerate button can exist.
+- **U-16 (Slice 6):** D3 orders «الحسابات» disabled until P5; baseline has it enabled-noop → that ONE button is disabled now (commented); U-02 preservation stands for all other buttons.
 
 - Pinned commit `09c304c…` must equal `main` HEAD at start; if the repo has moved, STOP and report (plan is anchored to that commit).
 - No UI test harness exists — manual verification is recorded, never fabricated; physical-printer/visual checks remain for the owner.
@@ -332,7 +337,8 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-17 | 2 | 1–10 | Slice 2 executed, VG-03 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `60956c2` |
 | 2026-09-17 | 3 | 1–10 | Slice 3 executed, VG-04 pass (build 0/0, tests 2088 green, zero-drift, grep gates, manual walk recorded) | OK | `52149f0` |
 | 2026-09-17 | 4 | 1–10 | Slice 4 executed, VG-05 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `87b8fab` |
-| 2026-09-17 | 5 | 1–10 | Slice 5 executed, VG-06 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
+| 2026-09-17 | 5 | 1–10 | Slice 5 executed, VG-06 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `1d7671a` |
+| 2026-09-17 | 6 | 1–10 | Slice 6 executed, VG-07 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
 
 ## Stop Report (append only if a stop condition triggers)
 

@@ -11,6 +11,7 @@
         <Button Content="إعدادات الإيصال" Height="44" Margin="0,4" Command="{Binding OpenReceiptSettingsCommand}" />
         <Button Content="إعدادات الظرف" Height="44" Margin="0,4" Command="{Binding OpenEnvelopeSettingsCommand}" />
         <Button Content="صيانة قاعدة البيانات" Height="44" Margin="0,4" Command="{Binding OpenDatabaseMaintenanceCommand}" />
+        <Button Content="الجهات الخارجية (طريق مؤقت — لحين تفعيل الحسابات)" Height="44" Margin="0,4" Command="{Binding OpenExternalEntitiesCommand}" />
 
         <Separator Margin="0,16" />
 

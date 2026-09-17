@@ -10,6 +10,7 @@ using TopLab.Presentation.ViewModels.Settings;
 using TopLab.Presentation.ViewModels.Users;
 using TopLab.Presentation.ViewModels.Patients;
 using TopLab.Presentation.ViewModels.Lab;
+using TopLab.Presentation.ViewModels.External;
 using TopLab.Presentation.Views.Setup;
 
 namespace TopLab.Presentation;
@@ -51,6 +52,9 @@ public static class DependencyInjection
         services.AddTransient<AntibioticsViewModel>();
         services.AddTransient<AntibioticEditorViewModel>();
         services.AddTransient<CultureAttachmentViewModel>();
+        services.AddTransient<ExternalEntitiesViewModel>();
+        services.AddTransient<ExternalEntityEditorViewModel>();
+        services.AddTransient<ExternalEntityPickerViewModel>();
         services.AddTransient<SettingsDashboardViewModel>();
         services.AddTransient<SystemSettingsViewModel>();
         services.AddTransient<ReportSettingsViewModel>();

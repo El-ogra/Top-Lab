@@ -12,6 +12,8 @@
           xmlns:patientsView="clr-namespace:TopLab.Presentation.Views.Patients"
           xmlns:labVm="clr-namespace:TopLab.Presentation.ViewModels.Lab"
           xmlns:labView="clr-namespace:TopLab.Presentation.Views.Lab"
+          xmlns:externalVm="clr-namespace:TopLab.Presentation.ViewModels.External"
+          xmlns:externalView="clr-namespace:TopLab.Presentation.Views.External"
          mc:Ignorable="d"
          Title="Top-Lab — نظام توب لاب" Height="600" Width="1024"
          FlowDirection="RightToLeft"
@@ -117,6 +119,9 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type labVm:CultureAttachmentViewModel}">
                         <labView:CultureAttachmentView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type externalVm:ExternalEntitiesViewModel}">
+                        <externalView:ExternalEntitiesView/>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type usersVm:UserManagementViewModel}">
                         <usersView:UserManagementView/>

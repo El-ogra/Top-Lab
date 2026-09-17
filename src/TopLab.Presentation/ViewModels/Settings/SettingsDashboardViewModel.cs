@@ -33,6 +33,7 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
         OpenEnvelopeSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<EnvelopeSettingsViewModel>());
         OpenDatabaseMaintenanceCommand = new AsyncRelayCommand(_ => OpenDatabaseMaintenanceAsync(navigation));
         RunSystemInitializationCommand = new AsyncRelayCommand(_ => RunSystemInitializationAsync());
+        OpenExternalEntitiesCommand = new AsyncRelayCommand(_ => OpenExternalEntitiesAsync(navigation));
     }
 
     public string StatusMessage
@@ -51,6 +52,7 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
     public RelayCommand OpenReportSettingsCommand { get; }
     public RelayCommand OpenReceiptSettingsCommand { get; }
     public RelayCommand OpenEnvelopeSettingsCommand { get; }
+    public AsyncRelayCommand OpenExternalEntitiesCommand { get; }
     public AsyncRelayCommand OpenDatabaseMaintenanceCommand { get; }
     public AsyncRelayCommand RunSystemInitializationCommand { get; }
 
@@ -64,6 +66,17 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
         }
 
         navigation.NavigateTo<DatabaseMaintenanceViewModel>();
+    }
+
+    /// <summary>S-02 Slice 6 (D3): temporary explicitly-tagged route to the
+    /// ExternalEntities list until the «الحسابات» shell section lands in P5.</summary>
+    public async Task OpenExternalEntitiesAsync(INavigationService navigation)
+    {
+        navigation.NavigateTo<ViewModels.External.ExternalEntitiesViewModel>();
+        if (navigation.CurrentViewModel is ViewModels.External.ExternalEntitiesViewModel vm)
+        {
+            await vm.LoadAsync();
+        }
     }
 
     public async Task RunSystemInitializationAsync()
