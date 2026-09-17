@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-03.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — P2» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 2 — Next (Slices 0–1 complete + committed).
+- **Current Slice:** 3 — Next (Slices 0–2 complete + committed).
 - **Current Branch:** main
 - **Baseline Commit:** `ef99502051d9405632915915c0c214beec8c84d6` ("[S-02] Slice 7/8: record final commit hash in memory file — loop-engineering", 2026-09-17 13:26:35 +0300) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -66,7 +66,7 @@ Additional user-authorized execution parameters (override skill defaults):
 |---|-------------|--------|-----------------|
 | 0 | Patient editor state surfacing (loading + empty states) | [x] Complete (committed) | VG-01 PASS |
 | 1 | Patient search-to-edit section in editor | [x] Complete (committed) | VG-02 PASS |
-| 2 | Visit-history section in patient editor | [ ] Not started | VG-03 |
+| 2 | Visit-history section in patient editor | [x] Complete (committed) | VG-03 PASS |
 | 3 | Editor wiring for profile / custom-group / clear-all | [ ] Not started | VG-04 |
 | 4 | Patient account screen | [ ] Not started | VG-05 |
 | 5 | Billing dialogs (correction + extra charge + void) | [ ] Not started | VG-06 |
@@ -112,7 +112,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | U-03 | Busy-indicator idiom (existing converter/control precedent) | Inference | RESOLVED Slice 0 Stage 3 — repo idiom = collapsed-by-default + `DataTrigger` on a bool VM property (precedents: `TestCatalogView.xaml:15-26` `ShowFilteredEmpty`, `AnalytesView.xaml:12-23` `ShowEmpty`; VM pattern `TestCatalogViewModel.cs:109-140` computed `Show*Empty` + `RefreshEmptyStates()`). App-wide `BoolToVis` resource exists (`App.xaml:6`; resolves to WPF built-in converter) but NO view bound `IsBusy` before Slice 0 (grep `IsBusy` over `*.xaml` = 0 hits) — Slice 0 is the first consumer, using the dominant DataTrigger idiom. |
 | U-04 | Profiles/custom-groups picker source inside the registration catalog | Inference | OPEN — resolve at Slice 3 Stage 3; if no catalog surface exists → STOP-and-report |
 | U-05 | Account-screen navigation idiom (`LoadAsync(patientId)` after parameterless `NavigateTo<T>`) | Inference (structural, per P2 plan) | ADOPTED unless contradicted at Slice 4 Stage 3; record outcome |
-| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slice 0: «لا توجد تحاليل مختارة.», «لا توجد تحاليل في الكتالوج.» (created). Slice 1: «لا نتائج مطابقة.» (plan-verbatim, `PatientEditorView.xaml` search section) + hint «الاسم / الرقم القومي / Lab.ID / الهاتف» (created from U-02 channels). Remaining texts open for later slices. |
+| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slice 0: «لا توجد تحاليل مختارة.», «لا توجد تحاليل في الكتالوج.». Slice 1: «لا نتائج مطابقة.» + hint. Slice 2: «لا توجد زيارات سابقة.» (plan-verbatim) + «سجل الزيارات» section header (created). Remaining texts open for later slices. |
 
 ---
 
@@ -166,16 +166,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; tree clean.
-- [ ] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 2 + P2 M02 §4 S-M02-5 + D2 settlement read in full.
-- [ ] **Stage 3 — File Analysis:** `GetPatientVisitHistoryQuery(.Handler)`, `VisitHistoryDto`/`PatientTestSummaryDto`, editor load path.
-- [ ] **Stage 4 — Planning:**
-- [ ] **Stage 5 — Execution:**
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-03 (record evidence).
-- [ ] **Stage 8 — Documentation Update:**
-- [ ] **Stage 9 — Memory Status Update:**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 2/8: Visit-history section in patient editor — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** post-Slice-1 commit `4ee6173`, tree clean; build 0/0; suite green 474+195+1419=2088.
+- [x] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 2 + D2 settlement read (new read-only section on existing editor; DTO-fields only; no actions).
+- [x] **Stage 3 — File Analysis:** `GetPatientVisitHistoryQuery(patientId)` + Handler: requested patient must exist/non-deleted («المريض غير موجود.»), siblings = same `LabId` (self-only when LabId empty), ordered `RegistrationDateUtc` asc, tests carry name/code/price/six flags/drawn state; `VisitHistoryDto`/`PatientTestSummaryDto` shapes confirmed (no per-visit deleted flag — display as returned); editor load path (`LoadPatientAsync` → visit tests + billing; `UndoAsync` reloads; `ResetForm` clears).
+- [x] **Stage 4 — Planning:** VM: `VisitHistory` collection + `IsVisitHistoryVisible` (=IsEditMode) + `ShowVisitHistoryEmpty` (count≤1 — current visit alone) + `LoadVisitHistoryAsync` hooked into `LoadPatientAsync`, cleared in `ResetForm`; XAML: «سجل الزيارات» section at end of right column, declarative only (TextBlocks + visibility triggers, zero commands), per-test name/code/price + drawn state + six flag texts shown only when true.
+- [x] **Stage 5 — Execution:** VM — 1 using, collection, 2 props, 2 subscriptions/raises, `LoadVisitHistoryAsync`, hook + clear paths. XAML — history section only. No backend change; create-mode selection path untouched.
+- [x] **Stage 6 — Post-Execution Verification:** build 0 errors / 0 warnings (first attempt).
+- [x] **Stage 7 — Validation Gate:** VG-03 PASS — (1) build 0/0 + suite 2088 green; (2) zero-drift: Persistence diff empty + EF «No changes»; (3) grep: `GetPatientVisitHistoryQuery` consumed at VM:497 (non-test, only consumer); all 19 `Command=` bindings in the view lie outside the history section (read-only proven); only DTO fields bound (PatientId/LabId/RegistrationDateUtc/TestName/TestCode/PriceAtOrderTime/six flags/IsSampleDrawn/SampleDrawnAtUtc); (4) manual walk RECORDED AS INSPECTION: shared-LabId patient → sibling cards in date order; single-visit → «لا توجد زيارات سابقة.»; create mode → section collapsed (`IsVisitHistoryVisible=false`, cleared in `ResetForm`); «تراجع» → `LoadPatientAsync` reloads history.
+- [x] **Stage 8 — Documentation Update:** this section + U-06 + status updated.
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 2/8: Visit-history section in patient editor — loop-engineering`.
 
 ---
 
@@ -286,17 +286,17 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–1/8 complete).
-- **Completed slices:** Slice 0 (VG-01), Slice 1 (VG-02) — 2/8.
+- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–2/8 complete).
+- **Completed slices:** Slice 0 (VG-01), Slice 1 (VG-02), Slice 2 (VG-03) — 3/8.
 - **Blocked slices:** none.
-- **Exact next action:** Slice 2, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-1 commit), then read S-03.md §4 Slice 2.
-- **Conditions before proceeding:** G0 green on the Slice-1 commit.
+- **Exact next action:** Slice 3, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-2 commit), then read S-03.md §4 Slice 3.
+- **Conditions before proceeding:** G0 green on the Slice-2 commit.
 - **Open uncertainties:** U-04, U-05 (+ U-06 remainder for later slices).
 - **Owner-pending (never silently decide):** `BLOCK_PRINT_ON_BALANCE` enforcement; LabId visit-worksheet entry; group/log worksheet print path.
-- **Evidence collected (Slice 1):** build 0/0 (pre+post, 1×CS8323 fixed at once); tests 2088 green (pre+post); EF «No changes»; `SearchPatientsQuery` consumer VM:922; open path VM:971; single delete confirmation VM:853; empty text «لا نتائج مطابقة.».
-- **Changed files (Slice 1):** same editor pair (`PatientEditorViewModel.cs`, `PatientEditorView.xaml`).
-- **Deviations:** (1) PageSize fixed at 20, no UI editor — backend range [1,500] respected, keeps invalid-states unreachable from UI; (2) manual walk by inspection (no live DB/UI session) — recorded, not claimed interactive.
-- **Lessons learned:** C# named-arg ordering (CS8323) — all-named or positional-first in `AsyncRelayCommand` lambdas.
+- **Evidence collected (Slice 2):** build 0/0 (pre+post, first attempt); tests 2088 green (pre+post); EF «No changes»; consumer VM:497; 19 Command bindings all outside history section; empty text «لا توجد زيارات سابقة.».
+- **Changed files (Slice 2):** same editor pair.
+- **Deviations:** (1) history placed at end of right column (S-03.md leaves exact placement open — «new read-only section on the existing editor»); single-visit counts as empty (plan: «single visit, no prior record» → empty text); (2) manual walk by inspection — recorded.
+- **Lessons learned:** none new (DataTrigger idiom scales to nested ItemsControls cleanly).
 
 ## Stop Report
 

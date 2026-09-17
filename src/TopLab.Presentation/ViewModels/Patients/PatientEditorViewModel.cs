@@ -20,6 +20,7 @@ using TopLab.Application.Features.PatientRegistration.Commands.UpdatePatientTest
 using TopLab.Application.Features.PatientRegistration.Common;
 using TopLab.Application.Features.PatientRegistration.Queries.GetNextLabId;
 using TopLab.Application.Features.PatientRegistration.Queries.GetPatientById;
+using TopLab.Application.Features.PatientRegistration.Queries.GetPatientVisitHistory;
 using TopLab.Application.Features.PatientRegistration.Queries.GetRegistrationCatalog;
 using TopLab.Application.Features.PatientRegistration.Queries.SearchPatients;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Common;
@@ -131,6 +132,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
         SelectedTests.CollectionChanged += (_, _) => RefreshEmptyStates();
         CatalogTests.CollectionChanged += (_, _) => RefreshEmptyStates();
         SearchResults.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowSearchEmpty));
+        VisitHistory.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowVisitHistoryEmpty));
     }
 
     public sealed class SelectedTestItem : ViewModelBase
@@ -317,6 +319,9 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     public ObservableCollection<PatientSummaryDto> SearchResults { get; } = new();
 
+    /// <summary>S-03 Slice 2: read-only visit history (sibling visits sharing the LabId).</summary>
+    public ObservableCollection<VisitHistoryDto> VisitHistory { get; } = new();
+
     public int SearchPage { get => _searchPage; private set => SetProperty(ref _searchPage, value); }
 
     public int SearchPageSize { get => _searchPageSize; private set => SetProperty(ref _searchPageSize, value); }
@@ -325,6 +330,13 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     /// <summary>S-03 Slice 1: empty-state flag (S-01/S-02 Show*Empty idiom).</summary>
     public bool ShowSearchEmpty => SearchExecuted && SearchResults.Count == 0;
+
+    /// <summary>S-03 Slice 2: history section is visible in edit mode only; shows the
+    /// empty text when there is no prior visit (the current visit alone).</summary>
+    public bool IsVisitHistoryVisible => IsEditMode;
+
+    /// <summary>S-03 Slice 2: empty-state flag (S-01/S-02 Show*Empty idiom).</summary>
+    public bool ShowVisitHistoryEmpty => VisitHistory.Count <= 1;
 
     public AsyncRelayCommand NewPatientCommand { get; }
 
@@ -460,10 +472,38 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
             await LoadVisitTestsAsync(cancellationToken);
             await RefreshBillingAsync(cancellationToken);
+            await LoadVisitHistoryAsync(cancellationToken);
+            OnPropertyChanged(nameof(IsVisitHistoryVisible));
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// S-03 Slice 2: read-only sibling-visit history. Display uses DTO fields only;
+    /// backend «المريض غير موجود.» surfaces via the presenter.
+    /// </summary>
+    private async Task LoadVisitHistoryAsync(CancellationToken cancellationToken)
+    {
+        VisitHistory.Clear();
+        if (!_patientId.HasValue)
+        {
+            OnPropertyChanged(nameof(ShowVisitHistoryEmpty));
+            return;
+        }
+
+        var history = await _mediator.Send(new GetPatientVisitHistoryQuery(_patientId.Value), cancellationToken);
+        if (!history.IsSuccess)
+        {
+            ErrorMessage = _presenter.Present(history.Error!);
+            return;
+        }
+
+        foreach (var visit in history.Value!)
+        {
+            VisitHistory.Add(visit);
         }
     }
 
@@ -560,6 +600,9 @@ public sealed class PatientEditorViewModel : ViewModelBase
         PaymentAmountText = string.Empty;
         PaymentDiscountText = null;
         SelectedTests.Clear();
+        VisitHistory.Clear();
+        OnPropertyChanged(nameof(IsVisitHistoryVisible));
+        OnPropertyChanged(nameof(ShowVisitHistoryEmpty));
         foreach (var condition in Conditions)
         {
             condition.IsSelected = false;
