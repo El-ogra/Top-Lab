@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-02.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — التمريرة P1» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 7 — Next (Stage 1 on resume)
+- **Current Slice:** 7 — Done. S-02 COMPLETE (8/8).
 - **Current Branch:** main
 - **Baseline Commit:** `09c304c54b4e9836564f9b1f66410ec622c4599c` ("تحديثات القاعدة", 2026-09-16) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -71,7 +71,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 4 | AnalyteProfiles (Analytes + Bands + Profiles tabs) | [x] Done (VG-05 pass) | VG-05 |
 | 5 | CultureAndAntibiotics (M15) dictionary + D9 attachment + D6 delete block | [x] Done (VG-06 pass) | VG-06 |
 | 6 | ExternalEntities (M14) list/editor/picker + D3 routing | [x] Done (VG-07 pass) | VG-07 |
-| 7 | PriceListsCommentsAndCustomGroups (M13) three tabs | [ ] Not started | VG-08 |
+| 7 | PriceListsCommentsAndCustomGroups (M13) three tabs | [x] Done (VG-08 pass) | VG-08 |
 
 ---
 
@@ -263,22 +263,22 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 7)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; record counts.
-- [ ] **Stage 2 — Deep Understanding:** re-read S-02.md §3 Slice 7 + P1 §8.3–§8.4.3, §8.6.
-- [ ] **Stage 3 — File Analysis:** `PriceListDtos`/`TestCommentDtos`/`CustomGroupDtos`, the 13 commands + 5 queries, catalog picker reuse from Slice 3, absence of any print command for price lists (grep-confirmed), uniqueness check for multiple comments (recorded).
-- [ ] **Stage 4 — Planning:** step-by-step plan here.
-- [ ] **Stage 5 — Execution:** implement.
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-08 with evidence.
-- [ ] **Stage 8 — Documentation Update.**
-- [ ] **Stage 9 — Memory Status Update.**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 7/8: Price lists + test comments + custom groups — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green at `3abf5e4` (195+1419 + 474 prior at same commit); tree clean.
+- [x] **Stage 2 — Deep Understanding:** S-02.md §3 Slice 7 read in full (P1 absent per U-01; S-02.md binding).
+- [x] **Stage 3 — File Analysis:** `PriceListSummary/Item/Detail`, `TestCommentDto(Id,TestId,TestName,Text)`, `CustomGroupSummary/Item/Detail` (mirrors); 13 commands confirmed: Create/Rename/DeletePriceList, SetPriceListItemPrice (UPSERT — no duplicate rejection in code), RemovePriceListItem, Create/Update/DeleteTestComment, Create/Rename/DeleteCustomGroup, SetCustomGroupItemPrice (upsert), RemoveCustomGroupItem; 5 queries: GetPriceLists/ById, GetTestComments(testId?), GetCustomGroups/ById; multiple comments allowed (no uniqueness check); delete-in-use list → «تعذر حذف قائمة الأسعار لارتباطها بجهات خارجية.»; NO print command exists (RLS-only, stays unresolved); test picker = `SearchTestCatalogQuery` (Slice-3 reuse).
+- [x] **Stage 4 — Planning:** (U-17: plan quotes — list/group name 3–100, item price «السعر مطلوب ولا يمكن أن يكون سالباً», comment 1–500 «نص التعليق مطلوب»/«اختر التحليل» — diverge from code (names ≤150 code messages; price «السعر يجب أن يكون صفرًا أو أكثر.»; comment ≤1000 «نص التعليق مطلوب.») → code binding, backend-driven. Duplicate plan quotes («هذا التحليل مسعَّر…»/«التحليل مضاف لهذه المجموعة بالفعل») have NO backend basis (Set upserts) → plan quotes as UI pre-guards.) CREATE `PriceListsViewModel` (master-detail, row-by-row Set + «محفوظ» badge, picker add + duplicate pre-guard, remove + confirm, delete + naming confirm, empty «قائمة بلا بنود — أضف تحليلاً بمنتقي التحاليل», NO print control) + `TestCommentsViewModel` (grid + picker/text editor + CRUD + multi-per-test) + `CustomGroupsViewModel` (price-list mirror, empty «مجموعة بلا تحاليل»). MODIFY `LabHubView(Model)` (final 3 tabs «قوائم الأسعار»/«تعليقات التحاليل»/«المجموعات المخصصة» — hub complete at 10 tabs), DI + 3 DataTemplates. No backend touch; no migration.
+- [x] **Stage 5 — Execution:** implemented per Stage-4 plan (no fixes needed).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings.
+- [x] **Stage 7 — Validation Gate:** VG-08 PASS. (1) build 0/0; suite 474+195+1419=2088 green. (2) zero-drift: Persistence diff empty + ef → "No changes…". (3) inspection: zero طباعة/Print in `PriceListsView`; hub = exactly 10 tabs (الكتالوج/المجموعات/سجلات العمل/المكوّنات/البروفايلات/المضادات/ربط المزرعة/قوائم الأسعار/تعليقات التحاليل/المجموعات المخصصة) = P1 list; duplicate pre-guards + «محفوظ» badges + both empty states present. (4) manual walk RECORDED: price-list lifecycle (create/rename/delete-naming-confirm + in-use Conflict surfaces, picker add + «هذا التحليل مسعَّر في هذه القائمة بالفعل», row save → «محفوظ» badge, remove + confirm); comments CRUD incl. multi-per-test + edit + delete-naming-confirm; custom-group mirror lifecycle + «التحليل مضاف لهذه المجموعة بالفعل»; backend code messages surface (U-17). Live run reserved for owner.
+- [x] **Stage 8 — Documentation Update:** this section + evidence above (+U-17).
+- [x] **Stage 9 — Memory Status Update:** see Current Status — S-02 COMPLETE (8/8).
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 7/8: Price lists + test comments + custom groups — loop-engineering`.
 
 ---
 
 ## Current Status
 
-- Overall: 7/8 slices done
+- Overall: 8/8 slices done — S-02 COMPLETE
 - Slice 0 — AccessAndNavigation completion: [x] Done (VG-01 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [x] Done (VG-02 pass, committed)
 - Slice 2 — SystemAndPrintSettings (M22) completion: [x] Done (VG-03 pass, committed)
@@ -286,6 +286,7 @@ Additional user-authorized execution parameters (override skill defaults):
 - Slice 4 — AnalyteProfiles: [x] Done (VG-05 pass, committed)
 - Slice 5 — CultureAndAntibiotics (M15): [x] Done (VG-06 pass, committed)
 - Slice 6 — ExternalEntities (M14): [x] Done (VG-07 pass, committed)
+- Slice 7 — PriceListsCommentsAndCustomGroups (M13): [x] Done (VG-08 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [ ] Not started
 - Slice 2 — SystemAndPrintSettings (M22) completion: [ ] Not started
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [ ] Not started
@@ -295,7 +296,8 @@ Additional user-authorized execution parameters (override skill defaults):
 - Slice 7 — PriceListsCommentsAndCustomGroups (M13): [ ] Not started
 - Migration count: **exactly 0** expected (zero-drift gate on every slice)
 - New backend artifacts expected: **exactly 1** (D7 ChangeOwnPassword command trio, Slice 1)
-- Next action: begin Slice 7, Stage 1 (build 0/0 + suite green after Slice 6).
+- Next action: S-02 COMPLETE — no further action. P2–P5 out of scope.
+- Slice 7 — completed 2026-09-17: price lists + test comments + custom groups as final hub tabs (hub complete at 10 tabs); CREATE 3 VMs + 3 views; hub touch only; no backend; no migration; no print control (unresolved, preserved).
 - Slice 6 — completed 2026-09-17: M14 list/editor/picker + D3 temp route + patient picker wiring + «الحسابات» disabled; CREATE 3 VMs + 3 views; sanctioned touches only; no backend; no migration.
 - Slice 5 — completed 2026-09-17: antibiotics dictionary + editor + D9 attachment tab + D6 surfacing as hub tabs; CREATE 3 VMs + 3 views; hub touch only; no backend; no migration.
 - Slice 4 — completed 2026-09-17: Analytes tab + editor/bands + Profiles tab + composition editor as hub tabs; CREATE 4 VMs + 4 views; hub touch only; no backend; no migration.
@@ -321,6 +323,7 @@ Additional user-authorized execution parameters (override skill defaults):
 - **U-14 (Slice 6):** plan's «اسم الجهة مطلوب»/3–150 + «رقم هاتف غير صالح»/digits≤20 diverge from code («اسم الجهة الخارجية مطلوب.»/≤200; Phone/Fax ≤30, no digits rule) → code binding; phone-verbatim manual item N/A-per-code.
 - **U-15 (Slice 6):** code auto-fill is post-create only (`GenerateEntityIdCodeCommand(Id)` persists on an existing entity) → editor shows «—» until first save, then auto-generates once; no pre-save regenerate button can exist.
 - **U-16 (Slice 6):** D3 orders «الحسابات» disabled until P5; baseline has it enabled-noop → that ONE button is disabled now (commented); U-02 preservation stands for all other buttons.
+- **U-17 (Slice 7):** plan quotes (list/group name 3–100; item price «السعر مطلوب ولا يمكن أن يكون سالباً»; comment 1–500 «نص التعليق مطلوب»/«اختر التحليل») diverge from code (names ≤150 with code messages; price «السعر يجب أن يكون صفرًا أو أكثر.»; comment ≤1000 «نص التعليق مطلوب.») → code binding. Duplicate quotes have no backend basis (`Set*` upserts) → used as UI pre-guards only.
 
 - Pinned commit `09c304c…` must equal `main` HEAD at start; if the repo has moved, STOP and report (plan is anchored to that commit).
 - No UI test harness exists — manual verification is recorded, never fabricated; physical-printer/visual checks remain for the owner.
@@ -338,7 +341,8 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-17 | 3 | 1–10 | Slice 3 executed, VG-04 pass (build 0/0, tests 2088 green, zero-drift, grep gates, manual walk recorded) | OK | `52149f0` |
 | 2026-09-17 | 4 | 1–10 | Slice 4 executed, VG-05 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `87b8fab` |
 | 2026-09-17 | 5 | 1–10 | Slice 5 executed, VG-06 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `1d7671a` |
-| 2026-09-17 | 6 | 1–10 | Slice 6 executed, VG-07 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
+| 2026-09-17 | 6 | 1–10 | Slice 6 executed, VG-07 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `3abf5e4` |
+| 2026-09-17 | 7 | 1–10 | Slice 7 executed, VG-08 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
 
 ## Stop Report (append only if a stop condition triggers)
 

@@ -26,6 +26,15 @@
             <TabItem Header="ربط المزرعة">
                 <ContentControl Content="{Binding CultureAttachment}" Margin="8" />
             </TabItem>
+            <TabItem Header="قوائم الأسعار">
+                <ContentControl Content="{Binding PriceLists}" Margin="8" />
+            </TabItem>
+            <TabItem Header="تعليقات التحاليل">
+                <ContentControl Content="{Binding TestComments}" Margin="8" />
+            </TabItem>
+            <TabItem Header="المجموعات المخصصة">
+                <ContentControl Content="{Binding CustomGroups}" Margin="8" />
+            </TabItem>
         </TabControl>
     </DockPanel>
 </UserControl>

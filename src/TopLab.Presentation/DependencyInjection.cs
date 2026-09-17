@@ -52,6 +52,9 @@ public static class DependencyInjection
         services.AddTransient<AntibioticsViewModel>();
         services.AddTransient<AntibioticEditorViewModel>();
         services.AddTransient<CultureAttachmentViewModel>();
+        services.AddTransient<PriceListsViewModel>();
+        services.AddTransient<TestCommentsViewModel>();
+        services.AddTransient<CustomGroupsViewModel>();
         services.AddTransient<ExternalEntitiesViewModel>();
         services.AddTransient<ExternalEntityEditorViewModel>();
         services.AddTransient<ExternalEntityPickerViewModel>();
