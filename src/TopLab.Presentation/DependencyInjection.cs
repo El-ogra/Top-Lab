@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddTransient<PriceListsViewModel>();
         services.AddTransient<TestCommentsViewModel>();
         services.AddTransient<CustomGroupsViewModel>();
+        services.AddTransient<SampleCollectionViewModel>();
         services.AddTransient<ExternalEntitiesViewModel>();
         services.AddTransient<ExternalEntityEditorViewModel>();
         services.AddTransient<ExternalEntityPickerViewModel>();

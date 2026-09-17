@@ -137,6 +137,9 @@
                     <DataTemplate DataType="{x:Type labVm:CustomGroupsViewModel}">
                         <labView:CustomGroupsView/>
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:SampleCollectionViewModel}">
+                        <labView:SampleCollectionView/>
+                    </DataTemplate>
                     <DataTemplate DataType="{x:Type externalVm:ExternalEntitiesViewModel}">
                         <externalView:ExternalEntitiesView/>
                     </DataTemplate>
