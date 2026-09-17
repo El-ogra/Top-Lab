@@ -221,6 +221,14 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                             await hub.LoadAsync();
                         }
                     }
+                    else if (t == "ورقة العمل")
+                    {
+                        _navigation.NavigateTo<ViewModels.WorkSheets.WorkSheetsViewModel>();
+                        if (_navigation.CurrentViewModel is ViewModels.WorkSheets.WorkSheetsViewModel sheets)
+                        {
+                            await sheets.LoadAsync();
+                        }
+                    }
                     else
                     {
                         // Future: navigate to feature

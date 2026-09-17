@@ -1,0 +1,256 @@
+<UserControl x:Class="TopLab.Presentation.Views.WorkSheets.WorkSheetsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <DockPanel LastChildFill="True">
+        <!-- S-03 Slice 7: visible loading indicator bound to IsBusy (Slice-0 idiom). -->
+        <ProgressBar DockPanel.Dock="Top" Height="6" IsIndeterminate="True" Margin="8,4,8,0">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Bottom strip: messages -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="8,4">
+            <Separator />
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="4,2" />
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="4,0" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="8,4">
+            <StackPanel>
+                <TextBlock Text="ورقة العمل" FontSize="16" Margin="0,0,0,8" />
+
+                <!-- Mode selector (exclusive) -->
+                <WrapPanel>
+                    <RadioButton Content="زيارة" IsChecked="{Binding IsVisitMode}" Margin="2" VerticalAlignment="Center" />
+                    <RadioButton Content="مجموعة تحاليل" IsChecked="{Binding IsTestGroupMode}" Margin="8,2,2,2" VerticalAlignment="Center" />
+                    <RadioButton Content="سجل مجموعة عمل" IsChecked="{Binding IsWorkGroupLogMode}" Margin="8,2,2,2" VerticalAlignment="Center" />
+                </WrapPanel>
+
+                <!-- Visit mode: integer PatientId only (no LabId — owner-pending). -->
+                <StackPanel Margin="0,4">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsVisitMode}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <WrapPanel>
+                        <TextBlock Text="رقم المريض:" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Text="{Binding VisitPatientIdText, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="2" />
+                        <Button Content="طباعة" Margin="8,2,2,2" Padding="10,2" Command="{Binding PrintVisitSheetCommand}" />
+                    </WrapPanel>
+                </StackPanel>
+
+                <!-- Test-group mode (print ships disabled — owner-pending, no command exists). -->
+                <StackPanel Margin="0,4">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsTestGroupMode}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <WrapPanel>
+                        <TextBlock Text="مجموعة التحاليل:" Margin="2" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding TestGroups}" SelectedItem="{Binding SelectedTestGroup}"
+                                  DisplayMemberPath="Name" Width="200" Margin="2" />
+                        <Button Content="طباعة" Margin="8,2,2,2" Padding="10,2" IsEnabled="False" />
+                    </WrapPanel>
+                </StackPanel>
+
+                <!-- Work-group-log mode (print ships disabled — owner-pending, no command exists). -->
+                <StackPanel Margin="0,4">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsWorkGroupLogMode}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <WrapPanel>
+                        <TextBlock Text="سجل مجموعة العمل:" Margin="2" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding WorkGroupLogs}" SelectedItem="{Binding SelectedWorkGroupLog}"
+                                  DisplayMemberPath="Name" Width="200" Margin="2" />
+                        <Button Content="طباعة" Margin="8,2,2,2" Padding="10,2" IsEnabled="False" />
+                    </WrapPanel>
+                </StackPanel>
+
+                <!-- Period -->
+                <WrapPanel Margin="0,4">
+                    <TextBlock Text="من:" Margin="2" VerticalAlignment="Center" />
+                    <DatePicker SelectedDate="{Binding FromDate}" Width="130" Margin="2" />
+                    <TextBlock Text="إلى:" Margin="8,2,2,2" VerticalAlignment="Center" />
+                    <DatePicker SelectedDate="{Binding ToDate}" Width="130" Margin="2" />
+                    <Button Content="عرض" Margin="8,2,2,2" Padding="14,2" Command="{Binding RunCommand}" />
+                    <TextBlock Text="{Binding ModeText}" Margin="8,2" VerticalAlignment="Center" Foreground="#666666" />
+                    <TextBlock Text="{Binding TotalTests}" Margin="2" VerticalAlignment="Center" FontWeight="Bold" />
+                </WrapPanel>
+
+                <!-- Sections grid -->
+                <TextBlock Text="الأقسام:" FontWeight="Bold" Margin="0,8,0,4" />
+                <TextBlock Text="لا توجد عناصر مطابقة في الفترة المحددة." Foreground="#666666" Margin="2,0,2,4">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowSheetEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <ItemsControl ItemsSource="{Binding Sections}" Margin="0,0,0,4">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,8">
+                                <TextBlock Text="{Binding SectionName}" FontWeight="Bold" Margin="0,0,0,2" />
+                                <ItemsControl ItemsSource="{Binding Lines}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding PatientFullName}" Margin="4,2" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding LabId}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                                <TextBlock Text="{Binding TestName}" Margin="4,2" VerticalAlignment="Center" FontWeight="Bold" />
+                                                <TextBlock Text="{Binding TestCode}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                                <TextBlock Text="{Binding Barcode}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                                <TextBlock Text="مُسحوبة" Margin="4,2" VerticalAlignment="Center" Foreground="Green">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSampleDrawn}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding SampleDrawnAtUtc}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSampleDrawn}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="لها نتيجة" Margin="4,2" VerticalAlignment="Center" Foreground="#1E3A5F">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasResult}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="مُراجعة" Margin="4,2" VerticalAlignment="Center" Foreground="#1E3A5F">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsReviewed}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding CompletionDurationMinutes}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- S-WS-2 summary grid -->
+                <TextBlock Text="الملخص:" FontWeight="Bold" Margin="0,8,0,4" />
+                <TextBlock Text="لا يوجد ملخص للفترة المحددة." Foreground="#666666" Margin="2,0,2,4">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowSummaryEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <ItemsControl ItemsSource="{Binding SummaryRows}" Margin="0,0,0,4">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" Margin="4,2" VerticalAlignment="Center" FontWeight="Bold" />
+                                <TextBlock Text="معلّق:" Margin="8,2,2,2" VerticalAlignment="Center" Foreground="#666666" />
+                                <TextBlock Text="{Binding PendingCount}" Margin="0,2,4,2" VerticalAlignment="Center" />
+                                <TextBlock Text="مسحوب:" Margin="4,2,2,2" VerticalAlignment="Center" Foreground="#666666" />
+                                <TextBlock Text="{Binding DrawnCount}" Margin="0,2,4,2" VerticalAlignment="Center" />
+                                <TextBlock Text="بنتيجة:" Margin="4,2,2,2" VerticalAlignment="Center" Foreground="#666666" />
+                                <TextBlock Text="{Binding ResultedCount}" Margin="0,2,4,2" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- S-WS-2 period-count grid -->
+                <TextBlock Text="عد التحاليل:" FontWeight="Bold" Margin="0,8,0,4" />
+                <TextBlock Text="لا يوجد عد للفترة المحددة." Foreground="#666666" Margin="2,0,2,4">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowCountEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <ItemsControl ItemsSource="{Binding CountRows}" Margin="0,0,0,4">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding TestName}" Margin="4,2" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding TestCode}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                <TextBlock Text="{Binding Count}" Margin="4,2" VerticalAlignment="Center" FontWeight="Bold" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <WrapPanel>
+                    <TextBlock Text="الإجمالي:" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                    <TextBlock Text="{Binding TotalCount}" Margin="0,2,8,2" VerticalAlignment="Center" FontWeight="Bold" />
+                </WrapPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

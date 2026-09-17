@@ -9,6 +9,7 @@ using TopLab.Presentation.ViewModels.Setup;
 using TopLab.Presentation.ViewModels.Settings;
 using TopLab.Presentation.ViewModels.Users;
 using TopLab.Presentation.ViewModels.Patients;
+using TopLab.Presentation.ViewModels.WorkSheets;
 using TopLab.Presentation.ViewModels.Lab;
 using TopLab.Presentation.ViewModels.External;
 using TopLab.Presentation.Views.Setup;
@@ -41,6 +42,7 @@ public static class DependencyInjection
         services.AddTransient<PatientsHubViewModel>();
         services.AddTransient<PatientEditorViewModel>();
         services.AddTransient<PatientAccountViewModel>();
+        services.AddTransient<WorkSheetsViewModel>();
         services.AddTransient<CorrectionDialogViewModel>();
         services.AddTransient<ExtraChargeDialogViewModel>();
         services.AddTransient<LabHubViewModel>();

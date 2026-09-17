@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-03.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — P2» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 7 — Next (Slices 0–6 complete + committed).
+- **Current Slice:** DONE — all 8 slices complete + committed.
 - **Current Branch:** main
 - **Baseline Commit:** `ef99502051d9405632915915c0c214beec8c84d6` ("[S-02] Slice 7/8: record final commit hash in memory file — loop-engineering", 2026-09-17 13:26:35 +0300) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -71,7 +71,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 4 | Patient account screen | [x] Complete (committed) | VG-05 PASS |
 | 5 | Billing dialogs (correction + extra charge + void) | [x] Complete (committed) | VG-06 PASS |
 | 6 | Invoice preview before print | [x] Complete (committed) | VG-07 PASS |
-| 7 | WorkSheets screen (three modes + summary/count) + shell wiring | [ ] Not started | VG-08 |
+| 7 | WorkSheets screen (three modes + summary/count) + shell wiring | [x] Complete (committed) | VG-08 PASS |
 
 ---
 
@@ -112,7 +112,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | U-03 | Busy-indicator idiom (existing converter/control precedent) | Inference | RESOLVED Slice 0 Stage 3 — repo idiom = collapsed-by-default + `DataTrigger` on a bool VM property (precedents: `TestCatalogView.xaml:15-26` `ShowFilteredEmpty`, `AnalytesView.xaml:12-23` `ShowEmpty`; VM pattern `TestCatalogViewModel.cs:109-140` computed `Show*Empty` + `RefreshEmptyStates()`). App-wide `BoolToVis` resource exists (`App.xaml:6`; resolves to WPF built-in converter) but NO view bound `IsBusy` before Slice 0 (grep `IsBusy` over `*.xaml` = 0 hits) — Slice 0 is the first consumer, using the dominant DataTrigger idiom. |
 | U-04 | Profiles/custom-groups picker source inside the registration catalog | Inference | RESOLVED Slice 3 Stage 3 — the registration catalog carries NO profiles/custom-groups (`RegistrationCatalogDto`: Tests/TestGroups/Titles/Conditions only; `TestGroupDto` = test categorization, not profiles). Complete EXISTING paths adopted instead (no new query, no STOP): profiles ← `GetProfileDefinitionsQuery` (existing, Presentation-consumed at `ProfilesViewModel.cs:75`; caveat: requires `EDIT_SYSTEM_SETTINGS` — denial surfaces verbatim per SD-9, recorded); custom groups ← `GetCustomGroupsQuery()` (existing, unauthenticated, Presentation-consumed at `CustomGroupsViewModel.cs:135`; `CustomGroupSummaryDto(Id,Name,ItemCount)`). Pickers = ComboBox + button (no new dialog; `TestCatalogView` GroupFilters precedent). |
 | U-05 | Account-screen navigation idiom (`LoadAsync(patientId)` after parameterless `NavigateTo<T>`) | Inference (structural, per P2 plan) | CONFIRMED Slice 4 Stage 3 — exact precedent `PatientsHubViewModel.cs:30-33` (`NavigateTo<PatientEditorViewModel>()` + `CurrentViewModel is` cast + `LoadCatalogAsync()`). Adopted for editor→account (`OpenAccountAsync`) and account→editor (`BackAsync`, with catalog+patient reload since VMs are transient). |
-| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slices 0–2 recorded. Slice 3 created+recorded: clear-all confirmation («مسح التحاليل» / «سيتم مسح جميع تحاليل هذه الزيارة. هل تريد المتابعة؟»); guards («احفظ بيانات المريض أولًا قبل إضافة بروفايل.» / «...قبل إضافة مجموعة.» / «...قبل مسح التحاليل.» / «اختر بروفايل أولًا.» / «اختر مجموعة أولًا.»); success («تمت إضافة البروفايل.» / «تمت إضافة المجموعة المخصصة.» / «تم مسح جميع التحاليل.»). Slice 4: «لا توجد عمليات مسجلة.», «احفظ بيانات المريض أولًا قبل عرض الحساب.». Slice 5 created+recorded — confirmations: («قيد تصحيحي» / «سيتم تسجيل قيد تصحيحي بمبلغ {amount}. هل تريد المتابعة؟»), («مبلغ إضافي» / «سيتم تسجيل مبلغ إضافي بمبلغ {amount}. هل تريد المتابعة؟»), («إلغاء عملية» / «سيتم إلغاء العملية المحددة (تبقى ظاهرة بعلامة ملغاة). هل تريد المتابعة؟»), («تسوية الحساب» / «سيتم تسوية حساب المريض بالكامل. هل تريد المتابعة؟»); parse guard «قيمة المبلغ غير صالحة.»; void selection guard «اختر عملية أولًا.»; success («تم تسجيل القيد التصحيحي.» / «تم تسجيل المبلغ الإضافي.» / «تم إلغاء العملية.»). Remaining texts open for Slices 6–7. Slice 6 created+recorded: SD-3 line «تنبيه: كل طباعة تصدر رقم فاتورة جديدًا متسلسلًا.»; null-number «لم تُصدَر بعد»; print success «تم إصدار الفاتورة رقم {n} وإرسالها إلى الطابعة.». Remaining texts open for Slice 7. |
+| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slices 0–2 recorded. Slice 3 created+recorded: clear-all confirmation («مسح التحاليل» / «سيتم مسح جميع تحاليل هذه الزيارة. هل تريد المتابعة؟»); guards («احفظ بيانات المريض أولًا قبل إضافة بروفايل.» / «...قبل إضافة مجموعة.» / «...قبل مسح التحاليل.» / «اختر بروفايل أولًا.» / «اختر مجموعة أولًا.»); success («تمت إضافة البروفايل.» / «تمت إضافة المجموعة المخصصة.» / «تم مسح جميع التحاليل.»). Slice 4: «لا توجد عمليات مسجلة.», «احفظ بيانات المريض أولًا قبل عرض الحساب.». Slice 5 created+recorded — confirmations: («قيد تصحيحي» / «سيتم تسجيل قيد تصحيحي بمبلغ {amount}. هل تريد المتابعة؟»), («مبلغ إضافي» / «سيتم تسجيل مبلغ إضافي بمبلغ {amount}. هل تريد المتابعة؟»), («إلغاء عملية» / «سيتم إلغاء العملية المحددة (تبقى ظاهرة بعلامة ملغاة). هل تريد المتابعة؟»), («تسوية الحساب» / «سيتم تسوية حساب المريض بالكامل. هل تريد المتابعة؟»); parse guard «قيمة المبلغ غير صالحة.»; void selection guard «اختر عملية أولًا.»; success («تم تسجيل القيد التصحيحي.» / «تم تسجيل المبلغ الإضافي.» / «تم إلغاء العملية.»). Remaining texts open for Slices 6–7. Slice 6 created+recorded: SD-3 line «تنبيه: كل طباعة تصدر رقم فاتورة جديدًا متسلسلًا.»; null-number «لم تُصدَر بعد»; print success «تم إصدار الفاتورة رقم {n} وإرسالها إلى الطابعة.». Remaining texts open for Slice 7. Slice 7 created+recorded: «لا توجد عناصر مطابقة في الفترة المحددة.» (plan-verbatim); summary empty «لا يوجد ملخص للفترة المحددة.»; count empty «لا يوجد عد للفترة المحددة.»; guards («معرّف المريض غير صالح.» mirrors backend validator; «اختر مجموعة تحاليل أولًا.» / «اختر سجل مجموعة عمل أولًا.»); headers («ورقة العمل», «زيارة», «مجموعة تحاليل», «سجل مجموعة عمل», «الأقسام:», «الملخص:», «عد التحاليل:», «مُسحوبة», «لها نتيجة», «مُراجعة», «معلّق:», «مسحوب:», «بنتيجة:»). U-06 COMPLETE. |
 
 ---
 
@@ -271,32 +271,32 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 7)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; tree clean.
-- [ ] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 7 + P2 WorkSheets §3/§4 read in full.
-- [ ] **Stage 3 — File Analysis:** all five WorkSheets queries + `PrintWorkSheetCommand`; `GetTestGroupsQuery`/`GetWorkGroupLogsQuery` DTO shapes; `WorkSheetHelpers.WorkSheetPeriod`; the three wiring sites (S-01/S-02 recipe).
-- [ ] **Stage 4 — Planning:**
-- [ ] **Stage 5 — Execution:**
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-08 (record evidence).
-- [ ] **Stage 8 — Documentation Update:**
-- [ ] **Stage 9 — Memory Status Update:**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 7/8: WorkSheets screen (three modes + summary/count) + shell wiring — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** post-Slice-6 commit `c324ea5`, tree clean; build 0/0; suite green 474+195+1419=2088.
+- [x] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 7 + P2 WorkSheets §3/§4 read (3 modes + period + sections + S-WS-2 + visit print + disabled group/log print + no LabId + shell debt).
+- [x] **Stage 3 — File Analysis:** 5 queries (`GetVisitWorkSheet(PatientId)` PRINT_WORKSHEET-gated; `GetWorkSheetByTestGroup(TestGroupId?,TestIds?,From?,To?)`; `GetWorkSheetByWorkGroupLog(LogId,From?,To?)`; `GetWorkSheetSummary(From?,To?)`; `GetWorkSheetTestCountByPeriod(From?,To?)`) + validators («معرّف المريض غير صالح.», «بداية الفترة يجب ألا تتجاوز نهايتها.»); `PrintWorkSheetCommand(PatientId)` (existing, no group/log counterpart); DTOs (`WorkSheetSectionDto`/`WorkSheetLineDto` 12 fields, `WorkSheetSummaryRowDto`, `WorkSheetTestCountRowDto/Dto`, `VisitWorkSheetDto` variant); pickers `TestGroupDto(Id,Name,IsActive)` + `WorkGroupLogDto(Id,Name,Items)`; `WorkSheetPeriod` (UTC-today default, `To ??= From`, inclusive); shell branch sites (`ShellViewModel.cs:159` titles, `:226` fall-through) + DataTemplate/DI recipe; «بدون مجموعة» handler-produced (displayed as returned).
+- [x] **Stage 4 — Planning:** CREATE VM (3 exclusive bool modes; visit PatientId text; group/log pickers loaded in `LoadAsync`; DateTime? period defaulting today; Sections/TotalTests/ModeText unify both DTO variants; S-WS-2 loaded per run; visit print only) + View (+code-behind) in new `WorkSheets` folders (area convention); WIRE shell branch + DataTemplate (+2 xmlns) + DI transient.
+- [x] **Stage 5 — Execution:** as planned. No new backend type; no LabId input; group/log print buttons `IsEnabled=False` with no command.
+- [x] **Stage 6 — Post-Execution Verification:** build 0 errors / 0 warnings (first attempt after a DI namespace fix caught pre-build by inspection — `WorkSheets.X` does not resolve under `TopLab.Presentation`; used the `ViewModels.WorkSheets` using like other VMs).
+- [x] **Stage 7 — Validation Gate:** VG-08 PASS — (1) build 0/0 + suite 2088 green; (2) zero-drift: Persistence diff empty + EF «No changes»; (3) grep: «ورقة العمل» branch at ShellViewModel:224 (fall-through gone for it); all 5 queries + existing print command consumed (sheets VM:204/222/241/280/295/327); no new Application files (`git status` = Presentation only); group/log print disabled ×2 (view:73/93); no LabId input (only DTO display binding); (4) manual walk RECORDED AS INSPECTION: shell button → screen with pickers loaded; visit/group/log runs produce sections + verbatim errors for bad input; period defaults to today; summary/count grids + empty texts; no-PRINT_WORKSHEET user → verbatim denial; visit print → «تم إرسال المستند إلى الطابعة.».
+- [x] **Stage 8 — Documentation Update:** this section + U-06 (COMPLETE) + status updated.
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 7/8: WorkSheets screen (three modes + summary/count) + shell wiring — loop-engineering`.
 
 ---
 
 ## Current Status
 
-- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–6/8 complete).
-- **Completed slices:** Slices 0–6 (VG-01…VG-07) — 7/8.
+- **Programme:** S-03 (P2 UI pass) — COMPLETE (Slices 0–7/8, all committed).
+- **Completed slices:** Slices 0–7 (VG-01…VG-08) — 8/8. No stop condition triggered (no 5-consecutive-failure event; two single-occurrence build errors fixed immediately at Slices 1/5-era — CS8323, plus pre-build DI namespace catch at Slice 7).
 - **Blocked slices:** none.
-- **Exact next action:** Slice 7, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-6 commit), then read S-03.md §4 Slice 7.
-- **Conditions before proceeding:** G0 green on the Slice-6 commit.
-- **Open uncertainties:** U-06 remainder (worksheets empty/confirmation texts for Slice 7).
-- **Owner-pending (never silently decide):** `BLOCK_PRINT_ON_BALANCE` enforcement; LabId visit-worksheet entry; group/log worksheet print path.
-- **Evidence collected (Slice 6):** build 0/0 (pre+post, first attempt); tests 2088 green; EF «No changes»; query consumer VM:360, command consumer VM:389; SD-3 line view:184; null text VM:122.
-- **Changed files (Slice 6):** account VM + account XAML only.
-- **Deviations:** (1) `RefreshAsync` hides the preview (stale-data avoidance — totals may change underneath); (2) print success text carries the new number (gate's manual item needs it visible); (3) manual walk by inspection — recorded.
-- **Lessons learned:** none new.
+- **Exact next action:** NONE — workstream done. No further slices exist; do not invent any.
+- **Conditions before proceeding:** N/A.
+- **Open uncertainties:** none (U-01…U-06 all resolved/recorded).
+- **Owner-pending (never silently decide — preserved):** `BLOCK_PRINT_ON_BALANCE` enforcement (not added); LabId visit-worksheet entry (not added); group/log worksheet print path (disabled affordances, no command created).
+- **Evidence collected (Slice 7):** build 0/0 (pre+post, first attempt); tests 2088 green; EF «No changes»; 5 query consumers + print consumer (sheets VM:204/222/241/280/295/327); branch ShellViewModel:224; disabled prints view:73/93; empty texts recorded.
+- **Changed files (Slice 7):** CREATE `ViewModels/WorkSheets/WorkSheetsViewModel.cs`, `Views/WorkSheets/WorkSheetsView.xaml(.cs)`; MODIFY `ShellViewModel.cs`, `MainWindow.xaml`, `DependencyInjection.cs`.
+- **Deviations:** (1) new `WorkSheets` area folders (repo area convention); (2) S-WS-2 summary/count load on every run (period-scoped, mode-independent per plan); (3) manual walk by inspection — recorded.
+- **Lessons learned:** namespace resolution under `TopLab.Presentation` — `WorkSheets.X` does NOT resolve to `ViewModels.WorkSheets.X`; always add the `ViewModels.*` using like sibling VMs.
 
 ## Stop Report
 
