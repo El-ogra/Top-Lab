@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddTransient<FirstRunAdminViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<UserManagementViewModel>();
+        services.AddTransient<ChangeOwnPasswordViewModel>();
         services.AddTransient<PatientsHubViewModel>();
         services.AddTransient<PatientEditorViewModel>();
         services.AddTransient<SettingsDashboardViewModel>();

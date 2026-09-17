@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-02.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — التمريرة P1» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 0 — In progress (Stage 5)
+- **Current Slice:** 2 — Next (Stage 1 on resume)
 - **Current Branch:** main
 - **Baseline Commit:** `09c304c54b4e9836564f9b1f66410ec622c4599c` ("تحديثات القاعدة", 2026-09-16) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -65,7 +65,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 0 | AccessAndNavigation completion (lock/unlock, About, exit confirm, login identity) | [x] Done (VG-01 pass) | VG-01 |
-| 1 | UsersAndPermissions (M17) completion + D7 self-change-password | [ ] Not started | VG-02 |
+| 1 | UsersAndPermissions (M17) completion + D7 self-change-password | [x] Done (VG-02 pass) | VG-02 |
 | 2 | SystemAndPrintSettings (M22) completion + D1 LabPrintText tab | [ ] Not started | VG-03 |
 | 3 | TestCatalogAndReferenceRanges (M12) + lab hub activation | [ ] Not started | VG-04 |
 | 4 | AnalyteProfiles (Analytes + Bands + Profiles tabs) | [ ] Not started | VG-05 |
@@ -137,16 +137,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 1)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; full suite green after Slice 0; record counts.
-- [ ] **Stage 2 — Deep Understanding:** re-read S-02.md §3 Slice 1 + P1 §2.3–§2.6.
-- [ ] **Stage 3 — File Analysis:** `UserManagementViewModel` (10 fields, CatalogCodes, PermissionItem), orphan `DeactivateUserCommand`/`ReactivateUserCommand`, `DeleteUserCommand`, `VerifySecondaryPasswordQuery`, `Pbkdf2PasswordHasher`, `ICurrentUserService`, existing MessageBox call sites, validator-test conventions.
-- [ ] **Stage 4 — Planning:** step-by-step plan here.
-- [ ] **Stage 5 — Execution:** implement.
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-02 with evidence (incl. new tests green).
-- [ ] **Stage 8 — Documentation Update.**
-- [ ] **Stage 9 — Memory Status Update.**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 1/8: UsersAndPermissions completion + self-change-password (D7) — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green at `72992ef` (Domain 474 + Infra 195 + App 1412 = 2081, 0 failed); status clean except slice work.
+- [x] **Stage 2 — Deep Understanding:** S-02.md §3 Slice 1 read in full (P1 source absent per U-01; S-02.md binding).
+- [x] **Stage 3 — File Analysis:** `UserManagementViewModel` (10 editor fields, CatalogCodes incl. PT_AUDIT_ACCESS, delete already via `IDialogService`, no MessageBox in VM or view code-behind); `DeactivateUserCommand(int UserId)`/`ReactivateUserCommand(int UserId)` orphan (only handler+tests reference); `UserSummaryDto`/`UserDetailDto` both carry `IsActive`; `Pbkdf2PasswordHasher: IPasswordHasher {Hash,Verify}`; `User.ChangePasswordHash`; `Error.Validation/NotFound` factories; `AuthorizationBehavior` enforces only `IAuthorizedRequest` (Deactivate does NOT implement it — no permission gate to preserve); denial string codebase-wide «أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام» (no em-dash) via presenter+behavior (U-04: code binding); `SystemMenuPasswordDialog` required message currently «كلمة المرور مطلوبة.» (test hit is the unrelated SignIn validator — safe to change); fakes (`FakeApplicationDbContext/Users`, `FakePasswordHasher`, `FakeCurrentUserService`, `User.Create(UserId, name, hash, secHash, absolute?)`) + `DeactivateReactivateTests` conventions followed.
+- [x] **Stage 4 — Planning:** (U-03: P1 §2.4 numbers — UserName 3–50, Break 1–480, quoted messages — DIVERGE from code validators `NotEmpty/≤100`, `>0`, working-hours text. Code wins; UI stays backend-driven via presenter, no invented client rules.) Backend CREATE `Features/UsersAndPermissions/Commands/ChangeOwnPassword/` trio only: Command(Current,New,Confirm):IRequest<Result> (no IAuthorizedRequest — any authenticated user, Deactivate precedent); Handler(db,hasher,currentUser): unauth/missing → NotFound «المستخدم غير موجود», verify-fail → Validation «كلمة المرور الحالية غير صحيحة» (Validation presents verbatim; Forbidden would map to denial text), success → `ChangePasswordHash(Hash(New))` + save; Validator: New `NotEmpty+≥6` «كلمة المرور الجديدة مطلوبة (6 أحرف على الأقل)», Confirm==New «غير متطابقتان», New!=Current «الجديدة يجب أن تختلف عن الحالية». Tests CREATE `ChangeOwnPasswordTests` (wrong-current verbatim; success hash rotation; 3 validator rules). Presentation: VM += `ToggleActiveCommand`/`ToggleActiveText` (confirm «سيتم تعطيل المستخدم "س" — متابعة؟» / «سيتم إعادة تفعيل المستخدم "س" — متابعة؟», reload detail after op), grid read-only when selected detail absolute, view += toggle button; dialog message → «أدخل كلمة المرور الثانوية»; CREATE `ChangeOwnPasswordViewModel` + `Views/Users/ChangeOwnPasswordWindow`; Shell += `OpenChangePasswordCommand`, MainWindow status-bar username → Button; DI += `ChangeOwnPasswordViewModel`. No other backend touch; no migration.
+- [x] **Stage 5 — Execution:** implemented per Stage-4 plan (1 warning fix: `OpenChangePasswordAsync` made non-async returning `Task.CompletedTask` — ShowDialog is sync).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings.
+- [x] **Stage 7 — Validation Gate:** VG-02 PASS. (1) build 0/0; suite 474+195+1419=2088 green (7 new ChangeOwnPassword tests). (2) zero-drift: Persistence diff empty + ef → "No changes…". (3) grep: `DeactivateUserCommand`/`ReactivateUserCommand` non-test callers = `UserManagementViewModel.cs:435-436`; zero `MessageBox` in `ViewModels/Users` + `Views/Users`; exactly ONE new dir under `Features/UsersAndPermissions/Commands/` = `ChangeOwnPassword/` (status-proven). (4) manual walk RECORDED: toggle text follows `SelectedIsActive` (`ToggleActiveText`), confirmations name the user (`«سيتم {تعطيل|إعادة تفعيل} المستخدم "س" — متابعة؟»`), absolute-user grid fully read-only (`UpdateAuditAccessVisibility` early-out), status-bar username Button → D7 dialog, wrong current password → «كلمة المرور الحالية غير صحيحة» stays open (Validation presents verbatim), secondary-password required → «أدخل كلمة المرور الثانوية». Live click-through reserved for owner (no UI harness).
+- [x] **Stage 8 — Documentation Update:** this section + evidence above (+U-03/U-04 resolutions).
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 1/8: UsersAndPermissions completion + self-change-password (D7) — loop-engineering`.
 
 ---
 
@@ -278,8 +278,9 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 1/8 slices done
+- Overall: 2/8 slices done
 - Slice 0 — AccessAndNavigation completion: [x] Done (VG-01 pass, committed)
+- Slice 1 — UsersAndPermissions (M17) completion: [x] Done (VG-02 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [ ] Not started
 - Slice 2 — SystemAndPrintSettings (M22) completion: [ ] Not started
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [ ] Not started
@@ -289,13 +290,15 @@ Additional user-authorized execution parameters (override skill defaults):
 - Slice 7 — PriceListsCommentsAndCustomGroups (M13): [ ] Not started
 - Migration count: **exactly 0** expected (zero-drift gate on every slice)
 - New backend artifacts expected: **exactly 1** (D7 ChangeOwnPassword command trio, Slice 1)
-- Next action: begin Slice 1, Stage 1 (build 0/0 + suite green after Slice 0).
+- Next action: begin Slice 2, Stage 1 (build 0/0 + suite green after Slice 1).
 - Slice 0 — completed 2026-09-17: shell «قفل المحطة»/About/exit-confirm/connection rules/login identity; files: CREATE UnlockViewModel + Views/Shell/{UnlockWindow,AboutWindow}(.xaml.cs); MODIFY ShellViewModel/MainWindow/LoginWindow/LoginViewModel/DI.
 
 ## Risks & Repository Constraints (living list — append during execution)
 
 - **U-01 (Slice 0):** the P1 plan file («خطة التنفيذ النهائية…») is not present anywhere in the repo; `S-02.md` (self-contained, verbatim strings) is used as the binding spec. If a fact is missing from `S-02.md`, it is out of scope → stop and report.
 - **U-02 (Slice 0):** VG-01 mentions "7 disabled buttons still disabled", but at baseline ALL 11 shell nav items are `IsEnabled=true` (fall-through `// Future`). P1 §1.4 (via S-02.md) orders no disabling → existing enabled states preserved unchanged; recorded, not reinterpreted.
+- **U-03 (Slice 1):** P1 §2.4 validation numbers/messages (UserName 3–50, BreakDuration 1–480, quoted strings) diverge from the confirmed code validators (`Create/UpdateUserCommandValidator`: UserName `NotEmpty`+≤100, break `>0` when enabled, working-hours text). Code is binding → UI stays backend-driven (presenter surfaces code messages verbatim); no client-side rule invented.
+- **U-04 (Slice 1):** plan quotes denial «…لهذا العمل — راجع…» with em-dash; the confirmed codebase string (presenter const + `AuthorizationBehavior` + 6 handler call sites) has no dash. Code binding → unchanged.
 
 - Pinned commit `09c304c…` must equal `main` HEAD at start; if the repo has moved, STOP and report (plan is anchored to that commit).
 - No UI test harness exists — manual verification is recorded, never fabricated; physical-printer/visual checks remain for the owner.
@@ -307,7 +310,8 @@ Additional user-authorized execution parameters (override skill defaults):
 | Date (YYYY-MM-DD) | Slice | Stage | Action | Result | Commit |
 |-------------------|-------|-------|--------|--------|--------|
 | 2026-09-17 | 0 | — | Memory file created | OK | — |
-| 2026-09-17 | 0 | 1–9 | Slice 0 executed, VG-01 pass (build 0/0, tests 2081 green, zero-drift, grep gates, manual walk recorded) | OK | pending Stage 10 |
+| 2026-09-17 | 0 | 1–9 | Slice 0 executed, VG-01 pass (build 0/0, tests 2081 green, zero-drift, grep gates, manual walk recorded) | OK | `72992ef` |
+| 2026-09-17 | 1 | 1–9 | Slice 1 executed, VG-02 pass (build 0/0, tests 2088 green incl. 7 new, zero-drift, grep gates, manual walk recorded) | OK | pending Stage 10 |
 
 ## Stop Report (append only if a stop condition triggers)
 

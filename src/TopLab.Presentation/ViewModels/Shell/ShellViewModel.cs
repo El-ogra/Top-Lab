@@ -61,6 +61,8 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
         NavigationItems = BuildNavigationItems();
 
+        OpenChangePasswordCommand = new AsyncRelayCommand(_ => OpenChangePasswordAsync());
+
         try
         {
             var t = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -77,6 +79,24 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
     }
 
     public IReadOnlyList<NavigationItem> NavigationItems { get; }
+
+    public AsyncRelayCommand OpenChangePasswordCommand { get; }
+
+    private Task OpenChangePasswordAsync()
+    {
+        if (!_currentUser.IsAuthenticated)
+        {
+            return Task.CompletedTask;
+        }
+
+        var vm = _services.GetRequiredService<ViewModels.Users.ChangeOwnPasswordViewModel>();
+        var window = new Views.Users.ChangeOwnPasswordWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        window.ShowDialog();
+        return Task.CompletedTask;
+    }
 
     public ViewModelBase? CurrentViewModel
     {

@@ -31,7 +31,8 @@
         </StackPanel>
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>
-                <TextBlock Text="{Binding CurrentUserName}" />
+                <Button Content="{Binding CurrentUserName}" Command="{Binding OpenChangePasswordCommand}"
+                        Background="Transparent" BorderThickness="0" Padding="2,0" Cursor="Hand" />
             </StatusBarItem>
             <Separator />
             <StatusBarItem>

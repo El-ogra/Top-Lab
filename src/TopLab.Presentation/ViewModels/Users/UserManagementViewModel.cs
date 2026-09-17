@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using MediatR;
 using TopLab.Application.Features.UsersAndPermissions.Commands.CreateUser;
+using TopLab.Application.Features.UsersAndPermissions.Commands.DeactivateUser;
 using TopLab.Application.Features.UsersAndPermissions.Commands.DeleteUser;
+using TopLab.Application.Features.UsersAndPermissions.Commands.ReactivateUser;
 using TopLab.Application.Features.UsersAndPermissions.Commands.SaveUserPermissions;
 using TopLab.Application.Features.UsersAndPermissions.Commands.UpdateUser;
 using TopLab.Application.Features.UsersAndPermissions.Common;
@@ -68,6 +70,7 @@ public sealed class UserManagementViewModel : ViewModelBase
     private int? _breakDurationMinutes;
     private string _errorMessage = string.Empty;
     private string _lastLoginText = string.Empty;
+    private bool _selectedIsActive = true;
     private bool _isBusy;
 
     public UserManagementViewModel(ISender mediator, IDialogService dialogs, ResultErrorPresenter presenter)
@@ -84,6 +87,7 @@ public sealed class UserManagementViewModel : ViewModelBase
         UpdateCommand = new AsyncRelayCommand(_ => UpdateAsync());
         SavePermissionsCommand = new AsyncRelayCommand(_ => SavePermissionsAsync());
         DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync());
+        ToggleActiveCommand = new AsyncRelayCommand(_ => ToggleActiveAsync());
     }
 
     public ObservableCollection<UserSummaryDto> Users
@@ -182,6 +186,20 @@ public sealed class UserManagementViewModel : ViewModelBase
         set => SetProperty(ref _errorMessage, value);
     }
 
+    public bool SelectedIsActive
+    {
+        get => _selectedIsActive;
+        private set
+        {
+            if (SetProperty(ref _selectedIsActive, value))
+            {
+                OnPropertyChanged(nameof(ToggleActiveText));
+            }
+        }
+    }
+
+    public string ToggleActiveText => SelectedIsActive ? "تعطيل" : "إعادة تفعيل";
+
     public bool IsBusy
     {
         get => _isBusy;
@@ -195,9 +213,21 @@ public sealed class UserManagementViewModel : ViewModelBase
     public AsyncRelayCommand UpdateCommand { get; }
     public AsyncRelayCommand SavePermissionsCommand { get; }
     public AsyncRelayCommand DeleteCommand { get; }
+    public AsyncRelayCommand ToggleActiveCommand { get; }
 
     private void UpdateAuditAccessVisibility()
     {
+        // Edit mode with an absolute-permission user: the whole grid is read-only.
+        if (_selectedDetail is not null && _selectedDetail.IsAbsolutePermission)
+        {
+            foreach (var item in PermissionItems)
+            {
+                item.IsEnabled = false;
+            }
+
+            return;
+        }
+
         var audit = PermissionItems.FirstOrDefault(p => p.Code == "PT_AUDIT_ACCESS");
         if (audit is not null)
         {
@@ -244,6 +274,7 @@ public sealed class UserManagementViewModel : ViewModelBase
                 _selectedDetail = detail;
                 UserName = detail.UserName;
                 IsAbsolutePermission = detail.IsAbsolutePermission;
+                SelectedIsActive = detail.IsActive;
                 DiscountLimitPercent = detail.DiscountLimitPercent;
                 BlockPrintOnRemainingBalance = detail.BlockPrintOnRemainingBalance;
                 WorkStartTime = detail.WorkStartTime;
@@ -369,6 +400,48 @@ public sealed class UserManagementViewModel : ViewModelBase
             var cmd = new SaveUserPermissionsCommand(_selectedDetail.Id, codes);
             var result = await _mediator.Send(cmd);
             if (!result.IsSuccess && result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task ToggleActiveAsync()
+    {
+        if (_selectedDetail is null)
+        {
+            ErrorMessage = "لم يتم اختيار مستخدم.";
+            return;
+        }
+
+        string action = _selectedDetail.IsActive ? "تعطيل" : "إعادة تفعيل";
+        bool confirm = await _dialogs.ShowConfirmationAsync(
+            "تأكيد",
+            $"سيتم {action} المستخدم \"{_selectedDetail.UserName}\" — متابعة؟");
+        if (!confirm)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var result = _selectedDetail.IsActive
+                ? await _mediator.Send(new DeactivateUserCommand(_selectedDetail.Id))
+                : await _mediator.Send(new ReactivateUserCommand(_selectedDetail.Id));
+
+            if (result.IsSuccess)
+            {
+                int id = _selectedDetail.Id;
+                await LoadAsync();
+                await LoadDetailAsync(id);
+            }
+            else if (result.Error is not null)
             {
                 ErrorMessage = _presenter.Present(result.Error);
             }

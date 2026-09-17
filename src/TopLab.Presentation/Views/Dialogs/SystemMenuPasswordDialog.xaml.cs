@@ -15,7 +15,7 @@ public partial class SystemMenuPasswordDialog : Window
     {
         if (string.IsNullOrWhiteSpace(PasswordBox.Password))
         {
-            ErrorText.Text = "كلمة المرور مطلوبة.";
+            ErrorText.Text = "أدخل كلمة المرور الثانوية";
             return;
         }
 
