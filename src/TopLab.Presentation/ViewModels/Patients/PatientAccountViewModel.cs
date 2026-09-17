@@ -10,6 +10,7 @@ using TopLab.Application.Features.PatientBilling.Commands.SettleAccountInFull;
 using TopLab.Application.Features.PatientBilling.Commands.VoidPaymentOperation;
 using TopLab.Application.Features.PatientBilling.Common;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
+using TopLab.Application.Features.PatientBilling.Queries.GetPatientInvoice;
 using TopLab.Application.Features.PatientBilling.Queries.ListPatientPayments;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
@@ -45,6 +46,8 @@ public sealed class PatientAccountViewModel : ViewModelBase
     private int _operationsPage = 1;
     private bool _operationsLoaded;
     private PaymentOperationDto? _selectedOperation;
+    private InvoiceDto? _invoicePreview;
+    private bool _showInvoicePreview;
     private string _paymentAmountText = string.Empty;
     private string? _paymentDiscountText;
     private bool _isBusy;
@@ -73,6 +76,9 @@ public sealed class PatientAccountViewModel : ViewModelBase
         OpenCorrectionCommand = new AsyncRelayCommand(async (_, ct) => await OpenCorrectionAsync(ct));
         OpenExtraChargeCommand = new AsyncRelayCommand(async (_, ct) => await OpenExtraChargeAsync(ct));
         VoidSelectedOperationCommand = new AsyncRelayCommand(async (_, ct) => await VoidSelectedOperationAsync(ct));
+        OpenInvoicePreviewCommand = new AsyncRelayCommand(async (_, ct) => await OpenInvoicePreviewAsync(ct));
+        PrintPreviewedInvoiceCommand = new AsyncRelayCommand(async (_, ct) => await PrintPreviewedInvoiceAsync(ct));
+        CloseInvoicePreviewCommand = new RelayCommand(() => ShowInvoicePreview = false);
         BackCommand = new AsyncRelayCommand(async (_, ct) => await BackAsync(ct));
 
         Operations.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowOperationsEmpty));
@@ -107,6 +113,14 @@ public sealed class PatientAccountViewModel : ViewModelBase
     /// <summary>S-03 Slice 4: staged for the Slice-5 void dialog (grid selection).</summary>
     public PaymentOperationDto? SelectedOperation { get => _selectedOperation; set => SetProperty(ref _selectedOperation, value); }
 
+    /// <summary>S-03 Slice 6: invoice preview state (null number tolerated).</summary>
+    public InvoiceDto? InvoicePreview { get => _invoicePreview; private set => SetProperty(ref _invoicePreview, value); }
+
+    public bool ShowInvoicePreview { get => _showInvoicePreview; private set => SetProperty(ref _showInvoicePreview, value); }
+
+    /// <summary>S-03 Slice 6: null-number case displays «لم تُصدَر بعد».</summary>
+    public string InvoiceNumberDisplay => InvoicePreview?.InvoiceNumber?.ToString(CultureInfo.InvariantCulture) ?? "لم تُصدَر بعد";
+
     public string PaymentAmountText { get => _paymentAmountText; set => SetProperty(ref _paymentAmountText, value); }
 
     public string? PaymentDiscountText { get => _paymentDiscountText; set => SetProperty(ref _paymentDiscountText, value); }
@@ -135,6 +149,12 @@ public sealed class PatientAccountViewModel : ViewModelBase
 
     public AsyncRelayCommand VoidSelectedOperationCommand { get; }
 
+    public AsyncRelayCommand OpenInvoicePreviewCommand { get; }
+
+    public AsyncRelayCommand PrintPreviewedInvoiceCommand { get; }
+
+    public RelayCommand CloseInvoicePreviewCommand { get; }
+
     public AsyncRelayCommand BackCommand { get; }
 
     public async Task LoadAsync(int patientId, CancellationToken cancellationToken = default)
@@ -149,6 +169,9 @@ public sealed class PatientAccountViewModel : ViewModelBase
         IsBusy = true;
         ErrorMessage = string.Empty;
         StatusMessage = string.Empty;
+        InvoicePreview = null;
+        OnPropertyChanged(nameof(InvoiceNumberDisplay));
+        ShowInvoicePreview = false;
         try
         {
             var account = await _mediator.Send(new GetPatientAccountQuery(_patientId), cancellationToken);
@@ -322,8 +345,64 @@ public sealed class PatientAccountViewModel : ViewModelBase
         }
     }
 
-    private async Task BackAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// S-03 Slice 6: invoice preview (S-M03-6) from GetPatientInvoiceQuery.
+    /// Null number/issue tolerated; SD-3 rule shown via the explanatory line.
+    /// </summary>
+    private async Task OpenInvoicePreviewAsync(CancellationToken cancellationToken)
     {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        IsBusy = true;
+        try
+        {
+            var invoice = await _mediator.Send(new GetPatientInvoiceQuery(_patientId), cancellationToken);
+            if (!invoice.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(invoice.Error!);
+                return;
+            }
+
+            InvoicePreview = invoice.Value;
+            OnPropertyChanged(nameof(InvoiceNumberDisplay));
+            ShowInvoicePreview = true;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// S-03 Slice 6: print-from-preview via PrintInvoiceCommand — every print
+    /// issues a new sequential number (SD-3); the preview reloads with the header.
+    /// </summary>
+    private async Task PrintPreviewedInvoiceAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        IsBusy = true;
+        try
+        {
+            var printed = await _mediator.Send(new PrintInvoiceCommand(_patientId), cancellationToken);
+            if (!printed.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(printed.Error!);
+                return;
+            }
+
+            await OpenInvoicePreviewAsync(cancellationToken);
+            StatusMessage = $"تم إصدار الفاتورة رقم {printed.Value} وإرسالها إلى الطابعة.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task BackAsync(CancellationToken cancellationToken)   {
         _navigation.NavigateTo<PatientEditorViewModel>();
         if (_navigation.CurrentViewModel is PatientEditorViewModel editor)
         {

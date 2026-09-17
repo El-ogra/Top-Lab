@@ -75,12 +75,12 @@
                     <Button Content="الإيصال" Margin="8,2,2,2" Padding="10,2" Command="{Binding PrintReceiptCommand}" />
                 </WrapPanel>
 
-                <!-- S-03 Slice 5: dialogs wired. The invoice button stays disabled until Slice 6. -->
+                <!-- S-03 Slice 6: invoice preview wired (SD-3 line below). -->
                 <WrapPanel>
                     <Button Content="قيد تصحيحي" Margin="2" Padding="10,2" Command="{Binding OpenCorrectionCommand}" />
                     <Button Content="مبلغ إضافي" Margin="2" Padding="10,2" Command="{Binding OpenExtraChargeCommand}" />
                     <Button Content="إلغاء عملية" Margin="2" Padding="10,2" Command="{Binding VoidSelectedOperationCommand}" />
-                    <Button Content="معاينة الفاتورة" Margin="8,2,2,2" Padding="10,2" IsEnabled="False" />
+                    <Button Content="معاينة الفاتورة" Margin="8,2,2,2" Padding="10,2" Command="{Binding OpenInvoicePreviewCommand}" />
                 </WrapPanel>
 
                 <!-- Operations grid -->
@@ -139,6 +139,54 @@
                     <TextBlock Text="{Binding OperationsPage}" Margin="6,2" VerticalAlignment="Center" />
                     <Button Content="التالي" Margin="2" Padding="10,2" Command="{Binding NextOperationsPageCommand}" />
                 </WrapPanel>
+
+                <!-- S-03 Slice 6: invoice preview (InvoiceDto/ChargedTestDto fields only). -->
+                <StackPanel Margin="0,8,0,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowInvoicePreview}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <TextBlock Text="معاينة الفاتورة" FontWeight="Bold" Margin="0,0,0,4" />
+                    <WrapPanel>
+                        <TextBlock Text="رقم الفاتورة:" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <TextBlock Text="{Binding InvoiceNumberDisplay}" Margin="0,2,8,2" VerticalAlignment="Center" FontWeight="Bold" />
+                        <TextBlock Text="تاريخ الإصدار:" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <TextBlock Text="{Binding InvoicePreview.IssuedAtUtc}" Margin="0,2,8,2" VerticalAlignment="Center" />
+                        <TextBlock Text="العملة:" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <TextBlock Text="{Binding InvoicePreview.Currency}" Margin="0,2,8,2" VerticalAlignment="Center" />
+                    </WrapPanel>
+                    <ItemsControl ItemsSource="{Binding InvoicePreview.ChargedTests}" Margin="0,4">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding ReceiptName}" Margin="4,2" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding PriceAtOrderTime}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <WrapPanel>
+                        <TextBlock Text="الإجمالي:" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <TextBlock Text="{Binding InvoicePreview.TotalCharged}" Margin="0,2,8,2" VerticalAlignment="Center" FontWeight="Bold" />
+                        <TextBlock Text="الخصم:" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <TextBlock Text="{Binding InvoicePreview.TotalDiscount}" Margin="0,2,8,2" VerticalAlignment="Center" />
+                        <TextBlock Text="المدفوع:" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <TextBlock Text="{Binding InvoicePreview.TotalPaid}" Margin="0,2,8,2" VerticalAlignment="Center" />
+                        <TextBlock Text="الباقي:" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
+                        <TextBlock Text="{Binding InvoicePreview.Balance}" Margin="0,2,8,2" VerticalAlignment="Center" FontWeight="Bold" />
+                    </WrapPanel>
+                    <TextBlock Text="تنبيه: كل طباعة تصدر رقم فاتورة جديدًا متسلسلًا." Foreground="#1E3A5F" TextWrapping="Wrap" Margin="2,4" />
+                    <WrapPanel>
+                        <Button Content="طباعة الفاتورة" Margin="2" Padding="10,2" Command="{Binding PrintPreviewedInvoiceCommand}" />
+                        <Button Content="إغلاق" Margin="2" Padding="10,2" Command="{Binding CloseInvoicePreviewCommand}" />
+                    </WrapPanel>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>
