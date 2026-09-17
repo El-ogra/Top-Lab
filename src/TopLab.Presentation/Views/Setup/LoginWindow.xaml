@@ -1,12 +1,14 @@
 <Window x:Class="TopLab.Presentation.Views.Setup.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="تسجيل الدخول — Top-Lab" Height="300" Width="420"
+        Title="تسجيل الدخول — Top-Lab" Height="360" Width="420"
         FlowDirection="RightToLeft"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -21,19 +23,22 @@
         </Grid.ColumnDefinitions>
 
         <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="تسجيل الدخول"
-                   FontSize="14" FontWeight="Bold" Margin="0,0,0,16"/>
+                   FontSize="14" FontWeight="Bold" Margin="0,0,0,4"/>
 
-        <TextBlock Grid.Row="1" Grid.Column="0" Text="اسم المستخدم:" VerticalAlignment="Center" Margin="0,0,12,8"/>
-        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="UserNameTextBox" Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Text="Top-Lab — SQL Server" Foreground="Gray" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Text="{Binding ConnectionStatusText}" Foreground="Gray" Margin="0,0,0,12"/>
 
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="كلمة المرور:" VerticalAlignment="Center" Margin="0,0,12,8"/>
-        <PasswordBox Grid.Row="2" Grid.Column="1" x:Name="PasswordBox" Margin="0,0,8,8"/>
-        <TextBox Grid.Row="2" Grid.Column="1" x:Name="PlainPasswordBox" Margin="0,0,8,8" Visibility="Collapsed"/>
-        <CheckBox Grid.Row="2" Grid.Column="2" x:Name="ShowPasswordCheckBox" Content="إظهار" VerticalAlignment="Center" Margin="0,0,0,8" Checked="ShowPasswordCheckBox_Changed" Unchecked="ShowPasswordCheckBox_Changed"/>
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="اسم المستخدم:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="UserNameTextBox" Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
 
-        <TextBlock Grid.Row="3" Grid.ColumnSpan="3" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,8"/>
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="كلمة المرور:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <PasswordBox Grid.Row="4" Grid.Column="1" x:Name="PasswordBox" Margin="0,0,8,8"/>
+        <TextBox Grid.Row="4" Grid.Column="1" x:Name="PlainPasswordBox" Margin="0,0,8,8" Visibility="Collapsed"/>
+        <CheckBox Grid.Row="4" Grid.Column="2" x:Name="ShowPasswordCheckBox" Content="إظهار" VerticalAlignment="Center" Margin="0,0,0,8" Checked="ShowPasswordCheckBox_Changed" Unchecked="ShowPasswordCheckBox_Changed"/>
 
-        <StackPanel Grid.Row="5" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Left">
+        <TextBlock Grid.Row="5" Grid.ColumnSpan="3" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,8"/>
+
+        <StackPanel Grid.Row="7" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Left">
             <Button Content="دخول" Width="90" Padding="8,4" Margin="0,0,8,0" Click="LoginButton_Click" IsDefault="True"/>
             <Button Content="خروج" Width="80" Padding="8,4" Click="ExitButton_Click" IsCancel="True"/>
         </StackPanel>

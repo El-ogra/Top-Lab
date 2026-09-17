@@ -1,11 +1,14 @@
 using System.Windows.Threading;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
+using TopLab.Application.Features.AccessAndNavigation.Commands.LockWorkstation;
 using TopLab.Application.Features.AccessAndNavigation.Queries.CheckDatabaseConnectivity;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Navigation;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
+using TopLab.Presentation.Views.Shell;
 
 namespace TopLab.Presentation.ViewModels.Shell;
 
@@ -24,12 +27,15 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
     private readonly IDateTimeProvider _dateTime;
     private readonly ResultErrorPresenter _errorPresenter;
     private readonly IDialogService _dialogs;
+    private readonly IServiceProvider _services;
     private readonly DispatcherTimer? _timer;
 
     private string _currentUserName = "—";
     private string _lastLoginText = "أول تسجيل دخول";
     private bool _isDatabaseConnected;
+    private bool _isConnectionStatusKnown;
     private string _databaseConnectivityText = "غير متصل";
+    private string _databaseConnectivityTooltip = "جارٍ التحقق من الاتصال…";
     private DateTime _currentDateTime;
     private ViewModelBase? _currentViewModel;
 
@@ -40,6 +46,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         IDateTimeProvider dateTime,
         ResultErrorPresenter errorPresenter,
         IDialogService dialogs,
+        IServiceProvider services,
         HomeViewModel home)
     {
         _mediator = mediator;
@@ -48,6 +55,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         _dateTime = dateTime;
         _errorPresenter = errorPresenter;
         _dialogs = dialogs;
+        _services = services;
         _currentViewModel = home;
         _currentDateTime = dateTime.UtcNow.ToLocalTime();
 
@@ -106,6 +114,18 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         private set => SetProperty(ref _databaseConnectivityText, value);
     }
 
+    public string DatabaseConnectivityTooltip
+    {
+        get => _databaseConnectivityTooltip;
+        private set => SetProperty(ref _databaseConnectivityTooltip, value);
+    }
+
+    public bool IsConnectionStatusKnown
+    {
+        get => _isConnectionStatusKnown;
+        private set => SetProperty(ref _isConnectionStatusKnown, value);
+    }
+
     public DateTime CurrentDateTime
     {
         get => _currentDateTime;
@@ -114,7 +134,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
     private IReadOnlyList<NavigationItem> BuildNavigationItems()
     {
-        string[] titles = ["المرضى", "المعمل", "ورقة العمل", "الأدوات", "الحسابات", "الإحصائيات", "المستخدمون", "النظام", "الإعدادات", "حول البرنامج", "خروج"];
+        string[] titles = ["المرضى", "المعمل", "ورقة العمل", "الأدوات", "الحسابات", "الإحصائيات", "المستخدمون", "النظام", "الإعدادات", "حول البرنامج", "قفل المحطة", "خروج"];
         var list = new List<NavigationItem>();
         foreach (var title in titles)
         {
@@ -127,7 +147,23 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                 {
                     if (t == "خروج")
                     {
-                        System.Windows.Application.Current.Shutdown();
+                        bool confirm = await _dialogs.ShowConfirmationAsync("خروج", "هل تريد إنهاء البرنامج؟");
+                        if (confirm)
+                        {
+                            System.Windows.Application.Current.Shutdown();
+                        }
+                    }
+                    else if (t == "حول البرنامج")
+                    {
+                        var about = new AboutWindow
+                        {
+                            Owner = System.Windows.Application.Current?.MainWindow
+                        };
+                        about.ShowDialog();
+                    }
+                    else if (t == "قفل المحطة")
+                    {
+                        await LockWorkstationAsync();
                     }
                     else if (t == "المستخدمون")
                     {
@@ -200,17 +236,49 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         }
 
         // DB
+        IsConnectionStatusKnown = false;
+        DatabaseConnectivityTooltip = "جارٍ التحقق من الاتصال…";
         try
         {
             var result = await _mediator.Send(new CheckDatabaseConnectivityQuery());
             IsDatabaseConnected = result.IsSuccess && result.Value is { IsConnected: true };
-            DatabaseConnectivityText = IsDatabaseConnected ? "متصل" : "غير متصل";
+            IsConnectionStatusKnown = true;
+            if (IsDatabaseConnected)
+            {
+                DatabaseConnectivityText = "متصل";
+                DatabaseConnectivityTooltip = "متصل";
+            }
+            else
+            {
+                DatabaseConnectivityText = "غير متصل";
+                DatabaseConnectivityTooltip = "لا يوجد اتصال بقاعدة البيانات";
+            }
         }
         catch
         {
             IsDatabaseConnected = false;
-            DatabaseConnectivityText = "غير متصل";
+            IsConnectionStatusKnown = true;
+            DatabaseConnectivityText = "تعذر الاتصال بقاعدة البيانات";
+            DatabaseConnectivityTooltip = "لا يوجد اتصال بقاعدة البيانات";
         }
+    }
+
+    private async Task LockWorkstationAsync()
+    {
+        string lockedUserName = CurrentUserName;
+
+        await _mediator.Send(new LockWorkstationCommand());
+        await LoadStatusAsync();
+
+        var unlockVm = _services.GetRequiredService<UnlockViewModel>();
+        unlockVm.Initialize(lockedUserName);
+        var unlock = new UnlockWindow(unlockVm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        unlock.ShowDialog();
+
+        await LoadStatusAsync();
     }
 
     public void Dispose()

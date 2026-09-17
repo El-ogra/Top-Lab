@@ -1,0 +1,38 @@
+<Window x:Class="TopLab.Presentation.Views.Shell.UnlockWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="المحطة مقفلة" Height="280" Width="420"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="المحطة مقفلة — أدخل كلمة المرور للمتابعة"
+                   FontSize="13" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="المستخدم:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding UserName, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="كلمة المرور:" VerticalAlignment="Center" Margin="0,0,12,8"/>
+        <PasswordBox Grid.Row="2" Grid.Column="1" x:Name="PasswordBox" Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,8"/>
+
+        <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Left">
+            <Button Content="فتح" Width="90" Padding="8,4" Margin="0,0,8,0" Click="UnlockButton_Click" IsDefault="True"/>
+            <Button Content="إنهاء البرنامج" Width="110" Padding="8,4" Click="ExitButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

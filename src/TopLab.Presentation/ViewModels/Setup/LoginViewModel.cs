@@ -1,4 +1,5 @@
 using MediatR;
+using TopLab.Application.Features.AccessAndNavigation.Queries.CheckDatabaseConnectivity;
 using TopLab.Application.Features.UsersAndPermissions.Commands.SignIn;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.ErrorPresentation;
@@ -13,6 +14,7 @@ public sealed class LoginViewModel : ViewModelBase
     private string _userName = string.Empty;
     private string _password = string.Empty;
     private string _errorMessage = string.Empty;
+    private string _connectionStatusText = "جارٍ التحقق من الاتصال…";
     private bool _isBusy;
 
     public LoginViewModel(ISender mediator, ResultErrorPresenter presenter)
@@ -43,6 +45,26 @@ public sealed class LoginViewModel : ViewModelBase
     {
         get => _isBusy;
         set => SetProperty(ref _isBusy, value);
+    }
+
+    public string ConnectionStatusText
+    {
+        get => _connectionStatusText;
+        private set => SetProperty(ref _connectionStatusText, value);
+    }
+
+    public async Task LoadConnectionStatusAsync()
+    {
+        try
+        {
+            var result = await _mediator.Send(new CheckDatabaseConnectivityQuery());
+            bool connected = result.IsSuccess && result.Value is { IsConnected: true };
+            ConnectionStatusText = connected ? "متصل بقاعدة البيانات" : "لا يوجد اتصال بقاعدة البيانات";
+        }
+        catch
+        {
+            ConnectionStatusText = "لا يوجد اتصال بقاعدة البيانات";
+        }
     }
 
     public async Task<bool> SignInAsync()

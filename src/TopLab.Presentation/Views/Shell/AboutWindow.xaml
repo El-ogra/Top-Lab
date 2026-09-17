@@ -1,0 +1,28 @@
+<Window x:Class="TopLab.Presentation.Views.Shell.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="حول البرنامج" Height="320" Width="460"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Top-Lab" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+        <TextBlock Grid.Row="1" x:Name="VersionText" Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="2" Text="الحقوق: [Placeholder — بانتظار قرار المالك]" TextWrapping="Wrap" Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="3" Text="بيانات الدعم: [Placeholder — بانتظار قرار المالك]" TextWrapping="Wrap" Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="4" Text="المحتوى النهائي لشاشة «حول البرنامج» بانتظار قرار المالك — [Placeholder]"
+                   Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+        <Button Grid.Row="6" Content="إغلاق" Width="90" Padding="8,4" HorizontalAlignment="Left" Click="CloseButton_Click" IsCancel="True"/>
+    </Grid>
+</Window>

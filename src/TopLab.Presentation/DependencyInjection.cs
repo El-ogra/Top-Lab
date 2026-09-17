@@ -30,6 +30,7 @@ public static class DependencyInjection
         // ViewModels
         services.AddTransient<ShellViewModel>();
         services.AddTransient<HomeViewModel>();
+        services.AddTransient<UnlockViewModel>();
         services.AddTransient<DatabaseSetupViewModel>();
         services.AddTransient<FirstRunAdminViewModel>();
         services.AddTransient<LoginViewModel>();

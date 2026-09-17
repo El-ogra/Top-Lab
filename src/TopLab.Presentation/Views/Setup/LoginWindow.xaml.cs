@@ -12,6 +12,12 @@ public partial class LoginWindow : Window
         InitializeComponent();
         _vm = vm;
         DataContext = _vm;
+        Loaded += LoginWindow_Loaded;
+    }
+
+    private async void LoginWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        await _vm.LoadConnectionStatusAsync();
     }
 
     private async void LoginButton_Click(object sender, RoutedEventArgs e)

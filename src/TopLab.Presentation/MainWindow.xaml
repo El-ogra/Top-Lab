@@ -39,15 +39,26 @@
             </StatusBarItem>
             <Separator />
             <StatusBarItem>
-                <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Horizontal" ToolTip="{Binding DatabaseConnectivityTooltip}">
                     <Ellipse Width="10" Height="10" Margin="0,0,4,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
-                                <Setter Property="Fill" Value="Red" />
+                                <Setter Property="Fill" Value="Gray" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDatabaseConnected}" Value="True">
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsConnectionStatusKnown}" Value="True" />
+                                            <Condition Binding="{Binding IsDatabaseConnected}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
                                         <Setter Property="Fill" Value="Green" />
-                                    </DataTrigger>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsConnectionStatusKnown}" Value="True" />
+                                            <Condition Binding="{Binding IsDatabaseConnected}" Value="False" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Fill" Value="Red" />
+                                    </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Ellipse.Style>
