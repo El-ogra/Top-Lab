@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-02.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — التمريرة P1» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 3 — Next (Stage 1 on resume)
+- **Current Slice:** 4 — Next (Stage 1 on resume)
 - **Current Branch:** main
 - **Baseline Commit:** `09c304c54b4e9836564f9b1f66410ec622c4599c` ("تحديثات القاعدة", 2026-09-16) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -67,7 +67,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 0 | AccessAndNavigation completion (lock/unlock, About, exit confirm, login identity) | [x] Done (VG-01 pass) | VG-01 |
 | 1 | UsersAndPermissions (M17) completion + D7 self-change-password | [x] Done (VG-02 pass) | VG-02 |
 | 2 | SystemAndPrintSettings (M22) completion + D1 LabPrintText tab | [x] Done (VG-03 pass) | VG-03 |
-| 3 | TestCatalogAndReferenceRanges (M12) + lab hub activation | [ ] Not started | VG-04 |
+| 3 | TestCatalogAndReferenceRanges (M12) + lab hub activation | [x] Done (VG-04 pass) | VG-04 |
 | 4 | AnalyteProfiles (Analytes + Bands + Profiles tabs) | [ ] Not started | VG-05 |
 | 5 | CultureAndAntibiotics (M15) dictionary + D9 attachment + D6 delete block | [ ] Not started | VG-06 |
 | 6 | ExternalEntities (M14) list/editor/picker + D3 routing | [ ] Not started | VG-07 |
@@ -179,16 +179,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 3)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; record counts.
-- [ ] **Stage 2 — Deep Understanding:** re-read S-02.md §3 Slice 3 + P1 §4.3–§4.4.6, §4.6/§4.8 (Uncertain items resolved from code, recorded).
-- [ ] **Stage 3 — File Analysis:** `TestCatalogDtos.cs`, `CreateTestCommandValidator.cs` (verbatim limits/messages), `ReferenceRange.cs` (`MaxCommentLength`), `ResultKind`/`AgeUnit`/`Sex` enums, the 16 commands + 5 queries, `GetAnalyteDefinitionsQuery`, S-01 navigation-wiring precedent (DI + DataTemplate + branch).
-- [ ] **Stage 4 — Planning:** step-by-step plan here.
-- [ ] **Stage 5 — Execution:** implement.
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-04 with evidence.
-- [ ] **Stage 8 — Documentation Update.**
-- [ ] **Stage 9 — Memory Status Update.**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 3/8: Test catalog + reference ranges + lab hub — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green at `60956c2` (474+195+1419=2088); tree clean.
+- [x] **Stage 2 — Deep Understanding:** S-02.md §3 Slice 3 read in full (P1 absent per U-01; S-02.md binding).
+- [x] **Stage 3 — File Analysis:** `TestCatalogDtos` (Summary 12 props / Detail 16 / Group / WorkGroupLog(+Item) / ReferenceRangeDto 10 props); `CreateTestCommand` (13 ctor params + optional AnalyteId; EDIT_SYSTEM_SETTINGS) + validator (code messages: «كود التحليل مطلوب.»/≤50, «الاسم مطلوب.»/«اسم التقرير مطلوب.»/«اسم الإيصال مطلوب.»/≤150, duration>0, prices≥0, sent-out rule, ResultKind enum); `UpdateTestCommand` (no ResultKind/IsCultureType → immutable in edit mode); `Deactivate/ReactivateTest(id)`; groups (`Create(name)` validator «اسم المجموعة مطلوب.»/≤150 — no duplicate backend rule; `Update/Deactivate/Reactivate(id)`); ranges (`Create/Update(TestId,Sex?,AgeUnit,Ages,Min/Max,comments)` validator code messages, comments ≤500; `Delete(id)`); mapping = SINGLE nullable `Test.AnalyteId` (`MapTestToAnalyte(TestId,AnalyteId)` throws→«لا يمكن ربط المادة التحليلية إلا بتحليل بسيط.», `UnmapTestFromAnalyte(TestId)` → ClearAnalyteMapping); `GetTestById` returns Detail WITHOUT AnalyteId; `SearchTestCatalogQuery(term,groupId,includeInactive)`; `GetTestGroupsQuery(includeInactive)` → GroupDto (no counts → derived client-side); `GetReferenceRangesQuery(testId?)`; `CreateWorkGroupLog(name)` validator «اسم مجموعة العمل مطلوب.»; `Rename(id,name)`; `SaveWorkGroupLogItems(id,testIds)`; `GetWorkGroupLogsQuery()`; `GetAnalyteDefinitionsQuery()` → `AnalyteDefinitionDto(AnalyteId,Name,ReportName,IsActive,Bands)`; enums `ResultKind{Simple,SpecializedProfile,Culture}`, `AgeUnit{Day,Month,Year}`, `Sex{Male,Female}`; S-01 precedent = DI transient + MainWindow DataTemplate + shell branch + `vm.LoadAsync()`; hub UI pattern = nested views.
+- [x] **Stage 4 — Planning:** (U-08: plan's test-validator quotes «اختر مجموعة التحليل»/«حدد نوع النتيجة»/«السعر لا يمكن أن يكون سالباً» + range quotes «نهاية مدى السن…»/«الحد الأعلى…»/«يوجد تداخل…» + group «اسم المجموعة مطلوب»/«يوجد مجموعة بهذا الاسم» + log «اسم السجل مطلوب» ALL diverge/absent vs code → code binding, backend-driven surfacing, no overlap/duplicate rules invented. Mapping is single-link in code → tab = picker + ربط/فك الربط + session-known current + «هذا المكوّن مرتبط بالفعل» UI guard. U-09: no duplicate-group backend rule → save surfaces result, recorded. U-10: log-name code message «اسم مجموعة العمل مطلوب.» wins. U-11: `ShellViewModel` never subscribes to `Navigated` → navigated content never displays (baseline shell bug blocking the hub); minimal fix = subscribe in ctor + `OnNavigated`.) CREATE `ViewModels/Lab/`: `LabHubViewModel(catalog,groups,logs)` + `LoadAsync`; `TestCatalogViewModel` (search+group filter incl «الكل», TotalCount, both empty states, per-row edit/toggle, dim+«معطَّل» badge, deactivate confirm = plan verbatim history text); `TestEditorViewModel` (13 editor fields; ranges sub-state with permanent «تعديل المدى لا يغيّر النتائج السابقة» bar + «أدخل نورمالات كل وحدة عمرية على حدة»; mapping sub-state; create→id capture enables tabs); `TestGroupsViewModel` (list+derived counts, editor, toggle); `WorkGroupLogsViewModel` (logs+items editor+picker, NO delete). CREATE `Views/Lab/`: hub (TabControl الكتالوج/المجموعات/سجلات العمل, nested ContentControls) + 3 tab views + modal `TestEditorWindow` (tabs بيانات/مدى/ربط). MODIFY: Shell («المعمل» branch + Navigated subscription), MainWindow (lab xmlns + 4 DataTemplates), DI (5 VMs). No backend touch; no migration.
+- [x] **Stage 5 — Execution:** implemented per Stage-4 plan (2 fixes: `AsyncRelayCommand` overload ambiguity → 2-param lambdas ×3; `RemoveItemCommand` → sync `RelayCommand`; worklog item button «حذف»→«إزالة» to keep zero log-delete affordances).
+- [x] **Stage 6 — Post-Execution Verification:** `dotnet build TopLab.sln` → 0 errors / 0 warnings.
+- [x] **Stage 7 — Validation Gate:** VG-04 PASS. (1) build 0/0; suite 474+195+1419=2088 green. (2) zero-drift: Persistence diff empty + ef → "No changes…". (3) grep: «المعمل» real branch `ShellViewModel.cs:212` (+U-11 Navigated subscription); zero `DeleteWorkGroupLog` in src; editor exposes exactly the 13 DTO props (no Unit/Price invented); range grid binds exact `AgeMin/AgeMax/AgeUnit/Sex/MinValue/MaxValue/LowComment/HighComment`; permanent note bar + guidance + both empty states + «هذا المكوّن مرتبط بالفعل» guard present. (4) manual walk RECORDED: search/filter/counter (`TotalCount`), filtered vs critical empty states, create→edit→deactivate(history verbatim)→reactivate, ranges CRUD + note bar, groups CRUD + derived counts + dimming, mapping map/unmap + duplicate guard + light confirm, worklogs create/rename/save-items with NO log-delete button (item-list «إزالة» is local list editing saved via `SaveWorkGroupLogItems`), hub tabs RTL. Live run reserved for owner.
+- [x] **Stage 8 — Documentation Update:** this section + evidence above (+U-08/U-09/U-10/U-11).
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-02] Slice 3/8: Test catalog + reference ranges + lab hub — loop-engineering`.
 
 ---
 
@@ -278,10 +278,11 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- Overall: 3/8 slices done
+- Overall: 4/8 slices done
 - Slice 0 — AccessAndNavigation completion: [x] Done (VG-01 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [x] Done (VG-02 pass, committed)
 - Slice 2 — SystemAndPrintSettings (M22) completion: [x] Done (VG-03 pass, committed)
+- Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [x] Done (VG-04 pass, committed)
 - Slice 1 — UsersAndPermissions (M17) completion: [ ] Not started
 - Slice 2 — SystemAndPrintSettings (M22) completion: [ ] Not started
 - Slice 3 — TestCatalogAndReferenceRanges (M12) + lab hub: [ ] Not started
@@ -291,7 +292,8 @@ Additional user-authorized execution parameters (override skill defaults):
 - Slice 7 — PriceListsCommentsAndCustomGroups (M13): [ ] Not started
 - Migration count: **exactly 0** expected (zero-drift gate on every slice)
 - New backend artifacts expected: **exactly 1** (D7 ChangeOwnPassword command trio, Slice 1)
-- Next action: begin Slice 3, Stage 1 (build 0/0 + suite green after Slice 2).
+- Next action: begin Slice 4, Stage 1 (build 0/0 + suite green after Slice 3).
+- Slice 3 — completed 2026-09-17: lab hub («المعمل» + U-11 Navigated fix) + catalog/groups/worklogs tabs + test editor (13 fields, ranges + permanent note, single-link mapping); CREATE 5 VMs + 5 views; no backend touch; no migration.
 - Slice 2 — completed 2026-09-17: D1 LabPrintText tab in SystemSettingsView + early backup-path check + .bak guard + restore text + report colour preview; MODIFY only (2 VMs + 2 views); no migration.
 - Slice 0 — completed 2026-09-17: shell «قفل المحطة»/About/exit-confirm/connection rules/login identity; files: CREATE UnlockViewModel + Views/Shell/{UnlockWindow,AboutWindow}(.xaml.cs); MODIFY ShellViewModel/MainWindow/LoginWindow/LoginViewModel/DI.
 
@@ -304,6 +306,10 @@ Additional user-authorized execution parameters (override skill defaults):
 - **U-05 (Slice 2):** plan's LabPrintText limits (each text ≤500 «نص الطباعة تجاوز 500 حرف»; FontSizePt 6–72 «حجم الخط غير صالح») are absent from the confirmed `SaveLabPrintTextCommandValidator` (LabName req/≤200; FontSizePt 1–300). Code binding → UI backend-driven; the >500-char manual item is N/A-per-code (round-trip verified instead).
 - **U-06 (Slice 2):** no header/footer colour properties exist in any settings DTO; the colour preview is a live LabName/font/mode sample with static RLS-inspired colours.
 - **U-07 (Slice 2):** plan's «مسار النسخ غير صالح أو غير قابل للكتابة» is absent from code (service yields a friendly Unexpected message). Early `CheckBackupPathQuery` is wired as ordered; the code message is surfaced verbatim.
+- **U-08 (Slice 3):** plan's M12 quotes («اختر مجموعة التحليل», «حدد نوع النتيجة», «السعر لا يمكن أن يكون سالباً», «نهاية مدى السن يجب أن تتجاوز بدايته», «الحد الأعلى يجب ألا يقل عن الأدنى», «يوجد تداخل مع مدى مرجعي آخر») diverge from / are absent in the confirmed validators (code messages e.g. «نوع النتيجة غير صالح.», «العمر الأقصى يجب ألا يقل عن العمر الأدنى.», no overlap rule, group optional). Code binding; mapping is a single nullable link in code → single-picker tab with session-known current + «هذا المكوّن مرتبط بالفعل» UI guard.
+- **U-09 (Slice 3):** no duplicate-test-group-name backend rule exists → UI saves and surfaces the result; «يوجد مجموعة بهذا الاسم» N/A-per-code.
+- **U-10 (Slice 3):** work-log name code message is «اسم مجموعة العمل مطلوب.» (not plan's «اسم السجل مطلوب») → code binding.
+- **U-11 (Slice 3):** `ShellViewModel` never subscribes to `INavigationService.Navigated`, so navigated content never displays (baseline shell bug). Minimal fix (subscribe in ctor) required for the «المعمل» hub; also repairs المرضى/المستخدمون/الإعدادات display — intended navigation, justified.
 
 - Pinned commit `09c304c…` must equal `main` HEAD at start; if the repo has moved, STOP and report (plan is anchored to that commit).
 - No UI test harness exists — manual verification is recorded, never fabricated; physical-printer/visual checks remain for the owner.
@@ -317,7 +323,8 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2026-09-17 | 0 | — | Memory file created | OK | — |
 | 2026-09-17 | 0 | 1–9 | Slice 0 executed, VG-01 pass (build 0/0, tests 2081 green, zero-drift, grep gates, manual walk recorded) | OK | `72992ef` |
 | 2026-09-17 | 1 | 1–10 | Slice 1 executed, VG-02 pass (build 0/0, tests 2088 green incl. 7 new, zero-drift, grep gates, manual walk recorded) | OK | `034a45d` |
-| 2026-09-17 | 2 | 1–10 | Slice 2 executed, VG-03 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | pending Stage 10 |
+| 2026-09-17 | 2 | 1–10 | Slice 2 executed, VG-03 pass (build 0/0, tests 2088 green, zero-drift, inspection gates, manual walk recorded) | OK | `60956c2` |
+| 2026-09-17 | 3 | 1–10 | Slice 3 executed, VG-04 pass (build 0/0, tests 2088 green, zero-drift, grep gates, manual walk recorded) | OK | pending Stage 10 |
 
 ## Stop Report (append only if a stop condition triggers)
 

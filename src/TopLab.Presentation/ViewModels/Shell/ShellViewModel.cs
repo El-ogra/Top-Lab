@@ -63,6 +63,8 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
         OpenChangePasswordCommand = new AsyncRelayCommand(_ => OpenChangePasswordAsync());
 
+        _navigation.Navigated += OnNavigated;
+
         try
         {
             var t = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -207,6 +209,14 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                     {
                         _navigation.NavigateTo<ViewModels.Patients.PatientsHubViewModel>();
                     }
+                    else if (t == "المعمل")
+                    {
+                        _navigation.NavigateTo<ViewModels.Lab.LabHubViewModel>();
+                        if (_navigation.CurrentViewModel is ViewModels.Lab.LabHubViewModel hub)
+                        {
+                            await hub.LoadAsync();
+                        }
+                    }
                     else
                     {
                         // Future: navigate to feature
@@ -283,6 +293,14 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private void OnNavigated(ViewModelBase? viewModel)
+    {
+        if (viewModel is not null)
+        {
+            CurrentViewModel = viewModel;
+        }
+    }
+
     private async Task LockWorkstationAsync()
     {
         string lockedUserName = CurrentUserName;
@@ -303,6 +321,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        _navigation.Navigated -= OnNavigated;
         _timer?.Stop();
     }
 }

@@ -8,8 +8,10 @@
          xmlns:usersView="clr-namespace:TopLab.Presentation.Views.Users"
          xmlns:settingsVm="clr-namespace:TopLab.Presentation.ViewModels.Settings"
          xmlns:settingsView="clr-namespace:TopLab.Presentation.Views.Settings"
-         xmlns:patientsVm="clr-namespace:TopLab.Presentation.ViewModels.Patients"
-         xmlns:patientsView="clr-namespace:TopLab.Presentation.Views.Patients"
+          xmlns:patientsVm="clr-namespace:TopLab.Presentation.ViewModels.Patients"
+          xmlns:patientsView="clr-namespace:TopLab.Presentation.Views.Patients"
+          xmlns:labVm="clr-namespace:TopLab.Presentation.ViewModels.Lab"
+          xmlns:labView="clr-namespace:TopLab.Presentation.Views.Lab"
          mc:Ignorable="d"
          Title="Top-Lab — نظام توب لاب" Height="600" Width="1024"
          FlowDirection="RightToLeft"
@@ -91,6 +93,18 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type patientsVm:PatientEditorViewModel}">
                         <patientsView:PatientEditorView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:LabHubViewModel}">
+                        <labView:LabHubView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:TestCatalogViewModel}">
+                        <labView:TestCatalogView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:TestGroupsViewModel}">
+                        <labView:TestGroupsView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type labVm:WorkGroupLogsViewModel}">
+                        <labView:WorkGroupLogsView/>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type usersVm:UserManagementViewModel}">
                         <usersView:UserManagementView/>

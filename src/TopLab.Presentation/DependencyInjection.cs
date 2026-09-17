@@ -9,6 +9,7 @@ using TopLab.Presentation.ViewModels.Setup;
 using TopLab.Presentation.ViewModels.Settings;
 using TopLab.Presentation.ViewModels.Users;
 using TopLab.Presentation.ViewModels.Patients;
+using TopLab.Presentation.ViewModels.Lab;
 using TopLab.Presentation.Views.Setup;
 
 namespace TopLab.Presentation;
@@ -38,6 +39,11 @@ public static class DependencyInjection
         services.AddTransient<ChangeOwnPasswordViewModel>();
         services.AddTransient<PatientsHubViewModel>();
         services.AddTransient<PatientEditorViewModel>();
+        services.AddTransient<LabHubViewModel>();
+        services.AddTransient<TestCatalogViewModel>();
+        services.AddTransient<TestEditorViewModel>();
+        services.AddTransient<TestGroupsViewModel>();
+        services.AddTransient<WorkGroupLogsViewModel>();
         services.AddTransient<SettingsDashboardViewModel>();
         services.AddTransient<SystemSettingsViewModel>();
         services.AddTransient<ReportSettingsViewModel>();

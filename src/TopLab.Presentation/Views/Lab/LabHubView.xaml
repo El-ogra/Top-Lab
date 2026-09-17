@@ -1,0 +1,19 @@
+<UserControl x:Class="TopLab.Presentation.Views.Lab.LabHubView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <DockPanel Margin="12">
+        <TextBlock DockPanel.Dock="Top" Text="المعمل — لوحة المعمل" FontSize="20" Margin="0,0,0,8" />
+        <TabControl>
+            <TabItem Header="الكتالوج">
+                <ContentControl Content="{Binding Catalog}" Margin="8" />
+            </TabItem>
+            <TabItem Header="المجموعات">
+                <ContentControl Content="{Binding Groups}" Margin="8" />
+            </TabItem>
+            <TabItem Header="سجلات العمل">
+                <ContentControl Content="{Binding WorkLogs}" Margin="8" />
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</UserControl>
