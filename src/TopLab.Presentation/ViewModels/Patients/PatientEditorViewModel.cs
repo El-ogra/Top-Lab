@@ -3,13 +3,18 @@ using System.Globalization;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Results;
+using TopLab.Application.Features.AnalyteProfiles.Common;
+using TopLab.Application.Features.AnalyteProfiles.Queries.GetProfileDefinitions;
 using TopLab.Application.Features.PatientBilling.Commands.PrintInvoice;
 using TopLab.Application.Features.PatientBilling.Commands.PrintReceipt;
 using TopLab.Application.Features.PatientBilling.Commands.RecordPayment;
 using TopLab.Application.Features.PatientBilling.Commands.SettleAccountInFull;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
+using TopLab.Application.Features.PatientRegistration.Commands.AddCustomGroupToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.AddMedicalCondition;
+using TopLab.Application.Features.PatientRegistration.Commands.AddProfileToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.AddTestsToVisit;
+using TopLab.Application.Features.PatientRegistration.Commands.ClearAllTests;
 using TopLab.Application.Features.PatientRegistration.Commands.CreatePatient;
 using TopLab.Application.Features.PatientRegistration.Commands.PrintBarcode;
 using TopLab.Application.Features.PatientRegistration.Commands.RemoveMedicalCondition;
@@ -21,6 +26,8 @@ using TopLab.Application.Features.PatientRegistration.Common;
 using TopLab.Application.Features.PatientRegistration.Queries.GetNextLabId;
 using TopLab.Application.Features.PatientRegistration.Queries.GetPatientById;
 using TopLab.Application.Features.PatientRegistration.Queries.GetPatientVisitHistory;
+using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Common;
+using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Queries.GetCustomGroups;
 using TopLab.Application.Features.PatientRegistration.Queries.GetRegistrationCatalog;
 using TopLab.Application.Features.PatientRegistration.Queries.SearchPatients;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Common;
@@ -83,6 +90,14 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private int _searchPage = 1;
     private int _searchPageSize = 20;
     private bool _searchExecuted;
+    private ProfileDefinitionDto? _selectedProfile;
+    private bool _profileIsUrine;
+    private bool _profileIsStool;
+    private bool _profileIsBlood = true;
+    private bool _profileIsSemen;
+    private bool _profileIsCsf;
+    private bool _profileIsTakenOutsideLab;
+    private CustomGroupSummaryDto? _selectedCustomGroup;
 
     public PatientEditorViewModel(
         ISender mediator,
@@ -127,6 +142,9 @@ public sealed class PatientEditorViewModel : ViewModelBase
         PrevSearchPageCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: false, cancellationToken: ct));
         ClearSearchCommand = new RelayCommand(ClearSearch);
         OpenSearchResultCommand = new AsyncRelayCommand(async (param, ct) => await OpenSearchResultAsync(param as PatientSummaryDto, ct));
+        AddProfileCommand = new AsyncRelayCommand(async (_, ct) => await AddProfileAsync(ct));
+        AddCustomGroupCommand = new AsyncRelayCommand(async (_, ct) => await AddCustomGroupAsync(ct));
+        ClearAllVisitTestsCommand = new AsyncRelayCommand(async (_, ct) => await ClearAllVisitTestsAsync(ct));
 
         // S-03 Slice 0: empty-state visibility follows the S-01/S-02 Show*Empty idiom.
         SelectedTests.CollectionChanged += (_, _) => RefreshEmptyStates();
@@ -322,6 +340,12 @@ public sealed class PatientEditorViewModel : ViewModelBase
     /// <summary>S-03 Slice 2: read-only visit history (sibling visits sharing the LabId).</summary>
     public ObservableCollection<VisitHistoryDto> VisitHistory { get; } = new();
 
+    /// <summary>S-03 Slice 3: profile picker source (existing GetProfileDefinitionsQuery).</summary>
+    public ObservableCollection<ProfileDefinitionDto> Profiles { get; } = new();
+
+    /// <summary>S-03 Slice 3: custom-group picker source (existing GetCustomGroupsQuery).</summary>
+    public ObservableCollection<CustomGroupSummaryDto> CustomGroups { get; } = new();
+
     public int SearchPage { get => _searchPage; private set => SetProperty(ref _searchPage, value); }
 
     public int SearchPageSize { get => _searchPageSize; private set => SetProperty(ref _searchPageSize, value); }
@@ -337,6 +361,23 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     /// <summary>S-03 Slice 2: empty-state flag (S-01/S-02 Show*Empty idiom).</summary>
     public bool ShowVisitHistoryEmpty => VisitHistory.Count <= 1;
+
+    /// <summary>S-03 Slice 3: profile / custom-group picker state (edit mode only).</summary>
+    public ProfileDefinitionDto? SelectedProfile { get => _selectedProfile; set => SetProperty(ref _selectedProfile, value); }
+
+    public bool ProfileIsUrine { get => _profileIsUrine; set => SetProperty(ref _profileIsUrine, value); }
+
+    public bool ProfileIsStool { get => _profileIsStool; set => SetProperty(ref _profileIsStool, value); }
+
+    public bool ProfileIsBlood { get => _profileIsBlood; set => SetProperty(ref _profileIsBlood, value); }
+
+    public bool ProfileIsSemen { get => _profileIsSemen; set => SetProperty(ref _profileIsSemen, value); }
+
+    public bool ProfileIsCsf { get => _profileIsCsf; set => SetProperty(ref _profileIsCsf, value); }
+
+    public bool ProfileIsTakenOutsideLab { get => _profileIsTakenOutsideLab; set => SetProperty(ref _profileIsTakenOutsideLab, value); }
+
+    public CustomGroupSummaryDto? SelectedCustomGroup { get => _selectedCustomGroup; set => SetProperty(ref _selectedCustomGroup, value); }
 
     public AsyncRelayCommand NewPatientCommand { get; }
 
@@ -371,6 +412,12 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public RelayCommand ClearSearchCommand { get; }
 
     public AsyncRelayCommand OpenSearchResultCommand { get; }
+
+    public AsyncRelayCommand AddProfileCommand { get; }
+
+    public AsyncRelayCommand AddCustomGroupCommand { get; }
+
+    public AsyncRelayCommand ClearAllVisitTestsCommand { get; }
 
     public async Task LoadCatalogAsync(CancellationToken cancellationToken = default)
     {
@@ -419,10 +466,49 @@ public sealed class PatientEditorViewModel : ViewModelBase
                     LabId = nextLabId.Value!;
                 }
             }
+
+            await LoadPickerSourcesAsync(cancellationToken);
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// S-03 Slice 3 (U-04): picker sources are existing queries only — the registration
+    /// catalog carries no profiles/custom-groups. Picker failures are non-fatal: the
+    /// error surfaces and the pickers stay empty (add-guards refuse without selection).
+    /// Note: profile listing requires EDIT_SYSTEM_SETTINGS; a denial surfaces verbatim.
+    /// </summary>
+    private async Task LoadPickerSourcesAsync(CancellationToken cancellationToken)
+    {
+        var profiles = await _mediator.Send(new GetProfileDefinitionsQuery(), cancellationToken);
+        if (!profiles.IsSuccess)
+        {
+            ErrorMessage = _presenter.Present(profiles.Error!);
+        }
+        else
+        {
+            Profiles.Clear();
+            foreach (var profile in profiles.Value!)
+            {
+                Profiles.Add(profile);
+            }
+        }
+
+        var groups = await _mediator.Send(new GetCustomGroupsQuery(), cancellationToken);
+        if (!groups.IsSuccess)
+        {
+            ErrorMessage = _presenter.Present(groups.Error!);
+        }
+        else
+        {
+            CustomGroups.Clear();
+            foreach (var group in groups.Value!)
+            {
+                CustomGroups.Add(group);
+            }
         }
     }
 
@@ -1012,6 +1098,125 @@ public sealed class PatientEditorViewModel : ViewModelBase
         }
 
         await LoadPatientAsync(row.PatientId, cancellationToken);
+    }
+
+    /// <summary>S-03 Slice 3: wires the orphaned AddProfileToVisitCommand (edit mode only).</summary>
+    private async Task AddProfileAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل إضافة بروفايل.";
+            return;
+        }
+
+        if (SelectedProfile is null)
+        {
+            ErrorMessage = "اختر بروفايل أولًا.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new AddProfileToVisitCommand(
+                PatientId: _patientId.Value,
+                ProfileId: SelectedProfile.ProfileId,
+                IsUrine: ProfileIsUrine,
+                IsStool: ProfileIsStool,
+                IsBlood: ProfileIsBlood,
+                IsSemen: ProfileIsSemen,
+                IsCsf: ProfileIsCsf,
+                IsTakenOutsideLab: ProfileIsTakenOutsideLab), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            await LoadVisitTestsAsync(cancellationToken);
+            await RefreshBillingAsync(cancellationToken);
+            StatusMessage = "تمت إضافة البروفايل.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>S-03 Slice 3: wires the orphaned AddCustomGroupToVisitCommand (edit mode only).</summary>
+    private async Task AddCustomGroupAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل إضافة مجموعة.";
+            return;
+        }
+
+        if (SelectedCustomGroup is null)
+        {
+            ErrorMessage = "اختر مجموعة أولًا.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new AddCustomGroupToVisitCommand(_patientId.Value, SelectedCustomGroup.Id), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            await LoadVisitTestsAsync(cancellationToken);
+            await RefreshBillingAsync(cancellationToken);
+            StatusMessage = "تمت إضافة المجموعة المخصصة.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>S-03 Slice 3: wires the orphaned ClearAllTestsCommand (edit mode only, confirmed).</summary>
+    private async Task ClearAllVisitTestsAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل مسح التحاليل.";
+            return;
+        }
+
+        var confirm = await _dialogs.ShowConfirmationAsync("مسح التحاليل", "سيتم مسح جميع تحاليل هذه الزيارة. هل تريد المتابعة؟");
+        if (!confirm)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new ClearAllTestsCommand(_patientId.Value), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            await LoadVisitTestsAsync(cancellationToken);
+            await RefreshBillingAsync(cancellationToken);
+            StatusMessage = "تم مسح جميع التحاليل.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private async Task RecordPaymentAsync(CancellationToken cancellationToken)

@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-03.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — P2» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 3 — Next (Slices 0–2 complete + committed).
+- **Current Slice:** 4 — Next (Slices 0–3 complete + committed).
 - **Current Branch:** main
 - **Baseline Commit:** `ef99502051d9405632915915c0c214beec8c84d6` ("[S-02] Slice 7/8: record final commit hash in memory file — loop-engineering", 2026-09-17 13:26:35 +0300) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -67,7 +67,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 0 | Patient editor state surfacing (loading + empty states) | [x] Complete (committed) | VG-01 PASS |
 | 1 | Patient search-to-edit section in editor | [x] Complete (committed) | VG-02 PASS |
 | 2 | Visit-history section in patient editor | [x] Complete (committed) | VG-03 PASS |
-| 3 | Editor wiring for profile / custom-group / clear-all | [ ] Not started | VG-04 |
+| 3 | Editor wiring for profile / custom-group / clear-all | [x] Complete (committed) | VG-04 PASS |
 | 4 | Patient account screen | [ ] Not started | VG-05 |
 | 5 | Billing dialogs (correction + extra charge + void) | [ ] Not started | VG-06 |
 | 6 | Invoice preview before print | [ ] Not started | VG-07 |
@@ -110,9 +110,9 @@ Additional user-authorized execution parameters (override skill defaults):
 | U-01 | `CreatePatient.DomainFailureTranslator` physical location + verbatim texts | Uncertain (carried from P2 plan) | RESOLVED Slice 0 Stage 3 — NOT a standalone file: `internal static class DomainFailureTranslator` at the bottom of `src/TopLab.Application/Features/PatientRegistration/Commands/CreatePatient/CreatePatientCommandHandler.cs:215-227`. Verbatim texts: fullName→«اسم المريض مطلوب.»; ageValue→«العمر يجب أن يكون صفرًا أو أكثر.»; fastingHours→«ساعات الصيام تتطلب تحديد الصيام.»; default→«بيانات المريض غير صالحة.». Surfaced via handlers through `ResultErrorPresenter` — no UI action needed. |
 | U-02 | `SearchPatientsQueryHandler` exact filter channels | Uncertain (handler unopened in P2 plan) | RESOLVED Slice 1 Stage 3 — `SearchPatientsQueryHandler.cs:25-47`: base excludes deleted (`!p.IsDeleted`); term channels = `FullName`, `NationalId`, `LabId.Value`, phone via `PatientPhoneNumber` contains; ordered `RegistrationDateUtc` desc; paging `Skip/Take`, no total count. UI hints record these channels verbatim («الاسم / الرقم القومي / Lab.ID / الهاتف»); handler untouched. Consequence: `IsDeleted` rows can never arrive — the flagged/refuse path is defensive only (VM refuses with «المريض محذوف.», button disabled via trigger). |
 | U-03 | Busy-indicator idiom (existing converter/control precedent) | Inference | RESOLVED Slice 0 Stage 3 — repo idiom = collapsed-by-default + `DataTrigger` on a bool VM property (precedents: `TestCatalogView.xaml:15-26` `ShowFilteredEmpty`, `AnalytesView.xaml:12-23` `ShowEmpty`; VM pattern `TestCatalogViewModel.cs:109-140` computed `Show*Empty` + `RefreshEmptyStates()`). App-wide `BoolToVis` resource exists (`App.xaml:6`; resolves to WPF built-in converter) but NO view bound `IsBusy` before Slice 0 (grep `IsBusy` over `*.xaml` = 0 hits) — Slice 0 is the first consumer, using the dominant DataTrigger idiom. |
-| U-04 | Profiles/custom-groups picker source inside the registration catalog | Inference | OPEN — resolve at Slice 3 Stage 3; if no catalog surface exists → STOP-and-report |
+| U-04 | Profiles/custom-groups picker source inside the registration catalog | Inference | RESOLVED Slice 3 Stage 3 — the registration catalog carries NO profiles/custom-groups (`RegistrationCatalogDto`: Tests/TestGroups/Titles/Conditions only; `TestGroupDto` = test categorization, not profiles). Complete EXISTING paths adopted instead (no new query, no STOP): profiles ← `GetProfileDefinitionsQuery` (existing, Presentation-consumed at `ProfilesViewModel.cs:75`; caveat: requires `EDIT_SYSTEM_SETTINGS` — denial surfaces verbatim per SD-9, recorded); custom groups ← `GetCustomGroupsQuery()` (existing, unauthenticated, Presentation-consumed at `CustomGroupsViewModel.cs:135`; `CustomGroupSummaryDto(Id,Name,ItemCount)`). Pickers = ComboBox + button (no new dialog; `TestCatalogView` GroupFilters precedent). |
 | U-05 | Account-screen navigation idiom (`LoadAsync(patientId)` after parameterless `NavigateTo<T>`) | Inference (structural, per P2 plan) | ADOPTED unless contradicted at Slice 4 Stage 3; record outcome |
-| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slice 0: «لا توجد تحاليل مختارة.», «لا توجد تحاليل في الكتالوج.». Slice 1: «لا نتائج مطابقة.» + hint. Slice 2: «لا توجد زيارات سابقة.» (plan-verbatim) + «سجل الزيارات» section header (created). Remaining texts open for later slices. |
+| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slices 0–2 recorded. Slice 3 created+recorded: clear-all confirmation («مسح التحاليل» / «سيتم مسح جميع تحاليل هذه الزيارة. هل تريد المتابعة؟»); guards («احفظ بيانات المريض أولًا قبل إضافة بروفايل.» / «...قبل إضافة مجموعة.» / «...قبل مسح التحاليل.» / «اختر بروفايل أولًا.» / «اختر مجموعة أولًا.»); success («تمت إضافة البروفايل.» / «تمت إضافة المجموعة المخصصة.» / «تم مسح جميع التحاليل.»). Remaining texts open for later slices. |
 
 ---
 
@@ -187,16 +187,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 3)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; tree clean.
-- [ ] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 3 + P2 M02 §2 command table + §4 action table read in full.
-- [ ] **Stage 3 — File Analysis:** three commands + validators; catalog DTO for picker sources (U-04); `IDialogService` idioms.
-- [ ] **Stage 4 — Planning:**
-- [ ] **Stage 5 — Execution:**
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-04 (record evidence).
-- [ ] **Stage 8 — Documentation Update:**
-- [ ] **Stage 9 — Memory Status Update:**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 3/8: Editor wiring for profile / custom-group / clear-all — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** post-Slice-2 commit `213a6f0`, tree clean; build 0/0; suite green 474+195+1419=2088.
+- [x] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 3 + P2 M02 §2 command table + §4 action table read (edit-mode only; create-mode `SelectedTests` semantics untouched; no conditions grouping).
+- [x] **Stage 3 — File Analysis:** `AddProfileToVisitCommand(PatientId,ProfileId,+6 flags)` + validator («معرّف المريض/البروفايل غير صالح.») + handler refusals («المريض غير موجود.»/«المريض محذوف ولا يمكن إضافة بروفايل إليه.»/«البروفايل غير موجود.»/«البروفايل غير مفعّل.»/«تحليل البروفايل غير صالح.»); `AddCustomGroupToVisitCommand(PatientId,CustomGroupId)` + handler («المجموعة فارغة.» etc.); `ClearAllTestsCommand` + handler (24h + resulted refusals verbatim); U-04 resolved (existing queries only — see register); `IDialogService.ShowConfirmationAsync` idiom (delete precedent).
+- [x] **Stage 4 — Planning:** VM: `Profiles`/`SelectedProfile` + 6 flag props + `AddProfileCommand`; `CustomGroups`/`SelectedCustomGroup` + `AddCustomGroupCommand`; `ClearAllVisitTestsCommand` (renamed to avoid member/type clash); pickers loaded in `LoadCatalogAsync` (failures non-fatal); all three edit-mode-guarded, success → reload visit tests + billing; XAML: «إجراءات الزيارة» bar at top of left column (2 picker rows + flags + مسح الكل).
+- [x] **Stage 5 — Execution:** VM — 5 usings, 8 fields/props, 2 collections, 3 commands, `LoadPickerSourcesAsync` + 3 action methods. XAML — action bar only; conditions `ItemsControl` untouched.
+- [x] **Stage 6 — Post-Execution Verification:** build 0 errors / 0 warnings (first attempt).
+- [x] **Stage 7 — Validation Gate:** VG-04 PASS — (1) build 0/0 + suite 2088 green; (2) zero-drift: Persistence diff empty + EF «No changes»; (3) grep: all three commands consumed at VM:1123/1168/1205 (non-test); no new files (`git status` = 2 modified Presentation files); `Categor` grep over editor files = 0 (no grouping); (4) manual walk RECORDED AS INSPECTION: profile add → tests+billing reload, inactive profile → «البروفايل غير مفعّل.»; group add → likewise, empty group → «المجموعة فارغة.»; مسح الكل → confirmation first, then 24h/resulted refusals verbatim; create mode → guards refuse, local selection semantics unchanged (delta-save path untouched).
+- [x] **Stage 8 — Documentation Update:** this section + U-04/U-06 + status updated.
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 3/8: Editor wiring for profile / custom-group / clear-all — loop-engineering`.
 
 ---
 
@@ -286,17 +286,17 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–2/8 complete).
-- **Completed slices:** Slice 0 (VG-01), Slice 1 (VG-02), Slice 2 (VG-03) — 3/8.
+- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–3/8 complete).
+- **Completed slices:** Slice 0 (VG-01), Slice 1 (VG-02), Slice 2 (VG-03), Slice 3 (VG-04) — 4/8.
 - **Blocked slices:** none.
-- **Exact next action:** Slice 3, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-2 commit), then read S-03.md §4 Slice 3.
-- **Conditions before proceeding:** G0 green on the Slice-2 commit.
-- **Open uncertainties:** U-04, U-05 (+ U-06 remainder for later slices).
+- **Exact next action:** Slice 4, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-3 commit), then read S-03.md §4 Slice 4.
+- **Conditions before proceeding:** G0 green on the Slice-3 commit.
+- **Open uncertainties:** U-05 (+ U-06 remainder for later slices).
 - **Owner-pending (never silently decide):** `BLOCK_PRINT_ON_BALANCE` enforcement; LabId visit-worksheet entry; group/log worksheet print path.
-- **Evidence collected (Slice 2):** build 0/0 (pre+post, first attempt); tests 2088 green (pre+post); EF «No changes»; consumer VM:497; 19 Command bindings all outside history section; empty text «لا توجد زيارات سابقة.».
-- **Changed files (Slice 2):** same editor pair.
-- **Deviations:** (1) history placed at end of right column (S-03.md leaves exact placement open — «new read-only section on the existing editor»); single-visit counts as empty (plan: «single visit, no prior record» → empty text); (2) manual walk by inspection — recorded.
-- **Lessons learned:** none new (DataTrigger idiom scales to nested ItemsControls cleanly).
+- **Evidence collected (Slice 3):** build 0/0 (pre+post, first attempt); tests 2088 green (pre+post); EF «No changes»; consumers VM:1123/1168/1205; `Categor` grep = 0; clear-all confirmation texts recorded.
+- **Changed files (Slice 3):** same editor pair.
+- **Deviations:** (1) VM clear command named `ClearAllVisitTestsCommand` (member/type name clash avoidance) — gate greps the Application command usage, unaffected; (2) profile picker via admin-gated existing query (denial surfaces verbatim; recorded) instead of STOP — no new backend created, plan's core constraint honored; (3) manual walk by inspection — recorded.
+- **Lessons learned:** member names colliding with imported command type names — suffix VM commands (`ClearAllVisitTestsCommand`).
 
 ## Stop Report
 

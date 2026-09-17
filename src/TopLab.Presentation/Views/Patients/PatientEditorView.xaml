@@ -384,6 +384,31 @@
             <!-- Left: test catalog + selected tests -->
             <DockPanel Grid.Column="1" Margin="8,4" LastChildFill="True">
                 <TextBlock DockPanel.Dock="Top" Text="التحاليل" FontSize="16" Margin="0,0,0,8" />
+                <!-- S-03 Slice 3: orphaned-action wiring (edit mode; guards live in the VM). -->
+                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                    <TextBlock Text="إجراءات الزيارة:" FontWeight="Bold" Margin="0,4" />
+                    <WrapPanel>
+                        <TextBlock Text="بروفايل:" Margin="2" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}"
+                                  DisplayMemberPath="Name" Width="160" Margin="2" />
+                        <Button Content="إضافة" Margin="2" Padding="8,0" Command="{Binding AddProfileCommand}" />
+                    </WrapPanel>
+                    <WrapPanel>
+                        <CheckBox Content="بول" IsChecked="{Binding ProfileIsUrine}" Margin="2" VerticalAlignment="Center" />
+                        <CheckBox Content="براز" IsChecked="{Binding ProfileIsStool}" Margin="2" VerticalAlignment="Center" />
+                        <CheckBox Content="دم" IsChecked="{Binding ProfileIsBlood}" Margin="2" VerticalAlignment="Center" />
+                        <CheckBox Content="مني" IsChecked="{Binding ProfileIsSemen}" Margin="2" VerticalAlignment="Center" />
+                        <CheckBox Content="نخاعي" IsChecked="{Binding ProfileIsCsf}" Margin="2" VerticalAlignment="Center" />
+                        <CheckBox Content="خارج المعمل" IsChecked="{Binding ProfileIsTakenOutsideLab}" Margin="2" VerticalAlignment="Center" />
+                    </WrapPanel>
+                    <WrapPanel>
+                        <TextBlock Text="مجموعة:" Margin="2" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding CustomGroups}" SelectedItem="{Binding SelectedCustomGroup}"
+                                  DisplayMemberPath="Name" Width="160" Margin="2" />
+                        <Button Content="إضافة" Margin="2" Padding="8,0" Command="{Binding AddCustomGroupCommand}" />
+                        <Button Content="مسح الكل" Margin="8,2,2,2" Padding="8,0" Command="{Binding ClearAllVisitTestsCommand}" />
+                    </WrapPanel>
+                </StackPanel>
                 <TextBlock DockPanel.Dock="Top" Text="تحاليل المريض:" FontWeight="Bold" Margin="0,4" />
                 <TextBlock DockPanel.Dock="Top" Text="لا توجد تحاليل مختارة." Foreground="#666666" Margin="0,0,0,4">
                     <TextBlock.Style>
