@@ -28,6 +28,7 @@
                 <TextBlock Text="{Binding TotalPaid}" Margin="0,4,8,4" VerticalAlignment="Center" />
                 <TextBlock Text="الباقي:" Margin="4" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding Balance}" Margin="0,4,8,4" VerticalAlignment="Center" FontWeight="Bold" />
+                <Button Content="عرض الحساب" Margin="8,4,4,4" Padding="10,2" Command="{Binding OpenAccountCommand}" />
                 <TextBlock Text="دفعة:" Margin="8,4,4,4" VerticalAlignment="Center" />
                 <TextBox Text="{Binding PaymentAmountText, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0,4" />
                 <TextBlock Text="خصم:" Margin="8,4,4,4" VerticalAlignment="Center" />

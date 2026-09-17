@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-03.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — P2» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 4 — Next (Slices 0–3 complete + committed).
+- **Current Slice:** 5 — Next (Slices 0–4 complete + committed).
 - **Current Branch:** main
 - **Baseline Commit:** `ef99502051d9405632915915c0c214beec8c84d6` ("[S-02] Slice 7/8: record final commit hash in memory file — loop-engineering", 2026-09-17 13:26:35 +0300) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -68,7 +68,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 1 | Patient search-to-edit section in editor | [x] Complete (committed) | VG-02 PASS |
 | 2 | Visit-history section in patient editor | [x] Complete (committed) | VG-03 PASS |
 | 3 | Editor wiring for profile / custom-group / clear-all | [x] Complete (committed) | VG-04 PASS |
-| 4 | Patient account screen | [ ] Not started | VG-05 |
+| 4 | Patient account screen | [x] Complete (committed) | VG-05 PASS |
 | 5 | Billing dialogs (correction + extra charge + void) | [ ] Not started | VG-06 |
 | 6 | Invoice preview before print | [ ] Not started | VG-07 |
 | 7 | WorkSheets screen (three modes + summary/count) + shell wiring | [ ] Not started | VG-08 |
@@ -111,8 +111,8 @@ Additional user-authorized execution parameters (override skill defaults):
 | U-02 | `SearchPatientsQueryHandler` exact filter channels | Uncertain (handler unopened in P2 plan) | RESOLVED Slice 1 Stage 3 — `SearchPatientsQueryHandler.cs:25-47`: base excludes deleted (`!p.IsDeleted`); term channels = `FullName`, `NationalId`, `LabId.Value`, phone via `PatientPhoneNumber` contains; ordered `RegistrationDateUtc` desc; paging `Skip/Take`, no total count. UI hints record these channels verbatim («الاسم / الرقم القومي / Lab.ID / الهاتف»); handler untouched. Consequence: `IsDeleted` rows can never arrive — the flagged/refuse path is defensive only (VM refuses with «المريض محذوف.», button disabled via trigger). |
 | U-03 | Busy-indicator idiom (existing converter/control precedent) | Inference | RESOLVED Slice 0 Stage 3 — repo idiom = collapsed-by-default + `DataTrigger` on a bool VM property (precedents: `TestCatalogView.xaml:15-26` `ShowFilteredEmpty`, `AnalytesView.xaml:12-23` `ShowEmpty`; VM pattern `TestCatalogViewModel.cs:109-140` computed `Show*Empty` + `RefreshEmptyStates()`). App-wide `BoolToVis` resource exists (`App.xaml:6`; resolves to WPF built-in converter) but NO view bound `IsBusy` before Slice 0 (grep `IsBusy` over `*.xaml` = 0 hits) — Slice 0 is the first consumer, using the dominant DataTrigger idiom. |
 | U-04 | Profiles/custom-groups picker source inside the registration catalog | Inference | RESOLVED Slice 3 Stage 3 — the registration catalog carries NO profiles/custom-groups (`RegistrationCatalogDto`: Tests/TestGroups/Titles/Conditions only; `TestGroupDto` = test categorization, not profiles). Complete EXISTING paths adopted instead (no new query, no STOP): profiles ← `GetProfileDefinitionsQuery` (existing, Presentation-consumed at `ProfilesViewModel.cs:75`; caveat: requires `EDIT_SYSTEM_SETTINGS` — denial surfaces verbatim per SD-9, recorded); custom groups ← `GetCustomGroupsQuery()` (existing, unauthenticated, Presentation-consumed at `CustomGroupsViewModel.cs:135`; `CustomGroupSummaryDto(Id,Name,ItemCount)`). Pickers = ComboBox + button (no new dialog; `TestCatalogView` GroupFilters precedent). |
-| U-05 | Account-screen navigation idiom (`LoadAsync(patientId)` after parameterless `NavigateTo<T>`) | Inference (structural, per P2 plan) | ADOPTED unless contradicted at Slice 4 Stage 3; record outcome |
-| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slices 0–2 recorded. Slice 3 created+recorded: clear-all confirmation («مسح التحاليل» / «سيتم مسح جميع تحاليل هذه الزيارة. هل تريد المتابعة؟»); guards («احفظ بيانات المريض أولًا قبل إضافة بروفايل.» / «...قبل إضافة مجموعة.» / «...قبل مسح التحاليل.» / «اختر بروفايل أولًا.» / «اختر مجموعة أولًا.»); success («تمت إضافة البروفايل.» / «تمت إضافة المجموعة المخصصة.» / «تم مسح جميع التحاليل.»). Remaining texts open for later slices. |
+| U-05 | Account-screen navigation idiom (`LoadAsync(patientId)` after parameterless `NavigateTo<T>`) | Inference (structural, per P2 plan) | CONFIRMED Slice 4 Stage 3 — exact precedent `PatientsHubViewModel.cs:30-33` (`NavigateTo<PatientEditorViewModel>()` + `CurrentViewModel is` cast + `LoadCatalogAsync()`). Adopted for editor→account (`OpenAccountAsync`) and account→editor (`BackAsync`, with catalog+patient reload since VMs are transient). |
+| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slices 0–2 recorded. Slice 3 created+recorded: clear-all confirmation («مسح التحاليل» / «سيتم مسح جميع تحاليل هذه الزيارة. هل تريد المتابعة؟»); guards («احفظ بيانات المريض أولًا قبل إضافة بروفايل.» / «...قبل إضافة مجموعة.» / «...قبل مسح التحاليل.» / «اختر بروفايل أولًا.» / «اختر مجموعة أولًا.»); success («تمت إضافة البروفايل.» / «تمت إضافة المجموعة المخصصة.» / «تم مسح جميع التحاليل.»). Slice 4 created+recorded: «لا توجد عمليات مسجلة.» (plan-verbatim); entry guard «احفظ بيانات المريض أولًا قبل عرض الحساب.». Remaining texts open for later slices. |
 
 ---
 
@@ -208,16 +208,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 4)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; tree clean.
-- [ ] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 4 + P2 M03 §4 S-M03-2 read in full.
-- [ ] **Stage 3 — File Analysis:** `GetPatientAccountQuery`/`ListPatientPaymentsQuery` + DTOs; `PatientBillingReader` voided-flag behaviour; navigation idiom (U-05); folder convention for new VMs/Views.
-- [ ] **Stage 4 — Planning:**
-- [ ] **Stage 5 — Execution:**
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-05 (record evidence).
-- [ ] **Stage 8 — Documentation Update:**
-- [ ] **Stage 9 — Memory Status Update:**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 4/8: Patient account screen — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** post-Slice-3 commit `26050ba`, tree clean; build 0/0; suite green 474+195+1419=2088.
+- [x] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 4 + P2 M03 §4 S-M03-2 read (totals-row entry; header + 4 cards from `GetPatientAccountQuery`; voided rows flagged; staged disabled affordances; no balance enforcement).
+- [x] **Stage 3 — File Analysis:** `GetPatientAccountQuery(patientId)` → `PatientAccountDto` (header + 4 totals + ChargedTests + full Operations — chose `ListPatientPaymentsQuery(patientId,page,size)` for the grid instead, so BOTH queries are consumed per VG-05; handler reuses `PatientBillingReader`; voided rows returned flagged); `PaymentOperationDto` 9 fields; `INavigationService` (parameterless `NavigateTo<T>` + `CurrentViewModel` cast — U-05 CONFIRMED via `PatientsHubViewModel.cs:30-33`); DataTemplate recipe (`MainWindow.xaml:96-98`) + DI transient (`DependencyInjection.cs:42`); `BLOCK_PRINT_ON_BALANCE` = seed/display only (never referenced); folder convention = `ViewModels/Patients/` + `Views/Patients/`.
+- [x] **Stage 4 — Planning:** CREATE VM (header/cards from DTO only, paged operations grid, payment/settle/receipt reuse of editor flows, `SelectedOperation` staged for Slice 5, `BackAsync` reloads fresh editor) + View (+ code-behind per idiom) with toolbar-first order: 4 Slice-5/6 buttons ship `IsEnabled=False`; WIRE one DataTemplate + one DI transient; MODIFY editor (store `_navigation`, `OpenAccountCommand`, «عرض الحساب» button in totals row). Settle confirmation deferred to Slice 5 (its texts belong there).
+- [x] **Stage 5 — Execution:** as planned. `IDialogService` removed from the account VM ctor (unused until Slice 5 — avoids CS0414); settle mirrors the editor (no confirmation yet).
+- [x] **Stage 6 — Post-Execution Verification:** build 0 errors / 0 warnings (first attempt; rebuilt clean after a doc-comment reword).
+- [x] **Stage 7 — Validation Gate:** VG-05 PASS — (1) build 0/0 + suite 2088 green (suite ran pre-comment-reword; comment-only diff + clean rebuild after); (2) zero-drift: Persistence diff empty + EF «No changes»; (3) grep: both queries consumed (account VM:136/190); `Sum(` absent from new VM; exactly 1 DataTemplate (`MainWindow.xaml:99`) + 1 DI registration (`DependencyInjection.cs:43`); `BLOCK_PRINT_ON_BALANCE` identifier absent from all new files; (4) manual walk RECORDED AS INSPECTION: «عرض الحساب» opens loaded account screen; header/cards = DTO; voided rows show red «ملغاة»; payment/settle/receipt update cards via refresh; empty account → «لا توجد عمليات مسجلة.»; 4 staged buttons visibly disabled.
+- [x] **Stage 8 — Documentation Update:** this section + U-05/U-06 + status updated.
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 4/8: Patient account screen — loop-engineering`.
 
 ---
 
@@ -286,17 +286,17 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–3/8 complete).
-- **Completed slices:** Slice 0 (VG-01), Slice 1 (VG-02), Slice 2 (VG-03), Slice 3 (VG-04) — 4/8.
+- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–4/8 complete).
+- **Completed slices:** Slices 0 (VG-01), 1 (VG-02), 2 (VG-03), 3 (VG-04), 4 (VG-05) — 5/8.
 - **Blocked slices:** none.
-- **Exact next action:** Slice 4, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-3 commit), then read S-03.md §4 Slice 4.
-- **Conditions before proceeding:** G0 green on the Slice-3 commit.
-- **Open uncertainties:** U-05 (+ U-06 remainder for later slices).
+- **Exact next action:** Slice 5, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-4 commit), then read S-03.md §4 Slice 5.
+- **Conditions before proceeding:** G0 green on the Slice-4 commit.
+- **Open uncertainties:** U-06 remainder (dialog/confirmation/invoice/worksheets texts for Slices 5–7).
 - **Owner-pending (never silently decide):** `BLOCK_PRINT_ON_BALANCE` enforcement; LabId visit-worksheet entry; group/log worksheet print path.
-- **Evidence collected (Slice 3):** build 0/0 (pre+post, first attempt); tests 2088 green (pre+post); EF «No changes»; consumers VM:1123/1168/1205; `Categor` grep = 0; clear-all confirmation texts recorded.
-- **Changed files (Slice 3):** same editor pair.
-- **Deviations:** (1) VM clear command named `ClearAllVisitTestsCommand` (member/type name clash avoidance) — gate greps the Application command usage, unaffected; (2) profile picker via admin-gated existing query (denial surfaces verbatim; recorded) instead of STOP — no new backend created, plan's core constraint honored; (3) manual walk by inspection — recorded.
-- **Lessons learned:** member names colliding with imported command type names — suffix VM commands (`ClearAllVisitTestsCommand`).
+- **Evidence collected (Slice 4):** build 0/0 (pre+post, first attempt); tests 2088 green; EF «No changes»; consumers account VM:136/190; 1 DataTemplate + 1 DI line; `Sum(`/balance-identifier absent; empty text «لا توجد عمليات مسجلة.».
+- **Changed files (Slice 4):** CREATE `ViewModels/Patients/PatientAccountViewModel.cs`, `Views/Patients/PatientAccountView.xaml(.cs)`; MODIFY `MainWindow.xaml`, `DependencyInjection.cs`, editor pair (navigation + entry button).
+- **Deviations:** (1) totals-row entry = «عرض الحساب» button in the totals WrapPanel (not a clickable row — same semantics, no restyle risk); (2) grid via `ListPatientPaymentsQuery` (paged, PageSize 50) rather than `PatientAccountDto.Operations` (both orders allowed; satisfies VG-05 dual-consumer gate); (3) toolbar-first order — 4 Slice-5/6 buttons ship disabled; (4) settle confirmation deferred to Slice 5; (5) manual walk by inspection — recorded.
+- **Lessons learned:** remove unused ctor deps immediately (CS0414 breaks the 0-warning gate) — `IDialogService` returns in Slice 5.
 
 ## Stop Report
 

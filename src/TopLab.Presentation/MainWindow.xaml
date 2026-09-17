@@ -96,6 +96,9 @@
                     <DataTemplate DataType="{x:Type patientsVm:PatientEditorViewModel}">
                         <patientsView:PatientEditorView/>
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type patientsVm:PatientAccountViewModel}">
+                        <patientsView:PatientAccountView/>
+                    </DataTemplate>
                     <DataTemplate DataType="{x:Type labVm:LabHubViewModel}">
                         <labView:LabHubView/>
                     </DataTemplate>

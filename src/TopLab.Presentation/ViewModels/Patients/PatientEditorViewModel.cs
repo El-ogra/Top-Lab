@@ -55,6 +55,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private readonly ResultErrorPresenter _presenter;
     private readonly IDialogService _dialogs;
     private readonly IServiceProvider _services;
+    private readonly INavigationService _navigation;
 
     private bool _isEditMode;
     private int? _patientId;
@@ -110,6 +111,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
         _presenter = presenter;
         _dialogs = dialogs;
         _services = services;
+        _navigation = navigation;
 
         NewPatientCommand = new AsyncRelayCommand(async (_, ct) => await NewPatientAsync());
         SaveCommand = new AsyncRelayCommand(async (_, ct) => await SaveAsync(ct));
@@ -142,6 +144,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
         PrevSearchPageCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: false, cancellationToken: ct));
         ClearSearchCommand = new RelayCommand(ClearSearch);
         OpenSearchResultCommand = new AsyncRelayCommand(async (param, ct) => await OpenSearchResultAsync(param as PatientSummaryDto, ct));
+        OpenAccountCommand = new AsyncRelayCommand(async (_, ct) => await OpenAccountAsync(ct));
         AddProfileCommand = new AsyncRelayCommand(async (_, ct) => await AddProfileAsync(ct));
         AddCustomGroupCommand = new AsyncRelayCommand(async (_, ct) => await AddCustomGroupAsync(ct));
         ClearAllVisitTestsCommand = new AsyncRelayCommand(async (_, ct) => await ClearAllVisitTestsAsync(ct));
@@ -412,6 +415,9 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public RelayCommand ClearSearchCommand { get; }
 
     public AsyncRelayCommand OpenSearchResultCommand { get; }
+
+    /// <summary>S-03 Slice 4: totals-row entry into the patient account screen.</summary>
+    public AsyncRelayCommand OpenAccountCommand { get; }
 
     public AsyncRelayCommand AddProfileCommand { get; }
 
@@ -1098,6 +1104,27 @@ public sealed class PatientEditorViewModel : ViewModelBase
         }
 
         await LoadPatientAsync(row.PatientId, cancellationToken);
+    }
+
+    /// <summary>
+    /// S-03 Slice 4 (U-05): totals-row entry — parameterless <c>NavigateTo&lt;T&gt;</c>
+    /// then <c>LoadAsync(patientId)</c> on the new VM (PatientsHub → editor idiom).
+    /// </summary>
+    private async Task OpenAccountAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل عرض الحساب.";
+            return;
+        }
+
+        _navigation.NavigateTo<PatientAccountViewModel>();
+        if (_navigation.CurrentViewModel is PatientAccountViewModel account)
+        {
+            await account.LoadAsync(_patientId.Value, cancellationToken);
+        }
     }
 
     /// <summary>S-03 Slice 3: wires the orphaned AddProfileToVisitCommand (edit mode only).</summary>

@@ -1,0 +1,145 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.PatientAccountView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <DockPanel LastChildFill="True">
+        <!-- S-03 Slice 4: visible loading indicator bound to IsBusy (Slice-0 idiom). -->
+        <ProgressBar DockPanel.Dock="Top" Height="6" IsIndeterminate="True" Margin="8,4,8,0">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Bottom strip: messages -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="8,4">
+            <Separator />
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="4,2" />
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="4,0" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="8,4">
+            <StackPanel>
+                <!-- Header -->
+                <WrapPanel>
+                    <Button Content="رجوع" Margin="2" Padding="14,2" Command="{Binding BackCommand}" />
+                    <TextBlock Text="حساب المريض:" FontSize="16" Margin="8,2,2,2" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding PatientFullName}" FontSize="16" FontWeight="Bold" Margin="2" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding LabId}" Margin="8,2" VerticalAlignment="Center" Foreground="#666666" />
+                    <TextBlock Text="{Binding AccountType}" Margin="8,2" VerticalAlignment="Center" Foreground="#666666" />
+                    <Button Content="تحديث" Margin="8,2,2,2" Padding="14,2" Command="{Binding RefreshCommand}" />
+                </WrapPanel>
+
+                <!-- Summary cards (DTO totals only — SD-9, no local arithmetic) -->
+                <WrapPanel Margin="0,8">
+                    <Border BorderBrush="#CCCCCC" BorderThickness="1" Padding="12,6" Margin="2">
+                        <StackPanel>
+                            <TextBlock Text="إجمالي التحاليل" Foreground="#666666" />
+                            <TextBlock Text="{Binding TotalCharged}" FontWeight="Bold" FontSize="14" />
+                        </StackPanel>
+                    </Border>
+                    <Border BorderBrush="#CCCCCC" BorderThickness="1" Padding="12,6" Margin="2">
+                        <StackPanel>
+                            <TextBlock Text="الخصم" Foreground="#666666" />
+                            <TextBlock Text="{Binding TotalDiscount}" FontWeight="Bold" FontSize="14" />
+                        </StackPanel>
+                    </Border>
+                    <Border BorderBrush="#CCCCCC" BorderThickness="1" Padding="12,6" Margin="2">
+                        <StackPanel>
+                            <TextBlock Text="المدفوع" Foreground="#666666" />
+                            <TextBlock Text="{Binding TotalPaid}" FontWeight="Bold" FontSize="14" />
+                        </StackPanel>
+                    </Border>
+                    <Border BorderBrush="#CCCCCC" BorderThickness="1" Padding="12,6" Margin="2">
+                        <StackPanel>
+                            <TextBlock Text="الباقي" Foreground="#666666" />
+                            <TextBlock Text="{Binding Balance}" FontWeight="Bold" FontSize="14" />
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <!-- Payment + print actions -->
+                <WrapPanel>
+                    <TextBlock Text="دفعة:" Margin="2" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding PaymentAmountText, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="2" />
+                    <TextBlock Text="خصم:" Margin="8,2,2,2" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding PaymentDiscountText, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="2" />
+                    <Button Content="تسجيل مدفوع" Margin="8,2,2,2" Padding="10,2" Command="{Binding RecordPaymentCommand}" />
+                    <Button Content="تسوية كاملة" Margin="2" Padding="10,2" Command="{Binding SettleCommand}" />
+                    <Button Content="الإيصال" Margin="8,2,2,2" Padding="10,2" Command="{Binding PrintReceiptCommand}" />
+                </WrapPanel>
+
+                <!-- Slice-5/6 affordances ship disabled (no-half-wired idiom) until their slices land. -->
+                <WrapPanel>
+                    <Button Content="قيد تصحيحي" Margin="2" Padding="10,2" IsEnabled="False" />
+                    <Button Content="مبلغ إضافي" Margin="2" Padding="10,2" IsEnabled="False" />
+                    <Button Content="إلغاء عملية" Margin="2" Padding="10,2" IsEnabled="False" />
+                    <Button Content="معاينة الفاتورة" Margin="8,2,2,2" Padding="10,2" IsEnabled="False" />
+                </WrapPanel>
+
+                <!-- Operations grid -->
+                <TextBlock Text="العمليات:" FontWeight="Bold" Margin="0,8,0,4" />
+                <TextBlock Text="لا توجد عمليات مسجلة." Foreground="#666666" Margin="2,0,2,4">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowOperationsEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <ListView ItemsSource="{Binding Operations}" SelectedItem="{Binding SelectedOperation}" Height="220" Margin="0,0,0,4">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding OperationAtUtc}" Margin="4,2" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding OperationType}" Margin="4,2" VerticalAlignment="Center" FontWeight="Bold" />
+                                <TextBlock Text="{Binding Amount}" Margin="4,2" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding DiscountAmount}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                <TextBlock Text="رسوم إضافية" Margin="4,2" VerticalAlignment="Center" Foreground="#1E3A5F">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsExtraCharge}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding ReceivedByUserName}" Margin="4,2" VerticalAlignment="Center" Foreground="#666666" />
+                                <TextBlock Text="ملغاة" Margin="4,2" VerticalAlignment="Center" Foreground="Red" FontWeight="Bold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsVoided}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <WrapPanel>
+                    <Button Content="السابق" Margin="2" Padding="10,2" Command="{Binding PrevOperationsPageCommand}" />
+                    <TextBlock Text="{Binding OperationsPage}" Margin="6,2" VerticalAlignment="Center" />
+                    <Button Content="التالي" Margin="2" Padding="10,2" Command="{Binding NextOperationsPageCommand}" />
+                </WrapPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
