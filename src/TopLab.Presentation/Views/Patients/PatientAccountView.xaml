@@ -75,11 +75,11 @@
                     <Button Content="الإيصال" Margin="8,2,2,2" Padding="10,2" Command="{Binding PrintReceiptCommand}" />
                 </WrapPanel>
 
-                <!-- Slice-5/6 affordances ship disabled (no-half-wired idiom) until their slices land. -->
+                <!-- S-03 Slice 5: dialogs wired. The invoice button stays disabled until Slice 6. -->
                 <WrapPanel>
-                    <Button Content="قيد تصحيحي" Margin="2" Padding="10,2" IsEnabled="False" />
-                    <Button Content="مبلغ إضافي" Margin="2" Padding="10,2" IsEnabled="False" />
-                    <Button Content="إلغاء عملية" Margin="2" Padding="10,2" IsEnabled="False" />
+                    <Button Content="قيد تصحيحي" Margin="2" Padding="10,2" Command="{Binding OpenCorrectionCommand}" />
+                    <Button Content="مبلغ إضافي" Margin="2" Padding="10,2" Command="{Binding OpenExtraChargeCommand}" />
+                    <Button Content="إلغاء عملية" Margin="2" Padding="10,2" Command="{Binding VoidSelectedOperationCommand}" />
                     <Button Content="معاينة الفاتورة" Margin="8,2,2,2" Padding="10,2" IsEnabled="False" />
                 </WrapPanel>
 

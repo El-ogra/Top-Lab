@@ -5,7 +5,7 @@
 - **Source Plan:** Docs/OpenCode/S-03.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه — P2» (authoritative requirements)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 5 — Next (Slices 0–4 complete + committed).
+- **Current Slice:** 6 — Next (Slices 0–5 complete + committed).
 - **Current Branch:** main
 - **Baseline Commit:** `ef99502051d9405632915915c0c214beec8c84d6` ("[S-02] Slice 7/8: record final commit hash in memory file — loop-engineering", 2026-09-17 13:26:35 +0300) — must be HEAD at Slice 0 Stage 1; `git status --porcelain` must be clean.
 - **Author:** loop-engineering skill (execution carried out by the local executing agent per owner authorization; stage-10 auto local commit authorized by owner, never push)
@@ -69,7 +69,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | 2 | Visit-history section in patient editor | [x] Complete (committed) | VG-03 PASS |
 | 3 | Editor wiring for profile / custom-group / clear-all | [x] Complete (committed) | VG-04 PASS |
 | 4 | Patient account screen | [x] Complete (committed) | VG-05 PASS |
-| 5 | Billing dialogs (correction + extra charge + void) | [ ] Not started | VG-06 |
+| 5 | Billing dialogs (correction + extra charge + void) | [x] Complete (committed) | VG-06 PASS |
 | 6 | Invoice preview before print | [ ] Not started | VG-07 |
 | 7 | WorkSheets screen (three modes + summary/count) + shell wiring | [ ] Not started | VG-08 |
 
@@ -112,7 +112,7 @@ Additional user-authorized execution parameters (override skill defaults):
 | U-03 | Busy-indicator idiom (existing converter/control precedent) | Inference | RESOLVED Slice 0 Stage 3 — repo idiom = collapsed-by-default + `DataTrigger` on a bool VM property (precedents: `TestCatalogView.xaml:15-26` `ShowFilteredEmpty`, `AnalytesView.xaml:12-23` `ShowEmpty`; VM pattern `TestCatalogViewModel.cs:109-140` computed `Show*Empty` + `RefreshEmptyStates()`). App-wide `BoolToVis` resource exists (`App.xaml:6`; resolves to WPF built-in converter) but NO view bound `IsBusy` before Slice 0 (grep `IsBusy` over `*.xaml` = 0 hits) — Slice 0 is the first consumer, using the dominant DataTrigger idiom. |
 | U-04 | Profiles/custom-groups picker source inside the registration catalog | Inference | RESOLVED Slice 3 Stage 3 — the registration catalog carries NO profiles/custom-groups (`RegistrationCatalogDto`: Tests/TestGroups/Titles/Conditions only; `TestGroupDto` = test categorization, not profiles). Complete EXISTING paths adopted instead (no new query, no STOP): profiles ← `GetProfileDefinitionsQuery` (existing, Presentation-consumed at `ProfilesViewModel.cs:75`; caveat: requires `EDIT_SYSTEM_SETTINGS` — denial surfaces verbatim per SD-9, recorded); custom groups ← `GetCustomGroupsQuery()` (existing, unauthenticated, Presentation-consumed at `CustomGroupsViewModel.cs:135`; `CustomGroupSummaryDto(Id,Name,ItemCount)`). Pickers = ComboBox + button (no new dialog; `TestCatalogView` GroupFilters precedent). |
 | U-05 | Account-screen navigation idiom (`LoadAsync(patientId)` after parameterless `NavigateTo<T>`) | Inference (structural, per P2 plan) | CONFIRMED Slice 4 Stage 3 — exact precedent `PatientsHubViewModel.cs:30-33` (`NavigateTo<PatientEditorViewModel>()` + `CurrentViewModel is` cast + `LoadCatalogAsync()`). Adopted for editor→account (`OpenAccountAsync`) and account→editor (`BackAsync`, with catalog+patient reload since VMs are transient). |
-| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slices 0–2 recorded. Slice 3 created+recorded: clear-all confirmation («مسح التحاليل» / «سيتم مسح جميع تحاليل هذه الزيارة. هل تريد المتابعة؟»); guards («احفظ بيانات المريض أولًا قبل إضافة بروفايل.» / «...قبل إضافة مجموعة.» / «...قبل مسح التحاليل.» / «اختر بروفايل أولًا.» / «اختر مجموعة أولًا.»); success («تمت إضافة البروفايل.» / «تمت إضافة المجموعة المخصصة.» / «تم مسح جميع التحاليل.»). Slice 4 created+recorded: «لا توجد عمليات مسجلة.» (plan-verbatim); entry guard «احفظ بيانات المريض أولًا قبل عرض الحساب.». Remaining texts open for later slices. |
+| U-06 | New UI texts (see Unresolved Owner Decisions list) | يتطلب إنشاء | PARTIAL — Slices 0–2 recorded. Slice 3 created+recorded: clear-all confirmation («مسح التحاليل» / «سيتم مسح جميع تحاليل هذه الزيارة. هل تريد المتابعة؟»); guards («احفظ بيانات المريض أولًا قبل إضافة بروفايل.» / «...قبل إضافة مجموعة.» / «...قبل مسح التحاليل.» / «اختر بروفايل أولًا.» / «اختر مجموعة أولًا.»); success («تمت إضافة البروفايل.» / «تمت إضافة المجموعة المخصصة.» / «تم مسح جميع التحاليل.»). Slice 4: «لا توجد عمليات مسجلة.», «احفظ بيانات المريض أولًا قبل عرض الحساب.». Slice 5 created+recorded — confirmations: («قيد تصحيحي» / «سيتم تسجيل قيد تصحيحي بمبلغ {amount}. هل تريد المتابعة؟»), («مبلغ إضافي» / «سيتم تسجيل مبلغ إضافي بمبلغ {amount}. هل تريد المتابعة؟»), («إلغاء عملية» / «سيتم إلغاء العملية المحددة (تبقى ظاهرة بعلامة ملغاة). هل تريد المتابعة؟»), («تسوية الحساب» / «سيتم تسوية حساب المريض بالكامل. هل تريد المتابعة؟»); parse guard «قيمة المبلغ غير صالحة.»; void selection guard «اختر عملية أولًا.»; success («تم تسجيل القيد التصحيحي.» / «تم تسجيل المبلغ الإضافي.» / «تم إلغاء العملية.»). Remaining texts open for Slices 6–7. |
 
 ---
 
@@ -229,16 +229,16 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ### 10-Stage Progress (Slice 5)
 
-- [ ] **Stage 1 — Pre-Execution Verification:** build 0/0; suite green; tree clean.
-- [ ] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 5 + P2 M03 §4 S-M03-3/4/5 + §7 settlement read in full.
-- [ ] **Stage 3 — File Analysis:** `RecordCorrectionCommand`/`RecordExtraChargeCommand`/`VoidPaymentOperationCommand` (+ validators, handler comments incl. sign semantics + void-and-reissue note); S-02 dialog idiom.
-- [ ] **Stage 4 — Planning:** (record the four new confirmation/success texts verbatim here).
-- [ ] **Stage 5 — Execution:**
-- [ ] **Stage 6 — Post-Execution Verification:** build 0/0.
-- [ ] **Stage 7 — Validation Gate:** VG-06 (record evidence).
-- [ ] **Stage 8 — Documentation Update:**
-- [ ] **Stage 9 — Memory Status Update:**
-- [ ] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 5/8: Billing dialogs (correction + extra charge + void) — loop-engineering`.
+- [x] **Stage 1 — Pre-Execution Verification:** post-Slice-4 commit `1b29183`, tree clean; build 0/0; suite green 474+195+1419=2088.
+- [x] **Stage 2 — Deep Understanding:** S-03.md §4 Slice 5 + P2 M03 §4 S-M03-3/4/5 + §7 settlement read (correction/void only; no reason/discount fields; void = flag only; void-and-reissue the sole correction flow).
+- [x] **Stage 3 — File Analysis:** `RecordCorrectionCommand(PatientId,Amount)` + validator («مبلغ القيد التصحيحي…») + handler sign comment (positive = credit reducing balance); `RecordExtraChargeCommand` + validator («المبلغ الإضافي…») + handler (no discount by design; translator «لا يمكن إضافة خصم على مبلغ إضافي.»); `VoidPaymentOperationCommand(PaymentOperationId)` + handler («العملية غير موجودة.»/«العملية ملغاة بالفعل.», void-and-reissue comment); dialog idiom = modal Window + `SaveAsync()->bool` VM + Setup idiom (`ExternalEntityEditorWindow`, `PresetType`/`SetTreatingDoctor` precedents); `IDialogService` has confirmation only (no generic input dialog).
+- [x] **Stage 4 — Planning:** CREATE 2 window+VM pairs (correction/extra-charge, amount-only); void = confirmation flow in account VM (the confirmation IS its dialog — cf. delete precedent); MODIFY account VM (IDialogService+IServiceProvider back, 3 open/void commands, settle confirmation) + account XAML (enable 3 buttons; invoice stays disabled) + 2 DI transients. Four confirmation/success texts recorded verbatim (see U-06).
+- [x] **Stage 5 — Execution:** as planned. No edit/delete affordance; no reason/discount fields; void sends even for voided rows so double-void refusal is genuinely backend-surfaced.
+- [x] **Stage 6 — Post-Execution Verification:** build 0 errors / 0 warnings (first attempt).
+- [x] **Stage 7 — Validation Gate:** VG-06 PASS — (1) build 0/0 + suite 2088 green; (2) zero-drift: Persistence diff empty + EF «No changes»; (3) grep: 3 commands consumed (account VM:402, correction VM:65, extra-charge VM:64); account view has no تعديل/حذف affordance (only pre-existing خصم labels); dialogs contain no reason/discount fields; all four mutations confirmed (correction VM:57, extra-charge VM:56, settle account VM:276, void account VM:391); (4) manual walk RECORDED AS INSPECTION: correction posts → balance drops via refresh; extra charge raises TotalCharged; void flags row (still visible); double-void → backend «العملية ملغاة بالفعل.»; no-CASH_DISBURSE_DEPOSIT user → verbatim permission denial; every mutation confirms first.
+- [x] **Stage 8 — Documentation Update:** this section + U-06 + status updated.
+- [x] **Stage 9 — Memory Status Update:** see Current Status.
+- [x] **Stage 10 — Git Commit (authorized local):** `[S-03] Slice 5/8: Billing dialogs (correction + extra charge + void) — loop-engineering`.
 
 ---
 
@@ -286,17 +286,17 @@ Additional user-authorized execution parameters (override skill defaults):
 
 ## Current Status
 
-- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–4/8 complete).
-- **Completed slices:** Slices 0 (VG-01), 1 (VG-02), 2 (VG-03), 3 (VG-04), 4 (VG-05) — 5/8.
+- **Programme:** S-03 (P2 UI pass) — IN PROGRESS (Slices 0–5/8 complete).
+- **Completed slices:** Slices 0–5 (VG-01…VG-06) — 6/8.
 - **Blocked slices:** none.
-- **Exact next action:** Slice 5, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-4 commit), then read S-03.md §4 Slice 5.
-- **Conditions before proceeding:** G0 green on the Slice-4 commit.
-- **Open uncertainties:** U-06 remainder (dialog/confirmation/invoice/worksheets texts for Slices 5–7).
+- **Exact next action:** Slice 6, Stage 1 — verify build 0/0 + suite green + tree clean (post-Slice-5 commit), then read S-03.md §4 Slice 6.
+- **Conditions before proceeding:** G0 green on the Slice-5 commit.
+- **Open uncertainties:** U-06 remainder (invoice SD-3 line + worksheets texts for Slices 6–7).
 - **Owner-pending (never silently decide):** `BLOCK_PRINT_ON_BALANCE` enforcement; LabId visit-worksheet entry; group/log worksheet print path.
-- **Evidence collected (Slice 4):** build 0/0 (pre+post, first attempt); tests 2088 green; EF «No changes»; consumers account VM:136/190; 1 DataTemplate + 1 DI line; `Sum(`/balance-identifier absent; empty text «لا توجد عمليات مسجلة.».
-- **Changed files (Slice 4):** CREATE `ViewModels/Patients/PatientAccountViewModel.cs`, `Views/Patients/PatientAccountView.xaml(.cs)`; MODIFY `MainWindow.xaml`, `DependencyInjection.cs`, editor pair (navigation + entry button).
-- **Deviations:** (1) totals-row entry = «عرض الحساب» button in the totals WrapPanel (not a clickable row — same semantics, no restyle risk); (2) grid via `ListPatientPaymentsQuery` (paged, PageSize 50) rather than `PatientAccountDto.Operations` (both orders allowed; satisfies VG-05 dual-consumer gate); (3) toolbar-first order — 4 Slice-5/6 buttons ship disabled; (4) settle confirmation deferred to Slice 5; (5) manual walk by inspection — recorded.
-- **Lessons learned:** remove unused ctor deps immediately (CS0414 breaks the 0-warning gate) — `IDialogService` returns in Slice 5.
+- **Evidence collected (Slice 5):** build 0/0 (pre+post, first attempt); tests 2088 green; EF «No changes»; consumers account VM:402/correction VM:65/extra-charge VM:64; 4×ShowConfirmationAsync (57/56/276/391); no reason/discount fields; no تعديل/حذف affordance.
+- **Changed files (Slice 5):** CREATE 2 dialog VMs + 2 windows (xaml+cs); MODIFY account VM + account XAML + DI.
+- **Deviations:** (1) void ships as confirmation flow, not a third window — the confirmation IS its dialog per the delete precedent; no input exists to collect; (2) voided-row void re-sends so double-void refusal is backend-surfaced; (3) manual walk by inspection — recorded.
+- **Lessons learned:** `IRequest<Result>` (non-generic) send needs `Result result =` — generic/non-generic overloads coexist.
 
 ## Stop Report
 

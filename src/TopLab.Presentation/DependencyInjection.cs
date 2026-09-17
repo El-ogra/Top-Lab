@@ -41,6 +41,8 @@ public static class DependencyInjection
         services.AddTransient<PatientsHubViewModel>();
         services.AddTransient<PatientEditorViewModel>();
         services.AddTransient<PatientAccountViewModel>();
+        services.AddTransient<CorrectionDialogViewModel>();
+        services.AddTransient<ExtraChargeDialogViewModel>();
         services.AddTransient<LabHubViewModel>();
         services.AddTransient<TestCatalogViewModel>();
         services.AddTransient<TestEditorViewModel>();

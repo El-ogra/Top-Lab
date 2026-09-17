@@ -1,15 +1,18 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.PatientBilling.Commands.PrintInvoice;
 using TopLab.Application.Features.PatientBilling.Commands.PrintReceipt;
 using TopLab.Application.Features.PatientBilling.Commands.RecordPayment;
 using TopLab.Application.Features.PatientBilling.Commands.SettleAccountInFull;
+using TopLab.Application.Features.PatientBilling.Commands.VoidPaymentOperation;
 using TopLab.Application.Features.PatientBilling.Common;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
 using TopLab.Application.Features.PatientBilling.Queries.ListPatientPayments;
 using TopLab.Presentation.Common;
+using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.Common.Navigation;
 
@@ -28,6 +31,8 @@ public sealed class PatientAccountViewModel : ViewModelBase
     private readonly ISender _mediator;
     private readonly INavigationService _navigation;
     private readonly ResultErrorPresenter _presenter;
+    private readonly IDialogService _dialogs;
+    private readonly IServiceProvider _services;
 
     private int _patientId;
     private string _patientFullName = string.Empty;
@@ -49,11 +54,15 @@ public sealed class PatientAccountViewModel : ViewModelBase
     public PatientAccountViewModel(
         ISender mediator,
         INavigationService navigation,
-        ResultErrorPresenter presenter)
+        ResultErrorPresenter presenter,
+        IDialogService dialogs,
+        IServiceProvider services)
     {
         _mediator = mediator;
         _navigation = navigation;
         _presenter = presenter;
+        _dialogs = dialogs;
+        _services = services;
 
         RefreshCommand = new AsyncRelayCommand(async (_, ct) => await LoadAsync(_patientId, ct));
         NextOperationsPageCommand = new AsyncRelayCommand(async (_, ct) => await LoadOperationsPageAsync(nextPage: true, ct));
@@ -61,6 +70,9 @@ public sealed class PatientAccountViewModel : ViewModelBase
         RecordPaymentCommand = new AsyncRelayCommand(async (_, ct) => await RecordPaymentAsync(ct));
         SettleCommand = new AsyncRelayCommand(async (_, ct) => await SettleAsync(ct));
         PrintReceiptCommand = new AsyncRelayCommand(async (_, ct) => await PrintReceiptAsync(ct));
+        OpenCorrectionCommand = new AsyncRelayCommand(async (_, ct) => await OpenCorrectionAsync(ct));
+        OpenExtraChargeCommand = new AsyncRelayCommand(async (_, ct) => await OpenExtraChargeAsync(ct));
+        VoidSelectedOperationCommand = new AsyncRelayCommand(async (_, ct) => await VoidSelectedOperationAsync(ct));
         BackCommand = new AsyncRelayCommand(async (_, ct) => await BackAsync(ct));
 
         Operations.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowOperationsEmpty));
@@ -116,6 +128,12 @@ public sealed class PatientAccountViewModel : ViewModelBase
     public AsyncRelayCommand SettleCommand { get; }
 
     public AsyncRelayCommand PrintReceiptCommand { get; }
+
+    public AsyncRelayCommand OpenCorrectionCommand { get; }
+
+    public AsyncRelayCommand OpenExtraChargeCommand { get; }
+
+    public AsyncRelayCommand VoidSelectedOperationCommand { get; }
 
     public AsyncRelayCommand BackCommand { get; }
 
@@ -249,11 +267,17 @@ public sealed class PatientAccountViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Full settlement (editor flow; Slice 5 adds the mandatory confirmation).</summary>
+    /// <summary>Full settlement (editor flow + Slice-5 mandatory confirmation).</summary>
     private async Task SettleAsync(CancellationToken cancellationToken)
     {
         ErrorMessage = string.Empty;
         StatusMessage = string.Empty;
+
+        var confirm = await _dialogs.ShowConfirmationAsync("تسوية الحساب", "سيتم تسوية حساب المريض بالكامل. هل تريد المتابعة؟");
+        if (!confirm)
+        {
+            return;
+        }
 
         IsBusy = true;
         try
@@ -305,6 +329,89 @@ public sealed class PatientAccountViewModel : ViewModelBase
         {
             await editor.LoadCatalogAsync(cancellationToken);
             await editor.LoadPatientAsync(_patientId, cancellationToken);
+        }
+    }
+
+    /// <summary>S-03 Slice 5: correction dialog (S-M03-3) — amount only, no reason field.</summary>
+    private async Task OpenCorrectionAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        var vm = _services.GetRequiredService<CorrectionDialogViewModel>();
+        vm.Setup(_patientId);
+        var window = new Views.Patients.CorrectionDialogWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        bool? confirmed = window.ShowDialog();
+        if (confirmed == true)
+        {
+            await RefreshAsync(cancellationToken);
+            StatusMessage = "تم تسجيل القيد التصحيحي.";
+        }
+    }
+
+    /// <summary>S-03 Slice 5: extra-charge dialog (S-M03-4) — amount only, no discount field.</summary>
+    private async Task OpenExtraChargeAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        var vm = _services.GetRequiredService<ExtraChargeDialogViewModel>();
+        vm.Setup(_patientId);
+        var window = new Views.Patients.ExtraChargeDialogWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        bool? confirmed = window.ShowDialog();
+        if (confirmed == true)
+        {
+            await RefreshAsync(cancellationToken);
+            StatusMessage = "تم تسجيل المبلغ الإضافي.";
+        }
+    }
+
+    /// <summary>
+    /// S-03 Slice 5: void flow (S-M03-5) — flag only, no reverse operation, no delete,
+    /// no edit. The void itself is the dialog (confirmation idiom, cf. delete):
+    /// a wrong amount is corrected by void-and-reissue only.
+    /// </summary>
+    private async Task VoidSelectedOperationAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        if (SelectedOperation is null)
+        {
+            ErrorMessage = "اختر عملية أولًا.";
+            return;
+        }
+
+        var confirm = await _dialogs.ShowConfirmationAsync(
+            "إلغاء عملية",
+            "سيتم إلغاء العملية المحددة (تبقى ظاهرة بعلامة ملغاة). هل تريد المتابعة؟");
+        if (!confirm)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            Result result = await _mediator.Send(new VoidPaymentOperationCommand(SelectedOperation.PaymentOperationId), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            await RefreshAsync(cancellationToken);
+            StatusMessage = "تم إلغاء العملية.";
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 }
