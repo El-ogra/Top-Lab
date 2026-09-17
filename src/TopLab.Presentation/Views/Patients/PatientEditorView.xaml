@@ -3,6 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FlowDirection="RightToLeft">
     <DockPanel LastChildFill="True">
+        <!-- S-03 Slice 0: visible loading indicator bound to IsBusy (S-01/S-02 DataTrigger idiom). -->
+        <ProgressBar DockPanel.Dock="Top" Height="6" IsIndeterminate="True" Margin="8,4,8,0">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
         <!-- Bottom strip: billing summary + payment + actions -->
         <StackPanel DockPanel.Dock="Bottom" Margin="8,4">
             <Separator />
@@ -146,6 +159,18 @@
             <DockPanel Grid.Column="1" Margin="8,4" LastChildFill="True">
                 <TextBlock DockPanel.Dock="Top" Text="التحاليل" FontSize="16" Margin="0,0,0,8" />
                 <TextBlock DockPanel.Dock="Top" Text="تحاليل المريض:" FontWeight="Bold" Margin="0,4" />
+                <TextBlock DockPanel.Dock="Top" Text="لا توجد تحاليل مختارة." Foreground="#666666" Margin="0,0,0,4">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowSelectedTestsEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
                 <ListView DockPanel.Dock="Top" ItemsSource="{Binding SelectedTests}" Height="180" Margin="0,0,0,4">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -165,6 +190,18 @@
                     </ListView.ItemTemplate>
                 </ListView>
                 <TextBlock DockPanel.Dock="Top" Text="كتالوج التحاليل:" FontWeight="Bold" Margin="0,4" />
+                <TextBlock DockPanel.Dock="Top" Text="لا توجد تحاليل في الكتالوج." Foreground="#666666" Margin="0,0,0,4">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowCatalogEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
                 <ListView ItemsSource="{Binding CatalogTests}" Margin="0,0,0,4">
                     <ListView.ItemTemplate>
                         <DataTemplate>

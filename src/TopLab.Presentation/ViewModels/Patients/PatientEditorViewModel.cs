@@ -115,6 +115,10 @@ public sealed class PatientEditorViewModel : ViewModelBase
         });
         PickTreatingDoctorCommand = new AsyncRelayCommand(_ => PickTreatingDoctorAsync());
         PickReferralEntityCommand = new AsyncRelayCommand(_ => PickReferralEntityAsync());
+
+        // S-03 Slice 0: empty-state visibility follows the S-01/S-02 Show*Empty idiom.
+        SelectedTests.CollectionChanged += (_, _) => RefreshEmptyStates();
+        CatalogTests.CollectionChanged += (_, _) => RefreshEmptyStates();
     }
 
     public sealed class SelectedTestItem : ViewModelBase
@@ -279,6 +283,18 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public decimal Balance { get => _balance; private set => SetProperty(ref _balance, value); }
 
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
+
+    /// <summary>S-03 Slice 0: empty-state flags (S-01/S-02 Show*Empty idiom).</summary>
+    public bool ShowSelectedTestsEmpty => SelectedTests.Count == 0;
+
+    /// <summary>S-03 Slice 0: empty-state flags (S-01/S-02 Show*Empty idiom).</summary>
+    public bool ShowCatalogEmpty => CatalogTests.Count == 0;
+
+    private void RefreshEmptyStates()
+    {
+        OnPropertyChanged(nameof(ShowSelectedTestsEmpty));
+        OnPropertyChanged(nameof(ShowCatalogEmpty));
+    }
 
     public string ErrorMessage { get => _errorMessage; private set => SetProperty(ref _errorMessage, value); }
 
