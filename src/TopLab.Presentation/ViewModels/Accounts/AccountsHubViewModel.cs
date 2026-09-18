@@ -6,6 +6,9 @@ using TopLab.Application.Features.InventoryAndAccounting.Commands.RecordCashDepo
 using TopLab.Application.Features.InventoryAndAccounting.Commands.RecordCashDisbursement;
 using TopLab.Application.Features.InventoryAndAccounting.Common;
 using TopLab.Application.Features.InventoryAndAccounting.Queries.GetCashDrawerInventory;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.GetCompanyDelegateAccounts;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.GetElementInventory;
+using TopLab.Application.Features.InventoryAndAccounting.Queries.GetPatientSamplesDetail;
 using TopLab.Application.Features.InventoryAndAccounting.Queries.ListCashMovements;
 using TopLab.Domain.Common.Enums;
 using TopLab.Presentation.Common;
@@ -16,7 +19,7 @@ using TopLab.Presentation.Common.Navigation;
 namespace TopLab.Presentation.ViewModels.Accounts;
 
 /// <summary>
-/// S-06 Slice 3: Accounts hub (M20) — cash drawer tab + cash movement dialog.
+/// S-06 Slice 3/4: Accounts hub (M20) — four tabs + cash movement dialog + M14/M16 routes.
 /// «الحسابات» shell activation: secondary password then NavigateTo&lt;AccountsHubViewModel&gt;.
 /// </summary>
 public sealed class AccountsHubViewModel : ViewModelBase
@@ -31,10 +34,24 @@ public sealed class AccountsHubViewModel : ViewModelBase
     private DateOnly? _to;
     private CashDrawerInventoryDto? _drawer;
     private ObservableCollection<CashMovementDto> _movements = new();
-    private int _selectedTab; // 0=cash drawer, 1=element inventory, 2=patient samples, 3=company/delegate
+    private int _selectedTab;
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
+
+    // S4: Element inventory
+    private InventoryElementKind _elementKind = InventoryElementKind.User;
+    private int? _elementId;
+    private AccountType? _accountTypeFilter;
+    private InventoryReportType _reportType = InventoryReportType.Summary;
+    private ElementInventoryDto? _elementStats;
+
+    // S4: Patient samples
+    private ObservableCollection<PatientSampleDetailDto> _patientSamples = new();
+
+    // S4: Company/delegate accounts
+    private int? _externalEntityId;
+    private ObservableCollection<CompanyDelegateAccountDto> _companyAccounts = new();
 
     public AccountsHubViewModel(
         ISender mediator,
@@ -52,6 +69,22 @@ public sealed class AccountsHubViewModel : ViewModelBase
         LoadCommand = new AsyncRelayCommand(async (_, ct) => await LoadAsync(ct));
         OpenDepositCommand = new AsyncRelayCommand(async (_, ct) => await OpenCashMovementAsync(isDeposit: true, ct));
         OpenDisbursementCommand = new AsyncRelayCommand(async (_, ct) => await OpenCashMovementAsync(isDeposit: false, ct));
+        OpenExternalEntitiesCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<External.ExternalEntitiesViewModel>();
+            if (_navigation.CurrentViewModel is External.ExternalEntitiesViewModel vm)
+            {
+                _ = vm.LoadAsync();
+            }
+        });
+        OpenSentOutSamplesCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<Patients.SentOutSamplesViewModel>();
+            if (_navigation.CurrentViewModel is Patients.SentOutSamplesViewModel vm)
+            {
+                _ = vm.LoadAsync();
+            }
+        });
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<Shell.HomeViewModel>());
     }
 
@@ -108,6 +141,62 @@ public sealed class AccountsHubViewModel : ViewModelBase
     public bool HasMovements => Movements.Count > 0;
     public bool ShowMovementsEmpty => Movements.Count == 0 && !IsBusy && string.IsNullOrEmpty(ErrorMessage);
 
+    // S4: Element inventory
+    public InventoryElementKind ElementKind { get => _elementKind; set => SetProperty(ref _elementKind, value); }
+    public int? ElementId { get => _elementId; set => SetProperty(ref _elementId, value); }
+    public AccountType? AccountTypeFilter { get => _accountTypeFilter; set => SetProperty(ref _accountTypeFilter, value); }
+    public InventoryReportType ReportType { get => _reportType; set => SetProperty(ref _reportType, value); }
+
+    public ElementInventoryDto? ElementStats
+    {
+        get => _elementStats;
+        private set
+        {
+            if (SetProperty(ref _elementStats, value))
+            {
+                OnPropertyChanged(nameof(HasElementStats));
+            }
+        }
+    }
+
+    public bool HasElementStats => _elementStats is not null;
+
+    // S4: Patient samples
+    public ObservableCollection<PatientSampleDetailDto> PatientSamples
+    {
+        get => _patientSamples;
+        private set
+        {
+            if (SetProperty(ref _patientSamples, value))
+            {
+                OnPropertyChanged(nameof(HasPatientSamples));
+                OnPropertyChanged(nameof(ShowPatientSamplesEmpty));
+            }
+        }
+    }
+
+    public bool HasPatientSamples => PatientSamples.Count > 0;
+    public bool ShowPatientSamplesEmpty => PatientSamples.Count == 0 && !IsBusy && string.IsNullOrEmpty(ErrorMessage);
+
+    // S4: Company/delegate
+    public int? ExternalEntityId { get => _externalEntityId; set => SetProperty(ref _externalEntityId, value); }
+
+    public ObservableCollection<CompanyDelegateAccountDto> CompanyAccounts
+    {
+        get => _companyAccounts;
+        private set
+        {
+            if (SetProperty(ref _companyAccounts, value))
+            {
+                OnPropertyChanged(nameof(HasCompanyAccounts));
+                OnPropertyChanged(nameof(ShowCompanyEmpty));
+            }
+        }
+    }
+
+    public bool HasCompanyAccounts => CompanyAccounts.Count > 0;
+    public bool ShowCompanyEmpty => CompanyAccounts.Count == 0 && !IsBusy && string.IsNullOrEmpty(ErrorMessage);
+
     public bool IsBusy
     {
         get => _isBusy;
@@ -129,6 +218,8 @@ public sealed class AccountsHubViewModel : ViewModelBase
     public AsyncRelayCommand LoadCommand { get; }
     public AsyncRelayCommand OpenDepositCommand { get; }
     public AsyncRelayCommand OpenDisbursementCommand { get; }
+    public RelayCommand OpenExternalEntitiesCommand { get; }
+    public RelayCommand OpenSentOutSamplesCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
@@ -154,9 +245,25 @@ public sealed class AccountsHubViewModel : ViewModelBase
             {
                 Movements = new ObservableCollection<CashMovementDto>(movementsResult.Value);
             }
-            else if (movementsResult.Error is not null)
+
+            var elementResult = await _mediator.Send(
+                new GetElementInventoryQuery(From, To, ElementKind, ElementId, AccountTypeFilter, ReportType), cancellationToken);
+            if (elementResult.IsSuccess && elementResult.Value is not null)
             {
-                ErrorMessage = _presenter.Present(movementsResult.Error);
+                ElementStats = elementResult.Value;
+            }
+
+            var samplesResult = await _mediator.Send(new GetPatientSamplesDetailQuery(From, To), cancellationToken);
+            if (samplesResult.IsSuccess && samplesResult.Value is not null)
+            {
+                PatientSamples = new ObservableCollection<PatientSampleDetailDto>(samplesResult.Value);
+            }
+
+            var companyResult = await _mediator.Send(
+                new GetCompanyDelegateAccountsQuery(From, To, ExternalEntityId), cancellationToken);
+            if (companyResult.IsSuccess && companyResult.Value is not null)
+            {
+                CompanyAccounts = new ObservableCollection<CompanyDelegateAccountDto>(companyResult.Value);
             }
         }
         finally
@@ -185,3 +292,6 @@ public sealed class AccountsHubViewModel : ViewModelBase
 
 /// <summary>Lab filter ComboBox item (D10 pattern).</summary>
 public sealed record LabFilterItem(int? Id, string Name);
+
+/// <summary>Element filter ComboBox item.</summary>
+public sealed record ElementFilterItem(int? Id, string Name);

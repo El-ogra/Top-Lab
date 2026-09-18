@@ -33,10 +33,7 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
         OpenEnvelopeSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<EnvelopeSettingsViewModel>());
         OpenDatabaseMaintenanceCommand = new AsyncRelayCommand(_ => OpenDatabaseMaintenanceAsync(navigation));
         RunSystemInitializationCommand = new AsyncRelayCommand(_ => RunSystemInitializationAsync());
-        OpenExternalEntitiesCommand = new AsyncRelayCommand(_ => OpenExternalEntitiesAsync(navigation));
-        // S-05 Slice 5 (D10-delegated decision): temporary explicitly-tagged route to
-        // SentOutSamples until the «الحسابات» shell section lands in P5.
-        OpenSentOutSamplesCommand = new AsyncRelayCommand(_ => OpenSentOutSamplesAsync(navigation));
+        // S-06 Slice 4: temporary routes absorbed into Accounts hub — D3/D10 comments closed.
     }
 
     public string StatusMessage
@@ -55,8 +52,6 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
     public RelayCommand OpenReportSettingsCommand { get; }
     public RelayCommand OpenReceiptSettingsCommand { get; }
     public RelayCommand OpenEnvelopeSettingsCommand { get; }
-    public AsyncRelayCommand OpenExternalEntitiesCommand { get; }
-    public AsyncRelayCommand OpenSentOutSamplesCommand { get; }
     public AsyncRelayCommand OpenDatabaseMaintenanceCommand { get; }
     public AsyncRelayCommand RunSystemInitializationCommand { get; }
 

@@ -10,6 +10,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Tab selector -->
@@ -49,9 +50,9 @@
         <!-- Tab content -->
         <Grid Grid.Row="3">
             <!-- Cash Drawer Tab -->
-            <DockPanel>
-                <DockPanel.Style>
-                    <Style TargetType="DockPanel">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Visible"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsCashDrawerTab}" Value="False">
@@ -59,61 +60,53 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </DockPanel.Style>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <!-- Balance card -->
-                        <Border Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
-                            <StackPanel>
-                                <TextBlock Text="بطاقة الرصيد" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
-                                <TextBlock Text="{Binding Drawer.TotalSamplesCount, StringFormat='إجمالي العينات (عدد): {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.TotalSamplesAmount, StringFormat='إجمالي العينات (مبلغ): {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.DiscountsValue, StringFormat='قيمة الخصومات: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.TotalAfterDiscount, StringFormat='الإجمالي بعد الخصم: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.CollectedAmount, StringFormat='ما تم سداده: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.UncollectedAmount, StringFormat='باقي لم يسدد: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.CashSupplies, StringFormat='توريدات نقدية: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.Disbursements, StringFormat='المصروفات: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.SafeCash, StringFormat='المتاح في الخزينة: {0}'}" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding Drawer.SentOutCount, StringFormat='العينات المرسلة (عدد): {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.SentOutTotalCost, StringFormat='تكلفة المرسلة: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.SentOutTotalPaid, StringFormat='المدفوع للمرسلة: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.SentOutRemaining, StringFormat='المتبقي للمرسلة: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.RemainingToLab, StringFormat='باقي للمعمل: {0}'}"/>
-                                <TextBlock Text="{Binding Drawer.NetProfit, StringFormat='صافي الربح: {0}'}" FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <!-- Movements table -->
-                        <TextBlock Text="لا توجد حركات نقدية في هذه الفترة." Foreground="#666666" Margin="0,0,0,8">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ShowMovementsEmpty}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <DataGrid ItemsSource="{Binding Movements}" AutoGenerateColumns="False" IsReadOnly="True">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="التاريخ" Binding="{Binding OccurredAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130"/>
-                                <DataGridTextColumn Header="النوع" Binding="{Binding MovementType}" Width="80"/>
-                                <DataGridTextColumn Header="المبلغ" Binding="{Binding Amount}" Width="80"/>
-                                <DataGridTextColumn Header="الجهة" Binding="{Binding RelatedExternalEntityName}" Width="120"/>
-                                <DataGridTextColumn Header="بواسطة" Binding="{Binding PerformedByName}" Width="100"/>
-                                <DataGridTextColumn Header="البيان" Binding="{Binding Notes}" Width="*"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </StackPanel>
-                </ScrollViewer>
-            </DockPanel>
+                </ScrollViewer.Style>
+                <StackPanel>
+                    <Border Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="بطاقة الرصيد" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding Drawer.TotalSamplesCount, StringFormat='إجمالي العينات (عدد): {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.TotalSamplesAmount, StringFormat='إجمالي العينات (مبلغ): {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.DiscountsValue, StringFormat='قيمة الخصومات: {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.TotalAfterDiscount, StringFormat='الإجمالي بعد الخصم: {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.CollectedAmount, StringFormat='ما تم سداده: {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.UncollectedAmount, StringFormat='باقي لم يسدد: {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.CashSupplies, StringFormat='توريدات نقدية: {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.Disbursements, StringFormat='المصروفات: {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.SafeCash, StringFormat='المتاح في الخزينة: {0}'}" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Drawer.RemainingToLab, StringFormat='باقي للمعمل: {0}'}"/>
+                            <TextBlock Text="{Binding Drawer.NetProfit, StringFormat='صافي الربح: {0}'}" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="لا توجد حركات نقدية في هذه الفترة." Foreground="#666666" Margin="0,0,0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowMovementsEmpty}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <DataGrid ItemsSource="{Binding Movements}" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="التاريخ" Binding="{Binding OccurredAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130"/>
+                            <DataGridTextColumn Header="النوع" Binding="{Binding MovementType}" Width="80"/>
+                            <DataGridTextColumn Header="المبلغ" Binding="{Binding Amount}" Width="80"/>
+                            <DataGridTextColumn Header="الجهة" Binding="{Binding RelatedExternalEntityName}" Width="120"/>
+                            <DataGridTextColumn Header="بواسطة" Binding="{Binding PerformedByName}" Width="100"/>
+                            <DataGridTextColumn Header="البيان" Binding="{Binding Notes}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </ScrollViewer>
 
-            <!-- Other tabs placeholder (Slices 4) -->
-            <TextBlock Text="جرد العناصر — سيتم تنفيذه في الشريحة 4." Foreground="#666666" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
+            <!-- Element Inventory Tab -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsElementInventoryTab}" Value="True">
@@ -121,11 +114,32 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </TextBlock.Style>
-            </TextBlock>
-            <TextBlock Text="عينات المرضى — سيتم تنفيذه في الشريحة 4." Foreground="#666666" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
+                </ScrollViewer.Style>
+                <StackPanel>
+                    <TextBlock Text="جرد العناصر" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
+                    <Border Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="{Binding ElementStats.ElementName, StringFormat='العنصر: {0}'}" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding ElementStats.TotalSamplesCount, StringFormat='إجمالي العينات (عدد): {0}'}"/>
+                            <TextBlock Text="{Binding ElementStats.CollectedAmount, StringFormat='ما تم سداده: {0}'}"/>
+                            <TextBlock Text="{Binding ElementStats.SafeCash, StringFormat='المتاح في الخزينة: {0}'}" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding ElementStats.NetProfit, StringFormat='صافي الربح: {0}'}" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <DataGrid ItemsSource="{Binding ElementStats.Lines}" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="العنصر" Binding="{Binding DisplayName}" Width="*"/>
+                            <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
+                            <DataGridTextColumn Header="المبلغ" Binding="{Binding Amount}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Patient Samples Tab -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsPatientSamplesTab}" Value="True">
@@ -133,11 +147,37 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </TextBlock.Style>
-            </TextBlock>
-            <TextBlock Text="حسابات الشركات — سيتم تنفيذه في الشريحة 4." Foreground="#666666" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
+                </ScrollViewer.Style>
+                <StackPanel>
+                    <TextBlock Text="عينات المرضى" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
+                    <TextBlock Text="لا توجد عينات في هذه الفترة." Foreground="#666666" Margin="0,0,0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowPatientSamplesEmpty}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <DataGrid ItemsSource="{Binding PatientSamples}" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="المريض" Binding="{Binding FullName}" Width="*"/>
+                            <DataGridTextColumn Header="التحاليل" Binding="{Binding TestsCount}" Width="80"/>
+                            <DataGridTextColumn Header="المحسوب" Binding="{Binding Charged}" Width="80"/>
+                            <DataGridTextColumn Header="المدفوع" Binding="{Binding Paid}" Width="80"/>
+                            <DataGridTextColumn Header="الرصيد" Binding="{Binding Balance}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Company/Delegate Tab -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsCompanyDelegateTab}" Value="True">
@@ -145,12 +185,42 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </TextBlock.Style>
-            </TextBlock>
+                </ScrollViewer.Style>
+                <StackPanel>
+                    <TextBlock Text="حسابات الشركات والمندوبين" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
+                    <TextBlock Text="لا توجد بيانات في هذه الفترة." Foreground="#666666" Margin="0,0,0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowCompanyEmpty}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <DataGrid ItemsSource="{Binding CompanyAccounts}" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="الجهة" Binding="{Binding EntityName}" Width="*"/>
+                            <DataGridTextColumn Header="الإيداع" Binding="{Binding Deposits}" Width="80"/>
+                            <DataGridTextColumn Header="الصرف" Binding="{Binding Disbursements}" Width="80"/>
+                            <DataGridTextColumn Header="الصافي" Binding="{Binding Net}" Width="80"/>
+                            <DataGridTextColumn Header="المتبقي" Binding="{Binding SentOutRemaining}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
 
+        <!-- S4: M14/M16 route buttons (absorbed from settings dashboard) -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,8,0,0">
+            <Button Content="الجهات الخارجية" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenExternalEntitiesCommand}"/>
+            <Button Content="العينات المرسلة" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenSentOutSamplesCommand}"/>
+        </StackPanel>
+
         <!-- Messages -->
-        <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
-        <TextBlock Grid.Row="5" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="6" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
     </Grid>
 </UserControl>
