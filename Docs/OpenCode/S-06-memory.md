@@ -85,7 +85,7 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 | 2 | Statistics dashboard + «الإحصائيات» wiring | [x] Done | VG-03 PASS |
 | 3 | Accounts hub + cash drawer + «الحسابات» activation | [x] Done | VG-04 PASS |
 | 4 | Accounts tabs + temporary-route absorption | [x] Done | VG-05 PASS |
-| 5 | Audit screen + «النظام» wiring | [ ] Not started | VG-06 |
+| 5 | Audit screen + «النظام» wiring | [x] Done | VG-06 PASS |
 | 6 | Utilities screen + «الأدوات» wiring | [ ] Not started | VG-07 |
 
 ## Slice 0: Attendance self-service screen
@@ -264,3 +264,4 @@ Audit method: fresh clone of `https://github.com/El-ogra/Top-Lab.git`; `git chec
 | 2026-09-18 | 2 | 1-10 | StatisticsViewModel + View (4 sections, tables-only per D5); «الإحصائيات» wired in ShellViewModel; VG-03 PASS | Success |
 | 2026-09-18 | 3 | 1-10 | AccountsHubViewModel + View + CashMovementDialog; «الحسابات» activated behind secondary password; VG-04 PASS | Success |
 | 2026-09-18 | 4 | 1-10 | Accounts tabs (element/patient/company) + M14/M16 routes absorbed; temporary routes removed from SettingsDashboard; VG-05 PASS | Success |
+| 2026-09-18 | 5 | 1-10 | AuditViewModel + View (P/T tabs); «النистем» wired to AuditViewModel (D12); VG-06 PASS | Success |

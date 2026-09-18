@@ -22,6 +22,8 @@
            xmlns:statisticsView="clr-namespace:TopLab.Presentation.Views.Statistics"
            xmlns:accountsVm="clr-namespace:TopLab.Presentation.ViewModels.Accounts"
            xmlns:accountsView="clr-namespace:TopLab.Presentation.Views.Accounts"
+           xmlns:auditVm="clr-namespace:TopLab.Presentation.ViewModels.Audit"
+           xmlns:auditView="clr-namespace:TopLab.Presentation.Views.Audit"
          mc:Ignorable="d"
          Title="Top-Lab — نظام توب لاب" Height="600" Width="1024"
          FlowDirection="RightToLeft"
@@ -181,6 +183,10 @@
 
                                                                                                                                                         <DataTemplate DataType="{x:Type accountsVm:AccountsHubViewModel}">
                                                                                                                                                             <accountsView:AccountsHubView/>
+                                                                                                                                                        </DataTemplate>
+
+                                                                                                                                                        <DataTemplate DataType="{x:Type auditVm:AuditViewModel}">
+                                                                                                                                                            <auditView:AuditView/>
                                                                                                                                                         </DataTemplate>
 
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">

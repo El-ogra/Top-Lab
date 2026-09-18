@@ -1,0 +1,124 @@
+<UserControl x:Class="TopLab.Presentation.Views.Audit.AuditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Tab selector -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <RadioButton Content="تدقيق مريض" IsChecked="{Binding IsPatientTab}" GroupName="AuditTab" Margin="0,0,8,0"/>
+            <RadioButton Content="تدقيق تحليل" IsChecked="{Binding IsTestTab}" GroupName="AuditTab"/>
+        </StackPanel>
+
+        <!-- Input + actions -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="معرف المريض:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBox Text="{Binding PatientIdInput, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0,0,8,0"/>
+            <Button Content="عرض التدقيق" Width="90" Margin="0,0,8,0" Command="{Binding LoadPatientAuditCommand}"/>
+            <TextBlock Text="معرف التحليل:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBox Text="{Binding PatientTestIdInput, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0,0,8,0"/>
+            <Button Content="عرض" Width="70" Margin="0,0,8,0" Command="{Binding LoadTestAuditCommand}"/>
+            <Button Content="رجوع" Width="70" Command="{Binding BackCommand}"/>
+        </StackPanel>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Content -->
+        <Grid Grid.Row="3">
+            <!-- P tab -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPatientTab}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Style>
+                <StackPanel>
+                    <Border Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="{Binding PatientAudit.FullName}" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Text="{Binding PatientAudit.CreatedByUserName, StringFormat='سجّله: {0}'}"/>
+                            <TextBlock Text="{Binding PatientAudit.CreatedAtUtc, StringFormat='تاريخ التسجيل: {0:yyyy-MM-dd HH:mm}'}"/>
+                            <TextBlock Text="{Binding PatientAudit.ModificationCount, StringFormat='عدد التعديلات: {0}'}"/>
+                            <TextBlock Text="{Binding PatientAudit.LastModifiedByUserName, StringFormat='آخر تعديل: {0}'}"/>
+                            <TextBlock Text="{Binding PatientAudit.LastModifiedAtUtc, StringFormat='تاريخ آخر تعديل: {0:yyyy-MM-dd HH:mm}'}"/>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="لا توجد عمليات دفع مسجلة لهذا المريض." Foreground="#666666" Margin="0,0,0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowPatientEmpty}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <DataGrid ItemsSource="{Binding PatientAudit.PaymentReceivers}" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="المستخدم" Binding="{Binding UserName}" Width="*"/>
+                            <DataGridTextColumn Header="التاريخ" Binding="{Binding OperationAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- T tab -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsTestTab}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Style>
+                <StackPanel>
+                    <Border Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="{Binding TestAudit.TestName}" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Text="{Binding TestAudit.EnteredByUserName, StringFormat='إدخال: {0}'}"/>
+                            <TextBlock Text="{Binding TestAudit.EnteredAtUtc, StringFormat='وقت الإدخال: {0:yyyy-MM-dd HH:mm}'}"/>
+                            <TextBlock Text="{Binding TestAudit.ReviewedByUserName, StringFormat='اعتماد: {0}'}"/>
+                            <TextBlock Text="{Binding TestAudit.ReviewedAtUtc, StringFormat='وقت الاعتماد: {0:yyyy-MM-dd HH:mm}'}"/>
+                            <TextBlock Text="{Binding TestAudit.LastPrintedByUserName, StringFormat='طباعة: {0}'}"/>
+                            <TextBlock Text="{Binding TestAudit.PrintCount, StringFormat='عدد مرات الطباعة: {0}'}"/>
+                            <TextBlock Text="{Binding TestAudit.DeliveredByUserName, StringFormat='تسليم: {0}'}"/>
+                            <TextBlock Text="{Binding TestAudit.DeliveredAtUtc, StringFormat='وقت التسليم: {0:yyyy-MM-dd HH:mm}'}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Error -->
+        <TextBlock Grid.Row="4" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0"/>
+    </Grid>
+</UserControl>

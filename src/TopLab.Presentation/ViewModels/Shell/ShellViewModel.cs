@@ -227,6 +227,14 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                             await vm.LoadAsync();
                         }
                     }
+                    else if (t == "النظام")
+                    {
+                        _navigation.NavigateTo<ViewModels.Audit.AuditViewModel>();
+                        if (_navigation.CurrentViewModel is ViewModels.Audit.AuditViewModel vm)
+                        {
+                            await vm.LoadAsync();
+                        }
+                    }
                     else if (t == "الإعدادات")
                     {
                         _navigation.NavigateTo<ViewModels.Settings.SettingsDashboardViewModel>();
