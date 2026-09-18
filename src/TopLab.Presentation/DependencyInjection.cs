@@ -63,6 +63,8 @@ public static class DependencyInjection
                                 services.AddTransient<SendSampleOutDialogViewModel>();
                                 services.AddTransient<SentOutLabAccountViewModel>();
                                 services.AddTransient<MyAttendanceViewModel>();
+                                services.AddTransient<AttendanceRecordsViewModel>();
+                                services.AddTransient<UserAttendanceSummaryViewModel>();
                                 services.AddTransient<WorkSheetsViewModel>();
         services.AddTransient<CorrectionDialogViewModel>();
         services.AddTransient<ExtraChargeDialogViewModel>();

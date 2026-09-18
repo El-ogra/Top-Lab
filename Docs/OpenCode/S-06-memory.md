@@ -64,7 +64,7 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 
 ## Recorded Open Decisions (with stop-gates)
 
-- **نقطة دخول شاشات Attendance (M18) الثلاث:** **«بانتظار قرار المالك — غير مُدرج في القائمة الأصلية»**. لا يوجد عنوان شِل باسم «الحضور» ولا ربط كودي قائم؛ القرار خارج تفويض D5/D11/D12 فلم يحسمه المدقق. **STOP-gate:** Slice 1, Stage 4 (Planning) — لا تخطيط لربط الدخول قبل حسم المالك. (للمالك عند الحسم: الخيارات المرئية كودياً امتداد مسار «المستخدمون» أو مدخل ضمن سطح «النظام» بعد هبوط D12 — تُرك الحسم له.)
+- **نقطة دخول شاشات Attendance (M18) الثلاث:** **«قرار نهائي من المالك»** — **(أ) امتداد مسار «المستخدمون» في الشِل**. المالك حسمها مباشرة عند سؤاله. التنفيذ: أزرار الحضور الثلاثة (سجلات الحضور + ملخص المستخدم + حضوري الذاتي) مضافة داخل `UserManagementView` بعد فحص كلمة المرور الثانوية القائم على مسار «المستخدمون».
 
 ## Slice Validation Gates (from plan)
 
@@ -81,7 +81,7 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 0 | Attendance self-service screen | [x] Done | VG-01 PASS |
-| 1 | Attendance admin screens + entry point | [ ] Not started | VG-02 |
+| 1 | Attendance admin screens + entry point | [x] Done | VG-02 PASS |
 | 2 | Statistics dashboard + «الإحصائيات» wiring | [ ] Not started | VG-03 |
 | 3 | Accounts hub + cash drawer + «الحسابات» activation | [ ] Not started | VG-04 |
 | 4 | Accounts tabs + temporary-route absorption | [ ] Not started | VG-05 |
@@ -210,13 +210,15 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 | 0 | MyAttendanceViewModel | «تم بدء الاستراحة.» | Status (success) |
 | 0 | MyAttendanceViewModel | «تم إنهاء الاستراحة.» | Status (success) |
 | 0 | MyAttendanceViewModel | «تم تسجيل الانصراف بنجاح.» | Status (success) |
+| 1 | AttendanceRecordsView | «لا توجد سجلات في هذه الفترة.» | Empty-state |
+| 1 | UserAttendanceSummaryView | «اختر مستخدماً واضغط «عرض» لعرض الملخص.» | Empty-state |
 
 Expected entries (from the audited plan — all Requires-creation view texts): «لا توجد عمليات دفع مسجلة لهذا المريض.» (S5, P-tab empty) / check-out confirmation text (S0) / «لا توجد سجلات في هذه الفترة.» (S1, empty) / «لا توجد بيانات في هذه الفترة.» (S2 + S4, empty) / cash-movement confirmation text showing direction + amount (S3) / «لا توجد حركات نقدية في هذه الفترة.» (S3, empty) / «إيداع»/«صرف» MovementType display translations (S3) / «لا توجد عينات في هذه الفترة.» (S4, empty) / InventoryElementKind + InventoryReportType display translations (S4) / phone-book/purchases delete confirmations (S6) / «هذه البيانات محلية لهذه المحطة ولا تُزامَن.» (S6, scope note) / empty-state texts for utilities tabs 4/5/6 (S6) / any display text for the Notes ≤ 500 limit if surfaced (S3/S6).
 
 ## Current Status
 - **Slice 0:** Done. VG-01 passed. Commit `816ee6e`.
-- **Slice 1:** STOPPED at Stage 4. Waiting for owner decision on attendance entry point.
-- **Slice 2:** Not started.
+- **Slice 1:** Done. VG-02 passed.
+- **Slice 2:** Not started. Statistics dashboard + «الإحصائيات» wiring.
 - **Slice 3:** Not started.
 - **Slice 4:** Not started.
 - **Slice 5:** Not started.
@@ -244,17 +246,7 @@ Audit method: fresh clone of `https://github.com/El-ogra/Top-Lab.git`; `git chec
 
 ## Stop Report (append only if a stop condition triggers)
 
-**STOP triggered at Slice 1, Stage 4 (Planning) — 2026-09-18.**
-
-**Trigger condition:** The owner has NOT settled the official entry point for the three M18 attendance screens. The decision is recorded as «بانتظار قرار المالك — غير مُدرج في القائمة الأصلية» (S-06.md §3; S-06-memory.md Recorded Open Decisions). The delegation covered D5/D11/D12 only — the attendance entry point was explicitly excluded.
-
-**What was completed before the stop:**
-- Slice 0: Attendance self-service screen — VG-01 PASS — commit `816ee6e`
-- Slice 1 Stages 1–3: Pre-exec verification (build 0/0, tests 1419/1419), deep understanding (M18 admin queries + DTOs verified), file analysis (ShellViewModel, DI, MainWindow.xaml)
-
-**What is blocked:** Slice 1 Stage 5 (Execution) cannot proceed without the owner's placement decision.
-
-**Requested decision:** How should the three M18 attendance screens be reached? Code-level options noted in the memory file: (a) extend the «المستخدمون» shell path, or (b) place a surface inside «النظام» after D12 lands (Slice 5). The owner may choose either, or specify a third option.
+**STOP resolved at Slice 1, Stage 4 — 2026-09-18.** Owner settled the attendance entry point directly: **(أ) امتداد مسار «المستخدمون» في الشِل**. Implementation: three attendance buttons (سجلات الحضور + ملخص المستخدم + حضوري الذاتي) added inside `UserManagementView` after the existing secondary-password gate on the «المستخدمون» shell path. Execution resumed.
 
 ---
 
@@ -263,5 +255,6 @@ Audit method: fresh clone of `https://github.com/El-ogra/Top-Lab.git`; `git chec
 | Timestamp | Slice | Stage | Action | Result |
 |-----------|-------|-------|--------|--------|
 | 2026-09-18 | 0 | 1-10 | MyAttendanceViewModel + View; 4 commands + live clock; DI + DataTemplate; VG-01 PASS | Success |
-| 2026-09-18 | 1 | 1-3 | Pre-exec + deep understanding + file analysis for attendance admin screens | Success |
-| 2026-09-18 | 1 | 4 | STOP-GATE: owner decision on attendance entry point not settled | STOPPED |
+| 2026-09-18 | 1 | 1-3 | Pre-exec + deep understanding + file analysis | Success |
+| 2026-09-18 | 1 | 4 | STOP-GATE resolved: owner settled (أ) امتداد مسار «المستخدمون» | Resolved |
+| 2026-09-18 | 1 | 5-10 | AttendanceRecordsViewModel + View + UserAttendanceSummaryViewModel + View; 3 attendance buttons in UserManagementView; VG-02 PASS | Success |

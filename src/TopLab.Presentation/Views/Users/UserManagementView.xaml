@@ -74,6 +74,14 @@
                     <Button Content="حفظ الصلاحيات" Width="110" Margin="0,0,8,0" Command="{Binding SavePermissionsCommand}"/>
                     <Button Content="حذف" Width="80" Margin="0,0,8,0" Command="{Binding DeleteCommand}"/>
                 </StackPanel>
+
+                <!-- S-06 Slice 1: Attendance entry point — «قرار نهائي من المالك» — امتداد مسار «المستخدمون» -->
+                <TextBlock Text="الحضور والانصراف:" FontWeight="Bold" Margin="0,12,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="سجلات الحضور" Width="100" Margin="0,0,8,0" Command="{Binding OpenAttendanceRecordsCommand}"/>
+                    <Button Content="ملخص المستخدم" Width="100" Margin="0,0,8,0" Command="{Binding OpenAttendanceSummaryCommand}"/>
+                    <Button Content="حضوري (الذاتي)" Width="110" Command="{Binding OpenMyAttendanceCommand}"/>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </Grid>

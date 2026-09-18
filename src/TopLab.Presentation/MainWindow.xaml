@@ -163,6 +163,14 @@
                                                                                                                                                             <attendanceView:MyAttendanceView/>
                                                                                                                                                         </DataTemplate>
 
+                                                                                                                                                        <DataTemplate DataType="{x:Type attendanceVm:AttendanceRecordsViewModel}">
+                                                                                                                                                            <attendanceView:AttendanceRecordsView/>
+                                                                                                                                                        </DataTemplate>
+
+                                                                                                                                                        <DataTemplate DataType="{x:Type attendanceVm:UserAttendanceSummaryViewModel}">
+                                                                                                                                                            <attendanceView:UserAttendanceSummaryView/>
+                                                                                                                                                        </DataTemplate>
+
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
                         <sheetsView:WorkSheetsView/>
                     </DataTemplate>

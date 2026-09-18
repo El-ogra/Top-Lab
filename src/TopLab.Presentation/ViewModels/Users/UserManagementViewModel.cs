@@ -12,6 +12,7 @@ using TopLab.Application.Features.UsersAndPermissions.Queries.GetUsers;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
+using TopLab.Presentation.Common.Navigation;
 
 namespace TopLab.Presentation.ViewModels.Users;
 
@@ -54,6 +55,7 @@ public sealed class UserManagementViewModel : ViewModelBase
     private readonly ISender _mediator;
     private readonly IDialogService _dialogs;
     private readonly ResultErrorPresenter _presenter;
+    private readonly INavigationService _navigation;
 
     private ObservableCollection<UserSummaryDto> _users = new();
     private UserSummaryDto? _selectedUser;
@@ -73,11 +75,12 @@ public sealed class UserManagementViewModel : ViewModelBase
     private bool _selectedIsActive = true;
     private bool _isBusy;
 
-    public UserManagementViewModel(ISender mediator, IDialogService dialogs, ResultErrorPresenter presenter)
+    public UserManagementViewModel(ISender mediator, IDialogService dialogs, ResultErrorPresenter presenter, INavigationService navigation)
     {
         _mediator = mediator;
         _dialogs = dialogs;
         _presenter = presenter;
+        _navigation = navigation;
 
         PermissionItems = new ObservableCollection<PermissionItem>(
             CatalogCodes.Select(code => new PermissionItem(code, code)));
@@ -88,6 +91,32 @@ public sealed class UserManagementViewModel : ViewModelBase
         SavePermissionsCommand = new AsyncRelayCommand(_ => SavePermissionsAsync());
         DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync());
         ToggleActiveCommand = new AsyncRelayCommand(_ => ToggleActiveAsync());
+
+        // S-06 Slice 1: attendance entry point — «قرار نهائي من المالك» — امتداد مسار «المستخدمون»
+        OpenAttendanceRecordsCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<Attendance.AttendanceRecordsViewModel>();
+            if (_navigation.CurrentViewModel is Attendance.AttendanceRecordsViewModel vm)
+            {
+                _ = vm.LoadAsync();
+            }
+        });
+        OpenAttendanceSummaryCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<Attendance.UserAttendanceSummaryViewModel>();
+            if (_navigation.CurrentViewModel is Attendance.UserAttendanceSummaryViewModel vm)
+            {
+                _ = vm.LoadAsync();
+            }
+        });
+        OpenMyAttendanceCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<Attendance.MyAttendanceViewModel>();
+            if (_navigation.CurrentViewModel is Attendance.MyAttendanceViewModel vm)
+            {
+                _ = vm.LoadAsync();
+            }
+        });
     }
 
     public ObservableCollection<UserSummaryDto> Users
@@ -214,6 +243,11 @@ public sealed class UserManagementViewModel : ViewModelBase
     public AsyncRelayCommand SavePermissionsCommand { get; }
     public AsyncRelayCommand DeleteCommand { get; }
     public AsyncRelayCommand ToggleActiveCommand { get; }
+
+    // S-06 Slice 1: attendance entry point — «قرار نهائي من المالك» — امتداد مسار «المستخدمون»
+    public RelayCommand OpenAttendanceRecordsCommand { get; }
+    public RelayCommand OpenAttendanceSummaryCommand { get; }
+    public RelayCommand OpenMyAttendanceCommand { get; }
 
     private void UpdateAuditAccessVisibility()
     {

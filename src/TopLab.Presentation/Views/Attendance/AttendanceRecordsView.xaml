@@ -1,0 +1,78 @@
+<UserControl x:Class="TopLab.Presentation.Views.Attendance.AttendanceRecordsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <DockPanel Margin="16">
+        <!-- Filters -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="المستخدم:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox ItemsSource="{Binding UserFilterItems}"
+                      SelectedValue="{Binding SelectedUserId}"
+                      SelectedValuePath="Id"
+                      DisplayMemberPath="UserName"
+                      Width="140" Margin="0,0,8,0"/>
+            <TextBlock Text="من:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <DatePicker SelectedDate="{Binding From, UpdateSourceTrigger=PropertyChanged}" Width="130" Margin="0,0,8,0"/>
+            <TextBlock Text="إلى:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <DatePicker SelectedDate="{Binding To, UpdateSourceTrigger=PropertyChanged}" Width="130" Margin="0,0,8,0"/>
+            <Button Content="تحديث" Width="70" Margin="0,0,12,0" Command="{Binding LoadCommand}"/>
+            <Button Content="رجوع" Width="70" Command="{Binding BackCommand}"/>
+        </StackPanel>
+
+        <!-- Paging -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <TextBlock Text="{Binding Page, StringFormat='صفحة {0}'}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <Button Content="السابق" Width="70" Margin="0,0,6,0" Command="{Binding PreviousPageCommand}"/>
+            <Button Content="التالي" Width="70" Command="{Binding NextPageCommand}"/>
+        </StackPanel>
+
+        <!-- Loading -->
+        <ProgressBar DockPanel.Dock="Top" Height="6" IsIndeterminate="True" Margin="0,4,0,0">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Error -->
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+        <!-- Empty state -->
+        <TextBlock DockPanel.Dock="Top" Text="لا توجد سجلات في هذه الفترة." Foreground="#666666" Margin="0,8,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Records Grid -->
+        <DataGrid ItemsSource="{Binding Records}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  RowHeaderWidth="0"
+                  Margin="0,8,0,0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="المستخدم" Binding="{Binding UserName}" Width="*"/>
+                <DataGridTextColumn Header="حضور" Binding="{Binding CheckInAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130"/>
+                <DataGridTextColumn Header="بداية الاستراحة" Binding="{Binding BreakStartAtUtc, StringFormat={}{0:HH:mm}}" Width="100"/>
+                <DataGridTextColumn Header="نهاية الاستراحة" Binding="{Binding BreakEndAtUtc, StringFormat={}{0:HH:mm}}" Width="100"/>
+                <DataGridTextColumn Header="انصراف" Binding="{Binding CheckOutAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130"/>
+                <DataGridTextColumn Header="تأخير" Binding="{Binding LatenessMinutes}" Width="60"/>
+                <DataGridTextColumn Header="إضافي" Binding="{Binding OvertimeMinutes}" Width="60"/>
+                <DataGridTextColumn Header="وقت العمل" Binding="{Binding WorkedMinutes}" Width="70"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>
