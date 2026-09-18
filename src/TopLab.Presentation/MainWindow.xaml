@@ -149,6 +149,14 @@
                                                                                                                                                             <patientsView:DeliveryHandoverView/>
                                                                                                                                                         </DataTemplate>
 
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:SentOutSamplesViewModel}">
+                                                                                                                                                            <patientsView:SentOutSamplesView/>
+                                                                                                                                                        </DataTemplate>
+
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:SentOutLabAccountViewModel}">
+                                                                                                                                                            <patientsView:SentOutLabAccountView/>
+                                                                                                                                                        </DataTemplate>
+
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
                         <sheetsView:WorkSheetsView/>
                     </DataTemplate>

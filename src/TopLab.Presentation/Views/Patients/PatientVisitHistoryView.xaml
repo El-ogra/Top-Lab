@@ -32,7 +32,7 @@
             <Button Content="كشف النتائج" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenResultSheetCommand}"/>
             <Button Content="التقارير" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenReportsCommand}"/>
             <Button Content="التسليم" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenDeliveryCommand}"/>
-            <Button Content="إرسال خارجياً" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenSentOutCommand}" IsEnabled="False"/>
+            <Button Content="إرسال خارجياً" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenSentOutCommand}"/>
             <Button Content="رجوع" Margin="0,0,6,0" Padding="10,5" Command="{Binding BackCommand}"/>
         </StackPanel>
 

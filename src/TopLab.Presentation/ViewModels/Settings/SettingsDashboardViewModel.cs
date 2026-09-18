@@ -34,6 +34,9 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
         OpenDatabaseMaintenanceCommand = new AsyncRelayCommand(_ => OpenDatabaseMaintenanceAsync(navigation));
         RunSystemInitializationCommand = new AsyncRelayCommand(_ => RunSystemInitializationAsync());
         OpenExternalEntitiesCommand = new AsyncRelayCommand(_ => OpenExternalEntitiesAsync(navigation));
+        // S-05 Slice 5 (D10-delegated decision): temporary explicitly-tagged route to
+        // SentOutSamples until the «الحسابات» shell section lands in P5.
+        OpenSentOutSamplesCommand = new AsyncRelayCommand(_ => OpenSentOutSamplesAsync(navigation));
     }
 
     public string StatusMessage
@@ -53,6 +56,7 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
     public RelayCommand OpenReceiptSettingsCommand { get; }
     public RelayCommand OpenEnvelopeSettingsCommand { get; }
     public AsyncRelayCommand OpenExternalEntitiesCommand { get; }
+    public AsyncRelayCommand OpenSentOutSamplesCommand { get; }
     public AsyncRelayCommand OpenDatabaseMaintenanceCommand { get; }
     public AsyncRelayCommand RunSystemInitializationCommand { get; }
 
@@ -74,6 +78,19 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
     {
         navigation.NavigateTo<ViewModels.External.ExternalEntitiesViewModel>();
         if (navigation.CurrentViewModel is ViewModels.External.ExternalEntitiesViewModel vm)
+        {
+            await vm.LoadAsync();
+        }
+    }
+
+    /// <summary>S-05 Slice 5: temporary explicitly-tagged route to the
+    /// SentOutSamples list until the «الحسابات» shell section lands in P5.
+    /// Placement decision: «قرار نهائي بتفويض من المالك — اتخذه الوكيل بناءً على تحليل الكود»
+    /// — placed after the ExternalEntities temporary button (D3-pattern consistency).</summary>
+    public async Task OpenSentOutSamplesAsync(INavigationService navigation)
+    {
+        navigation.NavigateTo<ViewModels.Patients.SentOutSamplesViewModel>();
+        if (navigation.CurrentViewModel is ViewModels.Patients.SentOutSamplesViewModel vm)
         {
             await vm.LoadAsync();
         }

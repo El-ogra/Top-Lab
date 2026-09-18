@@ -39,7 +39,7 @@ public sealed class PatientVisitHistoryViewModel : ViewModelBase
         OpenResultSheetCommand = new RelayCommand(_ => OpenResultSheet());
         OpenReportsCommand = new RelayCommand(_ => OpenReports());
         OpenDeliveryCommand = new RelayCommand(_ => OpenDelivery());
-        OpenSentOutCommand = new RelayCommand(_ => { }); // disabled until Slice 5
+        OpenSentOutCommand = new RelayCommand(_ => OpenSentOut());
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientSearchViewModel>());
     }
 
@@ -254,6 +254,15 @@ public sealed class PatientVisitHistoryViewModel : ViewModelBase
         if (_navigation.CurrentViewModel is DeliveryHandoverViewModel vm)
         {
             _ = vm.LoadAsync(_patientId);
+        }
+    }
+
+    private void OpenSentOut()
+    {
+        _navigation.NavigateTo<SentOutSamplesViewModel>();
+        if (_navigation.CurrentViewModel is SentOutSamplesViewModel vm)
+        {
+            _ = vm.LoadAsync();
         }
     }
 }

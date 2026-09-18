@@ -12,6 +12,7 @@
         <Button Content="إعدادات الظرف" Height="44" Margin="0,4" Command="{Binding OpenEnvelopeSettingsCommand}" />
         <Button Content="صيانة قاعدة البيانات" Height="44" Margin="0,4" Command="{Binding OpenDatabaseMaintenanceCommand}" />
         <Button Content="الجهات الخارجية (طريق مؤقت — لحين تفعيل الحسابات)" Height="44" Margin="0,4" Command="{Binding OpenExternalEntitiesCommand}" />
+        <Button Content="العينات المرسلة (طريق مؤقت — لحين تفعيل الحسابات)" Height="44" Margin="0,4" Command="{Binding OpenSentOutSamplesCommand}" />
 
         <Separator Margin="0,16" />
 
