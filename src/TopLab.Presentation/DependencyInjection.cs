@@ -13,6 +13,7 @@ using TopLab.Presentation.ViewModels.Attendance;
 using TopLab.Presentation.ViewModels.Statistics;
 using TopLab.Presentation.ViewModels.Accounts;
 using TopLab.Presentation.ViewModels.Audit;
+using TopLab.Presentation.ViewModels.Utilities;
 using TopLab.Presentation.ViewModels.WorkSheets;
 using TopLab.Presentation.ViewModels.Lab;
 using TopLab.Presentation.ViewModels.External;
@@ -72,6 +73,7 @@ public static class DependencyInjection
                                 services.AddTransient<AccountsHubViewModel>();
                                 services.AddTransient<CashMovementDialogViewModel>();
                                 services.AddTransient<AuditViewModel>();
+                                services.AddTransient<UtilitiesViewModel>();
                                 services.AddTransient<WorkSheetsViewModel>();
         services.AddTransient<CorrectionDialogViewModel>();
         services.AddTransient<ExtraChargeDialogViewModel>();

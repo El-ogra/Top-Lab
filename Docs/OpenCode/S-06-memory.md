@@ -86,7 +86,7 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 | 3 | Accounts hub + cash drawer + «الحسابات» activation | [x] Done | VG-04 PASS |
 | 4 | Accounts tabs + temporary-route absorption | [x] Done | VG-05 PASS |
 | 5 | Audit screen + «النظام» wiring | [x] Done | VG-06 PASS |
-| 6 | Utilities screen + «الأدوات» wiring | [ ] Not started | VG-07 |
+| 6 | Utilities screen + «الأدوات» wiring | [x] Done | VG-07 PASS |
 
 ## Slice 0: Attendance self-service screen
 

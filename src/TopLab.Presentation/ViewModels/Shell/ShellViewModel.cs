@@ -205,6 +205,14 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                             await vm.LoadAsync();
                         }
                     }
+                    else if (t == "الأدوات")
+                    {
+                        _navigation.NavigateTo<ViewModels.Utilities.UtilitiesViewModel>();
+                        if (_navigation.CurrentViewModel is ViewModels.Utilities.UtilitiesViewModel vm)
+                        {
+                            await vm.LoadAsync();
+                        }
+                    }
                     else if (t == "الحسابات")
                     {
                         bool ok = await _dialogs.ShowSecondaryPasswordDialogAsync();
