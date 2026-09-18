@@ -50,6 +50,7 @@ public static class DependencyInjection
                                 services.AddTransient<AmendDialogViewModel>();
                                 services.AddTransient<AmendmentsLogViewModel>();
                                 services.AddTransient<CultureEntryViewModel>();
+                                services.AddTransient<PatientSearchViewModel>();
                                 services.AddTransient<WorkSheetsViewModel>();
         services.AddTransient<CorrectionDialogViewModel>();
         services.AddTransient<ExtraChargeDialogViewModel>();

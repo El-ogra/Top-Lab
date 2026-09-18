@@ -41,7 +41,17 @@ public sealed class PatientsHubViewModel : ViewModelBase
             }
         });
 
-        OpenSearchPatientCommand = new RelayCommand(_ => { });
+        // S-05 Slice 0: enable M08 patient search gateway
+        SearchPatientEnabled = true;
+        OpenSearchPatientCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<PatientSearchViewModel>();
+            if (_navigation.CurrentViewModel is PatientSearchViewModel vm)
+            {
+                _ = vm.LoadAsync();
+            }
+        });
+
         OpenDeliverResultsCommand = new RelayCommand(_ => { });
     }
 
