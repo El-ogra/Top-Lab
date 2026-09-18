@@ -1,0 +1,107 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.DeliveryHandoverView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Account Panel -->
+        <Border Grid.Row="0" Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+            <StackPanel>
+                <TextBlock Text="حساب التسليم" FontSize="16" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Account.TotalCharged, StringFormat='المحسوب: {0}'}"/>
+                <TextBlock Text="{Binding Account.TotalPaid, StringFormat='المدفوع: {0}'}"/>
+                <TextBlock Text="{Binding Account.Balance, StringFormat='الرصيد: {0}'}"/>
+                <TextBlock Text="{Binding Account.RemainingToLab, StringFormat='باقي للمعمل: {0}'}" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Account.RemainingToPatient, StringFormat='باقي للمريض: {0}'}" FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Settlement controls -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="مبلغ التسوية:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBox Text="{Binding SettleAmountText, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="0,0,8,0"/>
+            <CheckBox Content="تسوية كاملة (خلاص)" IsChecked="{Binding SettleInFull}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <Button Content="تسليم وتسوية" Padding="10,5" Command="{Binding DeliverCommand}"/>
+            <TextBlock Text="{Binding SelectedCount, StringFormat='المحدد: {0}'}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+            <Button Content="رجوع" Margin="12,0,0,0" Padding="10,5" Command="{Binding BackCommand}"/>
+        </StackPanel>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Empty state -->
+        <TextBlock Grid.Row="3" Text="لا توجد تحاليل لهذا المريض." Foreground="#666666"
+                   HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Delivery Grid -->
+        <DataGrid Grid.Row="3"
+                  ItemsSource="{Binding GridRows}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  RowHeaderWidth="0">
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="تسليم" Width="60">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                      IsEnabled="{Binding CanDeliver}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="التحليل" Binding="{Binding TestName}" Width="*"/>
+                <DataGridTextColumn Header="الرمز" Binding="{Binding TestCode}" Width="70"/>
+                <DataGridTextColumn Header="النتيجة" Binding="{Binding ResultValue}" Width="80"/>
+                <DataGridCheckBoxColumn Header="مُدخل" Binding="{Binding IsEntered}" IsReadOnly="True" Width="60"/>
+                <DataGridCheckBoxColumn Header="مُعتمد" Binding="{Binding IsReviewed}" IsReadOnly="True" Width="60"/>
+                <DataGridCheckBoxColumn Header="مطبوع" Binding="{Binding IsPrinted}" IsReadOnly="True" Width="60"/>
+                <DataGridCheckBoxColumn Header="مُسلّم" Binding="{Binding IsDelivered}" IsReadOnly="True" Width="60"/>
+                <DataGridTextColumn Header="السعر" Binding="{Binding Price}" Width="70"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Messages -->
+        <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="5" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
+    </Grid>
+</UserControl>

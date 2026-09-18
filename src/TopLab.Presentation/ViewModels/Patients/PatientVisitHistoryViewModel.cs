@@ -38,7 +38,7 @@ public sealed class PatientVisitHistoryViewModel : ViewModelBase
         OpenAccountCommand = new RelayCommand(_ => OpenAccount());
         OpenResultSheetCommand = new RelayCommand(_ => OpenResultSheet());
         OpenReportsCommand = new RelayCommand(_ => OpenReports());
-        OpenDeliveryCommand = new RelayCommand(_ => { }); // disabled until Slice 4
+        OpenDeliveryCommand = new RelayCommand(_ => OpenDelivery());
         OpenSentOutCommand = new RelayCommand(_ => { }); // disabled until Slice 5
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientSearchViewModel>());
     }
@@ -237,6 +237,21 @@ public sealed class PatientVisitHistoryViewModel : ViewModelBase
 
         _navigation.NavigateTo<CombinedReportViewModel>();
         if (_navigation.CurrentViewModel is CombinedReportViewModel vm)
+        {
+            _ = vm.LoadAsync(_patientId);
+        }
+    }
+
+    private void OpenDelivery()
+    {
+        if (_patientId <= 0)
+        {
+            ErrorMessage = "معرف المريض غير صالح.";
+            return;
+        }
+
+        _navigation.NavigateTo<DeliveryHandoverViewModel>();
+        if (_navigation.CurrentViewModel is DeliveryHandoverViewModel vm)
         {
             _ = vm.LoadAsync(_patientId);
         }

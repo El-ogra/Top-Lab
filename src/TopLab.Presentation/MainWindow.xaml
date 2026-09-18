@@ -141,6 +141,14 @@
                                                                                                                                                             <patientsView:HistoryReportsView/>
                                                                                                                                                         </DataTemplate>
 
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:ResultDeliveryViewModel}">
+                                                                                                                                                            <patientsView:ResultDeliveryView/>
+                                                                                                                                                        </DataTemplate>
+
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:DeliveryHandoverViewModel}">
+                                                                                                                                                            <patientsView:DeliveryHandoverView/>
+                                                                                                                                                        </DataTemplate>
+
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
                         <sheetsView:WorkSheetsView/>
                     </DataTemplate>

@@ -52,7 +52,16 @@ public sealed class PatientsHubViewModel : ViewModelBase
             }
         });
 
-        OpenDeliverResultsCommand = new RelayCommand(_ => { });
+        // S-05 Slice 4: enable M09 delivery gateway
+        DeliverResultsEnabled = true;
+        OpenDeliverResultsCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<ResultDeliveryViewModel>();
+            if (_navigation.CurrentViewModel is ResultDeliveryViewModel vm)
+            {
+                _ = vm.LoadAsync();
+            }
+        });
     }
 
     public string HelpText => "من هنا تدير كل ما يخص المرضى: تسجيل بيانات مريض جديد أو تعديل بيانات مسجل، ثم إدخال النتائج والبحث عن المرضى وتسليم النتائج.";

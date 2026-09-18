@@ -67,7 +67,7 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 | 1 | Patient visit history master-detail screen | [x] Done | VG-02 PASS |
 | 2 | Combined report screen + insert-history dialog | [x] Done | VG-03 PASS |
 | 3 | Blank report + history reports screens | [x] Done | VG-04 PASS |
-| 4 | Result delivery screens + gateway activation | [ ] Not started | VG-05 |
+| 4 | Result delivery screens + gateway activation | [x] Done | VG-05 PASS |
 | 5 | Sent-out samples screens + temporary entry point | [ ] Not started | VG-06 |
 
 ## Slice 0: Patient search screen + gateway activation
@@ -180,6 +180,9 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 | 3 | BlankReportView | «لم يُبنَ تقرير بعد» | Empty-state |
 | 3 | HistoryReportsView | «لا يوجد تاريخ مرضي لهذا المريض.» | Empty-state |
 | 3 | HistoryReportsViewModel | «سيتم طباعة التقرير التاريخي وتعليم النتائج كمطبوعة. هل تريد المتابعة؟» | Confirmation (history print) |
+| 4 | ResultDeliveryView | «لا توجد نتائج غير مسلَّمة في هذه الفترة.» | Empty-state |
+| 4 | DeliveryHandoverView | «لا توجد تحاليل لهذا المريض.» | Empty-state |
+| 4 | DeliveryHandoverViewModel | «سيتم تسليم {N} نتيجة مع {settlementDesc}. هل تريد المتابعة؟» | Confirmation (deliver+settle) |
 
 Expected entries (from the audited plan — all Requires-creation view texts): «لا توجد نتائج مطابقة.» (S0) / «لا توجد تحاليل في هذه الزيارة.» (S1) / «لا توجد تحاليل معتمدة قابلة للدمج لهذا المريض.» + «لا نتائج تاريخية لهذا التحليل.» + insert/auto-insert confirmation texts (S2) / «لم يُبنَ تقرير بعد» + «لا يوجد تاريخ مرضي لهذا المريض.» + history-print confirmation (S3) / «لا توجد نتائج غير مسلَّمة في هذه الفترة.» + «لا توجد تحاليل لهذا المريض.» + deliver-and-settle confirmation (S4) / «لا توجد عينات مرسلة في هذه الفترة/لهذا المعمل.» + «لا توجد معامل خارجية مسجلة — أضف جهة بنوع «معمل خارجي» من إدارة الجهات.» + «لا عينات مرسلة لهذا المعمل في الفترة.» + send/payment/settle confirmations (S5).
 
@@ -188,8 +191,8 @@ Expected entries (from the audited plan — all Requires-creation view texts): �
 - **Slice 1:** Done. VG-02 passed.
 - **Slice 2:** Done. VG-03 passed.
 - **Slice 3:** Done. VG-04 passed.
-- **Slice 4:** Not started. Result delivery + gateway.
-- **Slice 5:** Not started.
+- **Slice 4:** Done. VG-05 passed.
+- **Slice 5:** Not started. Sent-out samples + temporary entry point.
 
 ---
 
@@ -223,3 +226,4 @@ Audit method: fresh clone; `git checkout 0e66b01` (detached HEAD, clean tree); `
 | 2026-09-18 | 1 | 1-10 | PatientVisitHistoryViewModel + View; open-patient + lab-id navigation enabled; cross-module buttons; VG-02 PASS | Success |
 | 2026-09-18 | 2 | 1-10 | CombinedReportViewModel + View + InsertHistoryDialog; «التقارير» enabled; VG-03 PASS | Success |
 | 2026-09-18 | 3 | 1-10 | BlankReportViewModel + View + HistoryReportsViewModel + View (3 modes); VG-04 PASS | Success |
+| 2026-09-18 | 4 | 1-10 | ResultDeliveryViewModel + View + DeliveryHandoverViewModel + View; «تسليم نتائج المرضى» gateway; «التسليم» enabled; VG-05 PASS | Success |
