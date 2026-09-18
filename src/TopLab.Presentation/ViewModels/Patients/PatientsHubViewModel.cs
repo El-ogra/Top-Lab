@@ -1,18 +1,16 @@
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Navigation;
+using TopLab.Presentation.ViewModels.Patients;
 
 namespace TopLab.Presentation.ViewModels.Patients;
 
 /// <summary>
 /// Patients hub (S-01 slice S5): the four-action screen behind the shell's
-/// «المرضى» button. All four buttons ship disabled in this slice — the three
-/// future screens (results entry, patient search, results delivery) belong to
-/// later workstreams, and «إضافة وتعديل بيانات المرضى» is enabled by S6 when
-/// the unified editor lands (disabled-by-design placeholder idiom, SD-6).
-/// Enablement is data-driven so S6 flips exactly one property.
+/// «المرضى» button. «إدخال نتائج التحاليل» gateway enabled by S-04 Slice 2.
 /// </summary>
 public sealed class PatientsHubViewModel : ViewModelBase
 {
+    private readonly INavigationService _navigation;
     private bool _addEditPatientEnabled;
     private bool _enterResultsEnabled;
     private bool _searchPatientEnabled;
@@ -20,20 +18,29 @@ public sealed class PatientsHubViewModel : ViewModelBase
 
     public PatientsHubViewModel(INavigationService navigation)
     {
-        // S6: the unified editor is live — the entry button is enabled and
-        // navigates to it (mirrors the vm.LoadAsync() idiom at
-        // ShellViewModel.cs:140–144). The other three buttons stay disabled
-        // until their workstreams land.
+        _navigation = navigation;
+
         AddEditPatientEnabled = true;
         OpenAddEditPatientCommand = new RelayCommand(_ =>
         {
-            navigation.NavigateTo<PatientEditorViewModel>();
-            if (navigation.CurrentViewModel is PatientEditorViewModel vm)
+            _navigation.NavigateTo<PatientEditorViewModel>();
+            if (_navigation.CurrentViewModel is PatientEditorViewModel vm)
             {
                 _ = vm.LoadCatalogAsync();
             }
         });
-        OpenEnterResultsCommand = new RelayCommand(_ => { });
+
+        // S-04 Slice 2: enable Results Worklist gateway
+        EnterResultsEnabled = true;
+        OpenEnterResultsCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<ResultsWorklistViewModel>();
+            if (_navigation.CurrentViewModel is ResultsWorklistViewModel vm)
+            {
+                _ = vm.LoadAsync();
+            }
+        });
+
         OpenSearchPatientCommand = new RelayCommand(_ => { });
         OpenDeliverResultsCommand = new RelayCommand(_ => { });
     }

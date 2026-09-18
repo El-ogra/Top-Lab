@@ -1,0 +1,67 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.ResultsWorklistView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <DockPanel Margin="12">
+        <!-- Filters -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="اليوم:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <DatePicker SelectedDate="{Binding Day, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,8,0" />
+            <TextBlock Text="لدي نتيجة:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <CheckBox IsChecked="{Binding HasResult, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" />
+            <Button Content="تحديث" Width="80" Margin="0,0,8,0" Command="{Binding LoadCommand}" />
+        </StackPanel>
+
+        <!-- Loading indicator -->
+        <ProgressBar DockPanel.Dock="Top" Height="6" IsIndeterminate="True" Margin="0,4,0,0">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Error strip -->
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+        <!-- Empty state -->
+        <TextBlock DockPanel.Dock="Top" Text="لا نتائج مطابقة للمرشح" Foreground="#666666" Margin="0,8,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- DataGrid -->
+        <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,8,0,0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="المريض" Binding="{Binding PatientFullName}" Width="*" />
+                <DataGridTextColumn Header="Lab ID" Binding="{Binding LabId}" Width="100" />
+                <DataGridTextColumn Header="التحليل" Binding="{Binding TestName}" Width="150" />
+                <DataGridTextColumn Header="الرمز" Binding="{Binding TestCode}" Width="80" />
+                <DataGridTextColumn Header="نوع النتيجة" Binding="{Binding ResultKind}" Width="100" />
+                <DataGridTextColumn Header="مزرعة؟" Binding="{Binding IsCultureType}" Width="80" />
+                <DataGridTextColumn Header="مسحوبة؟" Binding="{Binding IsSampleDrawn}" Width="80" />
+                <DataGridTextColumn Header="خارج المعمل؟" Binding="{Binding IsTakenOutsideLab}" Width="90" />
+                <DataGridTextColumn Header="النتيجة" Binding="{Binding ResultValue}" Width="100" />
+                <DataGridTextColumn Header="العلم" Binding="{Binding ResultFlag}" Width="60" />
+                <DataGridTextColumn Header="مُراجعة" Binding="{Binding IsReviewed}" Width="80" />
+                <DataGridTextColumn Header="مطبوعة" Binding="{Binding IsPrinted}" Width="80" />
+                <DataGridTextColumn Header="مُسلمة" Binding="{Binding IsDelivered}" Width="80" />
+                <DataGridTextColumn Header="حالة المريض" Binding="{Binding AggregateStatus}" Width="100" />
+                <DataGridTextColumn Header="التاريخ" Binding="{Binding RegistrationDateUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="140" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>
