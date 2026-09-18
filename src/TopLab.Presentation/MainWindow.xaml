@@ -133,6 +133,14 @@
                                                                                                                                                             <patientsView:CombinedReportView/>
                                                                                                                                                         </DataTemplate>
 
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:BlankReportViewModel}">
+                                                                                                                                                            <patientsView:BlankReportView/>
+                                                                                                                                                        </DataTemplate>
+
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:HistoryReportsViewModel}">
+                                                                                                                                                            <patientsView:HistoryReportsView/>
+                                                                                                                                                        </DataTemplate>
+
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
                         <sheetsView:WorkSheetsView/>
                     </DataTemplate>

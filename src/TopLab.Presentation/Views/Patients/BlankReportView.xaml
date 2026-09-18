@@ -1,0 +1,79 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.BlankReportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+            <TextBlock Text="التقرير الفارغ" FontSize="16" FontWeight="Bold"/>
+        </Border>
+
+        <!-- Actions -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="بناء" Margin="0,0,6,0" Padding="10,5" Command="{Binding BuildCommand}"/>
+            <Button Content="طباعة" Margin="0,0,6,0" Padding="10,5" Command="{Binding PrintCommand}"/>
+            <Button Content="رجوع" Margin="0,0,6,0" Padding="10,5" Command="{Binding BackCommand}"/>
+        </StackPanel>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Content -->
+        <Grid Grid.Row="3">
+            <TextBlock Text="لم يُبنَ تقرير بعد" Foreground="#666666" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowNotBuilt}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowNotBuilt}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <TextBlock Text="{Binding Report.PatientFullName}" FontSize="16" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Report.LabId, StringFormat='الرقم المعملي: {0}'}" Foreground="Gray"/>
+                <TextBlock Text="{Binding Report.Sex, StringFormat='الجنس: {0}'}"/>
+                <TextBlock Text="{Binding Report.AgeValue, StringFormat='العمر: {0}'}"/>
+                <TextBlock Text="{Binding Report.TreatingDoctorName, StringFormat='الطبيب المعالج: {0}'}"/>
+                <TextBlock Text="{Binding Report.ReferralEntityName, StringFormat='جهة الإحالة: {0}'}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Messages -->
+        <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="5" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
+    </Grid>
+</UserControl>

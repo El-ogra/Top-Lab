@@ -1,0 +1,103 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.HistoryReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+            <StackPanel>
+                <TextBlock Text="تقارير التاريخ المرضي" FontSize="16" FontWeight="Bold"/>
+                <TextBlock FontSize="12" Foreground="#888888">
+                    <Run Text="وضع الترتيب:"/>
+                    <Run Text="{Binding HistorySortMode, Mode=OneWay}"/>
+                    <Run Text=" — عرض تلقائي:"/>
+                    <Run Text="{Binding HistoryAutoDisplayEnabled, Mode=OneWay}"/>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!-- Mode selector -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+            <RadioButton Content="مريض واحد" IsChecked="{Binding IsSingleMode}" GroupName="HistoryMode" Margin="0,0,12,0"/>
+            <RadioButton Content="متعدد المرضى" IsChecked="{Binding IsMultiMode}" GroupName="HistoryMode" Margin="0,0,12,0"/>
+            <RadioButton Content="منفصل" IsChecked="{Binding IsSeparateMode}" GroupName="HistoryMode"/>
+        </StackPanel>
+
+        <!-- Actions -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="عرض (مريض واحد)" Margin="0,0,6,0" Padding="10,5" Command="{Binding LoadSingleCommand}"/>
+            <Button Content="عرض (متعدد)" Margin="0,0,6,0" Padding="10,5" Command="{Binding LoadMultiCommand}"/>
+            <Button Content="عرض (منفصل)" Margin="0,0,6,0" Padding="10,5" Command="{Binding LoadSeparateCommand}"/>
+            <Button Content="طباعة" Margin="0,0,6,0" Padding="10,5" Command="{Binding PrintHistoryCommand}"/>
+            <Button Content="رجوع" Margin="0,0,6,0" Padding="10,5" Command="{Binding BackCommand}"/>
+        </StackPanel>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="3" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Empty state -->
+        <TextBlock Grid.Row="4" Text="لا يوجد تاريخ مرضي لهذا المريض." Foreground="#666666"
+                   HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Entries Grid -->
+        <DataGrid Grid.Row="4"
+                  ItemsSource="{Binding Entries}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  RowHeaderWidth="0">
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="التحليل" Binding="{Binding TestName}" Width="*"/>
+                <DataGridTextColumn Header="الرمز" Binding="{Binding TestCode}" Width="80"/>
+                <DataGridTextColumn Header="النتيجة" Binding="{Binding ResultValue}" Width="80"/>
+                <DataGridCheckBoxColumn Header="مُعتمد" Binding="{Binding IsReviewed}" Width="60"/>
+                <DataGridTextColumn Header="تاريخ الإدخال" Binding="{Binding EnteredAtUtc, StringFormat={}{0:yyyy-MM-dd}}" Width="100"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Messages -->
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="6" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
+    </Grid>
+</UserControl>
