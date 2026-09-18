@@ -88,4 +88,17 @@ public sealed class DialogService : IDialogService
 
         return Task.FromResult(dialog.ShowDialog() == true ? dialog.FileName : null);
     }
+
+    public Task<string?> PickPdfSavePathAsync(string? suggestedFileName = null)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "تصدير تقرير PDF",
+            Filter = "ملفات PDF (*.pdf)|*.pdf",
+            DefaultExt = ".pdf",
+            FileName = suggestedFileName ?? "report.pdf"
+        };
+
+        return Task.FromResult(dialog.ShowDialog() == true ? dialog.FileName : null);
+    }
 }

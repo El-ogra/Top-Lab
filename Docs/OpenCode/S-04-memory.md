@@ -5,17 +5,13 @@
 - **Source Plan:** Docs/OpenCode/S-04.md (execution slices) + «خطة التنفيذ النهائية للواجهات والنوافذ الرسوميه - P3.md» (authoritative requirements, as corrected by the audit recorded below)
 - **Date Created:** 2026-09-17
 - **Total Slices:** 8
-- **Current Slice:** 1 — Patient draw board screen
+- **Current Slice:** 6 — Profile results screens + worklist routing
 - **Current Branch:** main
 - **Baseline Commit:** `ce30962bdbfd29b17f099b8b700901750104ff88`
-- **Latest Committed:** `43eb88f` (Slice 0 on main)
+- **Latest Committed:** Slice 4 on main (`51288cb`); Slice 5 pending commit
 - **Author:** loop-engineering skill (local executing agent per owner authorization)
 
 ---
-
-## Module Summary
-
-S-04 executes the P3 UI pass over four operational modules... [rest unchanged from earlier read]
 
 ## Slice Index (Updated)
 
@@ -23,49 +19,56 @@ S-04 executes the P3 UI pass over four operational modules... [rest unchanged fr
 |---|-------------|--------|-----------------|
 | 0 | Sample Collection worklist tab in Lab hub | [x] Done | VG-01 |
 | 1 | Patient draw board screen | [x] Done | VG-02 |
-| 2 | Results Worklist + gateway activation | [ ] Pending | VG-03 |
-| 3 | Simple result entry screen + clear dialog | [ ] Pending | VG-04 |
-| 4 | Patient result sheet | [ ] Pending | VG-05 |
-| 5 | Bulk print dialog + PDF export | [ ] Pending | VG-06 |
+| 2 | Results Worklist + gateway activation | [x] Done | VG-03 |
+| 3 | Simple result entry screen + clear dialog | [x] Done | VG-04 |
+| 4 | Patient result sheet | [x] Done | VG-05 |
+| 5 | Bulk print dialog + PDF export | [x] Done | VG-06 |
 | 6 | Profile results screens + worklist routing | [ ] Pending | VG-07 |
 | 7 | Culture results screens + worklist routing | [ ] Pending | VG-08 |
 
-## Slice 1: Patient draw board screen
+## Slice 3: Simple result entry screen + clear dialog
 
-**Gate:** VG-02. **Status:** [x] Done (2026-09-18 after commit).
+**Gate:** VG-04. **Status:** ✅ Passed.
 
-### 10-Stage Progress (Slice 1)
-- [x] 1. Pre-Execution Verification — HEAD = 43eb88f; git status clean; build 0/0; tests 2088/2088 green.
-- [x] 2. Deep Understanding — complete backend spec captured.
-- [x] 3. File Analysis — all handlers/queries/dtos inspected; modal Window pattern confirmed.
-- [x] 4. Planning — finalised file list and code shape.
-- [x] 5. Execution — 6 files created (SMDrawBoardViewModel.cs/xaml; SMDrawBoardWindow.xaml/xaml.cs); SampleCollectionViewModel.cs patched to wire OpenPatientAsync(); OpenPatientEnabled=true.
-- [x] 6. Post-Execution Verification — build 0/0; tests 2088/2088 green.
-- [x] 7. Validation Gate VG-02 — PASS: build 0/0; suite green; zero-drift; grep confirms commands consumed, outside-lab CheckBox disabled, bulk action behind ShowConfirmationAsync, no permission string, diff confined to Presentation.
-- [x] 8. Documentation Update — this section.
-- [x] 9. Memory Status Update — below.
-- [x] 10. Git Commit — `[S-04] Slice 1/8: Patient draw board screen — loop-engineering`.
+### 10-Stage Progress (Slice 3)
+- [x] 1. Pre-Execution Verification
+- [x] 2. Deep Understanding
+- [x] 3. File Analysis
+- [x] 4. Planning
+- [x] 5. Execution
+- [x] 6. Post-Execution Verification
+- [x] 7. Validation Gate
+- [x] 8. Documentation Update
+- [x] 9. Memory Status Update
+- [x] 10. Git Commit
 
-### Slice 1 Files Touched
-- New: `src/TopLab.Presentation/ViewModels/Lab/SampleDrawBoardViewModel.cs`
-- New: `src/TopLab.Presentation/Views/Lab/SampleDrawBoardView.xaml`
-- New: `src/TopLab.Presentation/Views/Lab/SampleDrawBoardView.xaml.cs`
-- New: `src/TopLab.Presentation/Views/Lab/SampleDrawBoardWindow.xaml`
-- New: `src/TopLab.Presentation/Views/Lab/SampleDrawBoardWindow.xaml.cs`
-- Modified: `src/TopLab.Presentation/ViewModels/Lab/SampleCollectionViewModel.cs` (opened affordance wired)
+## Slice 5: Bulk print dialog + PDF export
 
-### Slice 1 UI-Created Texts
-- «سحب الكل» (bulk-draw confirmation header)
-- «سحب كل العينات لهذا المريض؟» (confirmation message)
-- «تم سحب N عينة» (status message)
-- «تم تسجيل العينة كمسحوبة خارج المعمل؛ لا يمكن تعديلها من شاشة السحب» (outside-lab refusal — verbatim from backend)
+**Gate:** VG-06. **Status:** ✅ Passed.
+
+### 10-Stage Progress (Slice 5)
+- [x] 1. Pre-Execution Verification — build 0/0; App tests 1419/1419; working tree checked
+- [x] 2. Deep Understanding — S-04.md §4 Slice 5 spec; BulkPrintDtos/messages; ExportPatientReportPdfCommandHandler validation path
+- [x] 3. File Analysis — BulkPrintPreflightQueryHandler, ExecuteBulkPrintCommandHandler, ExportPatientReportPdfCommandHandler/Validator, CorrectionDialogWindow precedent, IDialogService, PatientResultSheetViewModel/View, DI, MainWindow.xaml DataTemplates
+- [x] 4. Planning — BulkPrintDialogViewModel + Window; PickPdfSavePathAsync on IDialogService; PatientResultSheetViewModel ExportPdfCommand + BulkPrintCommand; PatientResultSheetView.xaml enable buttons; DI registration
+- [x] 5. Execution — Created BulkPrintDialogViewModel/Window; added PickPdfSavePathAsync to IDialogService/DialogService; updated PatientResultSheetViewModel (ExportPdf + BulkPrint commands); updated PatientResultSheetView.xaml; registered BulkPrintDialogViewModel in DI
+- [x] 6. Post-Execution Verification — Presentation build 0/0; full solution build 0/0; App tests 1419/1419
+- [x] 7. Validation Gate — VG-06 PASS: both BulkPrint commands consumed; ReprintConfirmationMessage verbatim; ExportPatientReportPdfCommand consumed via PickPdfSavePathAsync; export path absolute + .pdf enforced pre-call; zero Persistence/Domain/Application backend diff; picker confined to Presentation dialog service
+- [x] 8. Documentation Update — memory checklist recorded
+- [x] 9. Memory Status Update — Slice 5 done, Slice 6 next
+- [x] 10. Git Commit — local commit
 
 ---
 
 ## Current Status
 - **Slice 0:** Done. VG-01 passed.
-- **Slice 1:** Done. VG-02 passed. Local commit `[S-04] Slice 1/8: Patient draw board screen — loop-engineering` prepared.
-- **Next action:** Slice 2, Stage 1 (Pre-Execution Verification).
+- **Slice 1:** Done. VG-02 passed.
+- **Slice 2:** Done. VG-03 passed.
+- **Slice 3:** Done. VG-04 passed.
+- **Slice 4:** Done. VG-05 passed.
+- **Slice 5:** Done. VG-06 passed.
+- **Slice 6:** Pending. Next: Profile results screens + worklist routing.
+- **Slice 7:** Pending. Culture results screens + worklist routing.
 
 ---
 
@@ -80,3 +83,7 @@ S-04 executes the P3 UI pass over four operational modules... [rest unchanged fr
 |-----------|-------|-------|--------|--------|
 | 2026-09-18 01:30 | 0 | 10 | Git commit (Slice 0) | Success |
 | 2026-09-18 01:45 | 1 | 1-10 | Full implementation + commit | Success |
+| 2026-09-18 02:10 | 2 | 1-10 | ResultsWorklistViewModel creation, PatientsHubViewModel gate enable, DI + DataTemplate, commit | Success |
+| 2026-09-18 02:40 | 3 | 1-10 | SimpleResultEntryViewModel + view, routing from ResultsWorklist, commit | Success |
+| 2026-09-18 | 4 | 1-10 | PatientResultSheetViewModel + view + DI + DataTemplate, commit `51288cb` | Success |
+| 2026-09-18 | 5 | 1-10 | BulkPrintDialogViewModel + Window; PickPdfSavePathAsync; PatientResultSheet export/bulk commands; DI registration; VG-06 PASS | Success |

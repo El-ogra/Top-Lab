@@ -7,4 +7,5 @@ public interface IDialogService
     Task<bool> ShowSecondaryPasswordDialogAsync();
     Task<string?> PickBackupFolderAsync(string initialDirectory);
     Task<string?> PickBackupFileAsync();
+    Task<string?> PickPdfSavePathAsync(string? suggestedFileName = null);
 }
