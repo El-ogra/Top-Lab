@@ -4,6 +4,7 @@ using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Application.Features.ResultsEntry.Queries.GetResultWorklist;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.ErrorPresentation;
+using TopLab.Presentation.Common.Navigation;
 
 namespace TopLab.Presentation.ViewModels.Patients;
 
@@ -16,6 +17,7 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
 {
     private readonly ISender _mediator;
     private readonly ResultErrorPresenter _presenter;
+    private readonly INavigationService _navigation;
 
     private DateOnly? _day = DateOnly.FromDateTime(DateTime.UtcNow);
     private bool? _hasResult = null;
@@ -28,14 +30,16 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
     private int _totalCount;
     private bool _isBusy;
     private string _errorMessage = string.Empty;
+    private ResultWorklistItemDto? _selectedItem;
 
-    public ResultsWorklistViewModel(ISender mediator, ResultErrorPresenter presenter)
+    public ResultsWorklistViewModel(ISender mediator, ResultErrorPresenter presenter, INavigationService navigation)
     {
         _mediator = mediator;
         _presenter = presenter;
+        _navigation = navigation;
 
-        LoadCommand = new AsyncRelayCommand(_ => LoadAsync());
-        OpenDetailCommand = new AsyncRelayCommand(async _ => await Task.CompletedTask); // disabled routing until S3/S6/S7
+        LoadCommand = new AsyncRelayCommand(async (_, ct) => await LoadAsync(ct));
+        OpenDetailCommand = new AsyncRelayCommand(async (param, ct) => await OpenDetailAsync(param as ResultWorklistItemDto, ct));
     }
 
     public DateOnly? Day
@@ -98,6 +102,12 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
         set => SetProperty(ref _pageSize, value);
     }
 
+    public ResultWorklistItemDto? SelectedItem
+    {
+        get => _selectedItem;
+        set => SetProperty(ref _selectedItem, value);
+    }
+
     public ObservableCollection<ResultWorklistItemDto> Items
     {
         get => _items;
@@ -135,14 +145,14 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
     public AsyncRelayCommand LoadCommand { get; }
     public AsyncRelayCommand OpenDetailCommand { get; }
 
-    public async Task LoadAsync()
+    public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
         IsBusy = true;
         ErrorMessage = string.Empty;
         try
         {
             var result = await _mediator.Send(new GetResultWorklistQuery(
-                Day, HasResult, IsReviewed, TestGroupId, ResultKind, Page, PageSize));
+                Day, HasResult, IsReviewed, TestGroupId, ResultKind, Page, PageSize), cancellationToken);
             if (result.IsSuccess && result.Value is not null)
             {
                 Items = new ObservableCollection<ResultWorklistItemDto>(result.Value);
@@ -157,5 +167,27 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    private async Task OpenDetailAsync(ResultWorklistItemDto? item, CancellationToken cancellationToken)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        // S-04 Slice 3: Simple results route to SimpleResultEntryViewModel (enabled)
+        // D4 routing: Simple tests → R2 (S3), SpecializedProfile → P1 (S6), Culture → C1 (S7)
+        // Note: item.ResultKind is int, ResultKind enum values: Simple=0, SpecializedProfile=1, Culture=2
+        if (item.ResultKind == 0)  // ResultKind.Simple = 0
+        {
+            _navigation.NavigateTo<SimpleResultEntryViewModel>();
+            if (_navigation.CurrentViewModel is SimpleResultEntryViewModel vm)
+            {
+                await vm.LoadAsync(item);
+            }
+        }
+        // S-04 Slice 6: SpecializedProfile routes to ProfileResultsViewModel (P1) - deferred
+        // S-04 Slice 7: Culture routes to CultureResultsViewModel (C1) - deferred
     }
 }

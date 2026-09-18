@@ -102,9 +102,14 @@
                                             <patientsView:PatientAccountView/>
                                         </DataTemplate>
                                         <DataTemplate DataType="{x:Type patientsVm:ResultsWorklistViewModel}">
-                                            <patientsView:ResultsWorklistView/>
-                                        </DataTemplate>
-                                        <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
+                                                                                <patientsView:ResultsWorklistView/>
+                                                                            </DataTemplate>
+
+                                                                            <DataTemplate DataType="{x:Type patientsVm:SimpleResultEntryViewModel}">
+                                                                                <patientsView:SimpleResultEntryView/>
+                                                                            </DataTemplate>
+
+                                                                            <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
                         <sheetsView:WorkSheetsView/>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type labVm:LabHubViewModel}">
