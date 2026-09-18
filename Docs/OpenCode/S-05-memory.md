@@ -187,12 +187,12 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 Expected entries (from the audited plan — all Requires-creation view texts): «لا توجد نتائج مطابقة.» (S0) / «لا توجد تحاليل في هذه الزيارة.» (S1) / «لا توجد تحاليل معتمدة قابلة للدمج لهذا المريض.» + «لا نتائج تاريخية لهذا التحليل.» + insert/auto-insert confirmation texts (S2) / «لم يُبنَ تقرير بعد» + «لا يوجد تاريخ مرضي لهذا المريض.» + history-print confirmation (S3) / «لا توجد نتائج غير مسلَّمة في هذه الفترة.» + «لا توجد تحاليل لهذا المريض.» + deliver-and-settle confirmation (S4) / «لا توجد عينات مرسلة في هذه الفترة/لهذا المعمل.» + «لا توجد معامل خارجية مسجلة — أضف جهة بنوع «معمل خارجي» من إدارة الجهات.» + «لا عينات مرسلة لهذا المعمل في الفترة.» + send/payment/settle confirmations (S5).
 
 ## Current Status
-- **Slice 0:** Done. VG-01 passed.
-- **Slice 1:** Done. VG-02 passed.
-- **Slice 2:** Done. VG-03 passed.
-- **Slice 3:** Done. VG-04 passed.
-- **Slice 4:** Done. VG-05 passed.
-- **Slice 5:** Not started. Sent-out samples + temporary entry point.
+- **Slice 0:** Done. VG-01 passed. Commit `9b1bdfe`.
+- **Slice 1:** Done. VG-02 passed. Commit `f93f0ea`.
+- **Slice 2:** Done. VG-03 passed. Commit `a98c4cd`.
+- **Slice 3:** Done. VG-04 passed. Commit `0289808`.
+- **Slice 4:** Done. VG-05 passed. Commit `6bdf242`.
+- **Slice 5:** STOPPED at Stage 4. Waiting for owner decision on M16 temporary-entry placement.
 
 ---
 
@@ -214,7 +214,26 @@ Audit method: fresh clone; `git checkout 0e66b01` (detached HEAD, clean tree); `
 
 ## Stop Report (append only if a stop condition triggers)
 
-(Empty — no stop condition triggered)
+**STOP triggered at Slice 5, Stage 4 (Planning) — 2026-09-18.**
+
+**Trigger condition:** The owner has NOT settled the exact placement of the M16 temporary entry point inside the settings dashboard. The decision is recorded as «بانتظار قرار المالك — غير مُدرج في القائمة الأصلية» (S-05.md §3-2; S-05-memory.md Settled Decisions). The plan explicitly forbids the agent from improvising a different host.
+
+**What was completed before the stop:**
+- Slice 0: Patient search screen + gateway — VG-01 PASS — commit `9b1bdfe`
+- Slice 1: Patient visit history master-detail — VG-02 PASS — commit `f93f0ea`
+- Slice 2: Combined report + insert-history dialog — VG-03 PASS — commit `a98c4cd`
+- Slice 3: Blank report + history reports — VG-04 PASS — commit `0289808`
+- Slice 4: Result delivery screens + gateway — VG-05 PASS — commit `6bdf242`
+- Slice 5 Stages 1–3: Pre-exec verification (build 0/0, tests 1419/1419), deep understanding (all M16 backend contracts verified), file analysis (SearchExternalEntitiesQuery for D10, SentOutSampleDtos, all command signatures)
+
+**What is blocked:** Slice 5 Stage 5 (Execution) cannot proceed without the owner's placement decision. The screens themselves (SentOutSamplesView, SendSampleOutDialog, SentOutLabAccountView) and the D10-closed ComboBox sourcing are fully specified and ready to implement — only the temporary entry point's exact host location inside the settings dashboard is missing.
+
+**Requested decision:** Where exactly inside `SettingsDashboardViewModel` / `SettingsDashboardView` should the temporary entry button for «العينات المرسلة» be placed? The mechanism (D3-pattern tagged temporary route) is settled; only the precise location is open.
+
+**Evidence:**
+- S-05.md §3-2: «الموضع الدقيق داخل اللوحة: «بانتظار قرار المالك — غير مُدرج في القائمة الأصلية» — مسجَّل لا محسوم»
+- S-05-memory.md Settled Decisions: "Recorded open decision (NOT settled — do not decide)"
+- Slice 5 Blocking conditions: "if the owner has not settled it by Stage 4 (Planning) of this slice, STOP-and-report"
 
 ---
 
@@ -227,3 +246,5 @@ Audit method: fresh clone; `git checkout 0e66b01` (detached HEAD, clean tree); `
 | 2026-09-18 | 2 | 1-10 | CombinedReportViewModel + View + InsertHistoryDialog; «التقارير» enabled; VG-03 PASS | Success |
 | 2026-09-18 | 3 | 1-10 | BlankReportViewModel + View + HistoryReportsViewModel + View (3 modes); VG-04 PASS | Success |
 | 2026-09-18 | 4 | 1-10 | ResultDeliveryViewModel + View + DeliveryHandoverViewModel + View; «تسليم نتائج المرضى» gateway; «التسليم» enabled; VG-05 PASS | Success |
+| 2026-09-18 | 5 | 1-3 | Pre-exec + deep understanding + file analysis for M16 screens | Success |
+| 2026-09-18 | 5 | 4 | STOP-GATE: owner decision on temporary-entry placement not settled | STOPPED |
