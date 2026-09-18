@@ -164,11 +164,11 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
             list.Add(new NavigationItem
             {
                 Title = t,
-                // D3 (S-02 Slice 6): the official ExternalEntities entry lives
-                // under «الحسابات», which stays disabled until P5. A temporary
-                // explicitly-tagged route via the Settings dashboard covers
-                // the gap until then.
-                IsEnabled = t != "الحسابات",
+                // S-06 Slice 3: «الحسابات» activated — D3 comment closed.
+                // The official ExternalEntities + SentOutSamples entries now live
+                // inside the Accounts hub (P5). Temporary settings-dashboard routes
+                // absorbed in Slice 4.
+                IsEnabled = true,
                 Command = new RelayCommand(async _ =>
                 {
                     if (t == "خروج")
@@ -201,6 +201,20 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
                         _navigation.NavigateTo<ViewModels.Users.UserManagementViewModel>();
                         if (_navigation.CurrentViewModel is ViewModels.Users.UserManagementViewModel vm)
+                        {
+                            await vm.LoadAsync();
+                        }
+                    }
+                    else if (t == "الحسابات")
+                    {
+                        bool ok = await _dialogs.ShowSecondaryPasswordDialogAsync();
+                        if (!ok)
+                        {
+                            return;
+                        }
+
+                        _navigation.NavigateTo<ViewModels.Accounts.AccountsHubViewModel>();
+                        if (_navigation.CurrentViewModel is ViewModels.Accounts.AccountsHubViewModel vm)
                         {
                             await vm.LoadAsync();
                         }

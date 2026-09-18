@@ -1,0 +1,24 @@
+<Window x:Class="TopLab.Presentation.Views.Accounts.CashMovementDialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="حركة نقدية" Height="300" Width="400"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="20">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Content="حفظ" Width="90" Margin="0,0,8,0" Click="SaveButton_Click" IsDefault="True"/>
+            <Button Content="إلغاء" Width="80" Click="CancelButton_Click" IsCancel="True"/>
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+        <StackPanel>
+            <TextBlock Text="{Binding DirectionLabel, StringFormat='نوع الحركة: {0}'}" FontWeight="Bold" Margin="0,0,0,8"/>
+            <TextBlock Text="المبلغ:" Margin="0,0,0,2"/>
+            <TextBox Text="{Binding AmountText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="الجهة الخارجية المرتبطة (اختياري):" Margin="0,0,0,2"/>
+            <ComboBox ItemsSource="{Binding EntityItems}" SelectedValue="{Binding RelatedExternalEntityId}" SelectedValuePath="Id" DisplayMemberPath="Name" Margin="0,0,0,8"/>
+            <TextBlock Text="البيان (اختياري، ≤ 500):" Margin="0,0,0,2"/>
+            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" Height="60"/>
+        </StackPanel>
+    </DockPanel>
+</Window>

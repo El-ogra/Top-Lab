@@ -20,6 +20,8 @@
            xmlns:attendanceView="clr-namespace:TopLab.Presentation.Views.Attendance"
            xmlns:statisticsVm="clr-namespace:TopLab.Presentation.ViewModels.Statistics"
            xmlns:statisticsView="clr-namespace:TopLab.Presentation.Views.Statistics"
+           xmlns:accountsVm="clr-namespace:TopLab.Presentation.ViewModels.Accounts"
+           xmlns:accountsView="clr-namespace:TopLab.Presentation.Views.Accounts"
          mc:Ignorable="d"
          Title="Top-Lab — نظام توب لاب" Height="600" Width="1024"
          FlowDirection="RightToLeft"
@@ -175,6 +177,10 @@
 
                                                                                                                                                         <DataTemplate DataType="{x:Type statisticsVm:StatisticsViewModel}">
                                                                                                                                                             <statisticsView:StatisticsView/>
+                                                                                                                                                        </DataTemplate>
+
+                                                                                                                                                        <DataTemplate DataType="{x:Type accountsVm:AccountsHubViewModel}">
+                                                                                                                                                            <accountsView:AccountsHubView/>
                                                                                                                                                         </DataTemplate>
 
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
