@@ -214,8 +214,8 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 Expected entries (from the audited plan — all Requires-creation view texts): «لا توجد عمليات دفع مسجلة لهذا المريض.» (S5, P-tab empty) / check-out confirmation text (S0) / «لا توجد سجلات في هذه الفترة.» (S1, empty) / «لا توجد بيانات في هذه الفترة.» (S2 + S4, empty) / cash-movement confirmation text showing direction + amount (S3) / «لا توجد حركات نقدية في هذه الفترة.» (S3, empty) / «إيداع»/«صرف» MovementType display translations (S3) / «لا توجد عينات في هذه الفترة.» (S4, empty) / InventoryElementKind + InventoryReportType display translations (S4) / phone-book/purchases delete confirmations (S6) / «هذه البيانات محلية لهذه المحطة ولا تُزامَن.» (S6, scope note) / empty-state texts for utilities tabs 4/5/6 (S6) / any display text for the Notes ≤ 500 limit if surfaced (S3/S6).
 
 ## Current Status
-- **Slice 0:** Done. VG-01 passed.
-- **Slice 1:** Not started. Attendance admin screens + entry point (STOP-GATE).
+- **Slice 0:** Done. VG-01 passed. Commit `816ee6e`.
+- **Slice 1:** STOPPED at Stage 4. Waiting for owner decision on attendance entry point.
 - **Slice 2:** Not started.
 - **Slice 3:** Not started.
 - **Slice 4:** Not started.
@@ -244,6 +244,18 @@ Audit method: fresh clone of `https://github.com/El-ogra/Top-Lab.git`; `git chec
 
 ## Stop Report (append only if a stop condition triggers)
 
+**STOP triggered at Slice 1, Stage 4 (Planning) — 2026-09-18.**
+
+**Trigger condition:** The owner has NOT settled the official entry point for the three M18 attendance screens. The decision is recorded as «بانتظار قرار المالك — غير مُدرج في القائمة الأصلية» (S-06.md §3; S-06-memory.md Recorded Open Decisions). The delegation covered D5/D11/D12 only — the attendance entry point was explicitly excluded.
+
+**What was completed before the stop:**
+- Slice 0: Attendance self-service screen — VG-01 PASS — commit `816ee6e`
+- Slice 1 Stages 1–3: Pre-exec verification (build 0/0, tests 1419/1419), deep understanding (M18 admin queries + DTOs verified), file analysis (ShellViewModel, DI, MainWindow.xaml)
+
+**What is blocked:** Slice 1 Stage 5 (Execution) cannot proceed without the owner's placement decision.
+
+**Requested decision:** How should the three M18 attendance screens be reached? Code-level options noted in the memory file: (a) extend the «المستخدمون» shell path, or (b) place a surface inside «النظام» after D12 lands (Slice 5). The owner may choose either, or specify a third option.
+
 ---
 
 ## Execution Log
@@ -251,3 +263,5 @@ Audit method: fresh clone of `https://github.com/El-ogra/Top-Lab.git`; `git chec
 | Timestamp | Slice | Stage | Action | Result |
 |-----------|-------|-------|--------|--------|
 | 2026-09-18 | 0 | 1-10 | MyAttendanceViewModel + View; 4 commands + live clock; DI + DataTemplate; VG-01 PASS | Success |
+| 2026-09-18 | 1 | 1-3 | Pre-exec + deep understanding + file analysis for attendance admin screens | Success |
+| 2026-09-18 | 1 | 4 | STOP-GATE: owner decision on attendance entry point not settled | STOPPED |
