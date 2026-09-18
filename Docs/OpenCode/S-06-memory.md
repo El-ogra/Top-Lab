@@ -82,7 +82,7 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 |---|-------------|--------|-----------------|
 | 0 | Attendance self-service screen | [x] Done | VG-01 PASS |
 | 1 | Attendance admin screens + entry point | [x] Done | VG-02 PASS |
-| 2 | Statistics dashboard + «الإحصائيات» wiring | [ ] Not started | VG-03 |
+| 2 | Statistics dashboard + «الإحصائيات» wiring | [x] Done | VG-03 PASS |
 | 3 | Accounts hub + cash drawer + «الحسابات» activation | [ ] Not started | VG-04 |
 | 4 | Accounts tabs + temporary-route absorption | [ ] Not started | VG-05 |
 | 5 | Audit screen + «النظام» wiring | [ ] Not started | VG-06 |
@@ -212,6 +212,7 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 | 0 | MyAttendanceViewModel | «تم تسجيل الانصراف بنجاح.» | Status (success) |
 | 1 | AttendanceRecordsView | «لا توجد سجلات في هذه الفترة.» | Empty-state |
 | 1 | UserAttendanceSummaryView | «اختر مستخدماً واضغط «عرض» لعرض الملخص.» | Empty-state |
+| 2 | StatisticsView | «لا توجد بيانات في هذه الفترة.» | Empty-state (all four sections) |
 
 Expected entries (from the audited plan — all Requires-creation view texts): «لا توجد عمليات دفع مسجلة لهذا المريض.» (S5, P-tab empty) / check-out confirmation text (S0) / «لا توجد سجلات في هذه الفترة.» (S1, empty) / «لا توجد بيانات في هذه الفترة.» (S2 + S4, empty) / cash-movement confirmation text showing direction + amount (S3) / «لا توجد حركات نقدية في هذه الفترة.» (S3, empty) / «إيداع»/«صرف» MovementType display translations (S3) / «لا توجد عينات في هذه الفترة.» (S4, empty) / InventoryElementKind + InventoryReportType display translations (S4) / phone-book/purchases delete confirmations (S6) / «هذه البيانات محلية لهذه المحطة ولا تُزامَن.» (S6, scope note) / empty-state texts for utilities tabs 4/5/6 (S6) / any display text for the Notes ≤ 500 limit if surfaced (S3/S6).
 
@@ -258,3 +259,4 @@ Audit method: fresh clone of `https://github.com/El-ogra/Top-Lab.git`; `git chec
 | 2026-09-18 | 1 | 1-3 | Pre-exec + deep understanding + file analysis | Success |
 | 2026-09-18 | 1 | 4 | STOP-GATE resolved: owner settled (أ) امتداد مسار «المستخدمون» | Resolved |
 | 2026-09-18 | 1 | 5-10 | AttendanceRecordsViewModel + View + UserAttendanceSummaryViewModel + View; 3 attendance buttons in UserManagementView; VG-02 PASS | Success |
+| 2026-09-18 | 2 | 1-10 | StatisticsViewModel + View (4 sections, tables-only per D5); «الإحصائيات» wired in ShellViewModel; VG-03 PASS | Success |

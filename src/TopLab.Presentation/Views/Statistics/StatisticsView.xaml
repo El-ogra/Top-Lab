@@ -1,0 +1,292 @@
+<UserControl x:Class="TopLab.Presentation.Views.Statistics.StatisticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Section selector -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="القسم:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <RadioButton Content="المرضى" IsChecked="{Binding IsPatientsSection}" GroupName="StatSection" Margin="0,0,8,0"/>
+            <RadioButton Content="التحاليل" IsChecked="{Binding IsTestsSection}" GroupName="StatSection" Margin="0,0,8,0"/>
+            <RadioButton Content="المرسلة" IsChecked="{Binding IsSentOutSection}" GroupName="StatSection" Margin="0,0,8,0"/>
+            <RadioButton Content="الإنتاجية" IsChecked="{Binding IsProductivitySection}" GroupName="StatSection"/>
+        </StackPanel>
+
+        <!-- Period + filters -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="من:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <DatePicker SelectedDate="{Binding From, UpdateSourceTrigger=PropertyChanged}" Width="130" Margin="0,0,8,0"/>
+            <TextBlock Text="إلى:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <DatePicker SelectedDate="{Binding To, UpdateSourceTrigger=PropertyChanged}" Width="130" Margin="0,0,8,0"/>
+            <Button Content="رجوع" Width="70" Command="{Binding BackCommand}"/>
+        </StackPanel>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Section content -->
+        <Grid Grid.Row="3">
+            <!-- Section 1: Patients -->
+            <DockPanel>
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPatientsSection}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DockPanel.Style>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <CheckBox Content="حسب الجنس" IsChecked="{Binding BySex}" Margin="0,0,8,0"/>
+                    <CheckBox Content="حسب جهة الإحالة" IsChecked="{Binding ByReferralEntity}" Margin="0,0,8,0"/>
+                    <CheckBox Content="حسب نوع الحساب" IsChecked="{Binding ByAccountType}" Margin="0,0,8,0"/>
+                    <CheckBox Content="تجميع شهري" IsChecked="{Binding GroupByMonth}" Margin="0,0,8,0"/>
+                    <Button Content="عرض" Width="70" Command="{Binding LoadPatientsCommand}"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding PatientStats.TotalCount, StringFormat='إجمالي المرضى: {0}'}" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                        <TextBlock Text="لا توجد بيانات في هذه الفترة." Foreground="#666666" Margin="0,0,0,8">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowPatientsEmpty}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <DataGrid ItemsSource="{Binding PatientStats.SexCounts}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,8" MaxHeight="200">
+                            <DataGrid.Style>
+                                <Style TargetType="DataGrid">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding BySex}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Style>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="الجنس" Binding="{Binding DisplayName}" Width="*"/>
+                                <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid ItemsSource="{Binding PatientStats.ReferralEntityCounts}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,8" MaxHeight="200">
+                            <DataGrid.Style>
+                                <Style TargetType="DataGrid">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ByReferralEntity}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Style>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="جهة الإحالة" Binding="{Binding DisplayName}" Width="*"/>
+                                <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid ItemsSource="{Binding PatientStats.AccountTypeCounts}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,8" MaxHeight="200">
+                            <DataGrid.Style>
+                                <Style TargetType="DataGrid">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ByAccountType}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Style>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="نوع الحساب" Binding="{Binding DisplayName}" Width="*"/>
+                                <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid ItemsSource="{Binding PatientStats.MonthlyCounts}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,8" MaxHeight="200">
+                            <DataGrid.Style>
+                                <Style TargetType="DataGrid">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding GroupByMonth}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Style>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="السنة" Binding="{Binding Year}" Width="60"/>
+                                <DataGridTextColumn Header="الشهر" Binding="{Binding Month}" Width="60"/>
+                                <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+
+            <!-- Section 2: Tests -->
+            <DockPanel>
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsTestsSection}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DockPanel.Style>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="مجموعة:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding TestGroupItems}" SelectedValue="{Binding TestGroupId}" SelectedValuePath="Id" DisplayMemberPath="Name" Width="140" Margin="0,0,8,0"/>
+                    <Button Content="عرض" Width="70" Command="{Binding LoadTestsCommand}"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding TestStats.TotalOrders, StringFormat='إجمالي التحاليل: {0}'}" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                        <TextBlock Text="لا توجد بيانات في هذه الفترة." Foreground="#666666" Margin="0,0,0,8">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowTestsEmpty}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <DataGrid ItemsSource="{Binding TestStats.Tests}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,8">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="التحليل" Binding="{Binding TestName}" Width="*"/>
+                                <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid ItemsSource="{Binding TestStats.Groups}" AutoGenerateColumns="False" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="المجموعة" Binding="{Binding GroupName}" Width="*"/>
+                                <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+
+            <!-- Section 3: Sent-out -->
+            <DockPanel>
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSentOutSection}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DockPanel.Style>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="المعمل:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding LabItems}" SelectedValue="{Binding ExternalLabEntityId}" SelectedValuePath="Id" DisplayMemberPath="Name" Width="140" Margin="0,0,8,0"/>
+                    <Button Content="عرض" Width="70" Command="{Binding LoadSentOutCommand}"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding SentOutStats.TotalSent, StringFormat='إجمالي المرسلة: {0}'}" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                        <TextBlock Text="لا توجد بيانات في هذه الفترة." Foreground="#666666" Margin="0,0,0,8">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowSentOutEmpty}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <DataGrid ItemsSource="{Binding SentOutStats.Labs}" AutoGenerateColumns="False" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="المعمل" Binding="{Binding LabName}" Width="*"/>
+                                <DataGridTextColumn Header="العدد" Binding="{Binding SentCount}" Width="60"/>
+                                <DataGridTextColumn Header="التكلفة" Binding="{Binding TotalCost}" Width="80"/>
+                                <DataGridTextColumn Header="المدفوع" Binding="{Binding TotalPaid}" Width="80"/>
+                                <DataGridTextColumn Header="المتبقي" Binding="{Binding Remaining}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+
+            <!-- Section 4: Productivity -->
+            <DockPanel>
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsProductivitySection}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DockPanel.Style>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="المستخدم:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding UserItems}" SelectedValue="{Binding UserId}" SelectedValuePath="Id" DisplayMemberPath="UserName" Width="140" Margin="0,0,8,0"/>
+                    <Button Content="عرض" Width="70" Command="{Binding LoadProductivityCommand}"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="لا توجد بيانات في هذه الفترة." Foreground="#666666" Margin="0,0,0,8">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowProductivityEmpty}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <DataGrid ItemsSource="{Binding ProductivityStats.Users}" AutoGenerateColumns="False" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="المستخدم" Binding="{Binding UserName}" Width="*"/>
+                                <DataGridTextColumn Header="إدخال" Binding="{Binding EnteredCount}" Width="60"/>
+                                <DataGridTextColumn Header="اعتماد" Binding="{Binding ReviewedCount}" Width="60"/>
+                                <DataGridTextColumn Header="طباعة" Binding="{Binding PrintedCount}" Width="60"/>
+                                <DataGridTextColumn Header="تسليم" Binding="{Binding DeliveredCount}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Grid>
+
+        <!-- Error -->
+        <TextBlock Grid.Row="4" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0"/>
+    </Grid>
+</UserControl>

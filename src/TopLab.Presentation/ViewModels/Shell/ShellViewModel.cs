@@ -205,6 +205,14 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                             await vm.LoadAsync();
                         }
                     }
+                    else if (t == "الإحصائيات")
+                    {
+                        _navigation.NavigateTo<ViewModels.Statistics.StatisticsViewModel>();
+                        if (_navigation.CurrentViewModel is ViewModels.Statistics.StatisticsViewModel vm)
+                        {
+                            await vm.LoadAsync();
+                        }
+                    }
                     else if (t == "الإعدادات")
                     {
                         _navigation.NavigateTo<ViewModels.Settings.SettingsDashboardViewModel>();
