@@ -187,7 +187,15 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
                 await vm.LoadAsync(item);
             }
         }
-        // S-04 Slice 6: SpecializedProfile routes to ProfileResultsViewModel (P1) - deferred
+        // S-04 Slice 6: SpecializedProfile routes to ProfileEntryViewModel (P1)
+        else if (item.ResultKind == 1)  // ResultKind.SpecializedProfile = 1
+        {
+            _navigation.NavigateTo<ProfileEntryViewModel>();
+            if (_navigation.CurrentViewModel is ProfileEntryViewModel pvm)
+            {
+                await pvm.LoadAsync(item.PatientTestId, cancellationToken);
+            }
+        }
         // S-04 Slice 7: Culture routes to CultureResultsViewModel (C1) - deferred
     }
 }

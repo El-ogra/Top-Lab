@@ -1,0 +1,30 @@
+<Window x:Class="TopLab.Presentation.Views.Patients.AmendDialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="تعديل نتيجة بروفايل" Height="300" Width="420"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="20">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Content="حفظ" Width="90" Margin="0,0,8,0" Click="SaveButton_Click" IsDefault="True"/>
+            <Button Content="إلغاء" Width="80" Click="CancelButton_Click" IsCancel="True"/>
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+        <StackPanel>
+            <TextBlock Text="{Binding AnalyteName}" FontWeight="Bold" Margin="0,0,0,8"/>
+            <TextBlock Text="قيمة النتيجة:" Margin="0,0,0,2"/>
+            <TextBox Text="{Binding ResultValue, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="الوحدة:" Margin="0,0,0,2"/>
+            <TextBox Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="العلم:" Margin="0,0,0,2"/>
+            <ComboBox SelectedIndex="{Binding Flag, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8">
+                <ComboBoxItem Content=""/>
+                <ComboBoxItem Content="منخفض"/>
+                <ComboBoxItem Content="مرتفع"/>
+            </ComboBox>
+            <TextBlock Text="سبب التعديل (اختياري):" Margin="0,0,0,2"/>
+            <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" Height="60"/>
+        </StackPanel>
+    </DockPanel>
+</Window>

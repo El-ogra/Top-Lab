@@ -1,0 +1,141 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.ProfileEntryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+            <StackPanel>
+                <TextBlock Text="{Binding PatientFullName}" FontSize="16" FontWeight="Bold"/>
+                <TextBlock Text="{Binding ProfileName, StringFormat='البروفايل: {0}'}" FontSize="13" Foreground="Gray"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Comment -->
+        <DockPanel Grid.Row="1" Margin="0,0,0,8">
+            <TextBlock Text="ملاحظة:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBox Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" MaxLength="500"/>
+        </DockPanel>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Empty state -->
+        <TextBlock Grid.Row="3" Text="لا توجد مواد في هذا البروفايل" Foreground="#666666"
+                   HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Entry Grid -->
+        <DataGrid Grid.Row="3"
+                  ItemsSource="{Binding Rows}"
+                  SelectedItem="{Binding SelectedRow}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  RowHeaderWidth="0">
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="المادة" Binding="{Binding AnalyteName}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="القيمة" Binding="{Binding ResultValue, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                <DataGridTextColumn Header="الوحدة" Binding="{Binding Unit, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                <DataGridTemplateColumn Header="العلم" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox SelectedIndex="{Binding Flag, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ComboBoxItem Content=""/>
+                                <ComboBoxItem Content="منخفض"/>
+                                <ComboBoxItem Content="مرتفع"/>
+                            </ComboBox>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridCheckBoxColumn Header="مُعتمد" Binding="{Binding IsVerified}" IsReadOnly="True" Width="70"/>
+                <DataGridCheckBoxColumn Header="مطبوع" Binding="{Binding IsPrinted}" IsReadOnly="True" Width="70"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Report preview -->
+        <Border Grid.Row="4" Background="#FAFAFA" Padding="8" Margin="0,8,0,0" BorderBrush="#DDD" BorderThickness="1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasReport}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel>
+                <TextBlock Text="{Binding Report.ProfileName}" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock Text="{Binding Report.PatientFullName}"/>
+                <TextBlock Text="{Binding Report.Comment, StringFormat='ملاحظة: {0}'}" Foreground="Gray"/>
+                <ItemsControl ItemsSource="{Binding Report.Lines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <Run Text="{Binding AnalyteName, Mode=OneWay}"/>:
+                                <Run Text="{Binding ResultValue, Mode=OneWay}"/>
+                                <Run Text="{Binding Unit, Mode=OneWay}"/>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Messages -->
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="5" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,20,0,0"/>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="حفظ" Margin="0,0,6,0" Padding="12,6" Command="{Binding SaveCommand}"/>
+            <Button Content="اعتماد" Margin="0,0,6,0" Padding="12,6" Command="{Binding VerifyCommand}"/>
+            <Button Content="إلغاء اعتماد" Margin="0,0,6,0" Padding="12,6" Command="{Binding UnverifyCommand}"/>
+            <Button Content="طباعة" Margin="0,0,6,0" Padding="12,6" Command="{Binding PrintCommand}"/>
+            <Button Content="تقرير" Margin="0,0,6,0" Padding="12,6" Command="{Binding ShowReportCommand}"/>
+            <Button Content="تعديل بعد الطباعة" Margin="0,0,6,0" Padding="12,6" Command="{Binding AmendCommand}"/>
+            <Button Content="سجل التعديلات" Margin="0,0,6,0" Padding="12,6" Command="{Binding ShowAmendmentsLogCommand}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
