@@ -196,6 +196,14 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
                 await pvm.LoadAsync(item.PatientTestId, cancellationToken);
             }
         }
-        // S-04 Slice 7: Culture routes to CultureResultsViewModel (C1) - deferred
+        // S-04 Slice 7: Culture routes to CultureEntryViewModel (C1)
+        else if (item.ResultKind == 2 || item.IsCultureType)  // ResultKind.Culture = 2
+        {
+            _navigation.NavigateTo<CultureEntryViewModel>();
+            if (_navigation.CurrentViewModel is CultureEntryViewModel cvm)
+            {
+                await cvm.LoadAsync(item.PatientTestId, cancellationToken);
+            }
+        }
     }
 }

@@ -1,0 +1,161 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.CultureEntryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+            <StackPanel>
+                <TextBlock Text="{Binding TestName}" FontSize="16" FontWeight="Bold"/>
+                <TextBlock Text="{Binding TestCode, StringFormat='الرمز: {0}'}" FontSize="13" Foreground="Gray"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Culture header fields -->
+        <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,4,4">
+                <TextBlock Text="العينة:" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding Sample, UpdateSourceTrigger=PropertyChanged}" MaxLength="100"/>
+            </StackPanel>
+            <StackPanel Grid.Row="0" Grid.Column="1" Margin="4,0,4,4">
+                <TextBlock Text="المستعمرة A:" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding OrganismA, UpdateSourceTrigger=PropertyChanged}" MaxLength="150"/>
+            </StackPanel>
+            <StackPanel Grid.Row="0" Grid.Column="2" Margin="4,0,0,4">
+                <TextBlock Text="المستعمرة B:" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding OrganismB, UpdateSourceTrigger=PropertyChanged}" MaxLength="150"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,4,4">
+                <TextBlock Text="المستعمرة C:" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding OrganismC, UpdateSourceTrigger=PropertyChanged}" MaxLength="150"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Margin="4,0,4,4">
+                <TextBlock Text="حالة المزرعة:" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding CultureCondition, UpdateSourceTrigger=PropertyChanged}" MaxLength="200"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="2" Margin="4,0,0,4">
+                <TextBlock Text="عدد المستعمرات:" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding ColonyCount, UpdateSourceTrigger=PropertyChanged}" MaxLength="50"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Empty state -->
+        <TextBlock Grid.Row="3" Text="لا مضادات حيوية مرفقة بهذه المزرعة" Foreground="#666666"
+                   HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!-- Sensitivity Grid -->
+        <DataGrid Grid.Row="3"
+                  ItemsSource="{Binding SensitivityRows}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  RowHeaderWidth="0">
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="المضاد الحيوي" Binding="{Binding AntibioticName}" IsReadOnly="True" Width="*"/>
+                <DataGridTemplateColumn Header="الحساسية" Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox SelectedIndex="{Binding SensitivityCategory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ComboBoxItem Content="غير محدد"/>
+                                <ComboBoxItem Content="حساسية عالية"/>
+                                <ComboBoxItem Content="حساسية متوسطة"/>
+                                <ComboBoxItem Content="حساسية منخفضة"/>
+                            </ComboBox>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridCheckBoxColumn Header="حمل؟" Binding="{Binding IsPregnancyFlagged}" IsReadOnly="True" Width="60"/>
+                <DataGridCheckBoxColumn Header="أطفال؟" Binding="{Binding IsChildrenFlagged}" IsReadOnly="True" Width="60"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Report preview -->
+        <Border Grid.Row="4" Background="#FAFAFA" Padding="8" Margin="0,8,0,0" BorderBrush="#DDD" BorderThickness="1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasReport}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel>
+                <TextBlock Text="{Binding Report.ReportName}" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock Text="{Binding Report.PatientFullName}"/>
+                <TextBlock Text="{Binding Report.Sample, StringFormat='العينة: {0}'}"/>
+                <TextBlock Text="{Binding Report.OrganismA, StringFormat='المستعمرة A: {0}'}"/>
+                <TextBlock Text="{Binding Report.OrganismB, StringFormat='المستعمرة B: {0}'}"/>
+                <TextBlock Text="{Binding Report.CultureCondition, StringFormat='حالة المزرعة: {0}'}"/>
+                <TextBlock Text="{Binding Report.ColonyCount, StringFormat='عدد المستعمرات: {0}'}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Messages -->
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="5" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,20,0,0"/>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="حفظ" Margin="0,0,6,0" Padding="12,6" Command="{Binding SaveCommand}"/>
+            <Button Content="اعتماد" Margin="0,0,6,0" Padding="12,6" Command="{Binding VerifyCommand}"/>
+            <Button Content="إلغاء اعتماد" Margin="0,0,6,0" Padding="12,6" Command="{Binding UnverifyCommand}"/>
+            <Button Content="طباعة" Margin="0,0,6,0" Padding="12,6" Command="{Binding PrintCommand}"/>
+            <Button Content="تقرير" Margin="0,0,6,0" Padding="12,6" Command="{Binding ShowReportCommand}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

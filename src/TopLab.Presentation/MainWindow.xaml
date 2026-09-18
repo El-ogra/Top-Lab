@@ -117,6 +117,10 @@
                                                                                                                                                             <patientsView:ProfileEntryView/>
                                                                                                                                                         </DataTemplate>
 
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:CultureEntryViewModel}">
+                                                                                                                                                            <patientsView:CultureEntryView/>
+                                                                                                                                                        </DataTemplate>
+
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
                         <sheetsView:WorkSheetsView/>
                     </DataTemplate>
