@@ -16,6 +16,8 @@
            xmlns:externalView="clr-namespace:TopLab.Presentation.Views.External"
            xmlns:sheetsVm="clr-namespace:TopLab.Presentation.ViewModels.WorkSheets"
            xmlns:sheetsView="clr-namespace:TopLab.Presentation.Views.WorkSheets"
+           xmlns:attendanceVm="clr-namespace:TopLab.Presentation.ViewModels.Attendance"
+           xmlns:attendanceView="clr-namespace:TopLab.Presentation.Views.Attendance"
          mc:Ignorable="d"
          Title="Top-Lab — نظام توب لاب" Height="600" Width="1024"
          FlowDirection="RightToLeft"
@@ -155,6 +157,10 @@
 
                                                                                                                                                         <DataTemplate DataType="{x:Type patientsVm:SentOutLabAccountViewModel}">
                                                                                                                                                             <patientsView:SentOutLabAccountView/>
+                                                                                                                                                        </DataTemplate>
+
+                                                                                                                                                        <DataTemplate DataType="{x:Type attendanceVm:MyAttendanceViewModel}">
+                                                                                                                                                            <attendanceView:MyAttendanceView/>
                                                                                                                                                         </DataTemplate>
 
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
