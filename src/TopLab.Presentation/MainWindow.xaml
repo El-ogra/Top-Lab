@@ -129,6 +129,10 @@
                                                                                                                                                             <patientsView:PatientVisitHistoryView/>
                                                                                                                                                         </DataTemplate>
 
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:CombinedReportViewModel}">
+                                                                                                                                                            <patientsView:CombinedReportView/>
+                                                                                                                                                        </DataTemplate>
+
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
                         <sheetsView:WorkSheetsView/>
                     </DataTemplate>

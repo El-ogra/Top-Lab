@@ -30,7 +30,7 @@
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
             <Button Content="فتح الحساب" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenAccountCommand}"/>
             <Button Content="كشف النتائج" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenResultSheetCommand}"/>
-            <Button Content="التقارير" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenReportsCommand}" IsEnabled="False"/>
+            <Button Content="التقارير" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenReportsCommand}"/>
             <Button Content="التسليم" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenDeliveryCommand}" IsEnabled="False"/>
             <Button Content="إرسال خارجياً" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenSentOutCommand}" IsEnabled="False"/>
             <Button Content="رجوع" Margin="0,0,6,0" Padding="10,5" Command="{Binding BackCommand}"/>

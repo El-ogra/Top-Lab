@@ -52,6 +52,8 @@ public static class DependencyInjection
                                 services.AddTransient<CultureEntryViewModel>();
                                 services.AddTransient<PatientSearchViewModel>();
                                 services.AddTransient<PatientVisitHistoryViewModel>();
+                                services.AddTransient<CombinedReportViewModel>();
+                                services.AddTransient<InsertHistoryDialogViewModel>();
                                 services.AddTransient<WorkSheetsViewModel>();
         services.AddTransient<CorrectionDialogViewModel>();
         services.AddTransient<ExtraChargeDialogViewModel>();
