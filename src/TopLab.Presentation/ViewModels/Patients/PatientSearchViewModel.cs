@@ -40,7 +40,7 @@ public sealed class PatientSearchViewModel : ViewModelBase
         FetchByLabIdCommand = new AsyncRelayCommand(async (_, ct) => await FetchByLabIdAsync(ct));
         NextPageCommand = new AsyncRelayCommand(async (_, ct) => { Page++; await SearchAsync(ct); });
         PreviousPageCommand = new AsyncRelayCommand(async (_, ct) => { if (Page > 1) { Page--; await SearchAsync(ct); } });
-        OpenPatientCommand = new RelayCommand(_ => { }); // disabled until Slice 1
+        OpenPatientCommand = new RelayCommand(param => OpenPatient(param as PatientSearchHitDto));
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientsHubViewModel>());
     }
 
@@ -166,10 +166,14 @@ public sealed class PatientSearchViewModel : ViewModelBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                // Slice 1 will enable navigation to PatientVisitHistoryViewModel
-                // For now, show a status message that the fetch succeeded
-                Items = new ObservableCollection<PatientSearchHitDto>();
-                TotalCount = 0;
+                // S-05 Slice 1: navigate to visit history with the pre-fetched DTO
+                var history = result.Value;
+                var patientId = history.Visits.Count > 0 ? history.Visits[0].PatientId : 0;
+                _navigation.NavigateTo<PatientVisitHistoryViewModel>();
+                if (_navigation.CurrentViewModel is PatientVisitHistoryViewModel vm && patientId > 0)
+                {
+                    await vm.LoadWithHistoryAsync(patientId, history, cancellationToken);
+                }
             }
             else if (result.Error is not null)
             {
@@ -179,6 +183,20 @@ public sealed class PatientSearchViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private void OpenPatient(PatientSearchHitDto? hit)
+    {
+        if (hit is null || hit.PatientId <= 0)
+        {
+            return;
+        }
+
+        _navigation.NavigateTo<PatientVisitHistoryViewModel>();
+        if (_navigation.CurrentViewModel is PatientVisitHistoryViewModel vm)
+        {
+            _ = vm.LoadAsync(hit.PatientId);
         }
     }
 }

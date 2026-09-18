@@ -125,6 +125,10 @@
                                                                                                                                                             <patientsView:PatientSearchView/>
                                                                                                                                                         </DataTemplate>
 
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:PatientVisitHistoryViewModel}">
+                                                                                                                                                            <patientsView:PatientVisitHistoryView/>
+                                                                                                                                                        </DataTemplate>
+
                                                                                                                                                         <DataTemplate DataType="{x:Type sheetsVm:WorkSheetsViewModel}">
                         <sheetsView:WorkSheetsView/>
                     </DataTemplate>

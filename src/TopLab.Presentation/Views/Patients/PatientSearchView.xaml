@@ -79,8 +79,7 @@
                         <DataTemplate>
                             <Button Content="فتح" Padding="6,2"
                                     Command="{Binding DataContext.OpenPatientCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                    CommandParameter="{Binding}"
-                                    IsEnabled="False"/>
+                                    CommandParameter="{Binding}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

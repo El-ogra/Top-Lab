@@ -5,10 +5,10 @@
 - **Source Plan:** Docs/OpenCode/S-05.md (execution slices) + «Fourth Pass Plan.md» (authoritative requirements, as corrected by the audit recorded below)
 - **Date Created:** 2026-09-18
 - **Total Slices:** 6
-- **Current Slice:** 1 — Patient visit history master-detail — NEXT
+- **Current Slice:** 2 — Combined report + insert-history dialog — NEXT
 - **Current Branch:** main
 - **Baseline Commit:** `0e66b014d5f3889e0ec11e15398f00ce967e196d`
-- **Latest Committed:** Slice 0 pending commit
+- **Latest Committed:** Slice 0 (`9b1bdfe`); Slice 1 pending commit
 - **Author:** loop-engineering skill (local executing agent per owner authorization)
 
 ---
@@ -64,7 +64,7 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 0 | Patient search screen + gateway activation | [x] Done | VG-01 PASS |
-| 1 | Patient visit history master-detail screen | [ ] Not started | VG-02 |
+| 1 | Patient visit history master-detail screen | [x] Done | VG-02 PASS |
 | 2 | Combined report screen + insert-history dialog | [ ] Not started | VG-03 |
 | 3 | Blank report + history reports screens | [ ] Not started | VG-04 |
 | 4 | Result delivery screens + gateway activation | [ ] Not started | VG-05 |
@@ -88,19 +88,19 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 
 ## Slice 1: Patient visit history master-detail screen
 
-**Gate:** VG-02. **Status:** ⬜ Not started.
+**Gate:** VG-02. **Status:** ✅ Passed.
 
 ### 10-Stage Progress
-- [ ] 1. Pre-Execution Verification
-- [ ] 2. Deep Understanding
-- [ ] 3. File Analysis
-- [ ] 4. Planning
-- [ ] 5. Execution
-- [ ] 6. Post-Execution Verification
-- [ ] 7. Validation Gate
-- [ ] 8. Documentation Update
-- [ ] 9. Memory Status Update
-- [ ] 10. Git Commit
+- [x] 1. Pre-Execution Verification — build 0/0; App tests 1419/1419
+- [x] 2. Deep Understanding — VisitHistoryDto/VisitSummaryDto/VisitDetailDto shapes; GetVisitHistoryQuery/GetVisitDetailQuery signatures
+- [x] 3. File Analysis — PatientAccountViewModel.LoadAsync(int), PatientResultSheetViewModel.LoadAsync(int), PatientsHub pattern
+- [x] 4. Planning — PatientVisitHistoryViewModel + View; enable open-patient + fetch-by-lab-id from S0; cross-module buttons
+- [x] 5. Execution — Created master-detail VM/View; enabled open-patient + lab-id navigation; wired account/result-sheet buttons; disabled reports/delivery/sent-out
+- [x] 6. Post-Execution Verification — build 0/0; tests 1419/1419; zero backend diff
+- [x] 7. Validation Gate — VG-02 PASS: both M08 queries consumed; account+result-sheet wired; reports/delivery/sent-out disabled
+- [x] 8. Documentation Update — memory checklist recorded
+- [x] 9. Memory Status Update — Slice 1 done, Slice 2 next
+- [x] 10. Git Commit — local commit
 
 ## Slice 2: Combined report screen + insert-history dialog
 
@@ -172,13 +172,14 @@ Continue automatically between slices while: build stays 0/0, suite stays green,
 |---|---|---|---|
 | 0 | PatientSearchView | «لا توجد نتائج مطابقة.» | Empty-state |
 | 0 | PatientSearchView | «كود المعمل مطلوب.» | Client-side validation (mirrors backend) |
+| 1 | PatientVisitHistoryView | «لا توجد تحاليل في هذه الزيارة.» | Empty-state |
 
 Expected entries (from the audited plan — all Requires-creation view texts): «لا توجد نتائج مطابقة.» (S0) / «لا توجد تحاليل في هذه الزيارة.» (S1) / «لا توجد تحاليل معتمدة قابلة للدمج لهذا المريض.» + «لا نتائج تاريخية لهذا التحليل.» + insert/auto-insert confirmation texts (S2) / «لم يُبنَ تقرير بعد» + «لا يوجد تاريخ مرضي لهذا المريض.» + history-print confirmation (S3) / «لا توجد نتائج غير مسلَّمة في هذه الفترة.» + «لا توجد تحاليل لهذا المريض.» + deliver-and-settle confirmation (S4) / «لا توجد عينات مرسلة في هذه الفترة/لهذا المعمل.» + «لا توجد معامل خارجية مسجلة — أضف جهة بنوع «معمل خارجي» من إدارة الجهات.» + «لا عينات مرسلة لهذا المعمل في الفترة.» + send/payment/settle confirmations (S5).
 
 ## Current Status
 - **Slice 0:** Done. VG-01 passed.
-- **Slice 1:** Not started. Patient visit history master-detail screen.
-- **Slice 2:** Not started.
+- **Slice 1:** Done. VG-02 passed.
+- **Slice 2:** Not started. Combined report + insert-history dialog.
 - **Slice 3:** Not started.
 - **Slice 4:** Not started.
 - **Slice 5:** Not started.
@@ -212,3 +213,4 @@ Audit method: fresh clone; `git checkout 0e66b01` (detached HEAD, clean tree); `
 | Timestamp | Slice | Stage | Action | Result |
 |-----------|-------|-------|--------|--------|
 | 2026-09-18 | 0 | 1-10 | PatientSearchViewModel + View; PatientsHub gateway activation; DI + DataTemplate; VG-01 PASS | Success |
+| 2026-09-18 | 1 | 1-10 | PatientVisitHistoryViewModel + View; open-patient + lab-id navigation enabled; cross-module buttons; VG-02 PASS | Success |

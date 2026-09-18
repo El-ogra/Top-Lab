@@ -1,0 +1,155 @@
+<UserControl x:Class="TopLab.Presentation.Views.Patients.PatientVisitHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FlowDirection="RightToLeft">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Patient Header -->
+        <Border Grid.Row="0" Background="#F0F4F8" Padding="12" Margin="0,0,0,8">
+            <StackPanel>
+                <TextBlock Text="{Binding PatientFullName}" FontSize="16" FontWeight="Bold"/>
+                <TextBlock Text="{Binding LabId, StringFormat='الرقم المعملي: {0}'}" FontSize="13" Foreground="Gray"/>
+                <TextBlock FontSize="12" Foreground="#888888">
+                    <Run Text="وضع الترتيب:"/>
+                    <Run Text="{Binding HistorySortMode, Mode=OneWay}"/>
+                    <Run Text=" — عرض تلقائي:"/>
+                    <Run Text="{Binding HistoryAutoDisplayEnabled, Mode=OneWay}"/>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!-- Cross-module buttons -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="فتح الحساب" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenAccountCommand}"/>
+            <Button Content="كشف النتائج" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenResultSheetCommand}"/>
+            <Button Content="التقارير" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenReportsCommand}" IsEnabled="False"/>
+            <Button Content="التسليم" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenDeliveryCommand}" IsEnabled="False"/>
+            <Button Content="إرسال خارجياً" Margin="0,0,6,0" Padding="10,5" Command="{Binding OpenSentOutCommand}" IsEnabled="False"/>
+            <Button Content="رجوع" Margin="0,0,6,0" Padding="10,5" Command="{Binding BackCommand}"/>
+        </StackPanel>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+            <ProgressBar.Style>
+                <Style TargetType="ProgressBar">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ProgressBar.Style>
+        </ProgressBar>
+
+        <!-- Master-Detail Grid -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Visits list (master) -->
+            <DockPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock DockPanel.Dock="Top" Text="الزيارات" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock DockPanel.Dock="Top" Text="لا توجد زيارات." Foreground="#666666" Margin="0,0,0,4">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <DataGrid ItemsSource="{Binding Visits}"
+                          SelectedItem="{Binding SelectedVisit}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          RowHeaderWidth="0">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="التاريخ" Binding="{Binding RegistrationDateUtc, StringFormat={}{0:yyyy-MM-dd}}" Width="100"/>
+                        <DataGridTextColumn Header="نوع الحساب" Binding="{Binding AccountType}" Width="80"/>
+                        <DataGridCheckBoxColumn Header="VIP" Binding="{Binding IsVip}" Width="50"/>
+                        <DataGridTextColumn Header="التحاليل" Binding="{Binding TestCount}" Width="60"/>
+                        <DataGridTextColumn Header="الحالة" Binding="{Binding AggregateStatus}" Width="60"/>
+                        <DataGridTextColumn Header="الرصيد" Binding="{Binding Balance}" Width="80"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+
+            <!-- Visit detail (detail) -->
+            <DockPanel Grid.Column="1" Margin="8,0,0,0">
+                <TextBlock DockPanel.Dock="Top" Text="تفاصيل الزيارة" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock DockPanel.Dock="Top" Text="لا توجد تحاليل في هذه الزيارة." Foreground="#666666" Margin="0,0,0,4">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowVisitEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <DataGrid ItemsSource="{Binding SelectedVisitDetail.Tests}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          RowHeaderWidth="0">
+                    <DataGrid.Style>
+                        <Style TargetType="DataGrid">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowVisitEmpty}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Style>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="التحليل" Binding="{Binding TestName}" Width="*"/>
+                        <DataGridTextColumn Header="الرمز" Binding="{Binding TestCode}" Width="70"/>
+                        <DataGridTextColumn Header="السعر" Binding="{Binding PriceAtOrderTime}" Width="70"/>
+                        <DataGridCheckBoxColumn Header="مسحوبة" Binding="{Binding IsSampleDrawn}" Width="60"/>
+                        <DataGridCheckBoxColumn Header="خارج المعمل" Binding="{Binding IsTakenOutsideLab}" Width="80"/>
+                        <DataGridTextColumn Header="النتيجة" Binding="{Binding ResultValue}" Width="80"/>
+                        <DataGridCheckBoxColumn Header="مُعتمد" Binding="{Binding IsReviewed}" Width="60"/>
+                        <DataGridCheckBoxColumn Header="مطبوع" Binding="{Binding IsPrinted}" Width="60"/>
+                        <DataGridCheckBoxColumn Header="مُسلّم" Binding="{Binding IsDelivered}" Width="60"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Grid>
+
+        <!-- Error -->
+        <TextBlock Grid.Row="4" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+        <!-- Detail info bar -->
+        <TextBlock Grid.Row="5" Margin="0,4,0,0" Foreground="#555555">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasVisitDetail}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+            <Run Text="{Binding SelectedVisitDetail.FullName, Mode=OneWay}"/>
+            <Run Text=" — الرصيد:"/>
+            <Run Text="{Binding SelectedVisitDetail.Balance, Mode=OneWay}"/>
+        </TextBlock>
+    </Grid>
+</UserControl>
