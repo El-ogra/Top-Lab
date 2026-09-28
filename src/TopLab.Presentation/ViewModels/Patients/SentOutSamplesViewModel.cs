@@ -5,6 +5,7 @@ using TopLab.Application.Features.SentOutSamples.Common;
 using TopLab.Application.Features.SentOutSamples.Queries.GetSentOutLabAccount;
 using TopLab.Application.Features.SentOutSamples.Queries.GetSentOutSamples;
 using TopLab.Domain.Common.Enums;
+using Microsoft.Extensions.DependencyInjection;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.Common.Navigation;
@@ -20,6 +21,7 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
     private readonly ISender _mediator;
     private readonly ResultErrorPresenter _presenter;
     private readonly INavigationService _navigation;
+    private readonly IServiceProvider _services;
 
     private DateOnly? _from = DateOnly.FromDateTime(DateTime.UtcNow);
     private DateOnly? _to = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -32,14 +34,16 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
     private bool _isBusy;
     private string _errorMessage = string.Empty;
 
-    public SentOutSamplesViewModel(ISender mediator, ResultErrorPresenter presenter, INavigationService navigation)
+    public SentOutSamplesViewModel(ISender mediator, ResultErrorPresenter presenter, INavigationService navigation, IServiceProvider services)
     {
         _mediator = mediator;
         _presenter = presenter;
         _navigation = navigation;
+        _services = services;
 
         LoadCommand = new AsyncRelayCommand(async (_, ct) => await LoadAsync(ct));
         OpenLabAccountCommand = new RelayCommand(param => OpenLabAccount(param as SentOutSampleDto));
+        OpenSendSampleOutCommand = new RelayCommand(_ => OpenSendSampleOut());
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientVisitHistoryViewModel>());
     }
 
@@ -103,6 +107,7 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
 
     public AsyncRelayCommand LoadCommand { get; }
     public RelayCommand OpenLabAccountCommand { get; }
+    public RelayCommand OpenSendSampleOutCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
@@ -163,6 +168,23 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
         {
             _ = vm.LoadAsync(sample.ExternalLabEntityId, From, To);
         }
+    }
+
+    /// <summary>S-07 Slice 7: open the send-sample-out dialog (M-01 entry point).</summary>
+    private void OpenSendSampleOut()
+    {
+        if (SelectedItem is null)
+        {
+            return;
+        }
+
+        var vm = _services.GetRequiredService<SendSampleOutDialogViewModel>();
+        _ = vm.SetupAsync(SelectedItem.PatientTestId, SelectedItem.TestName);
+        var window = new Views.Patients.SendSampleOutDialogWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        window.ShowDialog();
     }
 }
 

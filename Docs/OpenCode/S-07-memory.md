@@ -161,7 +161,7 @@ The three failures are `ReceiptPrintingServiceTests`, `InvoicePrintingServiceTes
 | 4 | User-management authorization: no self-escalation (B-01) | [x] DONE | VG-04 |
 | 5 | Lock-workstation result is checked (NEW-05-LOCK) | [x] DONE | VG-05 |
 | 6 | Navigation items filtered by permission (F-04) | [x] DONE | VG-06 |
-| 7 | Sent-out-samples write entry point (M-01) | [ ] NOT STARTED | VG-07 |
+| 7 | Sent-out-samples write entry point (M-01) | [x] DONE | VG-07 |
 | 8 | Durable file logging (F-03, NEW-06) | [ ] NOT STARTED | VG-08 |
 | 9 | Logging pipeline behavior moved outermost (NEW-05-LOG) | [ ] NOT STARTED | VG-09 |
 | 10 | Font-family resolution (m-09 + NEW-03) | [ ] NOT STARTED | VG-10 |
@@ -496,7 +496,8 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 | 2026-09-28 | 3 | 1-10 | Delete-user guard fails closed: removed SafeAny, wrapped HasReferences in try-catch returning Unexpected. 3 guard tests green. Build 0/0; App 1446/1446 (Δ+27); drift clean. | OK |
 | 2026-09-28 | 4 | 1-10 | User-mgmt auth: added ICurrentUserService + auth/anti-escalation/actor-floor guards to 8 handlers; UI checkbox IsEnabled binding. Login path intact. Build 0/0; App 1446/1446; drift clean. | OK |
 | 2026-09-28 | 5 | 1-10 | Lock-workstation result checked: captured lockResult, branch on IsSuccess, surface error via presenter. Build 0/0; App 1446/1446; drift clean. | OK |
-| 2026-09-28 | 6 | 1-10 | Navigation filtering: 4 items gated by permission (PRINT_WORKSHEET/STATISTICS/PT_AUDIT_ACCESS/EDIT_SYSTEM_SETTINGS); 6 owner-decision items stay enabled. Build 0/0; App 1446/1446; drift clean. | OK |
+| 2026-09-28 | 6 | 1-10 | Navigation filtering: 4 items gated by permission; 6 owner-decision items stay enabled. Build 0/0; App 1446/1446; drift clean. | OK |
+| 2026-09-28 | 7 | 1-10 | Sent-out entry point: added OpenSendSampleOutCommand + button in SentOutSamplesView; SendSampleOutDialogWindow creation site added. Build 0/0; App 1446/1446; drift clean. | OK |
 
 ---
 

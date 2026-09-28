@@ -67,6 +67,15 @@
                 <DataGridTextColumn Header="المدفوع" Binding="{Binding TotalPaid}" Width="70"/>
                 <DataGridTextColumn Header="المتبقي" Binding="{Binding Remaining}" Width="70"/>
                 <DataGridCheckBoxColumn Header="مُسوّى" Binding="{Binding IsFullySettled}" Width="60"/>
+                <DataGridTemplateColumn Header="إرسال" Width="70">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="إرسال" Padding="6,2"
+                                    Command="{Binding DataContext.OpenSendSampleOutCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="الحساب" Width="70">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
