@@ -47,3 +47,8 @@ logs/
 .DS_Store
 Thumbs.db
 ~$*
+
+# Test results & coverage
+TestResults/
+*.coverage
+*.trx

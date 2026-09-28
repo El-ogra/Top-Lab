@@ -9,7 +9,7 @@ public partial class AboutWindow : Window
     {
         InitializeComponent();
         string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
-        VersionText.Text = $"الإصدار: {version} [Placeholder — بانتظار قرار المالك]";
+        VersionText.Text = $"الإصدار: {version}";
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)

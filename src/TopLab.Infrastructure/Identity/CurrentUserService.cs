@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
 
 namespace TopLab.Infrastructure.Identity;
@@ -17,11 +16,8 @@ namespace TopLab.Infrastructure.Identity;
 /// </remarks>
 public sealed class CurrentUserService : ICurrentUserService
 {
-    private readonly IServiceProvider _services;
-
-    public CurrentUserService(IServiceProvider services)
+    public CurrentUserService()
     {
-        _services = services;
     }
 
     public bool IsAuthenticated { get; private set; }
