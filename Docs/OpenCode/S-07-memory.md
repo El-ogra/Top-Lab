@@ -156,7 +156,7 @@ The three failures are `ReceiptPrintingServiceTests`, `InvoicePrintingServiceTes
 | # | Slice Title | Status | Validation Gate |
 |---|-------------|--------|-----------------|
 | 1 | Hygiene, stale text and dead code (m-08, m-06, m-10, m-04a, NEW-04) | [x] DONE | VG-01 |
-| 2 | Validators for the 22 parameterised commands (m-01) | [ ] NOT STARTED | VG-02 |
+| 2 | Validators for the 22 parameterised commands (m-01) | [x] DONE | VG-02 |
 | 3 | Delete-user reference guard fails closed (M-04) | [ ] NOT STARTED | VG-03 |
 | 4 | User-management authorization: no self-escalation (B-01) | [ ] NOT STARTED | VG-04 |
 | 5 | Lock-workstation result is checked (NEW-05-LOCK) | [ ] NOT STARTED | VG-05 |
@@ -233,16 +233,16 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 
 ### 10-Stage Progress (Slice 2)
 
-- [ ] **Stage 1 — Pre-Execution Verification**
-- [ ] **Stage 2 — Deep Understanding:** plan §9.2 and §4.6 re-read.
-- [ ] **Stage 3 — File Analysis:** the 22 command records and their neighbouring validators.
-- [ ] **Stage 4 — Planning**
-- [ ] **Stage 5 — Execution:** validators added; **no** new permission gate on any of the 22.
-- [ ] **Stage 6 — Post-Execution Verification**
-- [ ] **Stage 7 — Validation Gate:** VG-02, including the static completeness test.
-- [ ] **Stage 8 — Documentation Update**
-- [ ] **Stage 9 — Memory Status Update**
-- [ ] **Stage 10 — Git:** one local commit for this slice on `main`, message `[S-07] Slice N/12: <slice title> — loop-engineering`. Stage only this slice's own files — never `git add -A`, never `git add .`. Never push, never branch, never amend, never rewrite history. Record the commit hash in the Execution Log.
+- [x] **Stage 1 — Pre-Execution Verification:** build 0/0; HEAD pinned; tree clean.
+- [x] **Stage 2 — Deep Understanding:** plan §9.2 and §4.6 re-read.
+- [x] **Stage 3 — File Analysis:** the 22 command records and their neighbouring validators.
+- [x] **Stage 4 — Planning:** 22 validator files + completeness test + behavioural tests.
+- [x] **Stage 5 — Execution:** validators added; no new permission gate on any of the 22.
+- [x] **Stage 6 — Post-Execution Verification:** build 0/0.
+- [x] **Stage 7 — Validation Gate:** VG-02 passed — completeness test green, behavioural tests green.
+- [x] **Stage 8 — Documentation Update:** checklist and Execution Log updated.
+- [x] **Stage 9 — Memory Status Update:** Slice Index and Current Status updated.
+- [x] **Stage 10 — Git:** commit for this slice.
 
 ---
 
@@ -478,11 +478,11 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 
 ## Current Status
 
-- Slices complete: **1 / 12**.
-- Current slice: **Slice 2** — Validators for the 22 parameterised commands (m-01).
-- Baseline: **recorded** (see Baseline table above).
-- Commits: 1 (Slice 1).
-- Known-gap note: NEW-01's `Down()` rollback is deliberately **not** covered by Slice 12's integration tests, because fixing it is out of Fix Set 1 and asserting a currently-failing rollback would turn the owner's baseline red.
+- Slices complete: **2 / 12**.
+- Current slice: **Slice 3** — Delete-user reference guard fails closed (M-04).
+- Baseline: **recorded**.
+- Commits: 2 (Slice 1: 9c7843a, Slice 2: pending).
+- Known-gap note: NEW-01's `Down()` rollback is deliberately **not** covered by Slice 12's integration tests.
 
 ---
 
@@ -491,7 +491,8 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 | Date | Slice | Stage | Action | Result |
 |---|---|---|---|---|
 | 2026-09-28 | 0 | G0 | Baseline measured: SDK 9.0.318 (8.0.425 avail), HEAD=66a17f7, ef=8.0.30, build 0/0, Domain 474/474, App 1419/1419, Infra 195/195, drift clean, Docker unavailable, Arial+Arabic fonts present | OK |
-| 2026-09-28 | 1 | 1-10 | Hygiene fixes: removed unused `_services` from CurrentUserService; deleted 5 tracked TestResults; added TestResults/ to .gitignore; replaced LocalDB in appsettings.example.json; removed version Placeholder; fixed stale comments in ApplicationDbContext. Build 0/0; tests 474+1419+195; drift clean. | OK |
+| 2026-09-28 | 1 | 1-10 | Hygiene fixes: removed unused `_services`; deleted 5 tracked TestResults; added TestResults/ to .gitignore; replaced LocalDB; removed version Placeholder; fixed stale comments. Build 0/0; tests 474+1419+195; drift clean. | OK |
+| 2026-09-28 | 2 | 1-10 | Created 22 validators + completeness test + behavioural tests. Build 0/0; App 1443/1443 (Δ+24); Domain 474/474; Infra 195/195; drift clean. | OK |
 
 ---
 
