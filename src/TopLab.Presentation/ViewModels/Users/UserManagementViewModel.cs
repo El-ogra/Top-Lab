@@ -9,6 +9,7 @@ using TopLab.Application.Features.UsersAndPermissions.Commands.UpdateUser;
 using TopLab.Application.Features.UsersAndPermissions.Common;
 using TopLab.Application.Features.UsersAndPermissions.Queries.GetUserById;
 using TopLab.Application.Features.UsersAndPermissions.Queries.GetUsers;
+using TopLab.Application.Common.Interfaces;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
@@ -56,6 +57,7 @@ public sealed class UserManagementViewModel : ViewModelBase
     private readonly IDialogService _dialogs;
     private readonly ResultErrorPresenter _presenter;
     private readonly INavigationService _navigation;
+    private readonly ICurrentUserService _currentUser;
 
     private ObservableCollection<UserSummaryDto> _users = new();
     private UserSummaryDto? _selectedUser;
@@ -75,12 +77,13 @@ public sealed class UserManagementViewModel : ViewModelBase
     private bool _selectedIsActive = true;
     private bool _isBusy;
 
-    public UserManagementViewModel(ISender mediator, IDialogService dialogs, ResultErrorPresenter presenter, INavigationService navigation)
+    public UserManagementViewModel(ISender mediator, IDialogService dialogs, ResultErrorPresenter presenter, INavigationService navigation, ICurrentUserService currentUser)
     {
         _mediator = mediator;
         _dialogs = dialogs;
         _presenter = presenter;
         _navigation = navigation;
+        _currentUser = currentUser;
 
         PermissionItems = new ObservableCollection<PermissionItem>(
             CatalogCodes.Select(code => new PermissionItem(code, code)));

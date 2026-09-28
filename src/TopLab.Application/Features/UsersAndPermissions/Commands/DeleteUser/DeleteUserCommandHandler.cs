@@ -16,14 +16,20 @@ namespace TopLab.Application.Features.UsersAndPermissions.Commands.DeleteUser;
 public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, Result>
 {
     private readonly IApplicationDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteUserCommandHandler(IApplicationDbContext db)
+    public DeleteUserCommandHandler(IApplicationDbContext db, ICurrentUserService currentUser)
     {
         _db = db;
+        _currentUser = currentUser;
     }
 
     public async Task<Result> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
+        if (!_currentUser.IsAuthenticated)
+        {
+            return Result.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
         var user = _db.Set<User>().FirstOrDefault(u => u.Id.Value == request.UserId);
         if (user is null)
         {

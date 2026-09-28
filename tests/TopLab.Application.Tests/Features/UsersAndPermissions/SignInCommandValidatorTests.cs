@@ -1,6 +1,8 @@
 using TopLab.Application.Features.UsersAndPermissions.Commands.SignIn;
 using Xunit;
 
+using TopLab.Application.Tests.Common.Fakes;
+
 namespace TopLab.Application.Tests.Features.UsersAndPermissions;
 
 public class SignInCommandValidatorTests

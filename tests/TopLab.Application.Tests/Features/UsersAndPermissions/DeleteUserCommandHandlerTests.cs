@@ -23,7 +23,7 @@ public class DeleteUserCommandHandlerTests
         patient.CreatedByUserId = 5;
         db.Patients.Add(patient);
 
-        var handler = new DeleteUserCommandHandler(db);
+        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService());
         var result = await handler.Handle(new DeleteUserCommand(5), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -39,7 +39,7 @@ public class DeleteUserCommandHandlerTests
         var user = User.Create(UserId.Create(10), "temp", hasher.Hash("p"), hasher.Hash("s"), isAbsolutePermission: false);
         db.Users.Add(user);
 
-        var handler = new DeleteUserCommandHandler(db);
+        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService());
         var result = await handler.Handle(new DeleteUserCommand(10), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -54,7 +54,7 @@ public class DeleteUserCommandHandlerTests
         var admin = User.Create(UserId.Create(1), "admin", hasher.Hash("p"), hasher.Hash("s"), true);
         db.Users.Add(admin);
 
-        var handler = new DeleteUserCommandHandler(db);
+        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService());
         var result = await handler.Handle(new DeleteUserCommand(1), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -73,7 +73,7 @@ public class DeleteUserCommandHandlerTests
         var cash = CashMovement.Create(CashMovementId.Create(1), MovementType.Deposit, 100, 7, DateTime.UtcNow);
         db.CashMovements.Add(cash);
 
-        var handler = new DeleteUserCommandHandler(db);
+        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService());
         var result = await handler.Handle(new DeleteUserCommand(7), CancellationToken.None);
 
         Assert.False(result.IsSuccess);

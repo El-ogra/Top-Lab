@@ -27,7 +27,7 @@ public class CreateUserCommandHandlerTests
         var db = new FakeApplicationDbContext();
         SeedPermissions(db);
         var hasher = new FakePasswordHasher();
-        var handler = new CreateUserCommandHandler(db, hasher);
+        var handler = new CreateUserCommandHandler(db, hasher, new FakeCurrentUserService());
 
         var cmd = new CreateUserCommand(
             UserName: "ahmed",
@@ -68,7 +68,7 @@ public class CreateUserCommandHandlerTests
         var db = new FakeApplicationDbContext();
         SeedPermissions(db);
         var hasher = new FakePasswordHasher();
-        var handler = new CreateUserCommandHandler(db, hasher);
+        var handler = new CreateUserCommandHandler(db, hasher, new FakeCurrentUserService());
         var existing = User.Create(UserId.Create(1), "ahmed", hasher.Hash("p1"), hasher.Hash("s1"));
         db.Users.Add(existing);
 
@@ -86,7 +86,7 @@ public class CreateUserCommandHandlerTests
         var db = new FakeApplicationDbContext();
         SeedPermissions(db);
         var hasher = new FakePasswordHasher();
-        var handler = new CreateUserCommandHandler(db, hasher);
+        var handler = new CreateUserCommandHandler(db, hasher, new FakeCurrentUserService());
 
         var cmd = new CreateUserCommand("newuser", "secret123", "sec12345", false, 0, false, null, null, false, null, new[] { "UNKNOWN_CODE" });
         var result = await handler.Handle(cmd, CancellationToken.None);

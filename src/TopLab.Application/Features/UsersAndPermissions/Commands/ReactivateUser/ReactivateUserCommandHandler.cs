@@ -8,14 +8,20 @@ namespace TopLab.Application.Features.UsersAndPermissions.Commands.ReactivateUse
 public sealed class ReactivateUserCommandHandler : IRequestHandler<ReactivateUserCommand, Result>
 {
     private readonly IApplicationDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public ReactivateUserCommandHandler(IApplicationDbContext db)
+    public ReactivateUserCommandHandler(IApplicationDbContext db, ICurrentUserService currentUser)
     {
         _db = db;
+        _currentUser = currentUser;
     }
 
     public async Task<Result> Handle(ReactivateUserCommand request, CancellationToken cancellationToken)
     {
+        if (!_currentUser.IsAuthenticated)
+        {
+            return Result.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
         var user = _db.Set<User>().FirstOrDefault(u => u.Id.Value == request.UserId);
         if (user is null)
         {

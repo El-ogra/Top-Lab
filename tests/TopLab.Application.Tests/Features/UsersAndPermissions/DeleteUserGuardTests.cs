@@ -4,6 +4,8 @@ using TopLab.Application.Features.UsersAndPermissions.Commands.DeleteUser;
 using TopLab.Domain.Common.Ids;
 using TopLab.Domain.Users;
 
+using TopLab.Application.Tests.Common.Fakes;
+
 namespace TopLab.Application.Tests.Features.UsersAndPermissions;
 
 /// <summary>
@@ -16,7 +18,7 @@ public class DeleteUserGuardTests
     public async Task ThrowingProbe_YieldsUnexpected_NotConflict()
     {
         var db = new ThrowingProbeDbContext();
-        var handler = new DeleteUserCommandHandler(db);
+        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService());
         var user = User.Create(UserId.Create(1), "testuser", "hash", "winhash");
         db.Users.Add(user);
 
@@ -32,7 +34,7 @@ public class DeleteUserGuardTests
     public async Task NoReferences_StillDeletes()
     {
         var db = new SimpleDbContext();
-        var handler = new DeleteUserCommandHandler(db);
+        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService());
         var user = User.Create(UserId.Create(1), "testuser", "hash", "winhash");
         db.Users.Add(user);
 
@@ -46,7 +48,7 @@ public class DeleteUserGuardTests
     public async Task ThrowingSet_YieldsUnexpected()
     {
         var db = new ThrowingSetDbContext();
-        var handler = new DeleteUserCommandHandler(db);
+        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService());
         var user = User.Create(UserId.Create(1), "testuser", "hash", "winhash");
         db.Users.Add(user);
 

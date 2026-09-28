@@ -10,15 +10,26 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
 {
     private readonly IApplicationDbContext _db;
     private readonly IPasswordHasher _hasher;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateUserCommandHandler(IApplicationDbContext db, IPasswordHasher hasher)
+    public CreateUserCommandHandler(IApplicationDbContext db, IPasswordHasher hasher, ICurrentUserService currentUser)
     {
         _db = db;
         _hasher = hasher;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<int>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
+        if (!_currentUser.IsAuthenticated)
+        {
+            return Result<int>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
+
+        if (request.IsAbsolutePermission && !_currentUser.IsAbsolutePermission)
+        {
+            return Result<int>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
         if (_db.Set<User>().Any(u => u.UserName == request.UserName))
         {
             return Result<int>.Failure(Error.Conflict("اسم المستخدم موجود بالفعل"));

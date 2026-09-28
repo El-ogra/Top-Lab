@@ -25,7 +25,7 @@ public class GetUsersQueryHandlerTests
         db.Users.Add(User.Create(UserId.Create(1), "ahmed", hasher.Hash("p"), hasher.Hash("s"), false));
         db.Users.Add(User.Create(UserId.Create(2), "sara", hasher.Hash("p"), hasher.Hash("s"), true));
 
-        var handler = new GetUsersQueryHandler(db);
+        var handler = new GetUsersQueryHandler(db, new FakeCurrentUserService());
         var result = await handler.Handle(new GetUsersQuery(), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -62,7 +62,7 @@ public class GetUsersQueryHandlerTests
         db.UserPermissionGrants.Add(new UserPermissionGrant(UserId.Create(1), PermissionId.Create(2)));
         db.UserPermissionGrants.Add(new UserPermissionGrant(UserId.Create(1), PermissionId.Create(3)));
 
-        var handler = new GetUserByIdQueryHandler(db);
+        var handler = new GetUserByIdQueryHandler(db, new FakeCurrentUserService());
         var result = await handler.Handle(new GetUserByIdQuery(1), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -77,7 +77,7 @@ public class GetUsersQueryHandlerTests
     public async Task GetUserById_NotFound_ReturnsNotFound()
     {
         var db = new FakeApplicationDbContext();
-        var handler = new GetUserByIdQueryHandler(db);
+        var handler = new GetUserByIdQueryHandler(db, new FakeCurrentUserService());
         var result = await handler.Handle(new GetUserByIdQuery(999), CancellationToken.None);
         Assert.False(result.IsSuccess);
         Assert.Equal(TopLab.Application.Common.Results.ErrorType.NotFound, result.Error!.Type);

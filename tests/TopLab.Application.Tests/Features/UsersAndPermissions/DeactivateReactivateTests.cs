@@ -15,7 +15,7 @@ public class DeactivateUserCommandHandlerTests
         var hasher = new FakePasswordHasher();
         var admin = User.Create(UserId.Create(1), "admin", hasher.Hash("p"), hasher.Hash("s"), true);
         db.Users.Add(admin);
-        var handler = new DeactivateUserCommandHandler(db);
+        var handler = new DeactivateUserCommandHandler(db, new FakeCurrentUserService());
 
         var result = await handler.Handle(new DeactivateUserCommand(1), CancellationToken.None);
 
@@ -33,7 +33,7 @@ public class DeactivateUserCommandHandlerTests
         var a2 = User.Create(UserId.Create(2), "admin2", hasher.Hash("p"), hasher.Hash("s"), true);
         db.Users.Add(a1);
         db.Users.Add(a2);
-        var handler = new DeactivateUserCommandHandler(db);
+        var handler = new DeactivateUserCommandHandler(db, new FakeCurrentUserService());
 
         var result = await handler.Handle(new DeactivateUserCommand(1), CancellationToken.None);
 
@@ -55,7 +55,7 @@ public class ReactivateUserCommandHandlerTests
         user.Deactivate();
         db.Users.Add(user);
 
-        var reactivateHandler = new ReactivateUserCommandHandler(db);
+        var reactivateHandler = new ReactivateUserCommandHandler(db, new FakeCurrentUserService());
         var reactivateResult = await reactivateHandler.Handle(new ReactivateUserCommand(1), CancellationToken.None);
         Assert.True(reactivateResult.IsSuccess);
         Assert.True(user.IsActive);

@@ -8,14 +8,20 @@ namespace TopLab.Application.Features.UsersAndPermissions.Commands.DeactivateUse
 public sealed class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserCommand, Result>
 {
     private readonly IApplicationDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeactivateUserCommandHandler(IApplicationDbContext db)
+    public DeactivateUserCommandHandler(IApplicationDbContext db, ICurrentUserService currentUser)
     {
         _db = db;
+        _currentUser = currentUser;
     }
 
     public async Task<Result> Handle(DeactivateUserCommand request, CancellationToken cancellationToken)
     {
+        if (!_currentUser.IsAuthenticated)
+        {
+            return Result.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
         var user = _db.Set<User>().FirstOrDefault(u => u.Id.Value == request.UserId);
         if (user is null)
         {

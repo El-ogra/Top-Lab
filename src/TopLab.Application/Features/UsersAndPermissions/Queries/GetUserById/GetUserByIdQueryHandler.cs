@@ -9,14 +9,20 @@ namespace TopLab.Application.Features.UsersAndPermissions.Queries.GetUserById;
 public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<UserDetailDto>>
 {
     private readonly IApplicationDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetUserByIdQueryHandler(IApplicationDbContext db)
+    public GetUserByIdQueryHandler(IApplicationDbContext db, ICurrentUserService currentUser)
     {
         _db = db;
+        _currentUser = currentUser;
     }
 
     public Task<Result<UserDetailDto>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
+        if (!_currentUser.IsAuthenticated)
+        {
+            return Task.FromResult(Result<UserDetailDto>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام")));
+        }
         var user = _db.Set<User>().FirstOrDefault(u => u.Id.Value == request.UserId);
         if (user is null)
         {
