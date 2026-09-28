@@ -29,7 +29,6 @@ public static class DependencyInjection
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<ResultErrorPresenter>();
-        services.AddSingleton<IAppLogger, WpfAppLogger>();
         services.AddSingleton<IPrinterCatalogService, PrinterCatalogService>();
         services.AddSingleton<TopLab.Presentation.Services.Configuration.ConfigurationFileService>();
         services.AddSingleton<TopLab.Application.Common.Interfaces.IWorkstationConnectionSettingsProvider, TopLab.Presentation.Services.Configuration.WorkstationConnectionSettingsProvider>();
@@ -112,11 +111,3 @@ public static class DependencyInjection
     }
 }
 
-internal sealed class WpfAppLogger : IAppLogger
-{
-    public void Log(string requestName, string outcome, TimeSpan duration)
-    {
-        // Minimal console logging; can be replaced with proper logger later
-        System.Diagnostics.Debug.WriteLine($"[{requestName}] {outcome} {duration.TotalMilliseconds:F0}ms");
-    }
-}

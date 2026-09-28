@@ -99,6 +99,8 @@ public static class DependencyInjection
         services.AddSingleton<IPurchasesListStore, JsonPurchasesListStore>();
         services.AddSingleton<IPhoneBookStore, JsonPhoneBookStore>();
 
+        services.AddSingleton<IAppLogger, Logging.FileAppLogger>();
+
         return services;
     }
 }
