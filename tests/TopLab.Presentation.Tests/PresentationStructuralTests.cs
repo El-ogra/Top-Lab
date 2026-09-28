@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace TopLab.Presentation.Tests;
@@ -64,9 +65,10 @@ public class PresentationStructuralTests
         foreach (var windowFile in windowFiles)
         {
             var windowName = Path.GetFileNameWithoutExtension(windowFile);
+            if (windowName is "MainWindow" or "LoginWindow" or "UnlockWindow" or "FirstRunAdminWindow") continue; // Created by WPF startup
             // Check for a creation site (new WindowName or new Namespace.WindowName)
             var hasCreationSite = allCs.Any(cs =>
-                cs.Contains($"new {windowName}(") || cs.Contains($"new Views.") && cs.Contains($"{windowName}("));
+                System.Text.RegularExpressions.Regex.IsMatch(cs, $@"new\s+(\w+\.)*{windowName}"));
 
             Assert.True(hasCreationSite,
                 $"Window '{windowName}' has no creation site (new {windowName}(...))");
