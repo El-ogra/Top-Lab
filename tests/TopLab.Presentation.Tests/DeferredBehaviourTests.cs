@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 
 namespace TopLab.Presentation.Tests;
@@ -17,9 +18,9 @@ public class DeferredBehaviourTests
         Assert.True(File.Exists(vmPath), "ShellViewModel.cs not found");
 
         var content = File.ReadAllText(vmPath);
-        Assert.Contains("lockResult.IsSuccess", content,
+        Assert.True(content.Contains("lockResult.IsSuccess"),
             "LockWorkstationAsync must check lockResult.IsSuccess");
-        Assert.DoesNotContain("await _mediator.Send(new LockWorkstationCommand());\n        await LoadStatusAsync();", content,
+        Assert.False(content.Contains("await _mediator.Send(new LockWorkstationCommand());\n        await LoadStatusAsync();"),
             "LockWorkstationAsync must not discard the LockWorkstationCommand result");
     }
 
@@ -38,8 +39,7 @@ public class DeferredBehaviourTests
         Assert.True(buildNavStart > 0, "BuildNavigationItems not found");
 
         var buildNavSection = content.Substring(buildNavStart);
-        Assert.DoesNotContain("IsEnabled = true,", buildNavSection,
-            "BuildNavigationItems must not contain a literal IsEnabled = true");
+        Assert.False(buildNavSection.Contains("IsEnabled = true,"), "BuildNavigationItems must not contain a literal IsEnabled = true");
 
         // Must contain the four mapped permission codes
         Assert.Contains("PRINT_WORKSHEET", content);
@@ -61,7 +61,7 @@ public class DeferredBehaviourTests
             Assert.True(files.Length > 0, $"{name}.cs not found");
 
             var content = File.ReadAllText(files[0]);
-            Assert.DoesNotContain("IAuthorizedRequest", content,
+            Assert.False(content.Contains("IAuthorizedRequest"),
                 $"{name} must not implement IAuthorizedRequest");
         }
     }
