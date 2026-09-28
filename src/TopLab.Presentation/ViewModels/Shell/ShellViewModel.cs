@@ -168,7 +168,14 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                 // The official ExternalEntities + SentOutSamples entries now live
                 // inside the Accounts hub (P5). Temporary settings-dashboard routes
                 // absorbed in Slice 4.
-                IsEnabled = true,
+                IsEnabled = t switch
+                {
+                    "ورقة العمل" => _currentUser.IsAbsolutePermission || _currentUser.HasPermission("PRINT_WORKSHEET"),
+                    "الإحصائيات" => _currentUser.IsAbsolutePermission || _currentUser.HasPermission("STATISTICS"),
+                    "النظام" => _currentUser.IsAbsolutePermission || _currentUser.HasPermission("PT_AUDIT_ACCESS"),
+                    "قفل المحطة" => _currentUser.IsAbsolutePermission || _currentUser.HasPermission("EDIT_SYSTEM_SETTINGS"),
+                    _ => true
+                },
                 Command = new RelayCommand(async _ =>
                 {
                     if (t == "خروج")
