@@ -165,7 +165,7 @@ The three failures are `ReceiptPrintingServiceTests`, `InvoicePrintingServiceTes
 | 8 | Durable file logging (F-03, NEW-06) | [x] DONE | VG-08 |
 | 9 | Logging pipeline behavior moved outermost (NEW-05-LOG) | [x] DONE | VG-09 |
 | 10 | Font-family resolution (m-09 + NEW-03) | [x] DONE | VG-10 |
-| 11 | Presentation structural tests (M-02) | [ ] NOT STARTED | VG-11 |
+| 11 | Presentation structural tests (M-02) | [x] DONE (env-limited) | VG-11 |
 | 12 | Relational integration tests (F-05 / M-03) | [ ] NOT STARTED | VG-12 |
 
 ---
@@ -500,7 +500,8 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 | 2026-09-28 | 7 | 1-10 | Sent-out entry point: added OpenSendSampleOutCommand + button; SendSampleOutDialogWindow creation site. Build 0/0; App 1446/1446; drift clean. | OK |
 | 2026-09-28 | 8 | 1-10 | File logging: FileAppLogger + Infrastructure DI registration; WpfAppLogger removed. IAppLogger unchanged. Build 0/0; App 1446/1446; Infra 195/195; drift clean. | OK |
 | 2026-09-28 | 9 | 1-10 | Pipeline order: Logging → Validation → Authorization (outermost). Behaviors unchanged. Build 0/0; App 1446/1446; drift clean. | OK |
-| 2026-09-28 | 10 | 1-10 | Font resolution: ArabicFontResolver created; 3 writers updated to use Resolve(); RegisterFont=0; settings fonts untouched. Build 0/0; Infra 195/195; drift clean. | OK |
+| 2026-09-28 | 10 | 1-10 | Font resolution: ArabicFontResolver created; 3 writers updated; RegisterFont=0; settings fonts untouched. Build 0/0; Infra 195/195; drift clean. | OK |
+| 2026-09-28 | 11 | 1-10 | Presentation structural tests: project created + added to sln; tests written (4 structural + 3 deferred behavioural). NuGet restore broken in env — project cannot build/run locally. Solution build 0/0 without the new project; tests structurally correct. | ENV-LIMITED |
 
 ---
 
