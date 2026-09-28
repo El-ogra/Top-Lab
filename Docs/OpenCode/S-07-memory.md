@@ -163,7 +163,7 @@ The three failures are `ReceiptPrintingServiceTests`, `InvoicePrintingServiceTes
 | 6 | Navigation items filtered by permission (F-04) | [x] DONE | VG-06 |
 | 7 | Sent-out-samples write entry point (M-01) | [x] DONE | VG-07 |
 | 8 | Durable file logging (F-03, NEW-06) | [x] DONE | VG-08 |
-| 9 | Logging pipeline behavior moved outermost (NEW-05-LOG) | [ ] NOT STARTED | VG-09 |
+| 9 | Logging pipeline behavior moved outermost (NEW-05-LOG) | [x] DONE | VG-09 |
 | 10 | Font-family resolution (m-09 + NEW-03) | [ ] NOT STARTED | VG-10 |
 | 11 | Presentation structural tests (M-02) | [ ] NOT STARTED | VG-11 |
 | 12 | Relational integration tests (F-05 / M-03) | [ ] NOT STARTED | VG-12 |
@@ -498,7 +498,8 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 | 2026-09-28 | 5 | 1-10 | Lock-workstation result checked: captured lockResult, branch on IsSuccess, surface error via presenter. Build 0/0; App 1446/1446; drift clean. | OK |
 | 2026-09-28 | 6 | 1-10 | Navigation filtering: 4 items gated by permission; 6 owner-decision items stay enabled. Build 0/0; App 1446/1446; drift clean. | OK |
 | 2026-09-28 | 7 | 1-10 | Sent-out entry point: added OpenSendSampleOutCommand + button; SendSampleOutDialogWindow creation site. Build 0/0; App 1446/1446; drift clean. | OK |
-| 2026-09-28 | 8 | 1-10 | File logging: FileAppLogger created + registered in Infrastructure DI; WpfAppLogger removed from Presentation. IAppLogger signature unchanged. Debug.WriteLine count=0. Build 0/0; App 1446/1446; Infra 195/195; drift clean. | OK |
+| 2026-09-28 | 8 | 1-10 | File logging: FileAppLogger + Infrastructure DI registration; WpfAppLogger removed. IAppLogger unchanged. Build 0/0; App 1446/1446; Infra 195/195; drift clean. | OK |
+| 2026-09-28 | 9 | 1-10 | Pipeline order: Logging → Validation → Authorization (outermost). Behaviors unchanged. Build 0/0; App 1446/1446; drift clean. | OK |
 
 ---
 
