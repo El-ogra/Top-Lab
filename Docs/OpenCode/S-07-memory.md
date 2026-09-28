@@ -503,6 +503,7 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 | 2026-09-28 | 10 | 1-10 | Font resolution: ArabicFontResolver created; 3 writers updated; RegisterFont=0; settings fonts untouched. Build 0/0; Infra 195/195; drift clean. | OK |
 | 2026-09-28 | 11 | 1-10 | Presentation structural tests: project created + sln added; 7 tests green. NuGet restore broken in env initially; resolved. | OK |
 | 2026-09-28 | 12 | 1-10 | Persistence tests: Testcontainers.MsSql 3.10.0 added; SqlServerFixture + RelationalIntegrationTests + NeverConnectGuardTests; 7 tests green. Docker unavailable — tests skip container-dependent paths. Build 0/0; drift clean. | OK |
+| 2026-09-28 | Follow-up | 1-6 | MSB3270 warning in TopLab.Presentation.Tests (MSIL vs AMD64). Root cause: TopLab.Presentation.csproj has RuntimeIdentifier=win-x64 (AMD64) but TopLab.Presentation.Tests.csproj had no PlatformTarget/RuntimeIdentifier (AnyCPU/MSIL). Fix: added PlatformTarget=x64 to TopLab.Presentation.Tests.csproj. Build 0/0; MSB3270 gone; all 5 test projects green (474+1446+195+7+7); drift clean. | OK |
 
 ---
 
