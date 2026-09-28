@@ -157,7 +157,7 @@ The three failures are `ReceiptPrintingServiceTests`, `InvoicePrintingServiceTes
 |---|-------------|--------|-----------------|
 | 1 | Hygiene, stale text and dead code (m-08, m-06, m-10, m-04a, NEW-04) | [x] DONE | VG-01 |
 | 2 | Validators for the 22 parameterised commands (m-01) | [x] DONE | VG-02 |
-| 3 | Delete-user reference guard fails closed (M-04) | [ ] NOT STARTED | VG-03 |
+| 3 | Delete-user reference guard fails closed (M-04) | [x] DONE | VG-03 |
 | 4 | User-management authorization: no self-escalation (B-01) | [ ] NOT STARTED | VG-04 |
 | 5 | Lock-workstation result is checked (NEW-05-LOCK) | [ ] NOT STARTED | VG-05 |
 | 6 | Navigation items filtered by permission (F-04) | [ ] NOT STARTED | VG-06 |
@@ -493,6 +493,7 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 | 2026-09-28 | 0 | G0 | Baseline measured: SDK 9.0.318 (8.0.425 avail), HEAD=66a17f7, ef=8.0.30, build 0/0, Domain 474/474, App 1419/1419, Infra 195/195, drift clean, Docker unavailable, Arial+Arabic fonts present | OK |
 | 2026-09-28 | 1 | 1-10 | Hygiene fixes: removed unused `_services`; deleted 5 tracked TestResults; added TestResults/ to .gitignore; replaced LocalDB; removed version Placeholder; fixed stale comments. Build 0/0; tests 474+1419+195; drift clean. | OK |
 | 2026-09-28 | 2 | 1-10 | Created 22 validators + completeness test + behavioural tests. Build 0/0; App 1443/1443 (Δ+24); Domain 474/474; Infra 195/195; drift clean. | OK |
+| 2026-09-28 | 3 | 1-10 | Delete-user guard fails closed: removed SafeAny, wrapped HasReferences in try-catch returning Unexpected. 3 guard tests green. Build 0/0; App 1446/1446 (Δ+27); drift clean. | OK |
 
 ---
 

@@ -39,8 +39,12 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
             }
         }
 
-        if (HasReferences(request.UserId))
+        if (HasReferences(request.UserId, out var referenceError))
         {
+            if (referenceError is not null)
+            {
+                return Result.Failure(referenceError);
+            }
             return Result.Failure(Error.Conflict("لا يمكن حذف مستخدم له سجلات مرتبطة؛ استخدم التعطيل بدلاً من الحذف"));
         }
 
@@ -55,67 +59,64 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
         return Result.Success();
     }
 
-    private bool HasReferences(int userId)
+    private bool HasReferences(int userId, out Error? failure)
     {
-        if (_db.Set<User>().Any(u => u.CreatedByUserId == userId || u.LastModifiedByUserId == userId))
-        {
-            return true;
-        }
-
-        if (SafeAny<Patient>(p => p.CreatedByUserId == userId || p.LastModifiedByUserId == userId))
-        {
-            return true;
-        }
-
-        if (SafeAny<Test>(t => t.CreatedByUserId == userId || t.LastModifiedByUserId == userId))
-        {
-            return true;
-        }
-
-        if (SafeAny<PatientTest>(pt => pt.CreatedByUserId == userId || pt.LastModifiedByUserId == userId
-            || pt.EnteredByUserId == userId || pt.ReviewedByUserId == userId
-            || pt.LastPrintedByUserId == userId || pt.DeliveredByUserId == userId))
-        {
-            return true;
-        }
-
-        if (SafeAny<PaymentOperation>(po => po.CreatedByUserId == userId || po.LastModifiedByUserId == userId || po.ReceivedByUserId == userId))
-        {
-            return true;
-        }
-
-        if (SafeAny<CashMovement>(cm => cm.CreatedByUserId == userId || cm.LastModifiedByUserId == userId || cm.PerformedByUserId == userId))
-        {
-            return true;
-        }
-
-        if (SafeAny<ExternalEntity>(e => e.CreatedByUserId == userId || e.LastModifiedByUserId == userId))
-        {
-            return true;
-        }
-
-        if (SafeAny<SentOutSample>(s => s.CreatedByUserId == userId || s.LastModifiedByUserId == userId))
-        {
-            return true;
-        }
-
-        if (SafeAny<AttendanceRecord>(a => a.UserId.Value == userId))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool SafeAny<T>(Func<T, bool> predicate) where T : class
-    {
+        failure = null;
         try
         {
-            return _db.Set<T>().Any(predicate);
-        }
-        catch
-        {
+            if (_db.Set<User>().Any(u => u.CreatedByUserId == userId || u.LastModifiedByUserId == userId))
+            {
+                return true;
+            }
+
+            if (_db.Set<Patient>().Any(p => p.CreatedByUserId == userId || p.LastModifiedByUserId == userId))
+            {
+                return true;
+            }
+
+            if (_db.Set<Test>().Any(t => t.CreatedByUserId == userId || t.LastModifiedByUserId == userId))
+            {
+                return true;
+            }
+
+            if (_db.Set<PatientTest>().Any(pt => pt.CreatedByUserId == userId || pt.LastModifiedByUserId == userId
+                || pt.EnteredByUserId == userId || pt.ReviewedByUserId == userId
+                || pt.LastPrintedByUserId == userId || pt.DeliveredByUserId == userId))
+            {
+                return true;
+            }
+
+            if (_db.Set<PaymentOperation>().Any(po => po.CreatedByUserId == userId || po.LastModifiedByUserId == userId || po.ReceivedByUserId == userId))
+            {
+                return true;
+            }
+
+            if (_db.Set<CashMovement>().Any(cm => cm.CreatedByUserId == userId || cm.LastModifiedByUserId == userId || cm.PerformedByUserId == userId))
+            {
+                return true;
+            }
+
+            if (_db.Set<ExternalEntity>().Any(e => e.CreatedByUserId == userId || e.LastModifiedByUserId == userId))
+            {
+                return true;
+            }
+
+            if (_db.Set<SentOutSample>().Any(s => s.CreatedByUserId == userId || s.LastModifiedByUserId == userId))
+            {
+                return true;
+            }
+
+            if (_db.Set<AttendanceRecord>().Any(a => a.UserId.Value == userId))
+            {
+                return true;
+            }
+
             return false;
+        }
+        catch (Exception)
+        {
+            failure = Error.Unexpected("تعذر التحقق من السجلات المرتبطة. لا يمكن حذف المستخدم.");
+            return true;
         }
     }
 }
