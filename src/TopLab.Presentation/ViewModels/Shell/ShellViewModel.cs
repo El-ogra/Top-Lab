@@ -355,7 +355,17 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
     {
         string lockedUserName = CurrentUserName;
 
-        await _mediator.Send(new LockWorkstationCommand());
+        var lockResult = await _mediator.Send(new LockWorkstationCommand());
+        if (!lockResult.IsSuccess)
+        {
+            if (lockResult.Error is not null)
+            {
+                var message = _errorPresenter.Present(lockResult.Error);
+                await _dialogs.ShowErrorAsync(message);
+            }
+            return;
+        }
+
         await LoadStatusAsync();
 
         var unlockVm = _services.GetRequiredService<UnlockViewModel>();

@@ -159,7 +159,7 @@ The three failures are `ReceiptPrintingServiceTests`, `InvoicePrintingServiceTes
 | 2 | Validators for the 22 parameterised commands (m-01) | [x] DONE | VG-02 |
 | 3 | Delete-user reference guard fails closed (M-04) | [x] DONE | VG-03 |
 | 4 | User-management authorization: no self-escalation (B-01) | [x] DONE | VG-04 |
-| 5 | Lock-workstation result is checked (NEW-05-LOCK) | [ ] NOT STARTED | VG-05 |
+| 5 | Lock-workstation result is checked (NEW-05-LOCK) | [x] DONE | VG-05 |
 | 6 | Navigation items filtered by permission (F-04) | [ ] NOT STARTED | VG-06 |
 | 7 | Sent-out-samples write entry point (M-01) | [ ] NOT STARTED | VG-07 |
 | 8 | Durable file logging (F-03, NEW-06) | [ ] NOT STARTED | VG-08 |
@@ -494,7 +494,8 @@ Rule: any user-facing string that has a backend counterpart is copied byte-for-b
 | 2026-09-28 | 1 | 1-10 | Hygiene fixes: removed unused `_services`; deleted 5 tracked TestResults; added TestResults/ to .gitignore; replaced LocalDB; removed version Placeholder; fixed stale comments. Build 0/0; tests 474+1419+195; drift clean. | OK |
 | 2026-09-28 | 2 | 1-10 | Created 22 validators + completeness test + behavioural tests. Build 0/0; App 1443/1443 (Δ+24); Domain 474/474; Infra 195/195; drift clean. | OK |
 | 2026-09-28 | 3 | 1-10 | Delete-user guard fails closed: removed SafeAny, wrapped HasReferences in try-catch returning Unexpected. 3 guard tests green. Build 0/0; App 1446/1446 (Δ+27); drift clean. | OK |
-| 2026-09-28 | 4 | 1-10 | User-mgmt auth: added ICurrentUserService + auth/anti-escalation/actor-floor guards to 8 handlers; UI checkbox IsEnabled binding. Login path intact (SignIn/SignOut/GetCurrentSession/VerifySecondaryPassword untouched). Build 0/0; App 1446/1446; drift clean. | OK |
+| 2026-09-28 | 4 | 1-10 | User-mgmt auth: added ICurrentUserService + auth/anti-escalation/actor-floor guards to 8 handlers; UI checkbox IsEnabled binding. Login path intact. Build 0/0; App 1446/1446; drift clean. | OK |
+| 2026-09-28 | 5 | 1-10 | Lock-workstation result checked: captured lockResult, branch on IsSuccess, surface error via presenter. Build 0/0; App 1446/1446; drift clean. | OK |
 
 ---
 
