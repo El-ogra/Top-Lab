@@ -63,7 +63,7 @@ public sealed class SystemSettingsViewModel : ViewModelBase
     private string _labName = string.Empty;
     private string _labAddress = string.Empty;
     private string _labPhone = string.Empty;
-    private string _labFontFamily = "Arial";
+    private string _labFontFamily = string.Empty;
     private int _labFontSizePt = 12;
     private bool _isLabPrintTextEmpty = true;
 

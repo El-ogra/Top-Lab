@@ -35,7 +35,7 @@ public sealed class ReportSettingsViewModel : ViewModelBase
     private string _labName = string.Empty;
     private string _labAddress = string.Empty;
     private string _labPhone = string.Empty;
-    private string _fontFamily = "Arial";
+    private string _fontFamily = string.Empty;
     private int _fontSizePt = 12;
 
     public ReportSettingsViewModel(
