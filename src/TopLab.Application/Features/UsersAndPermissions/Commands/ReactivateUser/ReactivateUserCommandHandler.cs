@@ -28,6 +28,11 @@ public sealed class ReactivateUserCommandHandler : IRequestHandler<ReactivateUse
             return Result.Failure(Error.NotFound("المستخدم غير موجود"));
         }
 
+        if (user.IsAbsolutePermission && !_currentUser.IsAbsolutePermission)
+        {
+            return Result.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
+
         user.Reactivate();
         await _db.SaveChangesAsync(cancellationToken);
         return Result.Success();

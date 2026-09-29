@@ -54,7 +54,7 @@ public class DeleteUserCommandHandlerTests
         var admin = User.Create(UserId.Create(1), "admin", hasher.Hash("p"), hasher.Hash("s"), true);
         db.Users.Add(admin);
 
-        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService());
+        var handler = new DeleteUserCommandHandler(db, new FakeCurrentUserService { IsAbsolutePermission = true });
         var result = await handler.Handle(new DeleteUserCommand(1), CancellationToken.None);
 
         Assert.False(result.IsSuccess);

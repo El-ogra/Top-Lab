@@ -28,6 +28,11 @@ public sealed class DeactivateUserCommandHandler : IRequestHandler<DeactivateUse
             return Result.Failure(Error.NotFound("المستخدم غير موجود"));
         }
 
+        if (user.IsAbsolutePermission && !_currentUser.IsAbsolutePermission)
+        {
+            return Result.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
+
         if (!user.IsActive)
         {
             return Result.Success();

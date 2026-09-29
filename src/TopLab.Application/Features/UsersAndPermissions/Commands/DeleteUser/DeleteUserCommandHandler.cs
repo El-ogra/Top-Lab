@@ -36,6 +36,11 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
             return Result.Failure(Error.NotFound("المستخدم غير موجود"));
         }
 
+        if (user.IsAbsolutePermission && !_currentUser.IsAbsolutePermission)
+        {
+            return Result.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
+
         if (user.IsAbsolutePermission && user.IsActive)
         {
             int otherAbsoluteCount = _db.Set<User>().Count(u => u.IsAbsolutePermission && u.IsActive && u.Id.Value != request.UserId);
