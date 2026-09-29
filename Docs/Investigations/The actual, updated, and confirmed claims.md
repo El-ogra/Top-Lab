@@ -1,12 +1,12 @@
 # The actual, updated, and confirmed claims — الادعاءات المؤكدة والمحدَّثة
 
 - **التاريخ:** 2026-09-29
-- **مصدر الحقيقة:** الحالة الراهنة للمستودع عند `HEAD = 0aea311` (ويندوز، فرع `main`) — 23 commitًا بعد `377aa28` — تم التحقق من كل ادعاء بالفحص المباشر للشيفرة/الإعدادات/الاختبارات، وبتنفيذ البناء والاختبارات.
+- **مصدر الحقيقة:** الحالة الراهنة للمستودع عند `HEAD = 22c78ec` (ويندوز، فرع `main`) — 25 commitًا بعد `377aa28` (هذه الوثيقة هي التحديث التالي مباشرة) — تم التحقق من كل ادعاء بالفحص المباشر للشيفرة/الإعدادات/الاختبارات، وبتنفيذ البناء والاختبارات.
 - **المصادر الثلاثة المدقَّقة (اختصارات تُستخدم أدناه):**
   - «البنود» = `تقرير البنود من الاول الى الثالث.md`
   - «الوكيل» = `تقرير الوكيل المحلي.md`
   - «المستقل» = `independent-security-and-test-theater-audit.md`
-- **ملاحظة منهجية:** المستودع تقدَّم 23 commitًا بعد الالتزام الذي دقَّقته التقارير الثلاثة (سلسلة `Security-Fix-1..5` و`Fix-N1..N4` و`Fix-T1..T3` و`Fix-M1` و`Fix-H1` و`R1` و`D1` و`D2` و`Owner-D1..D4`)، فكثير من الثغرات والاختبارات «المسرحية» الموثَّقة فيها صُلحت. ما يلي هو **الادعاءات الصحيحة والقائمة فعليًا الآن فقط**، مع ذكر الملفات المصدر لكل ادعاء (وعند تكراره في أكثر من ملف تُذكر كلها مرة واحدة).
+- **ملاحظة منهجية:** المستودع تقدَّم 25 commitًا بعد الالتزام الذي دقَّقته التقارير الثلاثة (سلسلة `Security-Fix-1..5` و`Fix-N1..N4` و`Fix-T1..T3` و`Fix-M1` و`Fix-H1` و`R1` و`D1` و`D2` و`Owner-D1..D4` و`Owner-D2b`)، فكثير من الثغرات والاختبارات «المسرحية» الموثَّقة فيها صُلحت. ما يلي هو **الادعاءات الصحيحة والقائمة فعليًا الآن فقط**، مع ذكر الملفات المصدر لكل ادعاء (وعند تكراره في أكثر من ملف تُذكر كلها مرة واحدة).
 
 ---
 
@@ -42,15 +42,15 @@
 22. نتيجة قفل المحطة تُفحص: عند الفشل يُعرض الخطأ عبر `ResultErrorPresenter` ولا تُفتح نافذة الفتح (`ShellViewModel.cs:370-376`، وانتهاء الكتلة عند `ShowErrorAsync :376`)، مع إعادة تحميل الحالة عبر `LoadStatusAsync` (`:381` و`:398`) و seam خاصية `showUnlock` العام (`:366` مع `:385-387`)؛ ومغطاة باختبارين سلوكيين (فشل/نجاح). — المصادر: «البنود» (NEW-05-LOCK)؛ «الوكيل» (S5)؛ «المستقل» §5.5.
 23. نقطة دخول «إرسال عيّنة»: `SetupAsync` **منتظَرة** داخل `try/catch` والقائمة تُعاد تحميلها بعد نجاع الحوار (`SentOutSamplesViewModel.cs:186-199`). الادعاء السابق بـ fire-and-forget وعدم التحديث لم يعد صحيحًا. — المصدر: «البنود» (M-01).
 24. الأزرار الميتة أُزيلت من `MainWindow.xaml`؛ الزران الفعليان: تنقل (`:43`) وتغيير كلمة المرور (`:50`)؛ و`HomeViewModel.cs` فارغ (5 أسطر) بلا أثر وظيفي. — المصدر: «الوكيل» (M-01/§11.3).
-25. نافذة «حول البرنامج»: سطر الإصدار حقيقي بلا Placeholder (`AboutWindow.xaml.cs:12`)؛ و3 أسطر Placeholder باقية عمدًا لمحتوى المالك (`AboutWindow.xaml:21-23`). — المصادر: «البنود» D-6؛ «الوكيل» (السبب 9).
+25. نافذة «حول البرنامج»: سطر الإصدار حقيقي (`VersionText` في `AboutWindow.xaml` + `AboutWindow.xaml.cs`)؛ **صفر Placeholder** — حُذفت الأسطر الثلاثة (قرار المالك). اختبار بنيوي: `AboutWindowPlaceholderTests.cs`. — المصدر: `e81221f` + الاختبار.
 26. كل ملفات العرض `Views/**/*.xaml` تحمل `FlowDirection="RightToLeft"` ويفرضها اختبار `EveryView_IsRightToLeft`. — المصدر: «المستقل» §4.8 (الوضع الحالي).
 
 ## 4. الطباعة والخطوط
 
 27. كاتبا PDF الثلاثة — `WorkSheetPdfWriter.cs:55`، `InvoicePdfWriter.cs:54`، `ReceiptPdfWriter.cs:53` — يستخدمون جميعًا `ArabicFontResolver.Resolve`؛ الادعاء السابق بـ«كاتب واحد من ثلاثة» و«3 writers updated كاذب» لم يعد صحيحًا. — المصادر: «البنود» (m-09+NEW-03)؛ «الوكيل» (السبب 1/D-1)؛ «المستقل» §6.2.
 28. لا يوجد خط مضمَّن ولا أي ملف خط (ttf/otf/…) متتبَّع في المستودع، ولا استدعاء `RegisterFont` (بحث = 0). — المصادر: «البنود» D-8؛ «الوكيل» (السبب 9/D-8).
-29. القيم الافتراضية لـ FontFamily في 4 ViewModels (`ReceiptSettingsViewModel`، `ReportSettingsViewModel`، `EnvelopeSettingsViewModel`، `SystemSettingsViewModel`) أصبحت `string.Empty` ليقرر `ArabicFontResolver` البديل (لا Windows-only name). — المصدر: `SettingsFontFamilyDefaultTests.cs` + `D1`.
-30. الكاتبان الثلاثة يضبطون `Settings.License = LicenseType.Community` (QuestPDF) بتعليق owner-confirmed؛ إعادة تأكيد أهلية Community للتوزيع التجاري بقرار المالك. — المصدر: «الوكيل» (السبب 9).
+29. القيم الافتراضية للخط في 4 ViewModels (`ReceiptSettingsViewModel.FontFamily`، `ReportSettingsViewModel.FontFamily`، `EnvelopeSettingsViewModel.FontFamily`، `SystemSettingsViewModel.LabFontFamily`) أصبحت `string.Empty` ليقرر `ArabicFontResolver` البديل (لا Windows-only name). — المصدر: `SettingsFontFamilyDefaultTests.cs` + `D1`.
+30. الكاتبات الثلاثة تضبطن `Settings.License = LicenseType.Community` (QuestPDF) بتعليق مؤرَّخ: «Community-eligible reconfirmed 2026-09-29 by owner decision; revisit before commercial distribution» (استُبدل تعليق owner-confirmed). — المصدر: `0aea311`.
 
 ## 5. التسجيل وخط الأنابيب
 
@@ -67,7 +67,7 @@
 38. اختبار `AfterRevoking_AuthorizationFails` يشغّل `AuthorizationBehavior` الحقيقي ويقرأ المنح من قاعدة الاختبار بعد السحب (لا tautology على `HashSet.Clear`). — المصدر: «المستقل» §4.10.
 39. `ValidatorCompletenessTests` تثبت التسجيل عبر حاوية DI حقيقية: كل أمر مُعلَّم (من أصل 129 أمرًا) يحلّ إلى `IValidator<T>`، وثلاثة أوامر بلا معاملات بلا validator بالضبط: `LockWorkstationCommand`، `ApplyDatabaseUpdatesCommand`، `SignOutCommand`. — المصادر: «البنود» (m-01)؛ «الوكيل» (S2)؛ «المستقل» §4.4.
 40. يوجد ملف اختبار للمحلل: `tests/TopLab.Infrastructure.Tests/Printing/ArabicFontResolverTests.cs` (حالات null/فارغ/Arial). — المصدر: «الوكيل» (D-2).
-41. أُضيفت اختبارات حارسة أمنية جديدة: `CreateUserBootstrapTests.cs` و`SaveUserPermissionsGuardTests.cs` و`ActorTargetGuardTests.cs` و`CreateUserPermissionCodesGuardTests.cs` و`GetUsersGuardTests.cs` إلى جانب `DeleteUserGuardTests.cs`، و`FinancialReadAuthorizationTests.cs` و`SettingsFontFamilyDefaultTests.cs`. — المصدر: «المستقل» §4.2 (تحديث).
+41. أُضيفت اختبارات حارسة أمنية وسلوكية جديدة: `CreateUserBootstrapTests.cs` و`SaveUserPermissionsGuardTests.cs` و`ActorTargetGuardTests.cs` و`CreateUserPermissionCodesGuardTests.cs` و`GetUsersGuardTests.cs` و`DeleteUserGuardTests.cs`، و`FinancialReadAuthorizationTests.cs` و`SettingsFontFamilyDefaultTests.cs` و`IdleAutoLockTimerTests.cs` و`AboutWindowPlaceholderTests.cs` و`ShellViewModelUsersNavigationGateTests.cs` و`UserManagementViewModelCanEditAbsoluteTests.cs` و`SentOutSamplesOpenSendSampleOutTests.cs`. — المصدر: «المستقل» §4.2 (تحديث).
 42. لا `NotImplementedException` إنتاجية ولا `TODO`/`FIXME`/`HACK` في `src/` (بحث = 0). — المصدر: «الوكيل» (U-09).
 
 ## 7. قاعدة البيانات والهجرات
@@ -79,8 +79,8 @@
 ## 8. بنود مؤجلة مفتوحة (قرارات مالك معلّقة)
 
 46. لا نظام ترخيص/تفعيل للمنتج: لا Entity ترخيص، لا أمر تفعيل، لا بوابة ترخيص في تسلسل الإقلاع (بحث `License|Activation|Trial` في الكود = 0 خارج تعليقات QuestPDF). **قرار المالك (إخلاء مسؤولية الترخيص):** استخدام داخلي فقط، لا إنفاذ للترخيص بقرار المالك، يُعاد فتحه قبل أي توزيع خارجي. — المصدر: «الوكيل» (السبب 2/F-02).
-47. لا قفل تلقائي عند الخمول (idle auto-lock): لا مؤقّت خمول في المشروع (بحث = 0)؛ القفل اليدوي فقط عبر `LockWorkstationCommand`. — المصادر: «البنود» D-7؛ «الوكيل» (السبب 6).
-48. مجلد `Features/SamplePipeline` حُذف بالكامل؛ اختبارا سلوك الأنبوب (`BehaviorsAuthorizationBehaviorTests` و`BehaviorsValidationBehaviorTests`) يعتمدان الآن على أنواع طلب محلية داخل مشروع الاختبار (`LocalAuthProbe` / `LocalValidationProbe`) بلا رمز إذن منتج. (grep `SamplePipeline|EchoName|SAMPLE_PIPELINE` = 0.) — المصادر: «البنود» D-5؛ «الوكيل» (السبب 9/F-06).
+47. يوجد قفل تلقائي عند الخمول بقرار المالك: `IdleAutoLockTimer` بثابت **10 دقائق غير قابل للضبط** (`IdleAutoLockTimer.cs`) يُستدعي مسار `LockWorkstationCommand`/`LockWorkstationAsync` الموجود؛ يُعاد الضبط عبر `InputManager.PreProcessInput` + `OnNavigated`؛ يتوقف أثناء نافذة Unlock؛ `TickAsync` محمي بـ try/catch. اختبارات: `IdleAutoLockTimerTests.cs`. — المصدر: `96fa5a2` + `Owner-D2b`.
+48. مجلد `Features/SamplePipeline` حُذف بالكامل؛ اختبارا سلوك الأنبوب (`BehaviorsAuthorizationBehaviorTests` و`BehaviorsValidationBehaviorTests`) يعتمدان الآن على أنواع طلب محلية داخل مشروع الاختبار (`LocalAuthProbe` / `LocalValidationProbe`) بلا رمز إذن منتج. (grep في `src/`+`tests/` = 0؛ الظهور فقط في توثيق `Docs/`.) — المصادر: «البنود» D-5؛ «الوكيل» (السبب 9/F-06).
 
 ## 9. قيود دائمة وإعدادات
 
