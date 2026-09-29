@@ -1,12 +1,12 @@
 # The actual, updated, and confirmed claims — الادعاءات المؤكدة والمحدَّثة
 
 - **التاريخ:** 2026-09-29
-- **مصدر الحقيقة:** الحالة الراهنة للمستودع عند `HEAD = 6096b75` (ويندوز، فرع `main`) — تم التحقق من كل ادعاء بالفحص المباشر للشيفرة/الإعدادات/الاختبارات، وبتنفيذ البناء والاختبارات.
+- **مصدر الحقيقة:** الحالة الراهنة للمستودع عند `HEAD = 0aea311` (ويندوز، فرع `main`) — 23 commitًا بعد `377aa28` — تم التحقق من كل ادعاء بالفحص المباشر للشيفرة/الإعدادات/الاختبارات، وبتنفيذ البناء والاختبارات.
 - **المصادر الثلاثة المدقَّقة (اختصارات تُستخدم أدناه):**
   - «البنود» = `تقرير البنود من الاول الى الثالث.md`
   - «الوكيل» = `تقرير الوكيل المحلي.md`
   - «المستقل» = `independent-security-and-test-theater-audit.md`
-- **ملاحظة منهجية:** المستودع تقدَّم 14 commitًا بعد الالتزام الذي دقَّقته التقارير الثلاثة (سلسلة `Security-Fix-1..5` و`Fix-N1..N4` و`Fix-T1..T3` و`Fix-M1` و`Fix-H1`)، فكثير من الثغرات والاختبارات «المسرحية» الموثَّقة فيها صُلحت. ما يلي هو **الادعاءات الصحيحة والقائمة فعليًا الآن فقط**، مع ذكر الملفات المصدر لكل ادعاء (وعند تكراره في أكثر من ملف تُذكر كلها مرة واحدة).
+- **ملاحظة منهجية:** المستودع تقدَّم 23 commitًا بعد الالتزام الذي دقَّقته التقارير الثلاثة (سلسلة `Security-Fix-1..5` و`Fix-N1..N4` و`Fix-T1..T3` و`Fix-M1` و`Fix-H1` و`R1` و`D1` و`D2` و`Owner-D1..D4`)، فكثير من الثغرات والاختبارات «المسرحية» الموثَّقة فيها صُلحت. ما يلي هو **الادعاءات الصحيحة والقائمة فعليًا الآن فقط**، مع ذكر الملفات المصدر لكل ادعاء (وعند تكراره في أكثر من ملف تُذكر كلها مرة واحدة).
 
 ---
 
@@ -24,7 +24,7 @@
 10. منطق `AuthorizationBehavior` سليم: `IsAbsolutePermission || HasPermission(code)` وإلا `Forbidden` (`AuthorizationBehavior.cs:34-39`). — المصدر: «المستقل» §3.8.
 11. كتالوج الصلاحيات المزروع = 13 رمزًا فقط (`PermissionId.Create(1)`…`(13)` في `PermissionConfiguration.cs:17-31`)، ولا يوجد رمز `MANAGE_USERS`. — المصادر: «البنود» §3.4/D-3؛ «الوكيل» (السبب 7)؛ «المستقل» §5.2.
 12. حذف المستخدم «فاشل مغلقًا»: تعريف `HasReferences` عند `DeleteUserCommandHandler.cs:73` و`catch (Exception)` عند `:127` يعيد `Error.Unexpected` + `true` عند أي استثناء (قبل أي `_db.Remove` (النطاق :62-68))؛ 9 فحوص مراجع (User, Patient, Test, PatientTest, PaymentOperation, CashMovement, ExternalEntity, SentOutSample, AttendanceRecord)؛ ويحذف صفوف `UserPermissionGrant` صراحةً (`:62-66`) قبل `_db.Remove(user)` (`:68`). — المصادر: «البنود» (M-04)؛ «الوكيل» (S3)؛ «المستقل» §5.3/§7.11.
-13. ستة استعلامات قراءة مالية بلا بوابة صلاحية: `GetPatientAccountQuery`، `ListPatientPaymentsQuery`، `GetPatientInvoiceQuery`، `GetSentOutLabAccountQuery`، `GetPatientReceiptQuery`، `GetSentOutSamplesQuery` (كلها `IRequest` فقط بلا `IAuthorizedRequest`). — المصادر: «البنود» D-2؛ «الوكيل» (السبب 8).
+13. ستة استعلامات قراءة مالية مُبوّبة الآن على الرمز المزروع `CASH_DISBURSE_DEPOSIT` عبر `IAuthorizedRequest`: `GetPatientAccountQuery`، `ListPatientPaymentsQuery`، `GetPatientInvoiceQuery`، `GetSentOutLabAccountQuery`، `GetPatientReceiptQuery`، `GetSentOutSamplesQuery`. **أثر موثّق:** `PatientEditor.RefreshBillingAsync` يعرض `Forbidden` عبر `ResultErrorPresenter` لمستخدم `ADD_EDIT_PATIENT` بلا رمز نقدي (المجامير تبقى صفر). — المصدر: `FinancialReadAuthorizationTests.cs` + `R1`.
 14. `VerifySecondaryPasswordQueryHandler` يشترط جلسة ويتحقق من هوية **المنادي نفسه** (`u.Id.Value == _currentUser.UserId` — `:26-31`). — المصدر: «المستقل» §3.5/§3.7.
 
 ## 2. مسار الدخول والإقلاع
@@ -49,7 +49,7 @@
 
 27. كاتبا PDF الثلاثة — `WorkSheetPdfWriter.cs:55`، `InvoicePdfWriter.cs:54`، `ReceiptPdfWriter.cs:53` — يستخدمون جميعًا `ArabicFontResolver.Resolve`؛ الادعاء السابق بـ«كاتب واحد من ثلاثة» و«3 writers updated كاذب» لم يعد صحيحًا. — المصادر: «البنود» (m-09+NEW-03)؛ «الوكيل» (السبب 1/D-1)؛ «المستقل» §6.2.
 28. لا يوجد خط مضمَّن ولا أي ملف خط (ttf/otf/…) متتبَّع في المستودع، ولا استدعاء `RegisterFont` (بحث = 0). — المصادر: «البنود» D-8؛ «الوكيل» (السبب 9/D-8).
-29. قوائم الخطوط الافتراضية في إعدادات العرض ما زالت `"Arial"` في 4 ViewModels: `ReceiptSettingsViewModel`، `ReportSettingsViewModel`، `EnvelopeSettingsViewModel`، `SystemSettingsViewModel`. — المصدر: «البنود» D-8.
+29. القيم الافتراضية لـ FontFamily في 4 ViewModels (`ReceiptSettingsViewModel`، `ReportSettingsViewModel`، `EnvelopeSettingsViewModel`، `SystemSettingsViewModel`) أصبحت `string.Empty` ليقرر `ArabicFontResolver` البديل (لا Windows-only name). — المصدر: `SettingsFontFamilyDefaultTests.cs` + `D1`.
 30. الكاتبان الثلاثة يضبطون `Settings.License = LicenseType.Community` (QuestPDF) بتعليق owner-confirmed؛ إعادة تأكيد أهلية Community للتوزيع التجاري بقرار المالك. — المصدر: «الوكيل» (السبب 9).
 
 ## 5. التسجيل وخط الأنابيب
@@ -59,7 +59,7 @@
 
 ## 6. الاختبارات — الحالة الراهنة
 
-33. البناء نظيف (0 تحذير / 0 خطأ)، وكل الاختبارات خضراء على ويندوز: Domain **474/474**، Application **1469/1469**، Infrastructure **201/201**، Persistence **7 ناجح + 1 Skipped**، Presentation **32/32**. (تحل هذه الأرقام محلّ الأرقام القديمة 474/1446/195/7/7 و2129.) — المصادر: «البنود» §4.2؛ «الوكيل» §2؛ «المستقل» §2.5 (تحديث بالتنفيذ).
+33. البناء نظيف (0 تحذير / 0 خطأ)، وكل الاختبارات خضراء على ويندوز: Domain **474**، Application **1484**، Infrastructure **201**، Persistence **7 Passed + 1 Skipped**، Presentation **44**. مجموع الناجحة = **2210** (2211 مع Skipped). (تحل هذه الأرقام محلّ 474/1469/201/7/32.) — المصادر: «البنود» §4.2؛ «الوكيل» §2؛ «المستقل» §2.5 (تحديث بالتنفيذ).
 34. اختبارات `RelationalIntegrationTests` التابعة لـDocker تُبلَّغ **Skipped صراحةً** عبر `DockerFactAttribute` (لا «نجاح أجوف» بـ`return;` مبكر)؛ والاختبار الحي يشغّل `MigrateAsync` فعليًا على حاوية عند توفر Docker؛ واختبارات النموذج صريحة كعقد تصميمي: فهرس `UserName` الفريد، دقة `decimal(18,2)` على `PaymentOperation.Amount`، وسلوك `Cascade`. — المصادر: «البنود» (F-05/M-03)؛ «الوكيل» (السبب 3)؛ «المستقل» §4.6 (بعد إصلاح التخطي الصامت).
 35. `NeverConnectGuardTests` تؤكد `Assert.NotEmpty(files)` وتفحص فعليًا `RelationalIntegrationTests.cs` — الادعاء السابق بـ«مجموعة فارغة لا يمكن أن تفشل» لم يعد صحيحًا. — المصادر: «البنود» (F-05/M-03)؛ «المستقل» §4.5.
 36. `DeferredBehaviourTests` اختبارات **سلوكية حقيقية** (بناء `ShellViewModel` مع `FakeCurrentUserService`/`FakeSender`) تغطي بوابات الكتالوج الأربع + بوابة «المستخدمون» + فشل/نجاح القفل + تسجيل validators وbehaviors في DI — لا بحث نصي في المصدر. — المصادر: «البنود» (M-02)؛ «المستقل» §4.7.
@@ -67,7 +67,7 @@
 38. اختبار `AfterRevoking_AuthorizationFails` يشغّل `AuthorizationBehavior` الحقيقي ويقرأ المنح من قاعدة الاختبار بعد السحب (لا tautology على `HashSet.Clear`). — المصدر: «المستقل» §4.10.
 39. `ValidatorCompletenessTests` تثبت التسجيل عبر حاوية DI حقيقية: كل أمر مُعلَّم (من أصل 129 أمرًا) يحلّ إلى `IValidator<T>`، وثلاثة أوامر بلا معاملات بلا validator بالضبط: `LockWorkstationCommand`، `ApplyDatabaseUpdatesCommand`، `SignOutCommand`. — المصادر: «البنود» (m-01)؛ «الوكيل» (S2)؛ «المستقل» §4.4.
 40. يوجد ملف اختبار للمحلل: `tests/TopLab.Infrastructure.Tests/Printing/ArabicFontResolverTests.cs` (حالات null/فارغ/Arial). — المصدر: «الوكيل» (D-2).
-41. أُضيفت اختبارات حارسة أمنية جديدة: `CreateUserBootstrapTests.cs` و`SaveUserPermissionsGuardTests.cs` و`ActorTargetGuardTests.cs` و`CreateUserPermissionCodesGuardTests.cs` و`GetUsersGuardTests.cs` إلى جانب `DeleteUserGuardTests.cs`. — المصدر: «المستقل» §4.2 (تحديث).
+41. أُضيفت اختبارات حارسة أمنية جديدة: `CreateUserBootstrapTests.cs` و`SaveUserPermissionsGuardTests.cs` و`ActorTargetGuardTests.cs` و`CreateUserPermissionCodesGuardTests.cs` و`GetUsersGuardTests.cs` إلى جانب `DeleteUserGuardTests.cs`، و`FinancialReadAuthorizationTests.cs` و`SettingsFontFamilyDefaultTests.cs`. — المصدر: «المستقل» §4.2 (تحديث).
 42. لا `NotImplementedException` إنتاجية ولا `TODO`/`FIXME`/`HACK` في `src/` (بحث = 0). — المصدر: «الوكيل» (U-09).
 
 ## 7. قاعدة البيانات والهجرات
@@ -80,7 +80,7 @@
 
 46. لا نظام ترخيص/تفعيل للمنتج: لا Entity ترخيص، لا أمر تفعيل، لا بوابة ترخيص في تسلسل الإقلاع (بحث `License|Activation|Trial` في الكود = 0 خارج تعليقات QuestPDF). **قرار المالك (إخلاء مسؤولية الترخيص):** استخدام داخلي فقط، لا إنفاذ للترخيص بقرار المالك، يُعاد فتحه قبل أي توزيع خارجي. — المصدر: «الوكيل» (السبب 2/F-02).
 47. لا قفل تلقائي عند الخمول (idle auto-lock): لا مؤقّت خمول في المشروع (بحث = 0)؛ القفل اليدوي فقط عبر `LockWorkstationCommand`. — المصادر: «البنود» D-7؛ «الوكيل» (السبب 6).
-48. `Features/SamplePipeline` مجلد هيكلي بثلاثة ملفات فقط (`EchoNameCommand` + Handler + Validator) بلا عرض؛ ويطلب رمز `"SAMPLE_PIPELINE"` غير المزروع — لا يُحقق إلا لمستخدم مطلق. — المصادر: «البنود» D-5؛ «الوكيل» (السبب 9/F-06).
+48. مجلد `Features/SamplePipeline` حُذف بالكامل؛ اختبارا سلوك الأنبوب (`BehaviorsAuthorizationBehaviorTests` و`BehaviorsValidationBehaviorTests`) يعتمدان الآن على أنواع طلب محلية داخل مشروع الاختبار (`LocalAuthProbe` / `LocalValidationProbe`) بلا رمز إذن منتج. (grep `SamplePipeline|EchoName|SAMPLE_PIPELINE` = 0.) — المصادر: «البنود» D-5؛ «الوكيل» (السبب 9/F-06).
 
 ## 9. قيود دائمة وإعدادات
 
