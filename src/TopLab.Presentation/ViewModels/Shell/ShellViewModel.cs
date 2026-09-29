@@ -29,6 +29,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
     private readonly IDialogService _dialogs;
     private readonly IServiceProvider _services;
     private readonly DispatcherTimer? _timer;
+    private readonly IdleAutoLockTimer _idleAutoLock;
 
     private string _currentUserName = "—";
     private string _lastLoginText = "أول تسجيل دخول";
@@ -59,6 +60,8 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         _currentViewModel = home;
         _currentDateTime = dateTime.UtcNow.ToLocalTime();
 
+        // Owner decision: fixed 10-minute idle auto-lock (not configurable).
+        _idleAutoLock = new IdleAutoLockTimer(() => LockWorkstationAsync());
         NavigationItems = BuildNavigationItems();
 
         OpenChangePasswordCommand = new AsyncRelayCommand(_ => OpenChangePasswordAsync());
@@ -68,7 +71,11 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         try
         {
             var t = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            t.Tick += (_, _) => CurrentDateTime = _dateTime.UtcNow.ToLocalTime();
+            t.Tick += async (_, _) =>
+            {
+                CurrentDateTime = _dateTime.UtcNow.ToLocalTime();
+                await _idleAutoLock.TickAsync(TimeSpan.FromSeconds(1));
+            };
             t.Start();
             _timer = t;
         }
@@ -353,6 +360,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
     private void OnNavigated(ViewModelBase? viewModel)
     {
+        _idleAutoLock.NotifyActivity();
         if (viewModel is not null)
         {
             CurrentViewModel = viewModel;
