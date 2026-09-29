@@ -21,14 +21,21 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
 
     public async Task<Result<int>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated)
-        {
-            return Result<int>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
-        }
+        bool isFirstRunBootstrap = !_currentUser.IsAuthenticated
+            && request.IsAbsolutePermission
+            && !_db.Set<User>().Any(u => u.IsAbsolutePermission && u.IsActive);
 
-        if (request.IsAbsolutePermission && !_currentUser.IsAbsolutePermission)
+        if (!isFirstRunBootstrap)
         {
-            return Result<int>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+            if (!_currentUser.IsAuthenticated)
+            {
+                return Result<int>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+            }
+
+            if (request.IsAbsolutePermission && !_currentUser.IsAbsolutePermission)
+            {
+                return Result<int>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+            }
         }
         if (_db.Set<User>().Any(u => u.UserName == request.UserName))
         {
