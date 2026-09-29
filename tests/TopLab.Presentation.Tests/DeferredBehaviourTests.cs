@@ -1,68 +1,203 @@
-using System.IO;
-using System.Reflection;
+using FluentValidation;
+using TopLab.Application;
+using Microsoft.Extensions.DependencyInjection;
+using TopLab.Application.Common.Authorization;
+using TopLab.Application.Common.Interfaces;
+using TopLab.Application.Common.Results;
+using TopLab.Application.Features.UsersAndPermissions.Commands.SignIn;
+using TopLab.Application.Features.UsersAndPermissions.Commands.SignOut;
+using TopLab.Application.Features.UsersAndPermissions.Queries.GetCurrentSession;
+using TopLab.Application.Features.UsersAndPermissions.Queries.VerifySecondaryPassword;
+using TopLab.Presentation.Common.ErrorPresentation;
+using TopLab.Presentation.Tests.Common;
+using TopLab.Presentation.ViewModels.Shell;
 
 namespace TopLab.Presentation.Tests;
 
 /// <summary>
-/// S-07 Slice 5/6: deferred behavioural tests for lock-workstation and navigation.
-/// Structural assertions only — no WPF element is instantiated.
+/// S-07 Slice 5/6: real behavioural tests for lock-workstation and navigation gating.
+/// Constructs ShellViewModel with explicit fake session state — no source-text search.
 /// </summary>
 public class DeferredBehaviourTests
 {
-    [Fact]
-    public void LockWorkstation_ResultsAreChecked()
-    {
-        // S-05 VG-05: LockWorkstationAsync must capture the result and branch on IsSuccess
-        var srcDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "TopLab.Presentation");
-        var vmPath = Path.Combine(srcDir, "ViewModels", "Shell", "ShellViewModel.cs");
-        Assert.True(File.Exists(vmPath), "ShellViewModel.cs not found");
+    private const string WorksheetTitle = "ورقة العمل";
+    private const string StatisticsTitle = "الإحصائيات";
+    private const string SystemTitle = "النظام";
+    private const string LockTitle = "قفل المحطة";
+    private const string UsersTitle = "المستخدمون";
 
-        var content = File.ReadAllText(vmPath);
-        Assert.True(content.Contains("lockResult.IsSuccess"),
-            "LockWorkstationAsync must check lockResult.IsSuccess");
-        Assert.False(content.Contains("await _mediator.Send(new LockWorkstationCommand());\n        await LoadStatusAsync();"),
-            "LockWorkstationAsync must not discard the LockWorkstationCommand result");
+    private static ShellViewModel CreateShell(FakeCurrentUserService currentUser, FakeSender sender, FakeDialogService dialogs)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<UnlockViewModel>(_ => new UnlockViewModel(sender));
+        var provider = services.BuildServiceProvider();
+
+        return new ShellViewModel(
+            sender,
+            new FakeNavigationService(),
+            currentUser,
+            new FakeDateTimeProvider(),
+            new ResultErrorPresenter(),
+            dialogs,
+            provider,
+            new HomeViewModel());
     }
 
-    [Fact]
-    public void NavigationItems_AreFilteredByPermission()
+    private static bool IsEnabled(ShellViewModel vm, string title) =>
+        vm.NavigationItems.First(i => i.Title == title).IsEnabled;
+
+    [Theory]
+    [InlineData(WorksheetTitle, "PRINT_WORKSHEET")]
+    [InlineData(StatisticsTitle, "STATISTICS")]
+    [InlineData(SystemTitle, "PT_AUDIT_ACCESS")]
+    [InlineData(LockTitle, "EDIT_SYSTEM_SETTINGS")]
+    public void CatalogGate_IsEnabled_WhenPermissionGranted(string title, string permissionCode)
     {
-        // S-06 VG-06: BuildNavigationItems must use permission-based IsEnabled
-        var srcDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "TopLab.Presentation");
-        var vmPath = Path.Combine(srcDir, "ViewModels", "Shell", "ShellViewModel.cs");
-        Assert.True(File.Exists(vmPath), "ShellViewModel.cs not found");
-
-        var content = File.ReadAllText(vmPath);
-
-        // Must NOT contain a literal IsEnabled = true in BuildNavigationItems
-        var buildNavStart = content.IndexOf("BuildNavigationItems", StringComparison.Ordinal);
-        Assert.True(buildNavStart > 0, "BuildNavigationItems not found");
-
-        var buildNavSection = content.Substring(buildNavStart);
-        Assert.False(buildNavSection.Contains("IsEnabled = true,"), "BuildNavigationItems must not contain a literal IsEnabled = true");
-
-        // Must contain the four mapped permission codes
-        Assert.Contains("PRINT_WORKSHEET", content);
-        Assert.Contains("STATISTICS", content);
-        Assert.Contains("PT_AUDIT_ACCESS", content);
-        Assert.Contains("EDIT_SYSTEM_SETTINGS", content);
-    }
-
-    [Fact]
-    public void LoginPath_Requests_HaveNoNewGuards()
-    {
-        // SD-7: SignInCommand, SignOutCommand, GetCurrentSessionQuery, VerifySecondaryPasswordQuery
-        // must not implement IAuthorizedRequest
-        var appDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "TopLab.Application");
-
-        foreach (var name in new[] { "SignInCommand", "SignOutCommand", "GetCurrentSessionQuery", "VerifySecondaryPasswordQuery" })
+        var user = new FakeCurrentUserService
         {
-            var files = Directory.GetFiles(appDir, $"{name}.cs", SearchOption.AllDirectories);
-            Assert.True(files.Length > 0, $"{name}.cs not found");
+            IsAuthenticated = true,
+            IsAbsolutePermission = false
+        };
+        user.GrantedPermissions.Add(permissionCode);
 
-            var content = File.ReadAllText(files[0]);
-            Assert.False(content.Contains("IAuthorizedRequest"),
-                $"{name} must not implement IAuthorizedRequest");
-        }
+        var vm = CreateShell(user, new FakeSender(), new FakeDialogService());
+
+        Assert.True(IsEnabled(vm, title));
+    }
+
+    [Theory]
+    [InlineData(WorksheetTitle, "PRINT_WORKSHEET")]
+    [InlineData(StatisticsTitle, "STATISTICS")]
+    [InlineData(SystemTitle, "PT_AUDIT_ACCESS")]
+    [InlineData(LockTitle, "EDIT_SYSTEM_SETTINGS")]
+    public void CatalogGate_IsDisabled_WhenPermissionMissing(string title, string _)
+    {
+        var user = new FakeCurrentUserService
+        {
+            IsAuthenticated = true,
+            IsAbsolutePermission = false
+        };
+
+        var vm = CreateShell(user, new FakeSender(), new FakeDialogService());
+
+        Assert.False(IsEnabled(vm, title));
+    }
+
+    [Fact]
+    public void CatalogGate_IsEnabled_WhenAbsolute_EvenWithoutCatalogPermission()
+    {
+        var user = new FakeCurrentUserService
+        {
+            IsAuthenticated = true,
+            IsAbsolutePermission = true
+        };
+
+        var vm = CreateShell(user, new FakeSender(), new FakeDialogService());
+
+        Assert.True(IsEnabled(vm, WorksheetTitle));
+        Assert.True(IsEnabled(vm, StatisticsTitle));
+        Assert.True(IsEnabled(vm, SystemTitle));
+        Assert.True(IsEnabled(vm, LockTitle));
+        Assert.True(IsEnabled(vm, UsersTitle));
+    }
+
+    [Fact]
+    public void UsersGate_IsDisabled_WithoutAbsolute()
+    {
+        var user = new FakeCurrentUserService
+        {
+            IsAuthenticated = true,
+            IsAbsolutePermission = false
+        };
+        user.GrantedPermissions.Add("PRINT_WORKSHEET");
+
+        var vm = CreateShell(user, new FakeSender(), new FakeDialogService());
+
+        Assert.False(IsEnabled(vm, UsersTitle));
+    }
+
+    [Fact]
+    public async Task LockWorkstation_Failure_SurfacesError_AndDoesNotOpenUnlock()
+    {
+        var user = new FakeCurrentUserService
+        {
+            IsAuthenticated = true,
+            IsAbsolutePermission = true,
+            UserName = "admin"
+        };
+        var sender = new FakeSender().WithLockResult(Result.Failure(Error.Unexpected("lock failed")));
+        var dialogs = new FakeDialogService();
+        var vm = CreateShell(user, sender, dialogs);
+
+        var unlockOpened = false;
+        await vm.LockWorkstationAsync(_ =>
+        {
+            unlockOpened = true;
+            return true;
+        });
+
+        Assert.False(unlockOpened);
+        Assert.Single(dialogs.Errors);
+    }
+
+    [Fact]
+    public async Task LockWorkstation_Success_OpensUnlock_AndReloadsStatus()
+    {
+        var user = new FakeCurrentUserService
+        {
+            IsAuthenticated = true,
+            IsAbsolutePermission = true,
+            UserName = "admin"
+        };
+        var sender = new FakeSender().WithLockResult(Result.Success());
+        var dialogs = new FakeDialogService();
+        var vm = CreateShell(user, sender, dialogs);
+
+        var unlockOpened = false;
+        await vm.LockWorkstationAsync(unlockVm =>
+        {
+            unlockOpened = true;
+            Assert.Equal("admin", unlockVm.UserName);
+            return true;
+        });
+
+        Assert.True(unlockOpened);
+        Assert.Empty(dialogs.Errors);
+    }
+
+    [Fact]
+    public void LoginPath_Requests_DoNotImplementIAuthorizedRequest()
+    {
+        Assert.False(typeof(IAuthorizedRequest).IsAssignableFrom(typeof(SignInCommand)));
+        Assert.False(typeof(IAuthorizedRequest).IsAssignableFrom(typeof(SignOutCommand)));
+        Assert.False(typeof(IAuthorizedRequest).IsAssignableFrom(typeof(GetCurrentSessionQuery)));
+        Assert.False(typeof(IAuthorizedRequest).IsAssignableFrom(typeof(VerifySecondaryPasswordQuery)));
+    }
+
+    [Fact]
+    public void LoginPath_Validators_AreRegistered_InApplicationDi()
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        using var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetService<IValidator<SignInCommand>>());
+        Assert.NotNull(provider.GetService<IValidator<VerifySecondaryPasswordQuery>>());
+    }
+
+    [Fact]
+    public void AuthorizationBehavior_IsRegistered_InMediatrPipeline()
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+
+        // Inspect descriptors — do not resolve LoggingBehavior (needs IAppLogger).
+        Assert.Contains(
+            services,
+            d => d.ImplementationType?.Name.StartsWith("AuthorizationBehavior") == true);
+
+        Assert.Contains(
+            services,
+            d => d.ImplementationType?.Name.StartsWith("ValidationBehavior") == true);
     }
 }

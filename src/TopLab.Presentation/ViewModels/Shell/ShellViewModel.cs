@@ -359,7 +359,11 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private async Task LockWorkstationAsync()
+    /// <summary>
+    /// Locks the workstation and opens the unlock dialog on success.
+    /// <paramref name="showUnlock"/> is a test seam; production passes null and uses the WPF window.
+    /// </summary>
+    public async Task LockWorkstationAsync(Func<UnlockViewModel, bool?>? showUnlock = null)
     {
         string lockedUserName = CurrentUserName;
 
@@ -378,11 +382,18 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
         var unlockVm = _services.GetRequiredService<UnlockViewModel>();
         unlockVm.Initialize(lockedUserName);
-        var unlock = new UnlockWindow(unlockVm)
+        if (showUnlock is not null)
         {
-            Owner = System.Windows.Application.Current?.MainWindow
-        };
-        unlock.ShowDialog();
+            showUnlock(unlockVm);
+        }
+        else
+        {
+            var unlock = new UnlockWindow(unlockVm)
+            {
+                Owner = System.Windows.Application.Current?.MainWindow
+            };
+            unlock.ShowDialog();
+        }
 
         await LoadStatusAsync();
     }

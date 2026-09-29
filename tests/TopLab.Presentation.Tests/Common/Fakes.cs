@@ -3,6 +3,7 @@ using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.UsersAndPermissions.Common;
 using TopLab.Application.Features.UsersAndPermissions.Queries.GetUsers;
+using TopLab.Application.Features.AccessAndNavigation.Commands.LockWorkstation;
 using TopLab.Application.Features.ExternalEntities.Common;
 using TopLab.Application.Features.ExternalEntities.Queries.SearchExternalEntities;
 using TopLab.Application.Features.SentOutSamples.Common;
@@ -50,9 +51,16 @@ public sealed class FakeCurrentUserService : ICurrentUserService
 
 public sealed class FakeDialogService : IDialogService
 {
+    public List<string> Errors { get; } = new();
+    public bool SecondaryPasswordResult { get; set; } = true;
+
     public Task<bool> ShowConfirmationAsync(string title, string message) => Task.FromResult(true);
-    public Task ShowErrorAsync(string message) => Task.CompletedTask;
-    public Task<bool> ShowSecondaryPasswordDialogAsync() => Task.FromResult(true);
+    public Task ShowErrorAsync(string message)
+    {
+        Errors.Add(message);
+        return Task.CompletedTask;
+    }
+    public Task<bool> ShowSecondaryPasswordDialogAsync() => Task.FromResult(SecondaryPasswordResult);
     public Task<string?> PickBackupFolderAsync(string initialDirectory) => Task.FromResult<string?>(null);
     public Task<string?> PickBackupFileAsync() => Task.FromResult<string?>(null);
     public Task<string?> PickPdfSavePathAsync(string? suggestedFileName = null) => Task.FromResult<string?>(null);
@@ -82,8 +90,15 @@ public sealed class FakeSender : ISender
         return this;
     }
 
+    private Result? _lockResult;
     private Result<IReadOnlyList<ExternalEntityListItemDto>>? _searchLabs;
     private Result<IReadOnlyList<SentOutSampleDto>>? _sentOut;
+
+    public FakeSender WithLockResult(Result result)
+    {
+        _lockResult = result;
+        return this;
+    }
 
     public FakeSender WithSearchLabsSuccess()
     {
@@ -129,6 +144,10 @@ public sealed class FakeSender : ISender
         if (request is GetUsersQuery)
         {
             return Task.FromResult((TResponse)(object)Result<IReadOnlyList<UserSummaryDto>>.Success(Array.Empty<UserSummaryDto>()));
+        }
+        if (request is LockWorkstationCommand)
+        {
+            return Task.FromResult((TResponse)(object)(_lockResult ?? Result.Success()));
         }
         throw new NotSupportedException($"FakeSender has no canned response for {request.GetType().Name}.");
     }
