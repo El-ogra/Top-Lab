@@ -50,7 +50,9 @@ public sealed class InvoicePdfWriter : IInvoicePdfWriter
         }
 
         var lines = BuildTextLines(invoice, labText);
-        var fontFamily = string.IsNullOrWhiteSpace(labText.FontFamily) ? "Arial" : labText.FontFamily;
+#pragma warning disable CA1416 // Windows-only WPF app
+        var fontFamily = ArabicFontResolver.Resolve(labText.FontFamily);
+#pragma warning restore CA1416
         var fontSize = labText.FontSizePt > 0 ? labText.FontSizePt : 12;
 
         Document
