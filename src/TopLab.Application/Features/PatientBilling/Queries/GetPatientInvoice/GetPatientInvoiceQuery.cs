@@ -1,4 +1,5 @@
 using MediatR;
+using TopLab.Application.Common.Authorization;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.PatientBilling.Common;
 
@@ -9,4 +10,7 @@ namespace TopLab.Application.Features.PatientBilling.Queries.GetPatientInvoice;
 /// numbered issue, or a preview (null number/date) when no issue exists yet.
 /// </summary>
 public sealed record GetPatientInvoiceQuery(
-    int PatientId) : IRequest<Result<InvoiceDto>>;
+    int PatientId) : IRequest<Result<InvoiceDto>>, IAuthorizedRequest
+{
+    public string RequiredPermissionCode => "CASH_DISBURSE_DEPOSIT";
+}
