@@ -1,64 +1,98 @@
+using System.Reflection;
 using FluentValidation;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
 
 namespace TopLab.Application.Tests.Features.Validators;
 
 /// <summary>
-/// Slice 2 (m-01): static completeness test asserting every parameterised command
-/// has a sibling validator, and every parameterless command does not need one.
+/// Slice 2 (m-01): completeness via the real validation DI container.
+/// Every parameterised command must resolve IValidator&lt;T&gt;; parameterless
+/// commands without validators are counted exactly (not name-listed only).
 /// </summary>
 public class ValidatorCompletenessTests
 {
-    [Fact]
-    public void EveryParameterisedCommand_HasSiblingValidator()
+    private static IEnumerable<Type> CommandTypes()
     {
         var assembly = typeof(IApplicationDbContext).Assembly;
-        var commandTypes = assembly.GetTypes()
+        return assembly.GetTypes()
             .Where(t => t.IsClass && t.IsSealed && t.Name.EndsWith("Command") && !t.Name.EndsWith("Validator"))
             .ToList();
+    }
 
+    private static bool IsParameterless(Type cmd)
+    {
+        // Positional records with no parameters: either no ctor params or an empty primary ctor.
+        var ctors = cmd.GetConstructors();
+        return ctors.Length > 0 && ctors.All(c => c.GetParameters().Length == 0);
+    }
+
+    private static ServiceProvider BuildApplicationProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddApplication();
+        return services.BuildServiceProvider();
+    }
+
+    [Fact]
+    public void EveryParameterisedCommand_ResolvesIValidator_FromDi()
+    {
+        using var provider = BuildApplicationProvider();
         var missing = new List<string>();
-        foreach (var cmd in commandTypes)
+
+        foreach (var cmd in CommandTypes().Where(c => !IsParameterless(c)))
         {
-            // Check if parameterised (has a constructor with parameters)
-            var ctor = cmd.GetConstructors().FirstOrDefault();
-            if (ctor == null || ctor.GetParameters().Length == 0)
-                continue; // parameterless — no validator needed
-
-            var validatorName = cmd.Name + "Validator";
-            var validatorType = assembly.GetTypes()
-                .FirstOrDefault(t => t.Name == validatorName && t.IsClass && t.IsSealed);
-
-            if (validatorType == null)
+            var validatorService = typeof(IValidator<>).MakeGenericType(cmd);
+            if (provider.GetService(validatorService) is null)
             {
                 missing.Add(cmd.Name);
-            }
-            else if (!typeof(IValidator).IsAssignableFrom(validatorType))
-            {
-                missing.Add($"{cmd.Name} (validator does not implement IValidator)");
             }
         }
 
         Assert.True(missing.Count == 0,
-            $"Parameterised commands without a sibling validator: {string.Join(", ", missing)}");
+            $"Parameterised commands without IValidator<T> in DI: {string.Join(", ", missing)}");
     }
 
     [Fact]
     public void ParameterlessCommandsWithoutValidators_AreExactlyThree()
     {
-        // SD-8: the three parameterless commands that should NOT have validators
-        var expected = new[] { "LockWorkstationCommand", "ApplyDatabaseUpdatesCommand", "SignOutCommand" };
-        var assembly = typeof(IApplicationDbContext).Assembly;
+        using var provider = BuildApplicationProvider();
 
-        foreach (var name in expected)
+        var withoutValidator = new List<string>();
+        foreach (var cmd in CommandTypes().Where(IsParameterless))
         {
-            var cmdType = assembly.GetTypes().FirstOrDefault(t => t.Name == name && t.IsClass && t.IsSealed);
-            Assert.NotNull(cmdType);
-
-            var validatorName = name + "Validator";
-            var validatorType = assembly.GetTypes().FirstOrDefault(t => t.Name == validatorName && t.IsClass && t.IsSealed);
-            Assert.Null(validatorType); // must NOT have a validator
+            var validatorService = typeof(IValidator<>).MakeGenericType(cmd);
+            if (provider.GetService(validatorService) is null)
+            {
+                withoutValidator.Add(cmd.Name);
+            }
         }
+
+        // SD-8: exactly these three parameterless commands have no validator.
+        var expected = new[] { "ApplyDatabaseUpdatesCommand", "LockWorkstationCommand", "SignOutCommand" };
+
+        Assert.Equal(3, withoutValidator.Count);
+        Assert.Equal(expected.OrderBy(n => n), withoutValidator.OrderBy(n => n));
+    }
+
+    [Fact]
+    public void ParameterlessCommandCount_IsExact()
+    {
+        var parameterless = CommandTypes().Where(IsParameterless).Select(t => t.Name).OrderBy(n => n).ToList();
+
+        // Current set of parameterless commands — count is part of the contract.
+        var expected = new[]
+        {
+            "ApplyDatabaseUpdatesCommand",
+            "CheckInCommand",
+            "CheckOutCommand",
+            "EndBreakCommand",
+            "LockWorkstationCommand",
+            "SignOutCommand",
+            "StartBreakCommand"
+        };
+
+        Assert.Equal(expected.OrderBy(n => n), parameterless);
     }
 }

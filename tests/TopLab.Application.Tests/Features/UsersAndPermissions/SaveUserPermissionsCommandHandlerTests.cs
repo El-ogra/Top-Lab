@@ -1,3 +1,5 @@
+using TopLab.Application.Common.Behaviors;
+using TopLab.Application.Common.Results;
 using TopLab.Application.Features.UsersAndPermissions.Commands.SaveUserPermissions;
 using TopLab.Application.Tests.Common.Fakes;
 using TopLab.Domain.Common.Ids;
@@ -71,17 +73,57 @@ public class SaveUserPermissionsCommandHandlerTests
         db.Users.Add(user);
         db.UserPermissionGrants.Add(new UserPermissionGrant(UserId.Create(1), PermissionId.Create(1)));
 
-        var fakeUser = new FakeCurrentUserService { UserId = 1, IsAbsolutePermission = false };
-        fakeUser.GrantedPermissions.Add("ADD_EDIT_PATIENT");
+        // Same fake is used for the handler, the AuthorizationBehavior, and the revoke admin.
+        var limitedUser = new FakeCurrentUserService
+        {
+            UserId = 1,
+            IsAuthenticated = true,
+            IsAbsolutePermission = false
+        };
+        limitedUser.GrantedPermissions.Add("ADD_EDIT_PATIENT");
 
-        var handler = new SaveUserPermissionsCommandHandler(db, new FakeCurrentUserService());
-        var cmd = new SaveUserPermissionsCommand(1, Array.Empty<string>());
-        await handler.Handle(cmd, CancellationToken.None);
+        var behavior = new AuthorizationBehavior<TestAuthorizedRequest, Result>(limitedUser);
+        var allowed = await behavior.Handle(
+            new TestAuthorizedRequest("ADD_EDIT_PATIENT"),
+            _ => Task.FromResult(Result.Success()),
+            CancellationToken.None);
+        Assert.True(allowed.IsSuccess);
 
-        // Simulate next login: user has no grants, so HasPermission should be false
-        fakeUser.GrantedPermissions.Clear();
-        Assert.False(fakeUser.HasPermission("ADD_EDIT_PATIENT"));
+        // Absolute admin revokes everything for user 1 via the real handler.
+        var admin = new FakeCurrentUserService
+        {
+            UserId = 99,
+            IsAuthenticated = true,
+            IsAbsolutePermission = true
+        };
+        var handler = new SaveUserPermissionsCommandHandler(db, admin);
+        var revokeResult = await handler.Handle(
+            new SaveUserPermissionsCommand(1, Array.Empty<string>()),
+            CancellationToken.None);
+        Assert.True(revokeResult.IsSuccess);
+
+        // Round-trip the same limitedUser fake from the domain grants (no self-clearing HashSet).
+        limitedUser.GrantedPermissions.Clear();
+        foreach (var grant in user.PermissionGrants)
+        {
+            var perm = db.Permissions.FirstOrDefault(p => p.Id == grant.PermissionId);
+            if (perm is not null)
+            {
+                limitedUser.GrantedPermissions.Add(perm.Code);
+            }
+        }
+        Assert.Empty(limitedUser.GrantedPermissions);
+
+        var denied = await behavior.Handle(
+            new TestAuthorizedRequest("ADD_EDIT_PATIENT"),
+            _ => Task.FromResult(Result.Success()),
+            CancellationToken.None);
+        Assert.False(denied.IsSuccess);
+        Assert.Equal(ErrorType.Forbidden, denied.Error!.Type);
     }
+
+    private sealed record TestAuthorizedRequest(string RequiredPermissionCode)
+        : MediatR.IRequest<Result>, TopLab.Application.Common.Authorization.IAuthorizedRequest;
 
     [Fact]
     public async Task SavingAuditAccess_SucceedsAtDataLayer()
