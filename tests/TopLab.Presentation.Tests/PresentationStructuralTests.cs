@@ -1,47 +1,116 @@
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using TopLab.Presentation.ViewModels.Shell;
 
 namespace TopLab.Presentation.Tests;
 
 /// <summary>
 /// S-07 Slice 11 (M-02): structural tests for the presentation layer.
-/// No WPF element is ever instantiated — static/structural assertions only.
+/// Resolves x:Type and Binding names against real CLR types/properties — not
+/// xmlns strings or substring presence. No WPF element is instantiated.
 /// </summary>
 public class PresentationStructuralTests
 {
     private static string SolutionRoot =>
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
-    [Fact]
-    public void MainWindow_Xaml_DataTemplates_Resolve()
-    {
-        var path = Path.Combine(SolutionRoot, "src", "TopLab.Presentation", "MainWindow.xaml");
-        Assert.True(File.Exists(path), $"MainWindow.xaml not found at {path}");
+    private static string MainWindowPath =>
+        Path.Combine(SolutionRoot, "src", "TopLab.Presentation", "MainWindow.xaml");
 
-        var content = File.ReadAllText(path);
-        var typeRefs = Regex.Matches(content, @"x:Type\s+(\w+:\w+)");
+    private static Assembly PresentationAssembly => typeof(ShellViewModel).Assembly;
+
+    private static Dictionary<string, string> ParseXmlns(XDocument doc)
+    {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (doc.Root is null)
+        {
+            return map;
+        }
+
+        foreach (var attr in doc.Root.Attributes())
+        {
+            if (attr.Name.Namespace == XNamespace.Xmlns)
+            {
+                map[attr.Name.LocalName] = attr.Value;
+            }
+        }
+
+        return map;
+    }
+
+    /// <summary>Resolves clr-namespace URI to a CLR namespace name.</summary>
+    private static string? ClrNamespaceFromXmlns(string xmlnsValue)
+    {
+        const string prefix = "clr-namespace:";
+        if (!xmlnsValue.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var rest = xmlnsValue.Substring(prefix.Length);
+        var semi = rest.IndexOf(';');
+        return semi >= 0 ? rest.Substring(0, semi) : rest;
+    }
+
+    [Fact]
+    public void MainWindow_Xaml_DataTemplates_ResolveToClrTypes()
+    {
+        Assert.True(File.Exists(MainWindowPath), $"MainWindow.xaml not found at {MainWindowPath}");
+
+        var doc = XDocument.Load(MainWindowPath);
+        var xmlns = ParseXmlns(doc);
+        var typeRefs = Regex.Matches(File.ReadAllText(MainWindowPath), @"x:Type\s+(\w+):([\w.]+)");
 
         Assert.True(typeRefs.Count > 0, "No x:Type references found in MainWindow.xaml");
 
-        // Each referenced type namespace must be declared in the XAML
         foreach (Match match in typeRefs)
         {
-            var fullType = match.Groups[1].Value;
-            var ns = fullType.Split(':')[0];
-            Assert.True(
-                content.Contains($"xmlns:{ns}="),
-                $"Namespace '{ns}' used in x:Type but not declared in MainWindow.xaml");
+            var prefix = match.Groups[1].Value;
+            var typeName = match.Groups[2].Value;
+
+            Assert.True(xmlns.TryGetValue(prefix, out var nsUri),
+                $"x:Type prefix '{prefix}' is not declared as xmlns:{prefix} in MainWindow.xaml");
+
+            var clrNs = ClrNamespaceFromXmlns(nsUri!)
+                ?? throw new Xunit.Sdk.XunitException(
+                    $"xmlns:{prefix}='{nsUri}' is not a clr-namespace mapping.");
+
+            var fullTypeName = $"{clrNs}.{typeName}";
+            var type = PresentationAssembly.GetType(fullTypeName)
+                ?? Type.GetType($"{fullTypeName}, {PresentationAssembly.GetName().Name}");
+
+            Assert.True(type is not null,
+                $"x:Type {prefix}:{typeName} does not resolve to a CLR type '{fullTypeName}' in the Presentation assembly.");
         }
     }
 
     [Fact]
-    public void MainWindow_Xaml_Bindings_Resolve()
+    public void MainWindow_Xaml_Bindings_ResolveToPublicProperties()
     {
-        var path = Path.Combine(SolutionRoot, "src", "TopLab.Presentation", "MainWindow.xaml");
-        var content = File.ReadAllText(path);
+        Assert.True(File.Exists(MainWindowPath), $"MainWindow.xaml not found at {MainWindowPath}");
+
+        var content = File.ReadAllText(MainWindowPath);
         var bindings = Regex.Matches(content, @"\{Binding\s+(\w+)");
 
         Assert.True(bindings.Count > 0, "No Binding expressions found in MainWindow.xaml");
+
+        // MainWindow DataContext is ShellViewModel; ItemTemplate rows bind NavigationItem.
+        var shellProps = typeof(ShellViewModel).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Select(p => p.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        var navItemProps = typeof(NavigationItem).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Select(p => p.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (Match match in bindings)
+        {
+            var prop = match.Groups[1].Value;
+            Assert.True(
+                shellProps.Contains(prop) || navItemProps.Contains(prop),
+                $"Binding '{prop}' does not exist as a public property on {nameof(ShellViewModel)} or {nameof(NavigationItem)}.");
+        }
     }
 
     [Fact]
@@ -62,16 +131,36 @@ public class PresentationStructuralTests
             .Select(File.ReadAllText)
             .ToList();
 
+        // Host-created windows (App composition root / WPF startup). Each has an explicit reason.
+        var frameworkCreated = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            // Startup shell — resolved from DI in App.OnStartup (`GetRequiredService<MainWindow>()`).
+            ["MainWindow"] = "DI-resolved host window in App.OnStartup",
+            // Login gate — resolved from DI in App.OnStartup (`GetRequiredService<LoginWindow>()`).
+            ["LoginWindow"] = "DI-resolved host window in App.OnStartup",
+        };
+
         foreach (var windowFile in windowFiles)
         {
             var windowName = Path.GetFileNameWithoutExtension(windowFile);
-            if (windowName is "MainWindow" or "LoginWindow" or "UnlockWindow" or "FirstRunAdminWindow") continue; // Created by WPF startup
-            // Check for a creation site (new WindowName or new Namespace.WindowName)
-            var hasCreationSite = allCs.Any(cs =>
-                System.Text.RegularExpressions.Regex.IsMatch(cs, $@"new\s+(\w+\.)*{windowName}"));
 
-            Assert.True(hasCreationSite,
-                $"Window '{windowName}' has no creation site (new {windowName}(...))");
+            if (frameworkCreated.ContainsKey(windowName))
+            {
+                // Prove the DI creation site exists (not just a name exclusion).
+                var hasDiSite = allCs.Any(cs =>
+                    Regex.IsMatch(cs, $@"GetRequiredService\s*<\s*(\w+\.)*{windowName}\s*>"));
+                Assert.True(hasDiSite,
+                    $"Excluded window '{windowName}' is claimed framework-created but has no GetRequiredService<{windowName}> site. Reason: {frameworkCreated[windowName]}");
+                continue;
+            }
+
+            var hasNewSite = allCs.Any(cs =>
+                Regex.IsMatch(cs, $@"new\s+(\w+\.)*{windowName}"));
+            var hasDiSiteOther = allCs.Any(cs =>
+                Regex.IsMatch(cs, $@"GetRequiredService\s*<\s*(\w+\.)*{windowName}\s*>"));
+
+            Assert.True(hasNewSite || hasDiSiteOther,
+                $"Window '{windowName}' has no creation site (new {windowName}(...) or GetRequiredService<{windowName}>).");
         }
     }
 
