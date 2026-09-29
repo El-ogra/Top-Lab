@@ -11,11 +11,19 @@ namespace TopLab.Persistence.Tests;
 /// </summary>
 public class NeverConnectGuardTests
 {
+    private static List<string> GuardSourceFiles()
+    {
+        var srcDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "TopLab.Persistence.Tests");
+        return Directory.GetFiles(srcDir, "*.cs", SearchOption.AllDirectories)
+            .Where(f => !f.Contains("NeverConnectGuardTests") && !f.Contains("SqlServerFixture"))
+            .ToList();
+    }
+
     [Fact]
     public void NoLocalDb_ConnectionString_InPersistenceTests()
     {
-        var srcDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "TopLab.Persistence.Tests");
-        var files = Directory.GetFiles(srcDir, "*.cs", SearchOption.AllDirectories).Where(f => !f.Contains("NeverConnectGuardTests") && !f.Contains("SqlServerFixture")).ToList();
+        var files = GuardSourceFiles();
+        Assert.NotEmpty(files);
 
         foreach (var file in files)
         {
@@ -27,8 +35,8 @@ public class NeverConnectGuardTests
     [Fact]
     public void NoConfigurationBuilder_InPersistenceTests()
     {
-        var srcDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "TopLab.Persistence.Tests");
-        var files = Directory.GetFiles(srcDir, "*.cs", SearchOption.AllDirectories).Where(f => !f.Contains("NeverConnectGuardTests") && !f.Contains("SqlServerFixture")).ToList();
+        var files = GuardSourceFiles();
+        Assert.NotEmpty(files);
 
         foreach (var file in files)
         {
@@ -40,8 +48,8 @@ public class NeverConnectGuardTests
     [Fact]
     public void NoGetConnectionString_InPersistenceTests()
     {
-        var srcDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "TopLab.Persistence.Tests");
-        var files = Directory.GetFiles(srcDir, "*.cs", SearchOption.AllDirectories).Where(f => !f.Contains("NeverConnectGuardTests") && !f.Contains("SqlServerFixture")).ToList();
+        var files = GuardSourceFiles();
+        Assert.NotEmpty(files);
 
         foreach (var file in files)
         {
