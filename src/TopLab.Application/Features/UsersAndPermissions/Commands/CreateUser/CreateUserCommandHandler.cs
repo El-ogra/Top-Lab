@@ -23,6 +23,7 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
     {
         bool isFirstRunBootstrap = !_currentUser.IsAuthenticated
             && request.IsAbsolutePermission
+            && (request.PermissionCodes?.Count ?? 0) == 0
             && !_db.Set<User>().Any(u => u.IsAbsolutePermission && u.IsActive);
 
         if (!isFirstRunBootstrap)
@@ -32,7 +33,9 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
                 return Result<int>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
             }
 
-            if (request.IsAbsolutePermission && !_currentUser.IsAbsolutePermission)
+            if (!_currentUser.IsAbsolutePermission
+                && (request.IsAbsolutePermission
+                    || (request.PermissionCodes?.Count ?? 0) > 0))
             {
                 return Result<int>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
             }
@@ -43,7 +46,7 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
         }
 
         var permissionMap = new Dictionary<string, PermissionId>();
-        foreach (var code in request.PermissionCodes)
+        foreach (var code in request.PermissionCodes ?? Enumerable.Empty<string>())
         {
             var perm = _db.Set<Permission>().FirstOrDefault(p => p.Code == code);
             if (perm is null)
