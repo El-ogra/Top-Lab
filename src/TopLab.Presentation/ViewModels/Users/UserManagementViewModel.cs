@@ -170,7 +170,9 @@ public sealed class UserManagementViewModel : ViewModelBase
         }
     }
 
-    public decimal DiscountLimitPercent
+        /// <summary>True when the session holds absolute permission; gates the absolute-permission checkbox.</summary>
+    public bool CanEditAbsolute => _currentUser.IsAbsolutePermission;
+public decimal DiscountLimitPercent
     {
         get => _discountLimitPercent;
         set => SetProperty(ref _discountLimitPercent, value);
@@ -280,6 +282,7 @@ public sealed class UserManagementViewModel : ViewModelBase
     {
         IsBusy = true;
         ErrorMessage = string.Empty;
+        OnPropertyChanged(nameof(CanEditAbsolute));
         try
         {
             var result = await _mediator.Send(new GetUsersQuery());
