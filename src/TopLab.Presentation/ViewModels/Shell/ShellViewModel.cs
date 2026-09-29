@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using System.Windows.Threading;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +31,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
     private readonly IServiceProvider _services;
     private readonly DispatcherTimer? _timer;
     private readonly IdleAutoLockTimer _idleAutoLock;
+    private bool _idleLockSuspended;
 
     private string _currentUserName = "—";
     private string _lastLoginText = "أول تسجيل دخول";
@@ -67,6 +69,16 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         OpenChangePasswordCommand = new AsyncRelayCommand(_ => OpenChangePasswordAsync());
 
         _navigation.Navigated += OnNavigated;
+        // Owner decision: any real keyboard/mouse input resets the idle clock.
+        // Guarded: InputManager is unavailable in unit-test hosts without WPF Application.
+        try
+        {
+            InputManager.Current.PreProcessInput += OnPreProcessInput;
+        }
+        catch
+        {
+            // Fallback: navigation still resets the idle clock via OnNavigated.
+        }
 
         try
         {
@@ -74,7 +86,18 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
             t.Tick += async (_, _) =>
             {
                 CurrentDateTime = _dateTime.UtcNow.ToLocalTime();
-                await _idleAutoLock.TickAsync(TimeSpan.FromSeconds(1));
+                if (_idleLockSuspended)
+                {
+                    return;
+                }
+                try
+                {
+                    await _idleAutoLock.TickAsync(TimeSpan.FromSeconds(1));
+                }
+                catch
+                {
+                    // Never let the idle timer crash the dispatcher.
+                }
             };
             t.Start();
             _timer = t;
@@ -358,6 +381,11 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private void OnPreProcessInput(object sender, PreProcessInputEventArgs e)
+    {
+        _idleAutoLock.NotifyActivity();
+    }
+
     private void OnNavigated(ViewModelBase? viewModel)
     {
         _idleAutoLock.NotifyActivity();
@@ -390,17 +418,26 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
 
         var unlockVm = _services.GetRequiredService<UnlockViewModel>();
         unlockVm.Initialize(lockedUserName);
-        if (showUnlock is not null)
+        _idleLockSuspended = true;
+        try
         {
-            showUnlock(unlockVm);
-        }
-        else
-        {
-            var unlock = new UnlockWindow(unlockVm)
+            if (showUnlock is not null)
             {
-                Owner = System.Windows.Application.Current?.MainWindow
-            };
-            unlock.ShowDialog();
+                showUnlock(unlockVm);
+            }
+            else
+            {
+                var unlock = new UnlockWindow(unlockVm)
+                {
+                    Owner = System.Windows.Application.Current?.MainWindow
+                };
+                unlock.ShowDialog();
+            }
+        }
+        finally
+        {
+            _idleLockSuspended = false;
+            _idleAutoLock.NotifyActivity();
         }
 
         await LoadStatusAsync();
@@ -409,6 +446,14 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         _navigation.Navigated -= OnNavigated;
+        try
+        {
+            InputManager.Current.PreProcessInput -= OnPreProcessInput;
+        }
+        catch
+        {
+            // Host without InputManager (unit tests).
+        }
         _timer?.Stop();
     }
 }
