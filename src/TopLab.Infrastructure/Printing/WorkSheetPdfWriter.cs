@@ -20,7 +20,7 @@ public sealed class WorkSheetPdfWriter : IWorkSheetPdfWriter
 {
     static WorkSheetPdfWriter()
     {
-        // License fit for Top-Lab's scale owner-confirmed (S-01 SD-2).
+        // Community-eligible reconfirmed 2026-09-29 by owner decision; revisit before commercial distribution.
         Settings.License = LicenseType.Community;
 
         // Arabic shaping needs a system font with Arabic glyphs (e.g. Arial on
