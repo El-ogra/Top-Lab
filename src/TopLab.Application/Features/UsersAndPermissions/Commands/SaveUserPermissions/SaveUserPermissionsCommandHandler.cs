@@ -22,6 +22,10 @@ public sealed class SaveUserPermissionsCommandHandler : IRequestHandler<SaveUser
         {
             return Result.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
         }
+        if (!_currentUser.IsAbsolutePermission)
+        {
+            return Result.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام"));
+        }
         var user = _db.Set<User>().FirstOrDefault(u => u.Id.Value == request.UserId);
         if (user is null)
         {

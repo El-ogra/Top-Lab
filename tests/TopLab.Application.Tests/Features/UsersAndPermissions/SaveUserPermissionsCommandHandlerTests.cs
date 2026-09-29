@@ -22,7 +22,7 @@ public class SaveUserPermissionsCommandHandlerTests
     public async Task GrantSetReplacement_IsAtomic_OneSaveChanges()
     {
         var db = SeedDb();
-        var handler = new SaveUserPermissionsCommandHandler(db, new FakeCurrentUserService());
+        var handler = new SaveUserPermissionsCommandHandler(db, new FakeCurrentUserService { IsAbsolutePermission = true });
         var hasher = new FakePasswordHasher();
         var user = User.Create(UserId.Create(1), "ahmed", hasher.Hash("p"), hasher.Hash("s"));
         user.GrantPermission(PermissionId.Create(1));
@@ -45,7 +45,7 @@ public class SaveUserPermissionsCommandHandlerTests
     public async Task ValidationFailureMidSet_PersistsNothing()
     {
         var db = SeedDb();
-        var handler = new SaveUserPermissionsCommandHandler(db, new FakeCurrentUserService());
+        var handler = new SaveUserPermissionsCommandHandler(db, new FakeCurrentUserService { IsAbsolutePermission = true });
         var hasher = new FakePasswordHasher();
         var user = User.Create(UserId.Create(1), "ahmed", hasher.Hash("p"), hasher.Hash("s"));
         user.GrantPermission(PermissionId.Create(1));
@@ -87,7 +87,7 @@ public class SaveUserPermissionsCommandHandlerTests
     public async Task SavingAuditAccess_SucceedsAtDataLayer()
     {
         var db = SeedDb();
-        var handler = new SaveUserPermissionsCommandHandler(db, new FakeCurrentUserService());
+        var handler = new SaveUserPermissionsCommandHandler(db, new FakeCurrentUserService { IsAbsolutePermission = true });
         var hasher = new FakePasswordHasher();
         var user = User.Create(UserId.Create(1), "ahmed", hasher.Hash("p"), hasher.Hash("s"));
         db.Users.Add(user);
