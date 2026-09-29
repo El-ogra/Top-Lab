@@ -172,7 +172,7 @@ public sealed class UserManagementViewModel : ViewModelBase
 
         /// <summary>True when the session holds absolute permission; gates the absolute-permission checkbox.</summary>
     public bool CanEditAbsolute => _currentUser.IsAbsolutePermission;
-public decimal DiscountLimitPercent
+    public decimal DiscountLimitPercent
     {
         get => _discountLimitPercent;
         set => SetProperty(ref _discountLimitPercent, value);

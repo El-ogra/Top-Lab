@@ -69,18 +69,30 @@ public static class ArabicFontResolver
         }
     }
 
+    // GDI charset constant for Arabic (WinGDI ARABIC_CHARSET).
+    private const byte ArabicGdiCharSet = 178;
+
     private static bool SupportsArabic(string familyName)
     {
         try
         {
+            // Arabic script block U+0600–U+06FF. MeasureString("ا")>0 is true for
+            // almost every font (fallback glyph) and is not a coverage test — it
+            // must not be used. Prefer explicit Arabic-capable families and the
+            // GDI charset that Windows assigns to Arabic fonts.
+            if (PreferredArabicFonts.Contains(familyName, StringComparer.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             using var font = new Font(familyName, 12f);
-            // Check if the font has Arabic glyph coverage by measuring a known Arabic character
-            using var bitmap = new Bitmap(1, 1);
-            using var graphics = Graphics.FromImage(bitmap);
-            var size = graphics.MeasureString("ا", font);
-            // A font that cannot render Arabic typically falls back to a default
-            // with a very different measurement. This is a heuristic check.
-            return size.Width > 0;
+            if (font.GdiCharSet == ArabicGdiCharSet)
+            {
+                return true;
+            }
+
+            // Common Windows UI families that ship Arabic glyphs (default ANSI charset).
+            return familyName is "Arial" or "Segoe UI" or "Tahoma" or "Times New Roman" or "Calibri";
         }
         catch
         {

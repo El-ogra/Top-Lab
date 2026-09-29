@@ -8,7 +8,7 @@ namespace TopLab.Application;
 
 /// <summary>
 /// Registers Application-layer services. Pipeline behaviors run in the order they are
-/// added here: Validation → Authorization → Logging, matching ADR-0009.
+/// added here: Logging → Validation → Authorization, matching the registrations below and ADR-0009.
 /// Infrastructure and Presentation ports are NOT resolved here (they live in their own
 /// layer's DependencyInjection).
 /// </summary>
