@@ -1,9 +1,7 @@
 using MediatR;
 using TopLab.Application.Common.Authorization;
 using TopLab.Application.Common.Behaviors;
-using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
-using TopLab.Application.Features.SamplePipeline.Commands.EchoName;
 using TopLab.Application.Tests.Common.Fakes;
 using Xunit;
 
@@ -11,13 +9,20 @@ namespace TopLab.Application.Tests.Common;
 
 public class BehaviorsAuthorizationBehaviorTests
 {
-    private static EchoNameCommand Sample() => new(Name: "Sara");
+    /// <summary>Test-local request; not product code and not a catalog permission.</summary>
+    private sealed record LocalAuthProbe(string Name)
+        : IRequest<Result<string>>, IAuthorizedRequest
+    {
+        public string RequiredPermissionCode => "TEST_LOCAL_AUTH";
+    }
+
+    private static LocalAuthProbe Sample() => new(Name: "Sara");
 
     [Fact]
     public async Task AuthorizationBehavior_ReturnsForbidden_WhenUserLacksPermission()
     {
         var user = new FakeCurrentUserService { IsAbsolutePermission = false };
-        var behavior = new AuthorizationBehavior<EchoNameCommand, Result<string>>(user);
+        var behavior = new AuthorizationBehavior<LocalAuthProbe, Result<string>>(user);
 
         var response = await behavior.Handle(Sample(), _ => throw new Exception("handler must not run"), CancellationToken.None);
 
@@ -29,7 +34,7 @@ public class BehaviorsAuthorizationBehaviorTests
     public async Task AuthorizationBehavior_ReturnsForbidden_WhenPermissionNotGranted()
     {
         var user = new FakeCurrentUserService { IsAbsolutePermission = false, GrantedPermissions = { "OTHER" } };
-        var behavior = new AuthorizationBehavior<EchoNameCommand, Result<string>>(user);
+        var behavior = new AuthorizationBehavior<LocalAuthProbe, Result<string>>(user);
 
         var response = await behavior.Handle(Sample(), _ => throw new Exception("handler must not run"), CancellationToken.None);
 
@@ -40,8 +45,8 @@ public class BehaviorsAuthorizationBehaviorTests
     [Fact]
     public async Task AuthorizationBehavior_CallsNext_WhenUserHasPermission()
     {
-        var user = new FakeCurrentUserService { IsAbsolutePermission = false, GrantedPermissions = { "SAMPLE_PIPELINE" } };
-        var behavior = new AuthorizationBehavior<EchoNameCommand, Result<string>>(user);
+        var user = new FakeCurrentUserService { IsAbsolutePermission = false, GrantedPermissions = { "TEST_LOCAL_AUTH" } };
+        var behavior = new AuthorizationBehavior<LocalAuthProbe, Result<string>>(user);
 
         var response = await behavior.Handle(Sample(), _ => Task.FromResult(Result<string>.Success("ok")), CancellationToken.None);
 
@@ -52,7 +57,7 @@ public class BehaviorsAuthorizationBehaviorTests
     public async Task AuthorizationBehavior_CallsNext_WhenUserIsAbsolute()
     {
         var user = new FakeCurrentUserService { IsAbsolutePermission = true };
-        var behavior = new AuthorizationBehavior<EchoNameCommand, Result<string>>(user);
+        var behavior = new AuthorizationBehavior<LocalAuthProbe, Result<string>>(user);
 
         var response = await behavior.Handle(Sample(), _ => Task.FromResult(Result<string>.Success("ok")), CancellationToken.None);
 
