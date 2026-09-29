@@ -19,7 +19,7 @@ public sealed class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result
 
     public Task<Result<IReadOnlyList<UserSummaryDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated)
+        if (!_currentUser.IsAuthenticated || !_currentUser.IsAbsolutePermission)
         {
             return Task.FromResult(Result<IReadOnlyList<UserSummaryDto>>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام")));
         }

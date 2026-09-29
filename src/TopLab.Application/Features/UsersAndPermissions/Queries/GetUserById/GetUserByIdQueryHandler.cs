@@ -19,7 +19,7 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
 
     public Task<Result<UserDetailDto>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
-        if (!_currentUser.IsAuthenticated)
+        if (!_currentUser.IsAuthenticated || !_currentUser.IsAbsolutePermission)
         {
             return Task.FromResult(Result<UserDetailDto>.Failure(Error.Forbidden("أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام")));
         }
