@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using MediatR;
+using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ExternalEntities.Queries.SearchExternalEntities;
 using TopLab.Application.Features.SentOutSamples.Common;
 using TopLab.Application.Features.SentOutSamples.Queries.GetSentOutLabAccount;
@@ -43,7 +44,7 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
 
         LoadCommand = new AsyncRelayCommand(async (_, ct) => await LoadAsync(ct));
         OpenLabAccountCommand = new RelayCommand(param => OpenLabAccount(param as SentOutSampleDto));
-        OpenSendSampleOutCommand = new RelayCommand(_ => OpenSendSampleOut());
+        OpenSendSampleOutCommand = new AsyncRelayCommand(_ => OpenSendSampleOutAsync());
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientVisitHistoryViewModel>());
     }
 
@@ -107,7 +108,7 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
 
     public AsyncRelayCommand LoadCommand { get; }
     public RelayCommand OpenLabAccountCommand { get; }
-    public RelayCommand OpenSendSampleOutCommand { get; }
+    public AsyncRelayCommand OpenSendSampleOutCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
@@ -171,7 +172,15 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
     }
 
     /// <summary>S-07 Slice 7: open the send-sample-out dialog (M-01 entry point).</summary>
-    private void OpenSendSampleOut()
+    private Task OpenSendSampleOutAsync()
+        => OpenSendSampleOutAsync(showDialog: null);
+
+    /// <summary>
+    /// Awaits dialog setup, opens the dialog only on setup success, and reloads
+    /// the sent-out list when the dialog reports a successful save.
+    /// <paramref name="showDialog"/> is a test seam; production passes null and uses the WPF window.
+    /// </summary>
+    public async Task OpenSendSampleOutAsync(Func<SendSampleOutDialogViewModel, bool?>? showDialog)
     {
         if (SelectedItem is null)
         {
@@ -179,12 +188,43 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
         }
 
         var vm = _services.GetRequiredService<SendSampleOutDialogViewModel>();
-        _ = vm.SetupAsync(SelectedItem.PatientTestId, SelectedItem.TestName);
-        var window = new Views.Patients.SendSampleOutDialogWindow(vm)
+        try
         {
-            Owner = System.Windows.Application.Current?.MainWindow
-        };
-        window.ShowDialog();
+            await vm.SetupAsync(SelectedItem.PatientTestId, SelectedItem.TestName);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = _presenter.Present(Error.Unexpected(ex.Message));
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(vm.ErrorMessage))
+        {
+            // Setup did not fully succeed — do not open the dialog.
+            ErrorMessage = vm.ErrorMessage;
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+
+        bool? dialogResult;
+        if (showDialog is not null)
+        {
+            dialogResult = showDialog(vm);
+        }
+        else
+        {
+            var window = new Views.Patients.SendSampleOutDialogWindow(vm)
+            {
+                Owner = System.Windows.Application.Current?.MainWindow
+            };
+            dialogResult = window.ShowDialog();
+        }
+
+        if (dialogResult == true)
+        {
+            await LoadAsync();
+        }
     }
 }
 

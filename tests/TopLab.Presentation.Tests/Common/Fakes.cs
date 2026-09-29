@@ -3,6 +3,11 @@ using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.UsersAndPermissions.Common;
 using TopLab.Application.Features.UsersAndPermissions.Queries.GetUsers;
+using TopLab.Application.Features.ExternalEntities.Common;
+using TopLab.Application.Features.ExternalEntities.Queries.SearchExternalEntities;
+using TopLab.Application.Features.SentOutSamples.Common;
+using TopLab.Application.Features.SentOutSamples.Queries.GetSentOutSamples;
+using TopLab.Domain.Common.Enums;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.Navigation;
@@ -68,6 +73,8 @@ public sealed class FakeNavigationService : INavigationService
 public sealed class FakeSender : ISender
 {
     private readonly Dictionary<Type, object> _responses = new();
+    public int GetSentOutSamplesCallCount { get; private set; }
+    public List<(int PatientTestId, string TestName)> SetupCalls { get; } = new();
 
     public FakeSender WithResponse<TResponse>(IRequest<TResponse> request, TResponse response)
     {
@@ -75,8 +82,46 @@ public sealed class FakeSender : ISender
         return this;
     }
 
+    private Result<IReadOnlyList<ExternalEntityListItemDto>>? _searchLabs;
+    private Result<IReadOnlyList<SentOutSampleDto>>? _sentOut;
+
+    public FakeSender WithSearchLabsSuccess()
+    {
+        var labs = new List<ExternalEntityListItemDto>
+        {
+            new(1, EntityType.PartnerLab, "Lab A", null, null, null, null, null, null)
+        };
+        _searchLabs = Result<IReadOnlyList<ExternalEntityListItemDto>>.Success(labs);
+        return this;
+    }
+
+    public FakeSender WithSearchLabsFailure(string message = "labs failed")
+    {
+        _searchLabs = Result<IReadOnlyList<ExternalEntityListItemDto>>.Failure(Error.Unexpected(message));
+        return this;
+    }
+
+    public FakeSender WithSentOutSamples(params SentOutSampleDto[] items)
+    {
+        GetSentOutSamplesCallCount = 0;
+        _sentOut = Result<IReadOnlyList<SentOutSampleDto>>.Success(items.ToList());
+        return this;
+    }
+
     public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
+        if (request is GetSentOutSamplesQuery)
+        {
+            GetSentOutSamplesCallCount++;
+            var sent = _sentOut ?? Result<IReadOnlyList<SentOutSampleDto>>.Success(Array.Empty<SentOutSampleDto>());
+            return Task.FromResult((TResponse)(object)sent);
+        }
+        if (request is SearchExternalEntitiesQuery)
+        {
+            var labs = _searchLabs ?? Result<IReadOnlyList<ExternalEntityListItemDto>>.Success(Array.Empty<ExternalEntityListItemDto>());
+            return Task.FromResult((TResponse)(object)labs);
+        }
+
         if (_responses.TryGetValue(request.GetType(), out var cached))
         {
             return Task.FromResult((TResponse)cached);
