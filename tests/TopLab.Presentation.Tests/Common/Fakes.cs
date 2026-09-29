@@ -101,3 +101,7 @@ public sealed class FakeSender : ISender
     public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("FakeSender does not support streams.");
 }
+public sealed class FakeDateTimeProvider : TopLab.Application.Common.Interfaces.IDateTimeProvider
+{
+    public DateTime UtcNow { get; set; } = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+}

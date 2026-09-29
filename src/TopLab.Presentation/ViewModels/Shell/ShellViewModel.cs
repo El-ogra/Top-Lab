@@ -174,6 +174,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
                     "الإحصائيات" => _currentUser.IsAbsolutePermission || _currentUser.HasPermission("STATISTICS"),
                     "النظام" => _currentUser.IsAbsolutePermission || _currentUser.HasPermission("PT_AUDIT_ACCESS"),
                     "قفل المحطة" => _currentUser.IsAbsolutePermission || _currentUser.HasPermission("EDIT_SYSTEM_SETTINGS"),
+                    "المستخدمون" => _currentUser.IsAbsolutePermission,
                     _ => true
                 },
                 Command = new RelayCommand(async _ =>
