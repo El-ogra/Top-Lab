@@ -48,6 +48,16 @@ public sealed class CultureEntryViewModel : ViewModelBase
     private int _patientTestId;
     private string _testName = string.Empty;
     private string _testCode = string.Empty;
+
+    /// <summary>WP-03 / SD-3: five English-labelled choices; Value null = Unspecified.</summary>
+    public static IReadOnlyList<TopLab.Domain.Results.SensitivityOption> SensitivityOptions { get; } =
+    [
+        new(null, "Unspecified"),
+        new((int)TopLab.Domain.Common.Enums.SensitivityCategory.HighlyFor, "Sensitive"),
+        new((int)TopLab.Domain.Common.Enums.SensitivityCategory.ModerateFor, "Intermediate"),
+        new((int)TopLab.Domain.Common.Enums.SensitivityCategory.LowFor, "Low Sensitivity"),
+        new((int)TopLab.Domain.Common.Enums.SensitivityCategory.ResistantFor, "Resistant")
+    ];
     private string? _sample;
     private string? _organismA;
     private string? _organismB;

@@ -5,7 +5,7 @@
 - **Source Plan:** `Docs/OpenCode/W-01.md`
 - **Date Created:** 2026-09-30
 - **Total Slices:** 8
-- **Current Slice:** 3 — Sensitivity UI + validation — NEXT
+- **Current Slice:** 4 — Sensitivity repair migration — NEXT
 - **Current Branch:** `main`
 - **Baseline Commit:** `8607a8757a424f3a6dc1bd08ee82671a0195b200`
 - **Author:** loop-engineering (execution by local coding agent per owner authorization)
@@ -132,7 +132,7 @@ Wave 1 reopens the broken daily paths: results-entry navigation (WP-02), culture
 |---|---|---|---|
 | 1 | Combined-report ownership guard (WP-05) | [x] DONE | VG-01 PASS |
 | 2 | Results worklist navigation + orphan screens (WP-02) | [x] DONE | VG-02 PASS |
-| 3 | Sensitivity UI + validation (WP-03) | ⬜ | VG-03 |
+| 3 | Sensitivity UI + validation (WP-03) | [x] DONE | VG-03 PASS |
 | 4 | Sensitivity repair migration (WP-03) | ⬜ | VG-04 |
 | 5 | ExternalEntity Email + commands (WP-04) | ⬜ | VG-05 |
 | 6 | Referral editor + AddExternalEntityEmail (WP-04) | ⬜ | VG-06 |
@@ -161,8 +161,8 @@ Wave 1 reopens the broken daily paths: results-entry navigation (WP-02), culture
 - [x] 1–10 complete. OpenDetail button + double-click + null message; hub +2 buttons; BlankReport LoadAsync builds; OrphanedViewModelTests green (57/57 Presentation).
 
 ### Slice 3 — Sensitivity UI (WP-03, no migration)
-**Gate:** VG-03. **Status:** ⬜
-- [ ] 1–10
+**Gate:** VG-03. **Status:** ✅ Passed.
+- [x] 1–10. SensitivityOption + 5 English labels (SD-3); SelectedValue binding; OrganismC preview; mapping tests green. No migration file.
 
 ### Slice 4 — Sensitivity repair migration (WP-03)
 **Gate:** VG-04. **Status:** ⬜

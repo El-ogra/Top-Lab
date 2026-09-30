@@ -105,15 +105,13 @@
             </DataGrid.Style>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="المضاد الحيوي" Binding="{Binding AntibioticName}" IsReadOnly="True" Width="*"/>
-                <DataGridTemplateColumn Header="الحساسية" Width="120">
+                <DataGridTemplateColumn Header="الحساسية" Width="140">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <ComboBox SelectedIndex="{Binding SensitivityCategory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                <ComboBoxItem Content="غير محدد"/>
-                                <ComboBoxItem Content="حساسية عالية"/>
-                                <ComboBoxItem Content="حساسية متوسطة"/>
-                                <ComboBoxItem Content="حساسية منخفضة"/>
-                            </ComboBox>
+                            <ComboBox ItemsSource="{Binding DataContext.SensitivityOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                      DisplayMemberPath="Label"
+                                      SelectedValuePath="Value"
+                                      SelectedValue="{Binding SensitivityCategory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -140,6 +138,7 @@
                 <TextBlock Text="{Binding Report.Sample, StringFormat='العينة: {0}'}"/>
                 <TextBlock Text="{Binding Report.OrganismA, StringFormat='المستعمرة A: {0}'}"/>
                 <TextBlock Text="{Binding Report.OrganismB, StringFormat='المستعمرة B: {0}'}"/>
+                <TextBlock Text="{Binding Report.OrganismC, StringFormat='المستعمرة C: {0}'}"/>
                 <TextBlock Text="{Binding Report.CultureCondition, StringFormat='حالة المزرعة: {0}'}"/>
                 <TextBlock Text="{Binding Report.ColonyCount, StringFormat='عدد المستعمرات: {0}'}"/>
             </StackPanel>
