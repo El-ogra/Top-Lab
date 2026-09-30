@@ -12,7 +12,7 @@
             <TextBlock Text="كود المعمل:" VerticalAlignment="Center" Margin="0,0,6,0"/>
             <TextBox Text="{Binding LabIdText, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,8,0"/>
             <Button Content="جلب بالكود" Width="90" Margin="0,0,12,0" Command="{Binding FetchByLabIdCommand}"/>
-
+            <Button Content="الفرع" Width="70" Margin="0,0,12,0" Command="{Binding BranchFilterNoticeCommand}"/>
             <Button Content="رجوع" Width="70" Command="{Binding BackCommand}"/>
         </StackPanel>
 

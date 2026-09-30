@@ -14,7 +14,8 @@ public sealed record SystemSettingsDto(
     bool PrintAccountInsteadOfDateOnReport,
     ResultScreenAccountDisplayMode ResultScreenAccountDisplayMode,
     bool DailyBackupEnabled,
-    string? DailyBackupPath);
+    string? DailyBackupPath,
+    int BranchNumber = 1);
 
 public sealed record ReportSettingsDto(
     decimal PageMarginLeftCm,

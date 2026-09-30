@@ -5,7 +5,7 @@
 - **Source Plan:** `Docs/OpenCode/W-01.md`
 - **Date Created:** 2026-09-30
 - **Total Slices:** 8
-- **Current Slice:** 7 — BranchScope + AddBranchNumber — NEXT
+- **Current Slice:** — WAVE COMPLETE (S1–S8)
 - **Current Branch:** `main`
 - **Baseline Commit:** `8607a8757a424f3a6dc1bd08ee82671a0195b200`
 - **Author:** loop-engineering (execution by local coding agent per owner authorization)
@@ -136,8 +136,8 @@ Wave 1 reopens the broken daily paths: results-entry navigation (WP-02), culture
 | 4 | Sensitivity repair migration (WP-03) | [x] DONE | VG-04 PASS |
 | 5 | ExternalEntity Email + commands (WP-04) | [x] DONE | VG-05 PASS |
 | 6 | Referral editor + AddExternalEntityEmail (WP-04) | [x] DONE | VG-06 PASS |
-| 7 | BranchScope + AddBranchNumber (WP-15) | ⬜ | VG-07 |
-| 8 | Branch UI + shell (WP-15) | ⬜ | VG-08 |
+| 7 | BranchScope + AddBranchNumber (WP-15) | [x] DONE | VG-07 PASS |
+| 8 | Branch UI + shell (WP-15) | [x] DONE | VG-08 PASS |
 
 ---
 
@@ -210,7 +210,16 @@ Wave 1 reopens the broken daily paths: results-entry navigation (WP-02), culture
 
 | Slice | Commit | Notes |
 |---|---|---|
-| 1 | (this commit) | Ownership guard WP-05; App tests 1495/1495 |
+| 1 | 18b5c9c | Ownership guard WP-05 |
+| 2 | 08b2bd4 | Worklist + orphans WP-02 |
+| 3 | cde4782 | Sensitivity UI WP-03 |
+| 4 | ef51b53 | Sensitivity repair migration |
+| 5 | 05b14d1 | ExternalEntity Email |
+| 6 | fde9ddb | Referral editor + AddExternalEntityEmail |
+| 7 | c11cf22 | BranchScope + AddBranchNumber |
+| 8 | (this commit) | Branch UI + honest search notice |
+
+**Wave DoD:** 3 migrations only · full suite 2277 passed / 1 skipped · build 0/0 · local commits only (SD-5) · owner pushes after independent migration review (SD-6).
 
 ---
 

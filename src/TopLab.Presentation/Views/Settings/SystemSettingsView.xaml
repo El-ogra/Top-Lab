@@ -61,6 +61,8 @@
 
             <TextBlock Text="النسخ الاحتياطي اليومي" FontWeight="Bold" Margin="0,16,0,4" />
             <CheckBox Content="تفعيل النسخ الاحتياطي اليومي" IsChecked="{Binding DailyBackupEnabled}" />
+            <TextBlock Text="رقم الفرع" FontWeight="Bold" Margin="0,12,0,4" />
+            <TextBox Text="{Binding BranchNumber, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Right" />
             <Grid Margin="0,8,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />

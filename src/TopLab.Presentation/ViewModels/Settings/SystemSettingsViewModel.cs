@@ -137,6 +137,15 @@ public sealed class SystemSettingsViewModel : ViewModelBase
     public bool DailyBackupEnabled { get => _dailyBackupEnabled; set => SetProperty(ref _dailyBackupEnabled, value); }
     public string DailyBackupPath { get => _dailyBackupPath; set => SetProperty(ref _dailyBackupPath, value); }
 
+    private int _branchNumber = 1;
+
+    /// <summary>WP-15 / SD-2: system default branch number (min 1).</summary>
+    public int BranchNumber
+    {
+        get => _branchNumber;
+        set => SetProperty(ref _branchNumber, value);
+    }
+
     public string ReportPrinter { get => _reportPrinter; set => SetProperty(ref _reportPrinter, value); }
     public string BarcodePrinter { get => _barcodePrinter; set => SetProperty(ref _barcodePrinter, value); }
     public string EnvelopePrinter { get => _envelopePrinter; set => SetProperty(ref _envelopePrinter, value); }
@@ -194,6 +203,7 @@ public sealed class SystemSettingsViewModel : ViewModelBase
                 ResultScreenAccountDisplayMode = s.ResultScreenAccountDisplayMode;
                 DailyBackupEnabled = s.DailyBackupEnabled;
                 DailyBackupPath = s.DailyBackupPath ?? string.Empty;
+                BranchNumber = s.BranchNumber;
             }
             else if (systems.Error is not null)
             {
@@ -322,7 +332,8 @@ public sealed class SystemSettingsViewModel : ViewModelBase
                 PrintAccountInsteadOfDateOnReport,
                 ResultScreenAccountDisplayMode,
                 DailyBackupEnabled,
-                DailyBackupPath));
+                DailyBackupPath,
+                BranchNumber));
 
             if (!result.IsSuccess)
             {

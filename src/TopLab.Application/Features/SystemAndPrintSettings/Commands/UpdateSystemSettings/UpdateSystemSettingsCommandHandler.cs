@@ -34,6 +34,7 @@ public sealed class UpdateSystemSettingsCommandHandler : IRequestHandler<UpdateS
             request.PrintAccountInsteadOfDateOnReport);
         row.SetResultScreenAccountDisplayMode(request.ResultScreenAccountDisplayMode);
         row.SetDailyBackup(request.DailyBackupEnabled, request.DailyBackupPath);
+        row.SetBranchNumber(request.BranchNumber);
 
         await _db.SaveChangesAsync(cancellationToken);
 

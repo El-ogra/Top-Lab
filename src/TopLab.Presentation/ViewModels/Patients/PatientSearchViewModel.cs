@@ -42,6 +42,11 @@ public sealed class PatientSearchViewModel : ViewModelBase
         PreviousPageCommand = new AsyncRelayCommand(async (_, ct) => { if (Page > 1) { Page--; await SearchAsync(ct); } });
         OpenPatientCommand = new RelayCommand(param => OpenPatient(param as PatientSearchHitDto));
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientsHubViewModel>());
+        // WP-15 / SD-2 / C-7: no Patient.BranchNumber — honest notice only.
+        BranchFilterNoticeCommand = new RelayCommand(_ =>
+        {
+            ErrorMessage = "البحث بفرع غير متاح دون مبيعات موزّعة على الفروع.";
+        });
     }
 
     public string SearchText
@@ -114,6 +119,8 @@ public sealed class PatientSearchViewModel : ViewModelBase
     public AsyncRelayCommand PreviousPageCommand { get; }
     public RelayCommand OpenPatientCommand { get; }
     public RelayCommand BackCommand { get; }
+
+    public RelayCommand BranchFilterNoticeCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {

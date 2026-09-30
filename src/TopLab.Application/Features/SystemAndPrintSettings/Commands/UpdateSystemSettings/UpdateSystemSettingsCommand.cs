@@ -17,7 +17,8 @@ public sealed record UpdateSystemSettingsCommand(
     bool PrintAccountInsteadOfDateOnReport,
     ResultScreenAccountDisplayMode ResultScreenAccountDisplayMode,
     bool DailyBackupEnabled,
-    string? DailyBackupPath)
+    string? DailyBackupPath,
+    int BranchNumber = 1)
     : IRequest<Result>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

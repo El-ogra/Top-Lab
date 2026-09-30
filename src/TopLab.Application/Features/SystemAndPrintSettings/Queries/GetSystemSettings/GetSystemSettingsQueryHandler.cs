@@ -36,7 +36,8 @@ public sealed class GetSystemSettingsQueryHandler : IRequestHandler<GetSystemSet
             row.PrintAccountInsteadOfDateOnReport,
             row.ResultScreenAccountDisplayMode,
             row.DailyBackupEnabled,
-            row.DailyBackupPath);
+            row.DailyBackupPath,
+            row.BranchNumber);
 
         return Task.FromResult(Result<SystemSettingsDto>.Success(dto));
     }
