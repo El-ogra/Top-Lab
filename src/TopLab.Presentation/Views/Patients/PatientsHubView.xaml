@@ -15,6 +15,10 @@
                     Command="{Binding OpenSearchPatientCommand}" IsEnabled="{Binding SearchPatientEnabled}" />
             <Button Content="تسليم نتائج المرضى" Height="64" Margin="4" Padding="16,8"
                     Command="{Binding OpenDeliverResultsCommand}" IsEnabled="{Binding DeliverResultsEnabled}" />
+            <Button Content="تقرير فارغ" Height="64" Margin="4" Padding="16,8"
+                    Command="{Binding OpenBlankReportCommand}" IsEnabled="{Binding BlankReportEnabled}" />
+            <Button Content="تقارير التاريخ" Height="64" Margin="4" Padding="16,8"
+                    Command="{Binding OpenHistoryReportsCommand}" IsEnabled="{Binding HistoryReportsEnabled}" />
         </UniformGrid>
     </StackPanel>
 </UserControl>

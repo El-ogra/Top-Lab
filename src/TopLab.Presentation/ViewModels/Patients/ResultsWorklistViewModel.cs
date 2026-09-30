@@ -30,6 +30,7 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
     private int _totalCount;
     private bool _isBusy;
     private string _errorMessage = string.Empty;
+    private string _statusMessage = string.Empty;
     private ResultWorklistItemDto? _selectedItem;
 
     public ResultsWorklistViewModel(ISender mediator, ResultErrorPresenter presenter, INavigationService navigation)
@@ -142,6 +143,12 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
         private set => SetProperty(ref _errorMessage, value);
     }
 
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        private set => SetProperty(ref _statusMessage, value);
+    }
+
     public AsyncRelayCommand LoadCommand { get; }
     public AsyncRelayCommand OpenDetailCommand { get; }
 
@@ -171,39 +178,43 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
 
     private async Task OpenDetailAsync(ResultWorklistItemDto? item, CancellationToken cancellationToken)
     {
-        if (item is null)
+        var target = item ?? SelectedItem;
+        if (target is null)
         {
+            StatusMessage = "اختر مريضاً من القائمة أولاً.";
             return;
         }
 
-        // S-04 Slice 3: Simple results route to SimpleResultEntryViewModel (enabled)
-        // D4 routing: Simple tests → R2 (S3), SpecializedProfile → P1 (S6), Culture → C1 (S7)
-        // Note: item.ResultKind is int, ResultKind enum values: Simple=0, SpecializedProfile=1, Culture=2
-        if (item.ResultKind == 0)  // ResultKind.Simple = 0
+        StatusMessage = string.Empty;
+
+        // D4 routing: Simple=0 → SimpleResultEntry, SpecializedProfile=1 → ProfileEntry, Culture=2 → CultureEntry
+        if (target.ResultKind == (int)TopLab.Domain.Common.Enums.ResultKind.Simple)
         {
             _navigation.NavigateTo<SimpleResultEntryViewModel>();
             if (_navigation.CurrentViewModel is SimpleResultEntryViewModel vm)
             {
-                await vm.LoadAsync(item);
+                await vm.LoadAsync(target);
             }
         }
-        // S-04 Slice 6: SpecializedProfile routes to ProfileEntryViewModel (P1)
-        else if (item.ResultKind == 1)  // ResultKind.SpecializedProfile = 1
+        else if (target.ResultKind == (int)TopLab.Domain.Common.Enums.ResultKind.SpecializedProfile)
         {
             _navigation.NavigateTo<ProfileEntryViewModel>();
             if (_navigation.CurrentViewModel is ProfileEntryViewModel pvm)
             {
-                await pvm.LoadAsync(item.PatientTestId, cancellationToken);
+                await pvm.LoadAsync(target.PatientTestId, cancellationToken);
             }
         }
-        // S-04 Slice 7: Culture routes to CultureEntryViewModel (C1)
-        else if (item.ResultKind == 2 || item.IsCultureType)  // ResultKind.Culture = 2
+        else if (target.ResultKind == (int)TopLab.Domain.Common.Enums.ResultKind.Culture || target.IsCultureType)
         {
             _navigation.NavigateTo<CultureEntryViewModel>();
             if (_navigation.CurrentViewModel is CultureEntryViewModel cvm)
             {
-                await cvm.LoadAsync(item.PatientTestId, cancellationToken);
+                await cvm.LoadAsync(target.PatientTestId, cancellationToken);
             }
+        }
+        else
+        {
+            StatusMessage = "نوع النتيجة غير مدعوم.";
         }
     }
 }

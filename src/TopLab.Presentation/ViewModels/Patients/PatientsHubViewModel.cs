@@ -15,6 +15,8 @@ public sealed class PatientsHubViewModel : ViewModelBase
     private bool _enterResultsEnabled;
     private bool _searchPatientEnabled;
     private bool _deliverResultsEnabled;
+    private bool _blankReportEnabled;
+    private bool _historyReportsEnabled;
 
     public PatientsHubViewModel(INavigationService navigation)
     {
@@ -62,6 +64,27 @@ public sealed class PatientsHubViewModel : ViewModelBase
                 _ = vm.LoadAsync();
             }
         });
+
+        // WP-02: blank report + history reports (were orphaned)
+        BlankReportEnabled = true;
+        OpenBlankReportCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<BlankReportViewModel>();
+            if (_navigation.CurrentViewModel is BlankReportViewModel vm)
+            {
+                _ = vm.LoadAsync(0);
+            }
+        });
+
+        HistoryReportsEnabled = true;
+        OpenHistoryReportsCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<HistoryReportsViewModel>();
+            if (_navigation.CurrentViewModel is HistoryReportsViewModel vm)
+            {
+                _ = vm.LoadAsync(0);
+            }
+        });
     }
 
     public string HelpText => "من هنا تدير كل ما يخص المرضى: تسجيل بيانات مريض جديد أو تعديل بيانات مسجل، ثم إدخال النتائج والبحث عن المرضى وتسليم النتائج.";
@@ -90,6 +113,18 @@ public sealed class PatientsHubViewModel : ViewModelBase
         set => SetProperty(ref _deliverResultsEnabled, value);
     }
 
+    public bool BlankReportEnabled
+    {
+        get => _blankReportEnabled;
+        set => SetProperty(ref _blankReportEnabled, value);
+    }
+
+    public bool HistoryReportsEnabled
+    {
+        get => _historyReportsEnabled;
+        set => SetProperty(ref _historyReportsEnabled, value);
+    }
+
     public RelayCommand OpenAddEditPatientCommand { get; }
 
     public RelayCommand OpenEnterResultsCommand { get; }
@@ -97,4 +132,8 @@ public sealed class PatientsHubViewModel : ViewModelBase
     public RelayCommand OpenSearchPatientCommand { get; }
 
     public RelayCommand OpenDeliverResultsCommand { get; }
+
+    public RelayCommand OpenBlankReportCommand { get; }
+
+    public RelayCommand OpenHistoryReportsCommand { get; }
 }

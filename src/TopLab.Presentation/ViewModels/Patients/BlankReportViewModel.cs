@@ -82,7 +82,14 @@ public sealed class BlankReportViewModel : ViewModelBase
         Report = null;
         ErrorMessage = string.Empty;
         StatusMessage = string.Empty;
-        await Task.CompletedTask;
+
+        if (_patientId <= 0)
+        {
+            ErrorMessage = "معرّف المريض غير صالح.";
+            return;
+        }
+
+        await BuildAsync(cancellationToken);
     }
 
     private async Task BuildAsync(CancellationToken cancellationToken)

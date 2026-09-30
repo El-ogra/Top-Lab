@@ -26,8 +26,9 @@
             </ProgressBar.Style>
         </ProgressBar>
 
-        <!-- Error strip -->
+        <!-- Error / status strips -->
         <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding StatusMessage}" Foreground="#0B5" TextWrapping="Wrap" Margin="0,4,0,0" />
 
         <!-- Empty state -->
         <TextBlock DockPanel.Dock="Top" Text="لا نتائج مطابقة للمرشح" Foreground="#666666" Margin="0,8,0,0">
@@ -44,8 +45,28 @@
         </TextBlock>
 
         <!-- DataGrid -->
-        <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,8,0,0">
+        <DataGrid x:Name="WorklistGrid"
+                  ItemsSource="{Binding Items}"
+                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  Margin="0,8,0,0"
+                  MouseDoubleClick="WorklistGrid_MouseDoubleClick">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Cursor" Value="Hand" />
+                </Style>
+            </DataGrid.RowStyle>
             <DataGrid.Columns>
+                <DataGridTemplateColumn Header="فتح" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="فتح" Padding="8,2"
+                                    Command="{Binding DataContext.OpenDetailCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="المريض" Binding="{Binding PatientFullName}" Width="*" />
                 <DataGridTextColumn Header="Lab ID" Binding="{Binding LabId}" Width="100" />
                 <DataGridTextColumn Header="التحليل" Binding="{Binding TestName}" Width="150" />
