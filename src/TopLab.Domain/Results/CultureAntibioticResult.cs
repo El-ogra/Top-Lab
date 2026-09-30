@@ -10,13 +10,14 @@ public sealed class CultureAntibioticResult : Entity<CultureAntibioticResultId>
 
     public AntibioticId AntibioticId { get; private set; } = default!;
 
-    public SensitivityCategory SensitivityCategory { get; private set; }
+    /// <summary>Nullable after WP-03 repair (0→NULL / Unspecified); values 0–3 unchanged (SD-9).</summary>
+    public SensitivityCategory? SensitivityCategory { get; private set; }
 
     private CultureAntibioticResult()
     {
     }
 
-    private CultureAntibioticResult(CultureAntibioticResultId id, PatientTestId patientTestId, AntibioticId antibioticId, SensitivityCategory sensitivityCategory)
+    private CultureAntibioticResult(CultureAntibioticResultId id, PatientTestId patientTestId, AntibioticId antibioticId, SensitivityCategory? sensitivityCategory)
         : base(id)
     {
         PatientTestId = patientTestId;
@@ -24,7 +25,7 @@ public sealed class CultureAntibioticResult : Entity<CultureAntibioticResultId>
         SensitivityCategory = sensitivityCategory;
     }
 
-    public static CultureAntibioticResult Create(CultureAntibioticResultId id, PatientTestId patientTestId, AntibioticId antibioticId, SensitivityCategory sensitivityCategory)
+    public static CultureAntibioticResult Create(CultureAntibioticResultId id, PatientTestId patientTestId, AntibioticId antibioticId, SensitivityCategory? sensitivityCategory)
     {
         return new CultureAntibioticResult(id, patientTestId, antibioticId, sensitivityCategory);
     }

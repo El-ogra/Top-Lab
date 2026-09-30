@@ -35,7 +35,7 @@ public sealed class GetCultureEntryGridQueryHandler : IRequestHandler<GetCulture
         var attachedIds = _db.Set<CultureAntibioticAttachment>().Where(x => x.TestId.Value == test.Id.Value).Select(x => x.AntibioticId.Value).ToHashSet();
         var antibiotics = _db.Set<Antibiotic>().Where(x => attachedIds.Contains(x.Id.Value)).ToList();
         var rows = antibiotics.Where(x => CultureAntibioticDisplay.IsDisplayable(x.IsPregnancyFlagged, x.IsChildrenFlagged, pregnant, child) || saved.ContainsKey(x.Id.Value))
-            .OrderBy(x => x.Id.Value).Select(x => { saved.TryGetValue(x.Id.Value, out var item); return new CultureSensitivityRowDto(item?.Id.Value, x.Id.Value, x.Name, item is null ? null : (int)item.SensitivityCategory, x.IsPregnancyFlagged, x.IsChildrenFlagged); }).ToList();
+            .OrderBy(x => x.Id.Value).Select(x => { saved.TryGetValue(x.Id.Value, out var item); return new CultureSensitivityRowDto(item?.Id.Value, x.Id.Value, x.Name, item is null ? null : (int?)item.SensitivityCategory, x.IsPregnancyFlagged, x.IsChildrenFlagged); }).ToList();
         var header = _db.Set<CultureResult>().FirstOrDefault(x => x.PatientTestId.Value == pt.Id.Value);
         return Task.FromResult(Result<CultureEntryGridDto>.Success(new CultureEntryGridDto(pt.Id.Value, patient.Id.Value, test.Name, test.TestCode, header?.Sample, header?.OrganismA, header?.OrganismB, header?.OrganismC, header?.CultureCondition, header?.ColonyCount, rows, pt.IsReviewed, pt.IsPrinted)));
     }

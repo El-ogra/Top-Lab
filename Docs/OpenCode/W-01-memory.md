@@ -5,7 +5,7 @@
 - **Source Plan:** `Docs/OpenCode/W-01.md`
 - **Date Created:** 2026-09-30
 - **Total Slices:** 8
-- **Current Slice:** 4 — Sensitivity repair migration — NEXT
+- **Current Slice:** 5 — ExternalEntity Email surface — NEXT
 - **Current Branch:** `main`
 - **Baseline Commit:** `8607a8757a424f3a6dc1bd08ee82671a0195b200`
 - **Author:** loop-engineering (execution by local coding agent per owner authorization)
@@ -133,7 +133,7 @@ Wave 1 reopens the broken daily paths: results-entry navigation (WP-02), culture
 | 1 | Combined-report ownership guard (WP-05) | [x] DONE | VG-01 PASS |
 | 2 | Results worklist navigation + orphan screens (WP-02) | [x] DONE | VG-02 PASS |
 | 3 | Sensitivity UI + validation (WP-03) | [x] DONE | VG-03 PASS |
-| 4 | Sensitivity repair migration (WP-03) | ⬜ | VG-04 |
+| 4 | Sensitivity repair migration (WP-03) | [x] DONE | VG-04 PASS |
 | 5 | ExternalEntity Email + commands (WP-04) | ⬜ | VG-05 |
 | 6 | Referral editor + AddExternalEntityEmail (WP-04) | ⬜ | VG-06 |
 | 7 | BranchScope + AddBranchNumber (WP-15) | ⬜ | VG-07 |
@@ -165,13 +165,8 @@ Wave 1 reopens the broken daily paths: results-entry navigation (WP-02), culture
 - [x] 1–10. SensitivityOption + 5 English labels (SD-3); SelectedValue binding; OrganismC preview; mapping tests green. No migration file.
 
 ### Slice 4 — Sensitivity repair migration (WP-03)
-**Gate:** VG-04. **Status:** ⬜
-- [ ] 1. Pre-Execution (build/tests green)
-- [ ] 2–3. Understand + file analysis (config + prior migrations pattern)
-- [ ] 4. Planning — **read-only GROUP BY report before any write**
-- [ ] 5. Execution — migration + backup + nullable if C-6
-- [ ] 6–7. Build + repair tests + SD-6 review prompt generated
-- [ ] 8–10. Memory + local commit
+**Gate:** VG-04. **Status:** ✅ Passed.
+- [x] 1–10. `20260930163921_FixCultureSensitivityCategoryOffByOne` + backup + CASE map; nullable column (C-6); repair tests green; only new migration + snapshot (EF tooling).
 
 ### Slice 5 — ExternalEntity Email surface (WP-04)
 **Gate:** VG-05. **Status:** ⬜
@@ -195,7 +190,7 @@ Wave 1 reopens the broken daily paths: results-entry navigation (WP-02), culture
 
 | Slice | Migration name | Tables/columns | Backup | Review agent |
 |---|---|---|---|---|
-| 4 | FixCultureSensitivityCategoryOffByOne | CultureAntibioticResults (data + nullable?) | CultureSensitivityBackup | pending |
+| 4 | FixCultureSensitivityCategoryOffByOne | CultureAntibioticResults (nullable + CASE 0→NULL/1→0/2→1/3→2) | CultureSensitivityBackup | pending |
 | 6 | AddExternalEntityEmail | ExternalEntities.Email | n/a | pending |
 | 7 | AddBranchNumber | SystemSettings.BranchNumber, Users.BranchNumber + seed | n/a | pending |
 

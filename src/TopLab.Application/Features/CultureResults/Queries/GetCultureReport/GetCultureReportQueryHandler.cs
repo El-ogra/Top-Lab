@@ -29,7 +29,7 @@ public sealed class GetCultureReportQueryHandler : IRequestHandler<GetCultureRep
         var rows = _db.Set<CultureAntibioticResult>().Where(x => x.PatientTestId.Value == pt.Id.Value).OrderBy(x => x.AntibioticId.Value).ToList().Select(x =>
         {
             antibiotics.TryGetValue(x.AntibioticId.Value, out var antibiotic);
-            return new CultureSensitivityRowDto(x.Id.Value, x.AntibioticId.Value, antibiotic?.Name ?? $"[{x.AntibioticId.Value}]", (int)x.SensitivityCategory, antibiotic?.IsPregnancyFlagged ?? false, antibiotic?.IsChildrenFlagged ?? false);
+            return new CultureSensitivityRowDto(x.Id.Value, x.AntibioticId.Value, antibiotic?.Name ?? $"[{x.AntibioticId.Value}]", (int?)x.SensitivityCategory, antibiotic?.IsPregnancyFlagged ?? false, antibiotic?.IsChildrenFlagged ?? false);
         }).ToList();
         var header = _db.Set<CultureResult>().FirstOrDefault(x => x.PatientTestId.Value == pt.Id.Value);
         return Task.FromResult(Result<CultureReportDto>.Success(new CultureReportDto(pt.Id.Value, patient.Id.Value, patient.FullName, patient.LabId?.Value, patient.Sex.ToString(), patient.AgeValue, patient.AgeUnit.ToString(), test.Name, test.ReportName, patient.RegistrationDateUtc, header?.Sample, header?.OrganismA, header?.OrganismB, header?.OrganismC, header?.CultureCondition, header?.ColonyCount, rows, settings.PrintLabIdInsteadOfPatientId, pt.IsReviewed, pt.IsPrinted, pt.PrintCount)));
