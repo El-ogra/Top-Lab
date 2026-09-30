@@ -30,6 +30,9 @@ public sealed class SystemSettings : Entity<int>
 
     public string? DailyBackupPath { get; private set; }
 
+    /// <summary>WP-15 / SD-2: default branch number (min 1).</summary>
+    public int BranchNumber { get; private set; } = 1;
+
     private SystemSettings()
     {
     }
@@ -53,8 +56,19 @@ public sealed class SystemSettings : Entity<int>
             PrintDateTimeOnTubeBarcode = false,
             PrintAccountInsteadOfDateOnReport = false,
             DailyBackupEnabled = false,
-            DailyBackupPath = null
+            DailyBackupPath = null,
+            BranchNumber = 1
         };
+    }
+
+    public void SetBranchNumber(int value)
+    {
+        if (value < 1)
+        {
+            throw new ArgumentException("BranchNumber must be at least 1.", nameof(value));
+        }
+
+        BranchNumber = value;
     }
 
     public void SetDefaultAccountType(AccountType value)

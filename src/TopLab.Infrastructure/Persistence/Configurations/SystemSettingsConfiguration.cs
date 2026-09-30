@@ -23,6 +23,7 @@ public sealed class SystemSettingsConfiguration : IEntityTypeConfiguration<Syste
         b.Property(e => e.PrintAccountInsteadOfDateOnReport).IsRequired();
         b.Property(e => e.DailyBackupEnabled).IsRequired();
         b.Property(e => e.DailyBackupPath).HasMaxLength(300).IsRequired(false);
-        b.HasData(new { Id = 1, DefaultAccountType = AccountType.Individual, PrintLabIdInsteadOfPatientId = false, AutoReviewAndComplete = false, ResultScreenAccountDisplayMode = ResultScreenAccountDisplayMode.Hidden, SaveTreatingDoctorOnlyFromEntityWindow = false, EnablePatientNameSearchAssist = false, DisableAutoTitleInsertion = false, PrintFileExternalBarcode = false, PrintDateTimeOnTubeBarcode = false, PrintAccountInsteadOfDateOnReport = false, DailyBackupEnabled = false, DailyBackupPath = (string?)null });
+        b.Property(e => e.BranchNumber).HasDefaultValue(1);
+        b.HasData(new { Id = 1, DefaultAccountType = AccountType.Individual, PrintLabIdInsteadOfPatientId = false, AutoReviewAndComplete = false, ResultScreenAccountDisplayMode = ResultScreenAccountDisplayMode.Hidden, SaveTreatingDoctorOnlyFromEntityWindow = false, EnablePatientNameSearchAssist = false, DisableAutoTitleInsertion = false, PrintFileExternalBarcode = false, PrintDateTimeOnTubeBarcode = false, PrintAccountInsteadOfDateOnReport = false, DailyBackupEnabled = false, DailyBackupPath = (string?)null, BranchNumber = 1 });
     }
 }

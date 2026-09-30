@@ -29,6 +29,9 @@ public sealed class User : AuditableEntity<UserId>
 
     public bool IsActive { get; private set; } = true;
 
+    /// <summary>WP-15 / SD-2: null = inherit SystemSettings.BranchNumber.</summary>
+    public int? BranchNumber { get; private set; }
+
     private readonly List<UserPermissionGrant> _grants = [];
     public IReadOnlyCollection<UserPermissionGrant> PermissionGrants => _grants.AsReadOnly();
 
@@ -77,14 +80,32 @@ public sealed class User : AuditableEntity<UserId>
         TimeOnly? workStartTime = null,
         TimeOnly? workEndTime = null,
         bool hasBreakPeriod = false,
-        int? breakDurationMinutes = null)
+        int? breakDurationMinutes = null,
+        int? branchNumber = null)
     {
         if (string.IsNullOrWhiteSpace(userName))
         {
             throw new ArgumentException("UserName is required.", nameof(userName));
         }
 
-        return new User(id, userName.Trim(), passwordHash, internalWindowsPasswordHash, isAbsolutePermission, discountLimitPercent, blockPrintOnRemainingBalance, workStartTime, workEndTime, hasBreakPeriod, breakDurationMinutes, null, true);
+        if (branchNumber is < 1)
+        {
+            throw new ArgumentException("BranchNumber must be at least 1.", nameof(branchNumber));
+        }
+
+        var user = new User(id, userName.Trim(), passwordHash, internalWindowsPasswordHash, isAbsolutePermission, discountLimitPercent, blockPrintOnRemainingBalance, workStartTime, workEndTime, hasBreakPeriod, breakDurationMinutes, null, true);
+        user.BranchNumber = branchNumber;
+        return user;
+    }
+
+    public void SetBranchNumber(int? branchNumber)
+    {
+        if (branchNumber is < 1)
+        {
+            throw new ArgumentException("BranchNumber must be at least 1.", nameof(branchNumber));
+        }
+
+        BranchNumber = branchNumber;
     }
 
     public void Deactivate()

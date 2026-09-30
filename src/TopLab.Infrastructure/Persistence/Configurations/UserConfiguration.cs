@@ -24,5 +24,6 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(e => e.BreakDurationMinutes).IsRequired(false);
         b.Property(e => e.LastLoginAtUtc).HasColumnType("datetime2").IsRequired(false);
         b.Property(e => e.IsActive).IsRequired();
+        b.Property(e => e.BranchNumber).IsRequired(false);
     }
 }
