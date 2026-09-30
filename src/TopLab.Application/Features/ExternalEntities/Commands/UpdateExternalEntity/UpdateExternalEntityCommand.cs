@@ -16,7 +16,8 @@ public sealed record UpdateExternalEntityCommand(
     string? ResponsiblePersonName,
     string? ResponsiblePersonPhone,
     int? PriceListId,
-    decimal? DiscountOrCommissionPercent)
+    decimal? DiscountOrCommissionPercent,
+    string? Email = null)
     : IRequest<Result>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

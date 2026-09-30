@@ -9,6 +9,9 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
     public const int MaxNameLength = 200;
 
     public const int MaxGeneratedIdCodeLength = 50;
+
+    public const int MaxEmailLength = 200;
+
     public EntityType EntityType { get; private set; }
 
     public string Name { get; private set; } = default!;
@@ -31,6 +34,9 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
 
     public string? GeneratedIdCode { get; private set; }
 
+    /// <summary>WP-04 / SD-4: optional contact email (≤ 200).</summary>
+    public string? Email { get; private set; }
+
     private ExternalEntity()
     {
     }
@@ -47,7 +53,8 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
         string? responsiblePersonPhone,
         PriceListId? priceListId,
         decimal? discountOrCommissionPercent,
-        string? generatedIdCode)
+        string? generatedIdCode,
+        string? email = null)
         : base(id)
     {
         EntityType = entityType;
@@ -61,6 +68,7 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
         PriceListId = priceListId;
         DiscountOrCommissionPercent = discountOrCommissionPercent;
         GeneratedIdCode = generatedIdCode;
+        Email = email;
     }
 
     public static ExternalEntity Create(
@@ -75,11 +83,13 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
         string? responsiblePersonPhone = null,
         PriceListId? priceListId = null,
         decimal? discountOrCommissionPercent = null,
-        string? generatedIdCode = null)
+        string? generatedIdCode = null,
+        string? email = null)
     {
         var normalizedName = RequireName(name);
         ValidatePriceListRule(entityType, priceListId);
         ValidatePercent(discountOrCommissionPercent);
+        ValidateEmail(email);
 
         return new ExternalEntity(
             id,
@@ -93,7 +103,8 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
             Normalize(responsiblePersonPhone),
             priceListId,
             discountOrCommissionPercent,
-            Normalize(generatedIdCode));
+            Normalize(generatedIdCode),
+            Normalize(email));
     }
 
     public void Update(
@@ -106,11 +117,13 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
         string? responsiblePersonName = null,
         string? responsiblePersonPhone = null,
         PriceListId? priceListId = null,
-        decimal? discountOrCommissionPercent = null)
+        decimal? discountOrCommissionPercent = null,
+        string? email = null)
     {
         var normalizedName = RequireName(name);
         ValidatePriceListRule(entityType, priceListId);
         ValidatePercent(discountOrCommissionPercent);
+        ValidateEmail(email);
 
         EntityType = entityType;
         Name = normalizedName;
@@ -122,6 +135,7 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
         ResponsiblePersonPhone = Normalize(responsiblePersonPhone);
         PriceListId = priceListId;
         DiscountOrCommissionPercent = discountOrCommissionPercent;
+        Email = Normalize(email);
     }
 
     public void RegenerateIdCode(string code)
@@ -174,6 +188,14 @@ public sealed class ExternalEntity : AuditableEntity<ExternalEntityId>
         if (discountOrCommissionPercent is < 0 or > 100)
         {
             throw new ArgumentException("DiscountOrCommissionPercent must be between 0 and 100.", nameof(discountOrCommissionPercent));
+        }
+    }
+
+    private static void ValidateEmail(string? email)
+    {
+        if (email is not null && email.Length > MaxEmailLength)
+        {
+            throw new ArgumentException("Email must be at most 200 characters.", nameof(email));
         }
     }
 

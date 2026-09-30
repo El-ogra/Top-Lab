@@ -39,7 +39,8 @@ public sealed class CreateExternalEntityCommandHandler : IRequestHandler<CreateE
                 request.ResponsiblePersonName,
                 request.ResponsiblePersonPhone,
                 request.PriceListId.HasValue ? PriceListId.Create(request.PriceListId.Value) : null,
-                request.DiscountOrCommissionPercent);
+                request.DiscountOrCommissionPercent,
+                email: request.Email);
         }
         catch (ArgumentException ex)
         {

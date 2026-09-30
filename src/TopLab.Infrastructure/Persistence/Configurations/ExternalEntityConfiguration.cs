@@ -22,6 +22,7 @@ public sealed class ExternalEntityConfiguration : IEntityTypeConfiguration<Exter
         b.Property(e => e.PriceListId).HasConversion(v => v == null ? (int?)null : v.Value, v => v == null ? null : PriceListId.Create(v.Value)).IsRequired(false);
         b.Property(e => e.DiscountOrCommissionPercent).HasColumnType("decimal(5,2)").HasPrecision(5,2).IsRequired(false);
         b.Property(e => e.GeneratedIdCode).HasMaxLength(50).IsRequired(false);
+        b.Property(e => e.Email).HasMaxLength(200).IsRequired(false);
         b.HasOne<TopLab.Domain.Billing.PriceList>().WithMany().HasForeignKey(e => e.PriceListId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(e => e.EntityType);
     }

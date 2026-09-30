@@ -54,5 +54,13 @@ public sealed class UpdateExternalEntityCommandValidator : AbstractValidator<Upd
             RuleFor(x => x.DiscountOrCommissionPercent!.Value)
                 .InclusiveBetween(0m, 100m).WithMessage("نسبة الخصم / العمولة يجب أن تكون بين 0 و 100.");
         });
+
+        When(x => !string.IsNullOrWhiteSpace(x.Email), () =>
+        {
+            RuleFor(x => x.Email)
+                .MaximumLength(ExternalEntity.MaxEmailLength)
+                .WithMessage("البريد الإلكتروني يجب ألا يتجاوز 200 حرف.")
+                .EmailAddress().WithMessage("البريد الإلكتروني غير صالح.");
+        });
     }
 }

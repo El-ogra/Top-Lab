@@ -41,7 +41,8 @@ public sealed class GetExternalEntityByIdQueryHandler : IRequestHandler<GetExter
             entity.PriceListId == null ? null : entity.PriceListId.Value,
             priceListName,
             entity.DiscountOrCommissionPercent,
-            entity.GeneratedIdCode);
+            entity.GeneratedIdCode,
+            entity.Email);
 
         return Task.FromResult(Result<ExternalEntityDetailDto>.Success(dto));
     }

@@ -11,7 +11,8 @@ public sealed record ExternalEntityListItemDto(
     int? PriceListId,
     string? PriceListName,
     decimal? DiscountOrCommissionPercent,
-    string? GeneratedIdCode);
+    string? GeneratedIdCode,
+    string? Email = null);
 
 public sealed record ExternalEntityDetailDto(
     int Id,
@@ -26,4 +27,5 @@ public sealed record ExternalEntityDetailDto(
     int? PriceListId,
     string? PriceListName,
     decimal? DiscountOrCommissionPercent,
-    string? GeneratedIdCode);
+    string? GeneratedIdCode,
+    string? Email = null);

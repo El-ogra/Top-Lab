@@ -63,7 +63,8 @@ public sealed class SearchExternalEntitiesQueryHandler
                 e.PriceListId == null ? null : e.PriceListId.Value,
                 e.PriceListId != null && names.TryGetValue(e.PriceListId, out var priceListName) ? priceListName : null,
                 e.DiscountOrCommissionPercent,
-                e.GeneratedIdCode))
+                e.GeneratedIdCode,
+                e.Email))
             .ToList();
 
         return Task.FromResult(Result<IReadOnlyList<ExternalEntityListItemDto>>.Success(items));
