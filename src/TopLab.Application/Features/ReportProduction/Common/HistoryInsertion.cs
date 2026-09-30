@@ -20,6 +20,8 @@ internal static class HistoryInsertion
             entry.ResultFlag,
             FrozenRangeText: null,
             ProfileLines: Array.Empty<ProfileReportLineDto>(),
-            Culture: null);
+            Culture: null,
+            LowComment: entry.LowComment,
+            HighComment: entry.HighComment);
     }
 }

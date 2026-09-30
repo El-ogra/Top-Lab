@@ -64,6 +64,15 @@ internal static class PatientHistoryReader
             .GroupBy(pt => pt.PatientId.Value)
             .ToDictionary(g => g.Key, g => g.ToList());
 
+        var testIds = rows.Select(r => r.Id.Value).ToList();
+        var snapshots = testIds.Count == 0
+            ? new Dictionary<int, PatientTestReferenceRangeSnapshot>()
+            : db.Set<PatientTestReferenceRangeSnapshot>()
+                .Where(s => testIds.Contains(s.PatientTestId.Value))
+                .ToList()
+                .GroupBy(s => s.PatientTestId.Value)
+                .ToDictionary(g => g.Key, g => g.First());
+
         IReadOnlyList<HistoryEntryDto> entries = patientsById.Keys
             .SelectMany(id => rowsByPatient.TryGetValue(id, out var list)
                 ? list.OrderByDescending(pt => pt.EnteredAtUtc).ThenByDescending(pt => pt.Id.Value)
@@ -71,6 +80,8 @@ internal static class PatientHistoryReader
             .Select(pt =>
             {
                 catalog.TryGetValue(pt.TestId.Value, out var test);
+                snapshots.TryGetValue(pt.Id.Value, out var snap);
+                var (lowComment, highComment) = RangeComments(snap, pt.ResultFlag);
                 return new HistoryEntryDto(
                     pt.Id.Value,
                     pt.PatientId.Value,
@@ -82,11 +93,34 @@ internal static class PatientHistoryReader
                     pt.ResultFlag == null ? null : (int)pt.ResultFlag.Value,
                     pt.IsReviewed,
                     pt.EnteredAtUtc,
-                    pt.ReviewedAtUtc);
+                    pt.ReviewedAtUtc,
+                    lowComment,
+                    highComment);
             })
             .ToList();
 
         return entries;
+    }
+
+    /// <summary>
+    /// WP-07: comments come from the frozen snapshot (never the live range) and
+    /// only on the matching out-of-range flag.
+    /// </summary>
+    internal static (string? Low, string? High) RangeComments(
+        PatientTestReferenceRangeSnapshot? frozen,
+        ResultFlag? flag)
+    {
+        if (frozen is null)
+        {
+            return (null, null);
+        }
+
+        return flag switch
+        {
+            ResultFlag.Low => (frozen.LowComment, null),
+            ResultFlag.High => (null, frozen.HighComment),
+            _ => (null, null)
+        };
     }
 
     internal static IReadOnlyList<Patient> OrderByIdentity(

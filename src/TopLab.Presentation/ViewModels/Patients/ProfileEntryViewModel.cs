@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Features.ProfileResults.Commands.AmendProfileResult;
 using TopLab.Application.Features.ProfileResults.Commands.MarkProfilePrinted;
 using TopLab.Application.Features.ProfileResults.Commands.SaveProfileResults;
@@ -10,9 +12,13 @@ using TopLab.Application.Features.ProfileResults.Common;
 using TopLab.Application.Features.ProfileResults.Queries.GetProfileEntryGrid;
 using TopLab.Application.Features.ProfileResults.Queries.GetProfileReport;
 using TopLab.Application.Features.ProfileResults.Queries.GetProfileResultAmendments;
+using TopLab.Application.Features.ReportProduction.Common;
+using TopLab.Domain.Settings;
+using TopLab.Infrastructure.Printing;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
+using FrozenProfileRangeDto = TopLab.Application.Features.ProfileResults.Common.FrozenProfileRangeDto;
 
 namespace TopLab.Presentation.ViewModels.Patients;
 
@@ -65,6 +71,8 @@ public sealed class ProfileEntryViewModel : ViewModelBase
     private readonly ResultErrorPresenter _presenter;
     private readonly IDialogService _dialogs;
     private readonly IServiceProvider _services;
+    private readonly IPdfPreviewService _pdfPreview;
+    private readonly IApplicationDbContext _db;
 
     private int _patientTestId;
     private string _patientFullName = string.Empty;
@@ -81,12 +89,16 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         ISender mediator,
         ResultErrorPresenter presenter,
         IDialogService dialogs,
-        IServiceProvider services)
+        IServiceProvider services,
+        IPdfPreviewService pdfPreview,
+        IApplicationDbContext db)
     {
         _mediator = mediator;
         _presenter = presenter;
         _dialogs = dialogs;
         _services = services;
+        _pdfPreview = pdfPreview;
+        _db = db;
 
         SaveCommand = new AsyncRelayCommand(async (_, ct) => await SaveAsync(ct));
         VerifyCommand = new AsyncRelayCommand(async (_, ct) => await VerifyAsync(ct));
@@ -372,6 +384,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
             if (result.IsSuccess && result.Value is not null)
             {
                 Report = result.Value;
+                await PreviewProfilePdfAsync(result.Value, cancellationToken);
             }
             else if (result.Error is not null)
             {
@@ -381,6 +394,32 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// WP-01: real PDF preview (never sends to the printer). Replaces the old
+    /// TextBlock-only report panel.
+    /// </summary>
+    private async Task PreviewProfilePdfAsync(ProfileReportDto report, CancellationToken cancellationToken)
+    {
+        var reportSettings = _db.Set<ReportSettings>().SingleOrDefault(s => s.Id == 1);
+        var systemSettings = _db.Set<SystemSettings>().SingleOrDefault(s => s.Id == 1);
+        if (reportSettings is null || systemSettings is null)
+        {
+            ErrorMessage = "تعذّر قراءة إعدادات الطباعة.";
+            return;
+        }
+
+        var content = ReportContentBuilder.FromProfileReport(report, reportSettings, systemSettings);
+        var document = new ReportDocument(content, reportSettings);
+        var path = Path.Combine(Path.GetTempPath(), $"TopLab-ProfilePreview-{Guid.NewGuid():N}.pdf");
+        document.WriteToFile(path);
+
+        var preview = await _pdfPreview.PreviewAsync(path, cancellationToken);
+        if (!preview.IsSuccess)
+        {
+            ErrorMessage = preview.Error?.Message ?? "تعذّر فتح معاينة التقرير.";
         }
     }
 

@@ -81,6 +81,9 @@ public static class DependencyInjection
         services.AddScoped<IWorkSheetPdfWriter, WorkSheetPdfWriter>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
+        // WP-01: Arabic report document + on-screen preview (never prints).
+        services.AddScoped<TopLab.Application.Features.ReportProduction.Common.IPdfPreviewService, PdfPreviewService>();
+        services.AddScoped<TopLab.Application.Features.ReportProduction.Common.ITestDisplayNameResolver, TestDisplayNameResolver>();
 
         // M-01 redacted connection descriptor: stateless, depends only on
         // IConfiguration, so Singleton is appropriate. The full

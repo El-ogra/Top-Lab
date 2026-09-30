@@ -135,6 +135,8 @@ public sealed class BuildCombinedReportCommandHandler
                     cr.CultureCondition, cr.ColonyCount);
             }
 
+            var (lowComment, highComment) = PatientHistoryReader.RangeComments(snap, pt.ResultFlag);
+
             return new CombinedReportLineDto(
                 pt.Id.Value,
                 pt.TestId.Value,
@@ -145,7 +147,9 @@ public sealed class BuildCombinedReportCommandHandler
                 pt.ResultFlag == null ? null : (int)pt.ResultFlag.Value,
                 snap is null ? null : FormatRange(snap),
                 profileLines,
-                culture);
+                culture,
+                lowComment,
+                highComment);
         }).ToList();
 
         var dto = new CombinedReportDto(

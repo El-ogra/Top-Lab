@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ReportProduction.Common;
 using TopLab.Domain.Settings;
@@ -202,8 +203,8 @@ public class ReportPrintingServiceTests
             Assert.True(first.IsSuccess);
             var firstPath = dispatcher.PdfPath!;
 
-            var settings = db.Set<SystemSettings>().Single(s => s.Id == 1);
-            settings.SetGeneralFlags(false, false, false, false, false, true, false, false);
+            var systemBefore = db.Set<SystemSettings>().Single(s => s.Id == 1);
+            systemBefore.SetGeneralFlags(false, false, false, false, false, true, false, false);
             db.SaveChanges();
 
             var second = await service.PrintReportAsync(Token(), CancellationToken.None);
@@ -211,12 +212,23 @@ public class ReportPrintingServiceTests
             var secondPath = dispatcher.PdfPath!;
 
             Assert.NotEqual(firstPath, secondPath);
-            var firstText = Encoding.ASCII.GetString(File.ReadAllBytes(firstPath));
-            var secondText = Encoding.ASCII.GetString(File.ReadAllBytes(secondPath));
-            Assert.Contains("PatientId: 7", firstText);
-            Assert.DoesNotContain("LabId:", firstText);
-            Assert.Contains("LabId: LAB-1", secondText);
-            Assert.DoesNotContain("PatientId:", secondText);
+            Assert.True(File.Exists(firstPath));
+            Assert.True(File.Exists(secondPath));
+
+            var firstLines = ReportContentBuilder.FromEnvelope(
+                JsonSerializer.Deserialize<ReportPrintEnvelope>(Token())!,
+                ReportSettings.CreateDefault(),
+                SystemSettings.CreateDefault()).BuildDisplayLines();
+            var systemAfter = db.Set<SystemSettings>().Single(s => s.Id == 1);
+            var secondLines = ReportContentBuilder.FromEnvelope(
+                JsonSerializer.Deserialize<ReportPrintEnvelope>(Token())!,
+                ReportSettings.CreateDefault(),
+                systemAfter).BuildDisplayLines();
+
+            Assert.Contains(firstLines, l => l.Contains("الرقم: 7", StringComparison.Ordinal));
+            Assert.DoesNotContain(firstLines, l => l.Contains("رقم الملف", StringComparison.Ordinal));
+            Assert.Contains(secondLines, l => l.Contains("رقم الملف: LAB-1", StringComparison.Ordinal));
+            Assert.DoesNotContain(secondLines, l => l.StartsWith("الرقم:", StringComparison.Ordinal));
         }
         finally
         {

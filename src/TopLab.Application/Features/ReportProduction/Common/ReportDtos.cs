@@ -47,7 +47,9 @@ public sealed record CombinedReportLineDto(
     int? ResultFlag,
     string? FrozenRangeText,
     IReadOnlyList<ProfileReportLineDto> ProfileLines,
-    CultureReportSummaryDto? Culture);
+    CultureReportSummaryDto? Culture,
+    string? LowComment = null,
+    string? HighComment = null);
 
 public sealed record CombinedReportDto(
     int PatientId,
@@ -76,7 +78,9 @@ public sealed record HistoryEntryDto(
     int? ResultFlag,
     bool IsReviewed,
     DateTime? EnteredAtUtc,
-    DateTime? ReviewedAtUtc);
+    DateTime? ReviewedAtUtc,
+    string? LowComment = null,
+    string? HighComment = null);
 
 public sealed record PatientHistoryDto(
     int PatientId,

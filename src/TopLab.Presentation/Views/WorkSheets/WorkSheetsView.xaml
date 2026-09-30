@@ -51,6 +51,7 @@
                         <TextBlock Text="رقم المريض:" Margin="2" VerticalAlignment="Center" />
                         <TextBox Text="{Binding VisitPatientIdText, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="2" />
                         <Button Content="طباعة" Margin="8,2,2,2" Padding="10,2" Command="{Binding PrintVisitSheetCommand}" />
+                        <Button Content="معاينة الطباعة" Margin="4,2,2,2" Padding="10,2" Command="{Binding PreviewVisitSheetCommand}" />
                     </WrapPanel>
                 </StackPanel>
 

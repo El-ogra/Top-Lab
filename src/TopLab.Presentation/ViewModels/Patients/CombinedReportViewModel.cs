@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Features.ReportProduction.Commands.AutoInsertHistory;
 using TopLab.Application.Features.ReportProduction.Commands.BuildCombinedReport;
 using TopLab.Application.Features.ReportProduction.Commands.InsertHistoryResult;
@@ -8,6 +11,8 @@ using TopLab.Application.Features.ReportProduction.Commands.PrintCombinedReport;
 using TopLab.Application.Features.ReportProduction.Common;
 using TopLab.Application.Features.ReportProduction.Queries.GetCombinableTests;
 using TopLab.Application.Features.ReportProduction.Queries.GetPatientTestHistory;
+using TopLab.Domain.Settings;
+using TopLab.Infrastructure.Printing;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
@@ -46,6 +51,8 @@ public sealed class CombinedReportViewModel : ViewModelBase
     private readonly IDialogService _dialogs;
     private readonly IServiceProvider _services;
     private readonly INavigationService _navigation;
+    private readonly IPdfPreviewService _pdfPreview;
+    private readonly IApplicationDbContext _db;
 
     private int _patientId;
     private string _patientFullName = string.Empty;
@@ -61,13 +68,17 @@ public sealed class CombinedReportViewModel : ViewModelBase
         ResultErrorPresenter presenter,
         IDialogService dialogs,
         IServiceProvider services,
-        INavigationService navigation)
+        INavigationService navigation,
+        IPdfPreviewService pdfPreview,
+        IApplicationDbContext db)
     {
         _mediator = mediator;
         _presenter = presenter;
         _dialogs = dialogs;
         _services = services;
         _navigation = navigation;
+        _pdfPreview = pdfPreview;
+        _db = db;
 
         BuildPreviewCommand = new AsyncRelayCommand(async (_, ct) => await BuildPreviewAsync(ct));
         PrintCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct));
@@ -203,6 +214,7 @@ public sealed class CombinedReportViewModel : ViewModelBase
                 Preview = result.Value;
                 PatientFullName = result.Value.PatientFullName;
                 LabId = result.Value.LabId;
+                await PreviewCombinedPdfAsync(result.Value, cancellationToken);
             }
             else if (result.Error is not null)
             {
@@ -212,6 +224,34 @@ public sealed class CombinedReportViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// WP-01: opens a real PDF preview of the combined report (never prints).
+    /// </summary>
+    private async Task PreviewCombinedPdfAsync(CombinedReportDto report, CancellationToken cancellationToken)
+    {
+        var reportSettings = _db.Set<ReportSettings>().SingleOrDefault(s => s.Id == 1);
+        var systemSettings = _db.Set<SystemSettings>().SingleOrDefault(s => s.Id == 1);
+        if (reportSettings is null || systemSettings is null)
+        {
+            ErrorMessage = "تعذّر قراءة إعدادات الطباعة.";
+            return;
+        }
+
+        var envelope = new ReportPrintEnvelope(
+            ReportPrintEnvelope.Combined,
+            JsonSerializer.Serialize(report));
+        var content = ReportContentBuilder.FromEnvelope(envelope, reportSettings, systemSettings);
+        var document = new ReportDocument(content, reportSettings);
+        var path = Path.Combine(Path.GetTempPath(), $"TopLab-CombinedPreview-{Guid.NewGuid():N}.pdf");
+        document.WriteToFile(path);
+
+        var preview = await _pdfPreview.PreviewAsync(path, cancellationToken);
+        if (!preview.IsSuccess)
+        {
+            ErrorMessage = preview.Error?.Message ?? "تعذّر فتح معاينة التقرير.";
         }
     }
 

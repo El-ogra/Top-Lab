@@ -1,0 +1,17 @@
+.NET TP Worker (TID 7) 639263704488240622 +    3.5054ms: Starting to acquire 1 new or existing node(s) to establish nodes from ID 2 to 2...
+.NET TP Worker (TID 7) 639263704488553573 +   31.2951ms: Building handshake for node type X64, NodeReuse, (version 1): options 16777228.
+.NET TP Worker (TID 7) 639263704488572077 +    1.8504ms: Handshake salt is 
+.NET TP Worker (TID 7) 639263704488589502 +    1.7425ms: Tools directory root is C:\Program Files\dotnet\sdk\9.0.318
+.NET TP Worker (TID 7) 639263704488765775 +   17.6273ms: Attempting to connect to 2 existing processes 'dotnet'...
+.NET TP Worker (TID 7) 639263704488908952 +   14.3177ms: Trying to connect to existing process dotnet with id 2356 to establish node 2...
+.NET TP Worker (TID 7) 639263704490565362 +   165.641ms: Attempting connect to PID 2356 with pipe MSBuild2356 with timeout 0 ms
+.NET TP Worker (TID 7) 639263704492899222 +   233.386ms: Writing handshake part 0 (16777228) to pipe MSBuild2356
+.NET TP Worker (TID 7) 639263704494121419 +  122.2197ms: Writing handshake part 1 (496309575) to pipe MSBuild2356
+.NET TP Worker (TID 7) 639263704495106967 +   98.5548ms: Writing handshake part 2 (17) to pipe MSBuild2356
+.NET TP Worker (TID 7) 639263704496213402 +  110.6435ms: Writing handshake part 3 (14) to pipe MSBuild2356
+.NET TP Worker (TID 7) 639263704496923738 +   71.0336ms: Writing handshake part 4 (51) to pipe MSBuild2356
+.NET TP Worker (TID 7) 639263704498075040 +  115.1302ms: Writing handshake part 5 (32402) to pipe MSBuild2356
+.NET TP Worker (TID 7) 639263704498573843 +   49.8803ms: Writing handshake part 6 (1) to pipe MSBuild2356
+.NET TP Worker (TID 7) 639263704499442537 +   86.8694ms: Reading handshake from pipe MSBuild2356
+.NET TP Worker (TID 7) 639263704499768698 +   32.6161ms: Successfully connected to pipe MSBuild2356...!
+.NET TP Worker (TID 7) 639263704499787218 +     1.852ms: Successfully connected to existed node 2 which is PID 2356

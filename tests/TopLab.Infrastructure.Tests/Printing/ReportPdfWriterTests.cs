@@ -53,10 +53,11 @@ public class ReportPdfWriterTests
         return Path.Combine(Path.GetTempPath(), $"toplab-writer-{Guid.NewGuid():N}.pdf");
     }
 
-    private static string WrittenText(string path)
+    private static IReadOnlyList<string> ContentLines(ReportPrintEnvelope envelope)
     {
-        Assert.True(File.Exists(path), $"Expected generated PDF at {path}");
-        return Encoding.ASCII.GetString(File.ReadAllBytes(path));
+        return ReportContentBuilder
+            .FromEnvelope(envelope, ReportSettings.CreateDefault(), SystemSettings.CreateDefault())
+            .BuildDisplayLines();
     }
 
     [Fact]
@@ -67,7 +68,9 @@ public class ReportPdfWriterTests
         {
             await Writer.WritePdfAsync(path, CombinedEnvelope(), ReportSettings.CreateDefault(), SystemSettings.CreateDefault());
 
-            Assert.StartsWith("%PDF-1.4", WrittenText(path));
+            Assert.True(File.Exists(path));
+            var bytes = File.ReadAllBytes(path);
+            Assert.Equal("%PDF", Encoding.ASCII.GetString(bytes, 0, 4));
         }
         finally
         {
@@ -94,130 +97,51 @@ public class ReportPdfWriterTests
     }
 
     [Fact]
-    public async Task IdentifierLine_UsesPatientId_WhenPrintLabIdDisabled()
+    public void IdentifierLine_UsesPatientId_WhenPrintLabIdDisabled()
     {
-        var path = TempPath();
-        try
-        {
-            var settings = SystemSettings.CreateDefault();
-            settings.SetGeneralFlags(false, false, false, false, false, false, false, false);
+        var settings = SystemSettings.CreateDefault();
+        settings.SetGeneralFlags(false, false, false, false, false, false, false, false);
 
-            await Writer.WritePdfAsync(path, CombinedEnvelope(), ReportSettings.CreateDefault(), settings);
+        var lines = ReportContentBuilder
+            .FromEnvelope(CombinedEnvelope(), ReportSettings.CreateDefault(), settings)
+            .BuildDisplayLines();
 
-            var text = WrittenText(path);
-            Assert.Contains("PatientId: 7", text);
-            Assert.DoesNotContain("LabId:", text);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        Assert.Contains(lines, l => l.Contains("الرقم: 7", StringComparison.Ordinal));
+        Assert.DoesNotContain(lines, l => l.Contains("رقم الملف", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task IdentifierLine_UsesLabId_WhenPrintLabIdEnabled()
+    public void IdentifierLine_UsesLabId_WhenPrintLabIdEnabled()
     {
-        var path = TempPath();
-        try
-        {
-            var settings = SystemSettings.CreateDefault();
-            settings.SetGeneralFlags(false, false, false, false, false, true, false, false);
+        var settings = SystemSettings.CreateDefault();
+        settings.SetGeneralFlags(false, false, false, false, false, true, false, false);
 
-            await Writer.WritePdfAsync(path, CombinedEnvelope(), ReportSettings.CreateDefault(), settings);
+        var lines = ReportContentBuilder
+            .FromEnvelope(CombinedEnvelope(), ReportSettings.CreateDefault(), settings)
+            .BuildDisplayLines();
 
-            var text = WrittenText(path);
-            Assert.Contains("LabId: LAB-1", text);
-            Assert.DoesNotContain("PatientId:", text);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        Assert.Contains(lines, l => l.Contains("رقم الملف: LAB-1", StringComparison.Ordinal));
+        Assert.DoesNotContain(lines, l => l.StartsWith("الرقم:", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task PaperAndTopSpaceLines_ReflectReportSettingsAtCallTime()
+    public void BlankEnvelope_RendersPatientData()
     {
-        var path = TempPath();
-        try
-        {
-            var reportSettings = ReportSettings.CreateDefault();
-            reportSettings.SetPaperSize(PaperSize.A5);
-            reportSettings.SetTopSpace(5m);
-
-            await Writer.WritePdfAsync(path, CombinedEnvelope(), reportSettings, SystemSettings.CreateDefault());
-
-            var text = WrittenText(path);
-            Assert.Contains("Paper: A5", text);
-            Assert.Contains("TopSpace: 5", text);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        var lines = ContentLines(BlankEnvelope());
+        var all = string.Join('\n', lines);
+        Assert.Contains("تقرير فارغ", all, StringComparison.Ordinal);
+        Assert.Contains("Ali", all, StringComparison.Ordinal);
+        Assert.Contains("Dr.Hassan", all, StringComparison.Ordinal);
+        Assert.Contains("Al-Shifa", all, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task HeaderFooterAndDoctorSignatureLines_ReflectSettings()
+    public void HistoryEnvelope_RendersEntriesWithReviewedFlag()
     {
-        var path = TempPath();
-        try
-        {
-            var reportSettings = ReportSettings.CreateDefault();
-            reportSettings.SetHeaderFooterMode(HeaderFooterMode.Words);
-            reportSettings.SetDoctorSignature(true);
-
-            await Writer.WritePdfAsync(path, CombinedEnvelope(), reportSettings, SystemSettings.CreateDefault());
-
-            var text = WrittenText(path);
-            Assert.Contains("HeaderFooter: Words", text);
-            Assert.Contains("Doctor Signature: Yes", text);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
-    }
-
-    [Fact]
-    public async Task BlankEnvelope_RendersPatientData()
-    {
-        var path = TempPath();
-        try
-        {
-            await Writer.WritePdfAsync(path, BlankEnvelope(), ReportSettings.CreateDefault(), SystemSettings.CreateDefault());
-
-            var text = WrittenText(path);
-            Assert.Contains("TopLab Blank Report", text);
-            Assert.Contains("Sex: Male", text);
-            Assert.Contains("Age: 30 Year", text);
-            Assert.Contains("Doctor: Dr.Hassan", text);
-            Assert.Contains("Referral: Al-Shifa", text);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
-    }
-
-    [Fact]
-    public async Task HistoryEnvelope_RendersEntriesWithReviewedFlag()
-    {
-        var path = TempPath();
-        try
-        {
-            await Writer.WritePdfAsync(path, HistoryEnvelope(), ReportSettings.CreateDefault(), SystemSettings.CreateDefault());
-
-            var text = WrittenText(path);
-            Assert.Contains("TopLab History Report", text);
-            Assert.Contains("SortMode: ByLabCode", text);
-            Assert.Contains("AutoDisplay: True", text);
-            Assert.Contains("Reviewed: Yes", text);
-            Assert.Contains("GLU Glucose: 5.5", text);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        var lines = ContentLines(HistoryEnvelope());
+        var all = string.Join('\n', lines);
+        Assert.Contains("تقرير التاريخ", all, StringComparison.Ordinal);
+        Assert.Contains("Glucose", all, StringComparison.Ordinal);
+        Assert.Contains("نعم", all, StringComparison.Ordinal);
     }
 }

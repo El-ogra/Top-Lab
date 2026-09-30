@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using MediatR;
+using TopLab.Application.Common.Interfaces;
+using TopLab.Application.Features.ReportProduction.Common;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Common;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Queries.GetTestGroups;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Queries.GetWorkGroupLogs;
@@ -11,6 +14,7 @@ using TopLab.Application.Features.WorkSheets.Queries.GetWorkSheetByTestGroup;
 using TopLab.Application.Features.WorkSheets.Queries.GetWorkSheetByWorkGroupLog;
 using TopLab.Application.Features.WorkSheets.Queries.GetWorkSheetSummary;
 using TopLab.Application.Features.WorkSheets.Queries.GetWorkSheetTestCountByPeriod;
+using TopLab.Infrastructure.Printing;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.ErrorPresentation;
 
@@ -28,6 +32,8 @@ public sealed class WorkSheetsViewModel : ViewModelBase
 {
     private readonly ISender _mediator;
     private readonly ResultErrorPresenter _presenter;
+    private readonly IPdfPreviewService _pdfPreview;
+    private readonly ILabPrintTextStore _labTextStore;
 
     private bool _isVisitMode = true;
     private bool _isTestGroupMode;
@@ -45,13 +51,20 @@ public sealed class WorkSheetsViewModel : ViewModelBase
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
 
-    public WorkSheetsViewModel(ISender mediator, ResultErrorPresenter presenter)
+    public WorkSheetsViewModel(
+        ISender mediator,
+        ResultErrorPresenter presenter,
+        IPdfPreviewService pdfPreview,
+        ILabPrintTextStore labTextStore)
     {
         _mediator = mediator;
         _presenter = presenter;
+        _pdfPreview = pdfPreview;
+        _labTextStore = labTextStore;
 
         RunCommand = new AsyncRelayCommand(async (_, ct) => await RunAsync(ct));
         PrintVisitSheetCommand = new AsyncRelayCommand(async (_, ct) => await PrintVisitSheetAsync(ct));
+        PreviewVisitSheetCommand = new AsyncRelayCommand(async (_, ct) => await PreviewVisitSheetAsync(ct));
 
         Sections.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowSheetEmpty));
         SummaryRows.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowSummaryEmpty));
@@ -146,6 +159,8 @@ public sealed class WorkSheetsViewModel : ViewModelBase
     public AsyncRelayCommand RunCommand { get; }
 
     public AsyncRelayCommand PrintVisitSheetCommand { get; }
+
+    public AsyncRelayCommand PreviewVisitSheetCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -332,6 +347,51 @@ public sealed class WorkSheetsViewModel : ViewModelBase
             }
 
             StatusMessage = "تم إرسال المستند إلى الطابعة.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>WP-01: PDF preview of the visit work sheet — never sends to the printer.</summary>
+    private async Task PreviewVisitSheetAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        if (!int.TryParse(VisitPatientIdText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var patientId) || patientId <= 0)
+        {
+            ErrorMessage = "معرّف المريض غير صالح.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var sheet = await _mediator.Send(new GetVisitWorkSheetQuery(patientId), cancellationToken);
+            if (!sheet.IsSuccess || sheet.Value is null)
+            {
+                ErrorMessage = _presenter.Present(sheet.Error!);
+                return;
+            }
+
+            var labText = await _labTextStore.GetAsync(LabPrintTextScope.Report, cancellationToken);
+            if (!labText.IsSuccess || labText.Value is null)
+            {
+                ErrorMessage = labText.Error?.Message ?? "تعذّر قراءة نصوص الطباعة.";
+                return;
+            }
+
+            var path = Path.Combine(Path.GetTempPath(), $"TopLab-WorkSheetPreview-{Guid.NewGuid():N}.pdf");
+            var writer = new WorkSheetPdfWriter();
+            await writer.WritePdfAsync(path, sheet.Value, labText.Value, cancellationToken);
+
+            var preview = await _pdfPreview.PreviewAsync(path, cancellationToken);
+            if (!preview.IsSuccess)
+            {
+                ErrorMessage = preview.Error?.Message ?? "تعذّر فتح معاينة ورقة العمل.";
+            }
         }
         finally
         {
