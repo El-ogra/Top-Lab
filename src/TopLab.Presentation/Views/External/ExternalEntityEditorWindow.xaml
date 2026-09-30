@@ -33,7 +33,30 @@
                 <TextBlock Text="اسم المسؤول:" Margin="0,0,0,2" />
                 <TextBox Text="{Binding ResponsiblePersonName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
                 <TextBlock Text="هاتف المسؤول:" Margin="0,0,0,2" />
-                <TextBox Text="{Binding ResponsiblePersonPhone, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding ResponsiblePersonPhone, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                <TextBlock Text="البريد الإلكتروني:" Margin="0,0,0,2" />
+                <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsPriceListRequired}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <TextBlock Text="قائمة الأسعار *" Margin="0,8,0,2" />
+                    <ComboBox ItemsSource="{Binding PriceListOptions}"
+                              DisplayMemberPath="Name"
+                              SelectedValuePath="Id"
+                              SelectedValue="{Binding PriceListId, UpdateSourceTrigger=PropertyChanged}"
+                              Margin="0,0,0,8" />
+                    <TextBlock Text="نسبة العمولة %" Margin="0,0,0,2" />
+                    <TextBox Text="{Binding DiscountOrCommissionPercent, UpdateSourceTrigger=PropertyChanged, StringFormat='0.##'}" />
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

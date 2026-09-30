@@ -33,6 +33,8 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
     private string? _responsiblePersonPhone;
     private int? _priceListId;
     private decimal? _discountOrCommissionPercent;
+    private string? _email;
+    private List<TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Common.PriceListSummaryDto> _priceListOptions = new();
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
     private bool _isBusy;
@@ -56,6 +58,48 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
 
     public bool IsEditMode { get => _isEditMode; private set => SetProperty(ref _isEditMode, value); }
     public bool IsTypeEditable => !IsEditMode;
+
+    public bool IsPriceListRequired => EntityType == EntityType.ReferralOrContract;
+
+    public bool CanSave =>
+        !string.IsNullOrWhiteSpace(Name)
+        && (!IsPriceListRequired || _priceListId is > 0);
+
+    public List<TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Common.PriceListSummaryDto> PriceListOptions
+    {
+        get => _priceListOptions;
+        private set
+        {
+            if (SetProperty(ref _priceListOptions, value))
+            {
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
+
+    public int? PriceListId
+    {
+        get => _priceListId;
+        set
+        {
+            if (SetProperty(ref _priceListId, value))
+            {
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
+
+    public decimal? DiscountOrCommissionPercent
+    {
+        get => _discountOrCommissionPercent;
+        set => SetProperty(ref _discountOrCommissionPercent, value);
+    }
+
+    public string? Email
+    {
+        get => _email;
+        set => SetProperty(ref _email, value);
+    }
 
     public EntityType EntityType
     {
@@ -97,6 +141,21 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
         City = Address = Phone = Fax = ResponsiblePersonName = ResponsiblePersonPhone = null;
         _priceListId = null;
         _discountOrCommissionPercent = null;
+        _email = null;
+        OnPropertyChanged(nameof(Email));
+        OnPropertyChanged(nameof(IsPriceListRequired));
+        OnPropertyChanged(nameof(CanSave));
+        _ = LoadPriceListsAsync();
+    }
+
+    private async Task LoadPriceListsAsync()
+    {
+        // C-3: reuse GetPriceListsQuery — no GetPriceListsForPick.
+        var result = await _mediator.Send(new TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Queries.GetPriceLists.GetPriceListsQuery());
+        if (result.IsSuccess && result.Value is not null)
+        {
+            PriceListOptions = result.Value.ToList();
+        }
     }
 
     public void InitializeEdit(int id)
@@ -133,6 +192,13 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
                 ResponsiblePersonPhone = d.ResponsiblePersonPhone;
                 _priceListId = d.PriceListId;
                 _discountOrCommissionPercent = d.DiscountOrCommissionPercent;
+                _email = d.Email;
+                OnPropertyChanged(nameof(Email));
+                OnPropertyChanged(nameof(PriceListId));
+                OnPropertyChanged(nameof(DiscountOrCommissionPercent));
+                OnPropertyChanged(nameof(IsPriceListRequired));
+                OnPropertyChanged(nameof(CanSave));
+                await LoadPriceListsAsync();
             }
             else if (result.Error is not null)
             {
@@ -154,11 +220,13 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
         {
             if (!IsEditMode)
             {
+                // C-4: pass real PriceListId / commission / Email — not null, null.
                 var result = await _mediator.Send(new CreateExternalEntityCommand(
                     EntityType, Name.Trim(), BlankToNull(City), BlankToNull(Address),
                     BlankToNull(Phone), BlankToNull(Fax),
                     BlankToNull(ResponsiblePersonName), BlankToNull(ResponsiblePersonPhone),
-                    null, null));
+                    PriceListId, DiscountOrCommissionPercent,
+                    BlankToNull(Email)));
                 if (!result.IsSuccess)
                 {
                     ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;
@@ -187,7 +255,8 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
                     _editingId, EntityType, Name.Trim(), BlankToNull(City), BlankToNull(Address),
                     BlankToNull(Phone), BlankToNull(Fax),
                     BlankToNull(ResponsiblePersonName), BlankToNull(ResponsiblePersonPhone),
-                    _priceListId, _discountOrCommissionPercent));
+                    PriceListId, DiscountOrCommissionPercent,
+                    BlankToNull(Email)));
                 if (!result.IsSuccess)
                 {
                     ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;

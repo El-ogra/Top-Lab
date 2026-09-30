@@ -5,7 +5,7 @@
 - **Source Plan:** `Docs/OpenCode/W-01.md`
 - **Date Created:** 2026-09-30
 - **Total Slices:** 8
-- **Current Slice:** 5 — ExternalEntity Email surface — NEXT
+- **Current Slice:** 7 — BranchScope + AddBranchNumber — NEXT
 - **Current Branch:** `main`
 - **Baseline Commit:** `8607a8757a424f3a6dc1bd08ee82671a0195b200`
 - **Author:** loop-engineering (execution by local coding agent per owner authorization)
@@ -134,8 +134,8 @@ Wave 1 reopens the broken daily paths: results-entry navigation (WP-02), culture
 | 2 | Results worklist navigation + orphan screens (WP-02) | [x] DONE | VG-02 PASS |
 | 3 | Sensitivity UI + validation (WP-03) | [x] DONE | VG-03 PASS |
 | 4 | Sensitivity repair migration (WP-03) | [x] DONE | VG-04 PASS |
-| 5 | ExternalEntity Email + commands (WP-04) | ⬜ | VG-05 |
-| 6 | Referral editor + AddExternalEntityEmail (WP-04) | ⬜ | VG-06 |
+| 5 | ExternalEntity Email + commands (WP-04) | [x] DONE | VG-05 PASS |
+| 6 | Referral editor + AddExternalEntityEmail (WP-04) | [x] DONE | VG-06 PASS |
 | 7 | BranchScope + AddBranchNumber (WP-15) | ⬜ | VG-07 |
 | 8 | Branch UI + shell (WP-15) | ⬜ | VG-08 |
 
