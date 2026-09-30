@@ -155,6 +155,26 @@ public class PrintCombinedReportCommandHandlerTests
     }
 
     [Fact]
+    public async Task PrintCombinedReport_RejectsForeignPatientTestId()
+    {
+        // C-5: Print delegates ownership to BuildCombinedReportCommand.
+        var (db, _, printing, user, clock) = Build();
+        var sender = new FakeSender();
+        sender.WithResponse(
+            new BuildCombinedReportCommand(1, new[] { 99 }),
+            Result<CombinedReportDto>.Failure(Error.Forbidden("أحد التحاليل المحددة لا يخص هذا المريض.")));
+
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+            .Handle(new PrintCombinedReportCommand(1, new[] { 99 }), CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorType.Forbidden, result.Error!.Type);
+        Assert.Equal("أحد التحاليل المحددة لا يخص هذا المريض.", result.Error.Message);
+        Assert.Empty(printing.Tokens);
+        Assert.Equal(0, db.SaveChangesCallCount);
+    }
+
+    [Fact]
     public async Task Print_PortFailure_PassesThroughWithoutMarkPrinted()
     {
         var (db, sender, printing, user, clock) = Build();

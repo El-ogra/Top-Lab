@@ -35,6 +35,13 @@ public sealed class BuildCombinedReportCommandHandler
             .Where(pt => distinctIds.Contains(pt.Id.Value))
             .ToList();
 
+        // WP-05 / C-1: ownership only — PatientTest has no IsDeleted.
+        if (pts.Any(pt => pt.PatientId.Value != request.PatientId))
+        {
+            return Task.FromResult(Result<CombinedReportDto>.Failure(
+                Error.Forbidden("أحد التحاليل المحددة لا يخص هذا المريض.")));
+        }
+
         if (pts.Count != distinctIds.Count)
         {
             return Task.FromResult(Result<CombinedReportDto>.Failure(

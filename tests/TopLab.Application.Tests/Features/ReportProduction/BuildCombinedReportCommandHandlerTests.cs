@@ -160,4 +160,79 @@ public class BuildCombinedReportCommandHandlerTests
     {
         return GetCombinableTestsQueryHandlerTests.Reviewed(ptId, testId, value);
     }
+
+    // WP-05 — ownership guard (C-1: no PatientTest.IsDeleted)
+
+    [Fact]
+    public async Task BuildCombinedReport_RejectsForeignPatientTestId()
+    {
+        var db = GetCombinableTestsQueryHandlerTests.Seed();
+        // Patient 1 owns 11. Patient 2 owns 99 (foreign).
+        db.Patients.Add(TopLab.Domain.Patients.Patient.Create(
+            TopLab.Domain.Common.Ids.PatientId.Create(2), "Other", TopLab.Domain.Common.Enums.Sex.Male, 40,
+            TopLab.Domain.Common.Enums.AgeUnit.Year, DateTime.UtcNow));
+        var foreign = PatientTest.Create(
+            TopLab.Domain.Common.Ids.PatientTestId.Create(99),
+            TopLab.Domain.Common.Ids.PatientId.Create(2),
+            TopLab.Domain.Common.Ids.TestId.Create(2), 100m);
+        foreign.EnterResult("1", TopLab.Domain.Common.Enums.ResultFlag.Normal, 1, DateTime.UtcNow);
+        foreign.MarkReviewed(2, DateTime.UtcNow);
+        db.PatientTests.Add(foreign);
+        db.PatientTests.Add(Reviewed(11, testId: 2, value: "5.5"));
+
+        var result = await new BuildCombinedReportCommandHandler(db)
+            .Handle(new BuildCombinedReportCommand(1, new[] { 11, 99 }), CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(TopLab.Application.Common.Results.ErrorType.Forbidden, result.Error!.Type);
+        Assert.Equal("أحد التحاليل المحددة لا يخص هذا المريض.", result.Error!.Message);
+        Assert.DoesNotContain("Other", result.Error!.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BuildCombinedReport_RejectsDuplicateIds()
+    {
+        var validator = new BuildCombinedReportCommandValidator();
+        var outcome = validator.Validate(new BuildCombinedReportCommand(1, new[] { 11, 11 }));
+
+        Assert.False(outcome.IsValid);
+        Assert.Contains(outcome.Errors, e => e.ErrorMessage == "لا يمكن تكرار التحاليل في التقرير الواحد.");
+    }
+
+    [Fact]
+    public async Task BuildCombinedReport_AcceptsOwnReviewedTests()
+    {
+        var db = GetCombinableTestsQueryHandlerTests.Seed();
+        db.PatientTests.Add(Reviewed(11, testId: 2, value: "5.5"));
+
+        var result = await new BuildCombinedReportCommandHandler(db)
+            .Handle(new BuildCombinedReportCommand(1, new[] { 11 }), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(11, Assert.Single(result.Value!.Lines).PatientTestId);
+    }
+
+    [Fact]
+    public async Task BuildCombinedReport_ErrorMessage_DoesNotLeakOtherPatientName()
+    {
+        var db = GetCombinableTestsQueryHandlerTests.Seed();
+        db.Patients.Add(TopLab.Domain.Patients.Patient.Create(
+            TopLab.Domain.Common.Ids.PatientId.Create(2), "سرية-مريض-آخر", TopLab.Domain.Common.Enums.Sex.Female, 50,
+            TopLab.Domain.Common.Enums.AgeUnit.Year, DateTime.UtcNow));
+        var foreign = PatientTest.Create(
+            TopLab.Domain.Common.Ids.PatientTestId.Create(99),
+            TopLab.Domain.Common.Ids.PatientId.Create(2),
+            TopLab.Domain.Common.Ids.TestId.Create(2), 100m);
+        foreign.EnterResult("1", TopLab.Domain.Common.Enums.ResultFlag.Normal, 1, DateTime.UtcNow);
+        foreign.MarkReviewed(2, DateTime.UtcNow);
+        db.PatientTests.Add(foreign);
+
+        var result = await new BuildCombinedReportCommandHandler(db)
+            .Handle(new BuildCombinedReportCommand(1, new[] { 99 }), CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        var payload = string.Join(' ', result.Error!.Code, result.Error!.Message);
+        Assert.DoesNotContain("سرية", payload, StringComparison.Ordinal);
+        Assert.DoesNotContain("مريض-آخر", payload, StringComparison.Ordinal);
+    }
 }
