@@ -221,7 +221,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | # | Slice Title | Package | Migration | Status | Gate |
 |---|---|---|---|---|---|
 | 1 | Culture sensitivity write path accepts NULL (C-19) | WP-14 | — | ✅ done | VG-01 ✅ |
-| 2 | SaveCultureResults updates rows instead of recreating them | WP-14 | — | ⬜ | VG-02 |
+| 2 | SaveCultureResults updates rows instead of recreating them | WP-14 | — | ✅ done | VG-02 ✅ |
 | 3 | AgeRules + infant child detection (C-20) | WP-14 | — | ⬜ | VG-03 |
 | 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | ⬜ | VG-04 |
 | 5 | Entry screens print through the coordinator + C-21 | WP-06 | — | ⬜ | VG-05 |
@@ -336,7 +336,84 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 - **Gate:** VG-02. Migration: none.
 - **SD-13:** this slice **must** land before S9.
 
+#### Stage 1 — Pre-Execution Verification (measured 2026-10-01)
+
+| Item | Measured | Δ vs agent G0 |
+|---|---|---|
+| `git rev-parse HEAD` | `871332f912ca69a2fd078dab8c32ac9609008e86` (S1 commit, descendant of the pinned baseline) | 0 |
+| `git status --porcelain` | 2 untracked W-02 package files only | 0 |
+| Build / Domain / Application / Infrastructure / Presentation / Persistence | 0/0 · 484 · 1511 · 221 · 57 · 13+1 | 0 vs G0; Application already carries S1's +9 |
+
+#### Stage 3 — File Analysis
+
+| Anchor | Confirmed | Match? |
+|---|---|---|
+| `SaveCultureResultsCommandHandler.cs:5` | `foreach(var old in _db.Set<CultureAntibioticResult>().Where(x=>x.PatientTestId.Value==pt.Id.Value).ToList())_db.Remove(old);` then a `Create(...)` per incoming row | ✓ |
+| `grep -c "_db.Remove(old)"` | **1** — must become **0** per VG-02 | ✓ |
+| `CultureAntibioticResult.cs` | 32 lines, private ctor, only `Create`; `Entity<TId>.Id` has a `protected set`, so identity is settable from inside the entity | ✓ |
+| `CultureAntibioticResultId` | `sealed : StronglyTypedId<int>` with `Create(int)` | ✓ |
+| `FakeApplicationDbContext` | exposes `CultureAntibioticResults` (`:51`), `Set<>` at `:237-239`, `Add` at `:331`, **`Remove` at `:386`**, `SaveChangesAsync` at `:400` is a **no-op returning 1** — it assigns **no** ids | ✓ |
+| header branch | `new CultureResult(...)` / `header.Update(...)` — correct already, **do not touch** | ✓ |
+
+#### Stage 4 — Planning (exact edits)
+
+1. **`CultureAntibioticResult.cs`** — **add** `public void UpdateSensitivity(SensitivityCategory? value) => SensitivityCategory = value;`. `Create` and the private ctor signatures are **unchanged**; SD-4 untouched (no new enum).
+2. **`SaveCultureResultsCommandHandler.cs:5`** — replace the two `foreach` loops with a three-way diff:
+   - load existing rows into `Dictionary<int, CultureAntibioticResult>` keyed by `AntibioticId`;
+   - for each incoming item: key present ⇒ `row.UpdateSensitivity(...)` (**the row keeps its id**); absent ⇒ `Create(CultureAntibioticResultId.Create(0), …)` exactly as before;
+   - keys in the store but not incoming ⇒ `_db.Remove(...)`. Removal iterates over a **snapshot of the keys**, never the live dictionary.
+3. **Kept byte-identical:** the not-attached guard, the reviewed/printed/delivered guard, and the header `Create`/`Update` branch (plan step 5 and 6).
+4. **Tests** — VG-02 items in `CultureResultCommandHandlerTests.cs` using the existing `FakeApplicationDbContext`. Because the fake's `SaveChangesAsync` assigns no ids, the "keeps its id" test **seeds** a row with a known non-zero `CultureAntibioticResultId` and asserts it survives a re-save — which is precisely the identity guarantee S9's `InhibitionZoneMm` depends on.
+5. **No migration.** `git diff -- src/TopLab.Infrastructure/Persistence/` must stay empty.
+
 - [ ] 1–10. Plan: add `CultureAntibioticResult.UpdateSensitivity(SensitivityCategory?)`; dictionary keyed by `AntibioticId`; update-in-place / create-new / remove-missing; header branch untouched; the not-attached guard kept verbatim.
+#### Stages 5–7 — Execution, Verification, Validation Gate (VG-02)
+
+**Edits made (3 files: 1 Domain, 1 Application, 1 test):**
+
+| File | Edit |
+|---|---|
+| `CultureAntibioticResult.cs` | **added** `public void UpdateSensitivity(SensitivityCategory? value)`. `Create` and the private ctor are **unchanged**. |
+| `SaveCultureResultsCommandHandler.cs:5` | the two `foreach` loops replaced by a three-way diff: existing rows loaded into `Dictionary<int, CultureAntibioticResult>` keyed by `AntibioticId`; incoming key present ⇒ `UpdateSensitivity` (**identity preserved**); absent ⇒ `Create(…Create(0)…)` exactly as before; store-keys not incoming ⇒ `_db.Remove` over a **materialised snapshot**, never the live dictionary. |
+| `CultureResultCommandHandlerTests.cs` | +5 handler tests. |
+
+**Kept byte-identical, as the plan required:** the not-attached guard (`المضاد الحيوي غير مرفق بهذه المزرعة.`) · the reviewed/printed/delivered guard · the header `CultureResult` `Create`/`Update` branch (`grep -c "header.Update"` ⇒ **1**, unchanged) · no enum change (SD-4).
+
+**Stage 6 — build:** `Build succeeded. 0 Warning(s) 0 Error(s)`.
+
+**Stage 7 — VG-02, item by item:**
+
+| VG-02 item | Result | Evidence |
+|---|---|---|
+| Build 0/0 | ✅ | 0/0 |
+| `SaveCulture_ExistingRow_KeepsItsId` | ✅ | seeded a row with `CultureAntibioticResultId.Create(777)`; after re-save the id is still **777** and the category updated to `ResistantFor` — no recreate |
+| `SaveCulture_RemoveOneRow_KeepsTheOthers` | ✅ | ids 701/702 seeded; sending only antibiotic 1 leaves exactly **one** row, id **701** |
+| `SaveCulture_AddNewRow_WhileKeepingExisting` | ✅ | existing keeps id **701**; the new antibiotic 2 row is added |
+| `SaveCulture_TwiceInARow_IsIdempotent` | ✅ | two identical saves ⇒ still exactly one row, category unchanged, header untouched |
+| `SaveCulture_HeaderUpdate_UnaffectedByRowDiffing` | ✅ | header `Sample` ⇒ `second`, `CultureCondition` ⇒ `anaerobic`, still one sensitivity row |
+| `SaveCulture_NotAttachedAntibiotic_IsRejected` (current behaviour preserved) | ✅ | pre-existing test still green, Arabic message unchanged |
+| `grep -c "_db.Remove(old)"` ⇒ **0** | ✅ | **0** (was 1) |
+| `git diff -- src/TopLab.Infrastructure/Persistence/` ⇒ empty, no migration | ✅ | empty; migration count still **11** |
+| zero-drift | ✅ | `No changes have been made to the model since the last migration.` |
+
+**Measured counts vs the agent's own G0:** Domain **484 (Δ 0)** · Application **1516 (Δ +14: S1's +9 and S2's +5)** · Infrastructure **221 (Δ 0)** · Presentation **57 (Δ 0)** · Persistence **13 + 1 skipped (Δ 0)**. Nothing below baseline.
+
+**Three things the plan did not anticipate — all recorded honestly:**
+
+1. **My own assertion was wrong, not the product code.** `SaveCulture_TwiceInARow_IsIdempotent` initially asserted `Sample == " sample "` and failed with `Actual: "sample"`. `CultureResult` **trims on construction** — pre-existing behaviour unrelated to this slice. The test now asserts the observed trimmed value with a comment saying so. **No product code was changed to make a test pass.**
+2. **The fake's `SaveChangesAsync` assigns no ids** (`FakeApplicationDbContext:400` returns `1`). So a "keeps its id" test cannot rely on EF-generated identity; the test **seeds** a known non-zero id and asserts it survives. This is a stronger assertion than the plan implied, and it is the exact guarantee S9's `InhibitionZoneMm` depends on.
+3. **A brace-placement mistake in the test file.** `Seed()`'s single-line body ended with `}}` (method + class); appending tests after it closed the class early and broke the build with `CS1519`/`CS1513`. Fixed by removing one brace and closing the class at the end of the file.
+
+**Deliberately not done:** no `CultureResult` header change · no change to `CultureAntibioticResult.Create` · no migration · no `InhibitionZoneMm` column (that is S9) · the S1 nullability work is untouched.
+
+**SD-13 is now satisfied: this commit must exist in `git log` before S9 opens. Its hash is recorded below.**
+
+- [x] **Stage 8 — Documentation Update:** no user-facing string changed. UI-texts register: **no new entry.**
+- [x] **Stage 9 — Memory Status Update:** Slice Index S2 → ✅ · Execution Log appended · Current Status 2/16.
+- [x] **Stage 10 — Git:** local commit `[W-02] Slice 2/16: SaveCultureResults updates sensitivity rows instead of recreating them (WP-14) — loop-engineering`; explicit paths only.
+
+**SD-13 checkpoint hash (S9 Stage 1 must find this in `git log`):** recorded in the Execution Log below.
+
 
 ### Slice 3 — AgeRules + infant child detection (C-20, WP-14)
 
@@ -519,16 +596,19 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 |---|---|---|---|---|
 | 2026-10-01 | — | authoring | Wave 2 package authored against `94292c2` from the W-01/S-06/S-07 loop-engineering trios; 25 plan-vs-code corrections registered; 16 slices, 3 migrations. | OK |
 | 2026-10-01 | — | G0 | **Agent measured its own baseline** (build + all 5 test projects + drift gate). Domain 484 · Application 1502 · Infrastructure 221 · Presentation 57 · Persistence 13+1 · full 2277+1 · build 0/0 · `has-pending-model-changes` = no changes · Docker absent · `dotnet-ef` 8.0.30. **Every Δ vs the owner's table = 0.** | ✅ PASS |
+| 2026-10-01 | S2 | 1–10 | SD-13 prerequisite landed: `CultureAntibioticResult.UpdateSensitivity` + three-way diff in `SaveCultureResultsCommandHandler` (update-in-place / create-new / remove-missing). VG-02 green: build 0/0, Application **1516 (+5)**, all others Δ 0, `_db.Remove(old)` now **0** hits, migration count **11**, Persistence diff empty, zero-drift "no changes". Caught 3 self-inflicted issues honestly: a wrong assertion about `CultureResult` trimming (fixed in the test, product code untouched), the fake `SaveChangesAsync` assigning no ids, and a brace-placement error. | ✅ committed |
+| 2026-10-01 | S2 | SD-13 | **SD-13 checkpoint — the S2 prerequisite commit hash is `871332f912ca69a2fd078dab8c32ac9609008e86`.** S9 Stage 1 MUST find this commit in `git log` before creating `AddCultureMicroscopyAndZone`; if absent, STOP. | pinned |
 | 2026-10-01 | S1 | 1–10 | C-19: `CultureSensitivityInput.SensitivityCategory` `int`⇒`int?` · validator accepts `null` · conditional cast in the handler · deleted `.Where(HasValue)` in `CultureEntryViewModel`. +10 tests. VG-01 fully green: build 0/0, Application **1511 (+9)**, all others Δ 0, old validator pattern `0` hits, Persistence diff empty, zero-drift "no changes". One self-caught counting error on the migration count (see Slice 1 note). | ✅ committed |
 
 ---
 
 ## Current Status
 
-- Slices complete: **1 / 16**.
-- Current slice: **Slice 2** — SaveCultureResults updates rows instead of recreating them (SD-13: must land before S9).
+- Slices complete: **2 / 16**.
+- **SD-13 satisfied** — the S2 prerequisite for S9 has landed and is committed.
+- Current slice: **Slice 3** — AgeRules + infant child detection (C-20).
 - Baseline: **MEASURED BY THE AGENT** — all Δ = 0, Infrastructure 221/221 (see the agent's own G0 table).
-- Commits: 1.
+- Commits: 2.
 - **Agent's measured baseline, binding from here on:** Domain **484** · Application **1502** (grew to 1511 in S1) · Infrastructure **221** · Presentation **57** · Persistence **13 + 1 skipped**. **Full suite 2277 + 1 skipped.** Build **0/0**.
 - Notes: **S2 must land before S9.** **S4 must land before S13.** SD-16 (C-21) is decided in S5 Stage 4. SD-2 forbids any commercial-name artefact.
 

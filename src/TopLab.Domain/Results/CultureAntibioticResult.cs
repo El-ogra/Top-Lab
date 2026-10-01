@@ -26,7 +26,14 @@ public sealed class CultureAntibioticResult : Entity<CultureAntibioticResultId>
     }
 
     public static CultureAntibioticResult Create(CultureAntibioticResultId id, PatientTestId patientTestId, AntibioticId antibioticId, SensitivityCategory? sensitivityCategory)
-    {
-        return new CultureAntibioticResult(id, patientTestId, antibioticId, sensitivityCategory);
+        {
+            return new CultureAntibioticResult(id, patientTestId, antibioticId, sensitivityCategory);
+        }
+
+        /// <summary>W-02 C-19/SD-13: changes only the category, so a re-save keeps the row's identity
+        /// (and, from S9, any column already stored on it such as the inhibition zone).</summary>
+        public void UpdateSensitivity(SensitivityCategory? value)
+        {
+            SensitivityCategory = value;
+        }
     }
-}
