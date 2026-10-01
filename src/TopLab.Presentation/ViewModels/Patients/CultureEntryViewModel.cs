@@ -7,6 +7,7 @@ using TopLab.Application.Features.CultureResults.Commands.VerifyCultureResult;
 using TopLab.Application.Features.CultureResults.Common;
 using TopLab.Application.Features.CultureResults.Queries.GetCultureEntryGrid;
 using TopLab.Application.Features.CultureResults.Queries.GetCultureReport;
+using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
@@ -45,6 +46,9 @@ public sealed class CultureEntryViewModel : ViewModelBase
     private readonly ResultErrorPresenter _presenter;
     private readonly IDialogService _dialogs;
 
+    // W-02 S5 (WP-06): the honest print path. The screen never marks a result itself.
+    private readonly IResultPrintCoordinator _printCoordinator;
+
     private int _patientTestId;
     private string _testName = string.Empty;
     private string _testCode = string.Empty;
@@ -75,11 +79,13 @@ public sealed class CultureEntryViewModel : ViewModelBase
     public CultureEntryViewModel(
         ISender mediator,
         ResultErrorPresenter presenter,
-        IDialogService dialogs)
+        IDialogService dialogs,
+        IResultPrintCoordinator printCoordinator)
     {
         _mediator = mediator;
         _presenter = presenter;
         _dialogs = dialogs;
+        _printCoordinator = printCoordinator;
 
         SaveCommand = new AsyncRelayCommand(async (_, ct) => await SaveAsync(ct));
         VerifyCommand = new AsyncRelayCommand(async (_, ct) => await VerifyAsync(ct));
@@ -339,15 +345,18 @@ public sealed class CultureEntryViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            var result = await _mediator.Send(new MarkCultureReportPrintedCommand(_patientTestId), cancellationToken);
-            if (result.IsSuccess)
+            // W-02 S5: build, then print. Never marks (SD-1).
+            var outcome = await _printCoordinator.PrintAsync(
+                _patientTestId, ResultPrintKind.CultureReport, cancellationToken);
+
+            if (outcome.Printed)
             {
                 StatusMessage = "تمت الطباعة.";
                 await LoadAsync(_patientTestId, cancellationToken);
             }
-            else if (result.Error is not null)
+            else
             {
-                ErrorMessage = _presenter.Present(result.Error);
+                ErrorMessage = "تعذّرت الطباعة: " + outcome.ErrorMessage;
             }
         }
         finally

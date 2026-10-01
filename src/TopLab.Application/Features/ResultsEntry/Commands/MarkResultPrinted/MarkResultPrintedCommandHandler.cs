@@ -12,16 +12,34 @@ public sealed class MarkResultPrintedCommandHandler : IRequestHandler<MarkResult
 {
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUserService _currentUser;
-    private readonly IDateTimeProvider _clock;
+    private readonly IResultPrintCoordinator? _coordinator;
 
+    /// <summary>
+    /// W-02 S5 / SD-16: the coordinator is an optional trailing parameter so the four C-26 test
+    /// files keep compiling untouched (SD-16 forbids editing them). Production always receives a
+    /// coordinator — it is registered in <c>AddApplication</c>. A missing coordinator is treated
+    /// as "cannot honestly print" rather than falling back to marking the row.
+    /// </summary>
+    public MarkResultPrintedCommandHandler(
+        IApplicationDbContext db,
+        ICurrentUserService currentUser,
+        IResultPrintCoordinator? coordinator = null)
+    {
+        _db = db;
+        _currentUser = currentUser;
+        _coordinator = coordinator;
+    }
+
+    /// <summary>
+    /// Retained so the C-26 test files that pass a clock as the third argument keep compiling
+    /// without edits. The clock is no longer needed because the handler no longer marks the row.
+    /// </summary>
     public MarkResultPrintedCommandHandler(
         IApplicationDbContext db,
         ICurrentUserService currentUser,
         IDateTimeProvider clock)
+        : this(db, currentUser, coordinator: null)
     {
-        _db = db;
-        _currentUser = currentUser;
-        _clock = clock;
     }
 
     public async Task<Result> Handle(MarkResultPrintedCommand request, CancellationToken cancellationToken)
@@ -52,16 +70,20 @@ public sealed class MarkResultPrintedCommandHandler : IRequestHandler<MarkResult
             return Result.Failure(Error.Conflict("يوجد رصيد متبقٍ على حساب المريض؛ لا يمكن الطباعة."));
         }
 
-        try
+        // W-02 S5 / SD-16 (C-21 + C-26): the binding default is WIRE, not delete. The command and
+        // its four test files stay; this handler simply stops lying — it goes through the honest
+        // coordinator instead of marking the row. The guards above are unchanged, so no error
+        // contract moves.
+        if (_coordinator is null)
         {
-            pt.MarkPrinted(_currentUser.UserId, _clock.UtcNow);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Result.Failure(Error.Conflict(DomainFailureTranslator.Translate(ex)));
+            return Result.Failure(Error.Conflict("تعذّرت الطباعة: خدمة الطباعة غير متاحة."));
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
-        return Result.Success();
+        var outcome = await _coordinator.PrintAsync(
+            request.PatientTestId, ResultPrintKind.SimpleResult, cancellationToken);
+
+        return outcome.Printed
+            ? Result.Success()
+            : Result.Failure(Error.Conflict(outcome.ErrorMessage ?? "تعذّرت الطباعة."));
     }
 }

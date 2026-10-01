@@ -13,6 +13,7 @@ using TopLab.Application.Features.ProfileResults.Queries.GetProfileEntryGrid;
 using TopLab.Application.Features.ProfileResults.Queries.GetProfileReport;
 using TopLab.Application.Features.ProfileResults.Queries.GetProfileResultAmendments;
 using TopLab.Application.Features.ReportProduction.Common;
+using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Domain.Settings;
 using TopLab.Infrastructure.Printing;
 using TopLab.Presentation.Common;
@@ -74,6 +75,9 @@ public sealed class ProfileEntryViewModel : ViewModelBase
     private readonly IPdfPreviewService _pdfPreview;
     private readonly IApplicationDbContext _db;
 
+    // W-02 S5 (WP-06): the honest print path. The screen never marks a result itself.
+    private readonly IResultPrintCoordinator _printCoordinator;
+
     private int _patientTestId;
     private string _patientFullName = string.Empty;
     private string _profileName = string.Empty;
@@ -91,7 +95,8 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         IDialogService dialogs,
         IServiceProvider services,
         IPdfPreviewService pdfPreview,
-        IApplicationDbContext db)
+        IApplicationDbContext db,
+        IResultPrintCoordinator printCoordinator)
     {
         _mediator = mediator;
         _presenter = presenter;
@@ -99,6 +104,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         _services = services;
         _pdfPreview = pdfPreview;
         _db = db;
+        _printCoordinator = printCoordinator;
 
         SaveCommand = new AsyncRelayCommand(async (_, ct) => await SaveAsync(ct));
         VerifyCommand = new AsyncRelayCommand(async (_, ct) => await VerifyAsync(ct));
@@ -352,15 +358,18 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            var result = await _mediator.Send(new MarkProfilePrintedCommand(_patientTestId), cancellationToken);
-            if (result.IsSuccess)
+            // W-02 S5: build, then print. Never marks (SD-1).
+            var outcome = await _printCoordinator.PrintAsync(
+                _patientTestId, ResultPrintKind.ProfileReport, cancellationToken);
+
+            if (outcome.Printed)
             {
-                StatusMessage = "تم الطباعة.";
+                StatusMessage = "تمت الطباعة.";
                 await LoadAsync(_patientTestId, cancellationToken);
             }
-            else if (result.Error is not null)
+            else
             {
-                ErrorMessage = _presenter.Present(result.Error);
+                ErrorMessage = "تعذّرت الطباعة: " + outcome.ErrorMessage;
             }
         }
         finally

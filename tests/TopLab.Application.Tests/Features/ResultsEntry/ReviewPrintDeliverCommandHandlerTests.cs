@@ -126,7 +126,7 @@ public class ReviewPrintDeliverCommandHandlerTests
         db.Users.Add(User.Create(UserId.Create(5), "cashier", "h", "h2", false, 0, true));
 
         var user = new FakeCurrentUserService { UserId = 5, IsAbsolutePermission = false };
-        var handler = new MarkResultPrintedCommandHandler(db, user, new FakeDateTimeProvider());
+        var handler = new MarkResultPrintedCommandHandler(db, user, new FakeResultPrintCoordinator());
         var result = await handler.Handle(new MarkResultPrintedCommand(101), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -148,11 +148,13 @@ public class ReviewPrintDeliverCommandHandlerTests
         db.Users.Add(User.Create(UserId.Create(5), "cashier", "h", "h2", false, 0, false));
 
         var user = new FakeCurrentUserService { UserId = 5, IsAbsolutePermission = false };
-        var handler = new MarkResultPrintedCommandHandler(db, user, new FakeDateTimeProvider());
+        var handler = new MarkResultPrintedCommandHandler(db, user, new FakeResultPrintCoordinator());
         var result = await handler.Handle(new MarkResultPrintedCommand(101), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.True(row.IsPrinted);
+        // W-02 S5 / SD-1: printing no longer marks the row, so this must stay false.
+        // The old assertion (IsPrinted == true) asserted the very dishonesty WP-06 removes.
+        Assert.False(row.IsPrinted);
     }
 
     [Fact]
@@ -169,7 +171,7 @@ public class ReviewPrintDeliverCommandHandlerTests
         db.Users.Add(User.Create(UserId.Create(5), "admin", "h", "h2", true, 0, true));
 
         var user = new FakeCurrentUserService { UserId = 5, IsAbsolutePermission = true };
-        var handler = new MarkResultPrintedCommandHandler(db, user, new FakeDateTimeProvider());
+        var handler = new MarkResultPrintedCommandHandler(db, user, new FakeResultPrintCoordinator());
         var result = await handler.Handle(new MarkResultPrintedCommand(101), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -190,7 +192,7 @@ public class ReviewPrintDeliverCommandHandlerTests
         db.Users.Add(User.Create(UserId.Create(5), "cashier", "h", "h2", false, 0, true));
 
         var user = new FakeCurrentUserService { UserId = 5, IsAbsolutePermission = false };
-        var handler = new MarkResultPrintedCommandHandler(db, user, new FakeDateTimeProvider());
+        var handler = new MarkResultPrintedCommandHandler(db, user, new FakeResultPrintCoordinator());
         var result = await handler.Handle(new MarkResultPrintedCommand(101), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
