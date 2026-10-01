@@ -35,6 +35,7 @@ public sealed class SimpleResultEntryViewModel : ViewModelBase
 
         SaveCommand = new AsyncRelayCommand(async _ => await SaveAsync());
         ClearCommand = new AsyncRelayCommand(async _ => await ClearAsync());
+        OpenCommentPickerCommand = new AsyncRelayCommand(async _ => await OpenCommentPickerAsync());
     }
 
     public ResultWorklistItemDto? Item
@@ -84,6 +85,7 @@ public sealed class SimpleResultEntryViewModel : ViewModelBase
 
     public AsyncRelayCommand SaveCommand { get; }
     public AsyncRelayCommand ClearCommand { get; }
+    public AsyncRelayCommand OpenCommentPickerCommand { get; }
 
     public async Task LoadAsync(ResultWorklistItemDto item)
     {
@@ -94,6 +96,33 @@ public sealed class SimpleResultEntryViewModel : ViewModelBase
         ErrorMessage = string.Empty;
         // Reference ranges loaded client-side if needed; backend provides via GetPatientAccountQuery pattern
         await Task.CompletedTask;
+    }
+
+    /// <summary>W-02 S8 (WP-13): standard test comments — picking never writes to the database.</summary>
+    private async Task OpenCommentPickerAsync()
+    {
+        if (string.IsNullOrWhiteSpace(TestCode))
+        {
+            ErrorMessage = "اختر تحليلاً أولاً قبل اختيار تعليق.";
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+
+        var vm = new TestCommentPickerViewModel(_mediator, _presenter);
+        await vm.LoadByTestCodeAsync(TestCode);
+        var window = new Views.Patients.TestCommentPickerWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+
+        bool? picked = window.ShowDialog();
+        if (picked == true && !string.IsNullOrWhiteSpace(vm.PickedCommentText))
+        {
+            Notes = string.IsNullOrWhiteSpace(Notes)
+                ? vm.PickedCommentText!
+                : Notes + Environment.NewLine + vm.PickedCommentText;
+        }
     }
 
     private async Task SaveAsync()

@@ -199,14 +199,30 @@ public static class ReportContentBuilder
         ITestDisplayNameResolver nameResolver)
     {
         var sections = new List<ReportSection>();
+        string? lastGroupName = null;
         foreach (var line in dto.Lines)
         {
+            // W-02 S8 (WP-13): group sub-title before the first line of each group.
+            if (settings.PrintGroupSubTitle
+                && !string.IsNullOrWhiteSpace(line.TestGroupName)
+                && line.TestGroupName != lastGroupName)
+            {
+                lastGroupName = line.TestGroupName;
+                sections.Add(ReportSection.FromLines($"المجموعة: {line.TestGroupName}", new List<string>()));
+            }
+
             var testName = nameResolver.ResolveReportName(line);
             var body = new List<string>
             {
                 $"التحليل: {testName}",
                 $"النتيجة: {line.ResultValue ?? "-"}"
             };
+
+            // W-02 S8 (WP-13): off-lab note travels only with its own line.
+            if (line.IsTakenOutsideLab)
+            {
+                body.Add("العينة أُخذت خارج المعمل");
+            }
 
             if (!string.IsNullOrWhiteSpace(line.FrozenRangeText))
             {
@@ -222,6 +238,12 @@ public static class ReportContentBuilder
             if (line.ResultFlag == (int)ResultFlag.High && !string.IsNullOrWhiteSpace(line.HighComment))
             {
                 body.Add(line.HighComment!);
+            }
+
+            // W-02 S8 (WP-13): test comments print after the result.
+            if (line.TestComments is { Count: > 0 })
+            {
+                body.AddRange(line.TestComments);
             }
 
             foreach (var profile in line.ProfileLines)

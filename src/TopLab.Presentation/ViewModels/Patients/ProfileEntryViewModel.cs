@@ -79,6 +79,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
     private readonly IResultPrintCoordinator _printCoordinator;
 
     private int _patientTestId;
+    private int _testId;
     private string _patientFullName = string.Empty;
     private string _profileName = string.Empty;
     private string _comment = string.Empty;
@@ -113,6 +114,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         ShowReportCommand = new AsyncRelayCommand(async (_, ct) => await ShowReportAsync(ct));
         AmendCommand = new AsyncRelayCommand(async (_, ct) => await AmendAsync(ct));
         ShowAmendmentsLogCommand = new AsyncRelayCommand(async (_, ct) => await ShowAmendmentsLogAsync(ct));
+        OpenCommentPickerCommand = new AsyncRelayCommand(async (_, ct) => await OpenCommentPickerAsync(ct));
     }
 
     public int PatientTestId => _patientTestId;
@@ -186,6 +188,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
     public AsyncRelayCommand ShowReportCommand { get; }
     public AsyncRelayCommand AmendCommand { get; }
     public AsyncRelayCommand ShowAmendmentsLogCommand { get; }
+    public AsyncRelayCommand OpenCommentPickerCommand { get; }
 
     public async Task LoadAsync(int patientTestId, CancellationToken cancellationToken = default)
     {
@@ -203,6 +206,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
                 PatientFullName = result.Value.PatientFullName;
                 ProfileName = result.Value.ProfileName;
                 Comment = string.Empty;
+                _testId = result.Value.TestId;
 
                 var rows = new ObservableCollection<ProfileEntryRow>();
                 foreach (var item in result.Value.Items)
@@ -429,6 +433,33 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         if (!preview.IsSuccess)
         {
             ErrorMessage = preview.Error?.Message ?? "تعذّر فتح معاينة التقرير.";
+        }
+    }
+
+    /// <summary>W-02 S8 (WP-13): standard test comments — picking never writes to the database.</summary>
+    private async Task OpenCommentPickerAsync(CancellationToken cancellationToken)
+    {
+        if (_testId <= 0)
+        {
+            ErrorMessage = "احفظ التحليل أولاً قبل اختيار تعليق.";
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+
+        var vm = _services.GetRequiredService<TestCommentPickerViewModel>();
+        await vm.LoadAsync(_testId, ProfileName, cancellationToken);
+        var window = new Views.Patients.TestCommentPickerWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+
+        bool? picked = window.ShowDialog();
+        if (picked == true && !string.IsNullOrWhiteSpace(vm.PickedCommentText))
+        {
+            Comment = string.IsNullOrWhiteSpace(Comment)
+                ? vm.PickedCommentText!
+                : Comment + Environment.NewLine + vm.PickedCommentText;
         }
     }
 

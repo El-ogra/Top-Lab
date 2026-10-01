@@ -22,6 +22,9 @@ internal static class HistoryInsertion
             ProfileLines: Array.Empty<ProfileReportLineDto>(),
             Culture: null,
             LowComment: entry.LowComment,
-            HighComment: entry.HighComment);
+            HighComment: entry.HighComment,
+            IsTakenOutsideLab: entry.IsTakenOutsideLab,
+            TestGroupName: null,
+            TestComments: entry.TestComments);
     }
 }

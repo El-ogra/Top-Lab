@@ -75,6 +75,7 @@ public sealed class CultureEntryViewModel : ViewModelBase
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
+    private string? _pickedCommentPreview;
 
     public CultureEntryViewModel(
         ISender mediator,
@@ -92,6 +93,7 @@ public sealed class CultureEntryViewModel : ViewModelBase
         UnverifyCommand = new AsyncRelayCommand(async (_, ct) => await UnverifyAsync(ct));
         PrintCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct));
         ShowReportCommand = new AsyncRelayCommand(async (_, ct) => await ShowReportAsync(ct));
+        OpenCommentPickerCommand = new AsyncRelayCommand(async (_, ct) => await OpenCommentPickerAsync(ct));
     }
 
     public int PatientTestId => _patientTestId;
@@ -163,6 +165,22 @@ public sealed class CultureEntryViewModel : ViewModelBase
     public AsyncRelayCommand UnverifyCommand { get; }
     public AsyncRelayCommand PrintCommand { get; }
     public AsyncRelayCommand ShowReportCommand { get; }
+    public AsyncRelayCommand OpenCommentPickerCommand { get; }
+
+    /// <summary>W-02 S8 (WP-13): picked standard comment, preview only — never saved.</summary>
+    public string? PickedCommentPreview
+    {
+        get => _pickedCommentPreview;
+        private set
+        {
+            if (SetProperty(ref _pickedCommentPreview, value))
+            {
+                OnPropertyChanged(nameof(HasPickedComment));
+            }
+        }
+    }
+
+    public bool HasPickedComment => !string.IsNullOrWhiteSpace(_pickedCommentPreview);
 
     public async Task LoadAsync(int patientTestId, CancellationToken cancellationToken = default)
     {
@@ -213,6 +231,31 @@ public sealed class CultureEntryViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>W-02 S8 (WP-13): standard test comments — picking never writes to the database.</summary>
+    private async Task OpenCommentPickerAsync(CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(TestCode))
+        {
+            ErrorMessage = "احفظ المزرعة أولاً قبل اختيار تعليق.";
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+
+        var vm = new TestCommentPickerViewModel(_mediator, _presenter);
+        await vm.LoadByTestCodeAsync(TestCode, cancellationToken);
+        var window = new Views.Patients.TestCommentPickerWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+
+        bool? picked = window.ShowDialog();
+        if (picked == true)
+        {
+            PickedCommentPreview = vm.PickedCommentText;
         }
     }
 

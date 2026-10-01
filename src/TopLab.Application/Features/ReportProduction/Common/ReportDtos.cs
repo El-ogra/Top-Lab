@@ -49,7 +49,10 @@ public sealed record CombinedReportLineDto(
     IReadOnlyList<ProfileReportLineDto> ProfileLines,
     CultureReportSummaryDto? Culture,
     string? LowComment = null,
-    string? HighComment = null);
+    string? HighComment = null,
+    bool IsTakenOutsideLab = false,
+    string? TestGroupName = null,
+    IReadOnlyList<string>? TestComments = null);
 
 public sealed record CombinedReportDto(
     int PatientId,
@@ -80,7 +83,9 @@ public sealed record HistoryEntryDto(
     DateTime? EnteredAtUtc,
     DateTime? ReviewedAtUtc,
     string? LowComment = null,
-    string? HighComment = null);
+    string? HighComment = null,
+    bool IsTakenOutsideLab = false,
+    IReadOnlyList<string>? TestComments = null);
 
 public sealed record PatientHistoryDto(
     int PatientId,

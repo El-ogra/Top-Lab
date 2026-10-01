@@ -144,6 +144,41 @@ public class BulkPrintHonestyTests
         Assert.Equal(BulkPrintOutcomes.PatientNotFound, result.Value![0].Outcome);
     }
 
+    /// <summary>W-02 S8 (WP-13): the lab can suppress the reprint confirmation.</summary>
+    [Fact]
+    public async Task BulkPrint_SuppressReprint_SkipsConfirmation()
+    {
+        var db = new FakeApplicationDbContext();
+        AddPatient(db, 1);
+        var row = Reviewed(101, 1);
+        row.MarkPrinted(1, DateTime.UtcNow);
+        db.PatientTests.Add(row);
+        var settings = TopLab.Domain.Settings.ReportSettings.CreateDefault();
+        settings.SetPrintOptions(false, true);
+        db.ReportSettings.Add(settings);
+
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator())
+            .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(1, false) }), CancellationToken.None);
+
+        Assert.Equal(BulkPrintOutcomes.Printed, result.Value![0].Outcome);
+    }
+
+    [Fact]
+    public async Task BulkPrint_DefaultBehaviour_ShowsConfirmation()
+    {
+        var db = new FakeApplicationDbContext();
+        AddPatient(db, 1);
+        var row = Reviewed(101, 1);
+        row.MarkPrinted(1, DateTime.UtcNow);
+        db.PatientTests.Add(row);
+        db.ReportSettings.Add(TopLab.Domain.Settings.ReportSettings.CreateDefault());
+
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator())
+            .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(1, false) }), CancellationToken.None);
+
+        Assert.Equal(BulkPrintOutcomes.Skipped, result.Value![0].Outcome);
+    }
+
     private static void AddPatient(FakeApplicationDbContext db, int id) =>
         db.Patients.Add(Patient.Create(PatientId.Create(id), $"P{id}", Sex.Male, 30, AgeUnit.Year, DateTime.UtcNow));
 

@@ -73,6 +73,19 @@ internal static class PatientHistoryReader
                 .GroupBy(s => s.PatientTestId.Value)
                 .ToDictionary(g => g.Key, g => g.First());
 
+        // W-02 S8 (WP-13): one aggregated read of test comments — no per-row query.
+        var catalogTestIds = rows.Select(r => r.TestId.Value).Distinct().ToList();
+        var commentsByTest = catalogTestIds.Count == 0
+            ? new Dictionary<int, IReadOnlyList<string>>()
+            : db.Set<TestComment>()
+                .Where(c => catalogTestIds.Contains(c.TestId.Value))
+                .OrderBy(c => c.Id.Value)
+                .ToList()
+                .GroupBy(c => c.TestId.Value)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (IReadOnlyList<string>)g.Select(c => c.CommentText).ToList());
+
         IReadOnlyList<HistoryEntryDto> entries = patientsById.Keys
             .SelectMany(id => rowsByPatient.TryGetValue(id, out var list)
                 ? list.OrderByDescending(pt => pt.EnteredAtUtc).ThenByDescending(pt => pt.Id.Value)
@@ -82,6 +95,7 @@ internal static class PatientHistoryReader
                 catalog.TryGetValue(pt.TestId.Value, out var test);
                 snapshots.TryGetValue(pt.Id.Value, out var snap);
                 var (lowComment, highComment) = RangeComments(snap, pt.ResultFlag);
+                commentsByTest.TryGetValue(pt.TestId.Value, out var testComments);
                 return new HistoryEntryDto(
                     pt.Id.Value,
                     pt.PatientId.Value,
@@ -95,7 +109,9 @@ internal static class PatientHistoryReader
                     pt.EnteredAtUtc,
                     pt.ReviewedAtUtc,
                     lowComment,
-                    highComment);
+                    highComment,
+                    pt.IsTakenOutsideLab,
+                    testComments);
             })
             .ToList();
 

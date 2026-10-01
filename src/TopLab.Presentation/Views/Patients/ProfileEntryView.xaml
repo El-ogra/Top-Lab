@@ -136,6 +136,7 @@
             <Button Content="تقرير" Margin="0,0,6,0" Padding="12,6" Command="{Binding ShowReportCommand}"/>
             <Button Content="تعديل بعد الطباعة" Margin="0,0,6,0" Padding="12,6" Command="{Binding AmendCommand}"/>
             <Button Content="سجل التعديلات" Margin="0,0,6,0" Padding="12,6" Command="{Binding ShowAmendmentsLogCommand}"/>
+            <Button Content="تعليق" Margin="0,0,6,0" Padding="12,6" Command="{Binding OpenCommentPickerCommand}"/>
         </StackPanel>
     </Grid>
 </UserControl>

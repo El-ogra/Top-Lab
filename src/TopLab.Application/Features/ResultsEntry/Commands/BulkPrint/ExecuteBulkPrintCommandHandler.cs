@@ -4,6 +4,7 @@ using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Domain.Patients;
 using TopLab.Domain.Results;
+using TopLab.Domain.Settings;
 using TopLab.Domain.Users;
 
 namespace TopLab.Application.Features.ResultsEntry.Commands.BulkPrint;
@@ -51,7 +52,12 @@ public sealed class ExecuteBulkPrintCommandHandler
                 continue;
             }
 
-            var requiresConfirmation = verified.Any(pt => pt.IsPrinted);
+            // W-02 S8 (WP-13): the reprint prompt is suppressed when the lab configured so.
+            var suppressReprint = _db.Set<ReportSettings>()
+                .Where(s => s.Id == 1)
+                .Select(s => s.SuppressReprintMessage)
+                .FirstOrDefault();
+            var requiresConfirmation = !suppressReprint && verified.Any(pt => pt.IsPrinted);
             if (requiresConfirmation && !decision.ConfirmReprint)
             {
                 outcomes.Add(new BulkPrintOutcomeDto(patient.Id.Value, BulkPrintOutcomes.Skipped, 0));

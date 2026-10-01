@@ -92,6 +92,18 @@ public sealed class BuildCombinedReportCommandHandler
 
         var analyteCatalog = _db.Set<Analyte>().ToDictionary(a => a.Id);
 
+        // W-02 S8 (WP-13): one aggregated read each — no per-test query (no N+1).
+        var lineTestIds = pts.Select(p => p.TestId.Value).Distinct().ToList();
+        var commentsByTest = _db.Set<TestComment>()
+            .Where(c => lineTestIds.Contains(c.TestId.Value))
+            .OrderBy(c => c.Id.Value)
+            .ToList()
+            .GroupBy(c => c.TestId.Value)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(c => c.CommentText).ToList());
+
+        var groupNamesById = _db.Set<TestGroup>()
+            .ToDictionary(g => g.Id.Value, g => g.Name);
+
         var cultureRows = _db.Set<CultureResult>()
             .Where(c => distinctIds.Contains(c.PatientTestId.Value))
             .ToDictionary(c => c.PatientTestId.Value);
@@ -144,6 +156,14 @@ public sealed class BuildCombinedReportCommandHandler
 
             var (lowComment, highComment) = PatientHistoryReader.RangeComments(snap, pt.ResultFlag);
 
+            // W-02 S8 (WP-13): off-lab note source + aggregated test comments.
+            commentsByTest.TryGetValue(pt.TestId.Value, out var testComments);
+            string? groupName = null;
+            if (test?.TestGroupId is not null)
+            {
+                groupNamesById.TryGetValue(test.TestGroupId.Value, out groupName);
+            }
+
             return new CombinedReportLineDto(
                 pt.Id.Value,
                 pt.TestId.Value,
@@ -156,7 +176,10 @@ public sealed class BuildCombinedReportCommandHandler
                 profileLines,
                 culture,
                 lowComment,
-                highComment);
+                highComment,
+                pt.IsTakenOutsideLab,
+                groupName,
+                testComments);
         }).ToList();
 
         var dto = new CombinedReportDto(

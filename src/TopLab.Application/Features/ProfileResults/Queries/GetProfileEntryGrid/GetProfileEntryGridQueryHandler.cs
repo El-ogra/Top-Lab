@@ -69,7 +69,8 @@ public sealed class GetProfileEntryGridQueryHandler
             patient.Id.Value,
             patient.FullName,
             profile.Name,
-            dtos);
+            dtos,
+            pt.TestId.Value);
 
         return Task.FromResult(Result<ProfileEntryGridDto>.Success(dto));
     }
