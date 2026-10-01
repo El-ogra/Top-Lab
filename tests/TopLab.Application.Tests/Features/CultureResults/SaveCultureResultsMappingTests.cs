@@ -1,4 +1,5 @@
 using TopLab.Application.Features.CultureResults.Commands.SaveCultureResults;
+using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Results;
 using Xunit;
 
@@ -66,5 +67,41 @@ public class SaveCultureResultsMappingTests
 
         var result = validator.Validate(cmd);
         Assert.False(result.IsValid);
+    }
+
+    /// <summary>W-02 C-19: «Unspecified» is stored as NULL, so the validator must accept null.</summary>
+    [Fact]
+    public void SaveCulture_NullCategory_IsAccepted()
+    {
+        var validator = new SaveCultureResultsCommandValidator();
+        var cmd = new SaveCultureResultsCommand(
+            101, "دم", "E.coli", null, null, null, null,
+            new[] { new CultureSensitivityInput(5, null) });
+
+        var result = validator.Validate(cmd);
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void SaveCulture_NullAndNonNullCategories_CoexistInOneCommand()
+    {
+        var validator = new SaveCultureResultsCommandValidator();
+        var cmd = new SaveCultureResultsCommand(
+            101, "دم", "E.coli", null, null, null, null,
+            new[] { new CultureSensitivityInput(5, null), new CultureSensitivityInput(6, 3) });
+
+        var result = validator.Validate(cmd);
+        Assert.True(result.IsValid);
+    }
+
+    /// <summary>SD-4: the enum values are pinned and must not drift.</summary>
+    [Fact]
+    public void CultureSensitivityCategoryEnum_ValuesUnchanged()
+    {
+        Assert.Equal(0, (int)SensitivityCategory.HighlyFor);
+        Assert.Equal(1, (int)SensitivityCategory.ModerateFor);
+        Assert.Equal(2, (int)SensitivityCategory.LowFor);
+        Assert.Equal(3, (int)SensitivityCategory.ResistantFor);
+        Assert.Equal(4, Enum.GetValues<SensitivityCategory>().Length);
     }
 }

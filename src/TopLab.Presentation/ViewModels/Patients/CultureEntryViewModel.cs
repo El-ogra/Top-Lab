@@ -221,8 +221,7 @@ public sealed class CultureEntryViewModel : ViewModelBase
         StatusMessage = string.Empty;
 
         var sensitivities = SensitivityRows
-            .Where(r => r.SensitivityCategory.HasValue)
-            .Select(r => new CultureSensitivityInput(r.AntibioticId, r.SensitivityCategory!.Value))
+            .Select(r => new CultureSensitivityInput(r.AntibioticId, r.SensitivityCategory))
             .ToList();
 
         IsBusy = true;

@@ -1,0 +1,539 @@
+# Loop Engineering — Memory File
+
+- **Module:** Wave 2 — WP-06, WP-07 (done), WP-10, WP-13, WP-14, WP-29
+- **Module Number:** W-02
+- **Source Plan:** `Docs/OpenCode/W-02.md`
+- **Execution Prompt:** `Docs/OpenCode/W-02-Execution-Prompt.md`
+- **Date Created:** 2026-10-01
+- **Total Slices:** 16
+- **Current Slice:** — (start at S1)
+- **Current Branch:** `main`
+- **Baseline Commit:** `94292c2b2c953f9a2767cf7e81392ade0f01187d`
+- **Author:** loop-engineering (execution by the local coding agent per owner authorization)
+
+---
+
+## Module Summary
+
+Wave 2 repairs the honesty, depth and integrity of the reporting and printing paths. Six packages: an honest print coordinator (WP-06), a regression net for the already-delivered range comments (WP-07), history filters plus a real CBC matrix (WP-10), combined-report print options with an off-lab note and test comments (WP-13), culture depth — microscopy, inhibition zone, antibiotic master fields (WP-14), and data integrity plus diagnostics (WP-29). Three new EF migrations; no edits to the eleven existing migrations. Two ordering constraints are load-bearing: **S2 before S9** (data loss) and **S4 before S13** (file ownership).
+
+---
+
+## Settled Decisions (binding — do not reopen)
+
+- **SD-1 — Decision 2 = (b1): zero the values, keep the columns.** `IsPrinted=false`, `PrintCount=0`. All six columns stay **mapped** on `PatientTest` and `ProfileResultItem` (`IsPrinted`, `PrintCount`, `LastPrintedByUserId`, `LastPrintedAtUtc` on each). **No `DropColumn`. No fourth migration. No backup** (the system never ran in production — owner attestation). The lifecycle guards `MarkDelivered`, `Unreview`, `ClearResult` stay **intact**. **Precise zeroing claim — do not overstate it.** Removing `MarkPrinted` calls prevents *future* writes only; it does **not** retro-zero a row that was already printed. Two verified code facts carry the guarantee: (1) **no `HasData` anywhere in the project sets `IsPrinted` or `PrintCount`** (`grep -rn "HasData.*IsPrinted\|HasData.*PrintCount" src/` ⇒ none), so every seeded row starts `false`/`0` from the column default; (2) `PatientTest`'s private constructor (`:70-96`) never assigns them, making `MarkPrinted` the **only** production writer. **Owner-side verification step (outside the agent, outside the repo, NOT a migration):** on the development database run `SELECT COUNT(*) FROM PatientTests WHERE IsPrinted=1 OR PrintCount>0;` (and the same for `ProfileResultItems`). Zero ⇒ nothing to zero; record the result. Non-zero ⇒ run the zeroing `UPDATE` **by hand** and record the date — **never create a migration for it**. `PatientTestConfiguration.cs:46`'s composite index `{IsReviewed, IsPrinted, IsDelivered}` therefore stays valid. **Optional owner-side housekeeping (NOT a migration, NOT part of any slice):** if the owner still has a development database with rows, an idempotent `UPDATE PatientTests SET IsPrinted=0, PrintCount=0, LastPrintedByUserId=NULL, LastPrintedAtUtc=NULL;` (and the same for `ProfileResultItems`) may be run by the owner outside the repository. Record whether it was run in the Execution Log; **do not** create a migration for it.
+- **SD-2 — Decision 3 = (ج): scientific name only.** `Antibiotic.Symbol` (≤10) + `Antibiotic.ScientificName` (≤150); «الاسم العلمي» in the sensitivity table. **Commercial names deferred entirely — no storage, no printing.** Four artefacts are **dropped** and must not be built: (1) `AntibioticCommercialName` entity, (2) `AntibioticCommercialNameConfiguration`, (3) the commercial-names grid in `AntibioticsView`, (4) the test `Report_ShowCommercialNameFalse_HidesColumn`. The stage plan's text naming them is **superseded**.
+- **SD-3 — WP-07 is complete** (delivered in WP-01). No slice. S16 is a regression net only.
+- **SD-4 — sensitivity labels** stay the five English ones already shipped at `CultureEntryViewModel.cs:55-59`: `Unspecified` · `Sensitive` · `Intermediate` · `Low Sensitivity` · `Resistant`. `SensitivityCategory` values 0–3 unchanged.
+- **SD-5 — `IAppLogger` is frozen.** `Log(string requestName, string outcome, TimeSpan duration)`, pinned by a reflection test (S-07 SD-4). Swallowed print exceptions go through a **new separate** port `IPrintingDiagnostics` (`Application/Common/Interfaces`), implemented at `Infrastructure/Logging/PrintingDiagnostics.cs`. Never widen `IAppLogger`; never put exception text, a patient identifier or a result into `requestName`.
+- **SD-6 — positional records: append-with-default only.** `CombinedReportLineDto`, `HistoryEntryDto`, `CultureReportSummaryDto`, `ReportCultureSection`, `ReportSettings`, `AntibioticDto`, `AttachedAntibioticDto`. Never insert a member in the middle.
+- **SD-7 — forbidden to touch:** `BarcodeService.ToAscii` (`BarcodeService.cs:207-221`, until WP-23) · the `TestDisplayNameResolver` chain (`TestDisplayNameResolver.cs:12-21`, until WP-17) · `IAppLogger` · any of the eleven existing migrations · `SensitivityCategory` values · reference-range matching logic.
+- **SD-8 — Arabic strings byte-for-byte from the stage plan.** Any new label the plan does not supply is marked **`TBD-AR`** in the register below and **not invented**. Never invent copyright text, a support address, or any commercial drug name.
+- **SD-9 — git.** One **local** commit per verified slice on `main`. Never push. No branch, amend, rebase, reset, stash, clean, tag. Never `git add -A` / `git add .`. The owner pushes after the wave.
+- **SD-10 — the plan is a hypothesis.** Code mismatch → STOP and report.
+- **SD-11 — migration budget: three new, only.** `AddCombinedReportPrintOptions` (S7), `AddCultureMicroscopyAndZone` (S9), `AddAntibioticMasterFields` (S10). No fourth under any circumstance.
+- **SD-12 — layering (C-18).** `App.xaml.cs:22`: no Presentation type may reference Infrastructure. Three ViewModels violate it today: `CombinedReportViewModel.cs:15,55,235-247`, `ProfileEntryViewModel.cs:17,75,406-417`, `WorkSheetsViewModel.cs:17,387`. **No refactor this wave** — S15 adds a structural non-regression test and records the debt as numbered TODO.
+- **SD-13 — data-loss ordering.** **S2 must precede S9.** `SaveCultureResultsCommandHandler.cs:5` deletes and recreates every `CultureAntibioticResult` row on every save; if `AddCultureMicroscopyAndZone` lands first, the first save after it erases every `InhibitionZoneMm` in the database.
+- **SD-14 — file ownership.** WP-06 owns `ReportPrintingService.cs` in **S4**. WP-29 adds diagnostics to the same file in **S13**, after S4. S5 and S6 must not touch it.
+- **SD-15 — migration review** is an independent analysis-only review agent after the wave. The owner does not review migrations.
+- **SD-16 — C-21 + C-26.** `MarkResultPrintedCommand` + handler have **zero** consumers in `src/`, but the command is referenced by **four** live test files, not two (see C-26). **Binding default: WIRE, not delete.** In S5, change `MarkResultPrintedCommandHandler` to go through `IResultPrintCoordinator` with `ResultPrintKind.SimpleResult` instead of `pt.MarkPrinted`. **Delete is an exception, not a default:** it requires explicit owner authorization recorded at S5 Stage 4, and it would force edits to two *structural* gates — `ValidatorRegistrationTests` and `ResultsEntryAuthorizationTests` — which weakens the very safety net that catches a missing validator or permission elsewhere. **Deletion decision recorded here:** ⬜ not yet decided (agent fills at S5 Stage 4) — default in force: **wire**.
+
+---
+
+## Plan-vs-Code Corrections (binding — see W-02.md §1)
+
+| ID | Correction |
+|---|---|
+| C-1 | History screen access already works (`PatientsHubViewModel.cs:79-87`) — no navigation work |
+| C-2 | `HistoryInsertion.cs` is 27 lines; the pins are at `:21-22`, and it already forwards comments at `:24-25` |
+| C-3 | No XML doc on either history handler — prove the duplication with `diff`, not with a doc citation |
+| C-4 | `HistoryEntryDto` already has `TestId` (`:73`) and `LowComment`/`HighComment` (`:82-83`); only `EnteredAtLocalDate` remains |
+| C-5 | History dates already print (`ReportContentBuilder.cs:343`) — do not re-add |
+| C-6 | `SimpleResultEntryViewModel.cs` has **zero** `Print` matches — not a file to modify for WP-06 |
+| C-7 | `ProfileEntryViewModel.cs` `PrintAsync` is **343-365**; `CultureEntryViewModel.cs` is **331-358**, command `:343`, message `:346` |
+| C-8 | `IAppLogger` is registered at `Infrastructure/DependencyInjection.cs:105`, not `:102` |
+| C-9 | `CultureAntibioticResult.cs` is 32 lines; fields are `:11` and `:14` |
+| C-10 | `ReportPdfWriter.cs` is 84 lines; culture rendering is `ReportContentBuilder.cs:246-256` + `ReportCultureSection.BuildLines` `:24-51` |
+| C-11 | `CultureEntryView.xaml:141` already binds `Report.OrganismC` — drop the WP-14 item |
+| C-12 | `IsTakenOutsideLab` reaches no clinical report (true) but has 25+ consumers, not one — restate the evidence |
+| C-13 | The commercial-name artefacts are dropped (SD-2) |
+| C-14 | `SettleAccountInFullCommandHandler.cs` is 79 lines; the unlocked read-then-write is `:42-77` |
+| C-15 | Hot-reader anchors — exact: `GetResultWorklistQueryHandler.cs:37`, `GetPatientTestAuditQueryHandler.cs:61`, `GetCultureReportQueryHandler.cs:28`. Wrong: `PatientBillingReader.cs:141,158`, `GetCombinableTestsQueryHandler.cs:194`, `GetPatientTestsForDrawQueryHandler.cs:45`, `GetResultEntryQueryHandler.cs:104` |
+| C-16 | Settled by SD-1: zero the values, keep the columns, no fourth migration |
+| C-17 | `HistoryReportsViewModel.cs:30` is accurate; multi-patient is still dead — fix it |
+| C-18 | Three ViewModels violate `App.xaml.cs:22` — non-regression test only (SD-12) |
+| C-19 | The nullable `SensitivityCategory` is unreachable on write: `SaveCultureResultsCommand.cs:8` is `int`; `CultureEntryViewModel.cs:223-225` drops null rows, so choosing «Unspecified» **deletes the saved row**. **S1** |
+| C-20 | `AgeRules` does not exist; there is **one** relevant site (`GetCultureEntryGridQueryHandler.cs:33`) with a named `const`, not a literal `12`. **S3** |
+| C-21 | `MarkResultPrintedCommand` has zero `src/` consumers — decide delete-or-wire in S5 (SD-16) |
+| C-22 | `HistoryReportsViewModel.cs:208` type test is statically always true — silent stale `Entries` on null. **S12** |
+| C-23 | `GetCultureAttachmentView` / `SaveCultureAntibioticAttachment` do not exist; real names are `GetCultureAntibioticsQueryHandler`, `AttachAntibioticToCultureCommand`, `DetachAntibioticFromCultureCommand` |
+| C-24 | `ReportSettings` columns are `IsRequired()` with a `HasData` seed at `ReportSettingsConfiguration.cs:25` — use `bit NOT NULL` + `HasDefaultValue(false)`, not nullable `bit` |
+| C-25 | Delete the duplicate `GetSeparateHistoryReportQueryHandler`, but **keep the query** — used at `HistoryReportsViewModel.cs:204` and `PrintHistoryReportCommandHandler.cs:49` |
+| C-26 | *(added after local-agent review)* The delete scope for C-21 listed only two test files. `MarkResultPrinted` is referenced by **four**: `ValidatorRegistrationTests.cs:71,219` (validator-completeness gate) · `ResultsEntryAuthorizationTests.cs:10,57,64` (`PRINT_RESULTS` permission gate) · `ExportPatientReportPdfCommandHandlerTests.cs:8` (`using` only — breaks the build) · `ReviewPrintDeliverCommandHandlerTests.cs:2,95,96,129,130,151,152,172,173,193,194`. Default flips to **wire** (SD-16); delete needs owner authorization plus edits to both structural gates |
+
+---
+
+## Confirmed Code Facts (verified at the pinned commit — confirm at Stage 3, do not re-derive blindly)
+
+**C-26 (four test files, not two):** `ValidatorRegistrationTests.cs:71,219` · `ResultsEntryAuthorizationTests.cs:10,57,64` · `ExportPatientReportPdfCommandHandlerTests.cs:8` · `ReviewPrintDeliverCommandHandlerTests.cs:2,95,96,129,130,151,152,172,173,193,194`. The first two are **structural gates** — do not weaken them.
+
+**WP-06:** `MarkProfilePrintedCommandHandler.cs:25-33` injects only db/user/clock; marks at `:63-74`, saves at `:81`, produces **no PDF**. `MarkCultureReportPrintedCommandHandler.cs` is **3 lines** — the whole handler is on line 1. `ExecuteBulkPrintCommandHandler.cs:18-26` injects only db/user/clock; `:76` `pt.MarkPrinted`; `:86` returns `Printed`. Exactly **7** handlers inject a print port (`PrintInvoice`, `PrintReceipt`, `PrintBarcode`, `PrintBlankReport`, `PrintCombinedReport`, `PrintHistoryReport`, `PrintWorkSheet`). `PrintCombinedReportCommandHandler.cs:64-85` and `PrintHistoryReportCommandHandler.cs:69-90` already print-then-mark (honest ordering). `PrintBlankReportCommandHandler.cs:50-54` prints with no `MarkPrinted` by design. `ReportPrintingService.cs` is exactly 77 lines; swallow at `:73-76`; `OperationCanceledException` re-thrown at `:69-72` — **keep that order**. `BarcodeService.cs:76-79` re-throws, `:80-83` swallows — keep. `ExportPatientReportPdfCommandHandler.cs:161-168` swallow. `FakeReportPrintingService` exists at `tests/TopLab.Application.Tests/Common/Fakes/FakeReportPrintingService.cs` with `Tokens` and `NextResult` — **reuse it, do not create a second**.
+
+**WP-07 (closed):** `ReportDtos.cs:51-52, 82-83, 19-20` · `AnalyteReferenceRangeBand.cs:30,32` · `PatientHistoryReader.cs:109-124` (frozen snapshot, matching flag only) · `BuildCombinedReportCommandHandler.cs:145,158-159,133-134` · `PatientHistoryReader.cs:84,97-98` · `HistoryInsertion.cs:24-25` · `ReportContentBuilder.cs:216-225,234-242,149-157,82-90,337-339,347,352`.
+
+**WP-10:** `PatientsHubViewModel.cs:79-87` · `HistoryReportsViewModel.cs:30` private field, `:157-161` always bails, `:170` unreachable, `:204-216` dead type test. `GetPatientTestHistoryQueryHandler.cs` and `GetSeparateHistoryReportQueryHandler.cs` are byte-identical after name normalisation. `PatientHistoryReader.cs:29-31` materialises the whole `Patient` table in `ByPatientName` mode; `:42-45` (`ByLabCode`) is already server-side. `PatientHistoryResolver.cs:31-40` normalises by `ToUpperInvariant` — not SQL-translatable as written. `InsertHistoryDialogViewModel.cs:88-90` — comment without code. `ReportGrid`/`ReportSection` in `ReportDocumentContent.cs:140-153`; `ReportPageComposer.cs:90-120` renders a grid as a QuestPDF table.
+
+**WP-13:** `ReportSettings.cs:9-27` has **10** properties, no print flags; `CreateDefault()` `:37-52`; `ReportSettingsConfiguration.cs:23` last flag, `:25` `HasData`. `UpdateReportSettingsCommand.cs:8-17` positional record, 8 params, `RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS"` at `:19` — **no new permission**. `UpdateReportSettingsCommandHandler.cs:30` `SetHistoryOptions`. `ReportSettingsDto` at `SettingsDtos.cs:20-28`. `PatientTest.cs:26` `IsTakenOutsideLab`; `PatientTestConfiguration.cs:22` non-nullable; only print consumer `WorkSheetPdfWriter.cs:218`. `TestComment.cs:6-53` + `TestCommentConfiguration.cs` + `ApplicationDbContext.DbSets.cs:29` + full CRUD under `Features/PriceListsCommentsAndCustomGroups/` + `Lab/TestCommentsViewModel.cs`; **zero** references under `ReportProduction`/`ResultsEntry`/`CultureResults`/`ProfileResults` ⇒ **no migration needed for test comments**.
+
+**WP-14:** `CultureResult.cs:10-20` exactly six fields; `CultureResultConfiguration.cs:11,19` 1:1 on `PatientTestId`, cascade. `CultureAntibioticResult.cs` 32 lines — **no `InhibitionZoneMm`**. `CultureAntibioticResultConfiguration.cs:16` nullable `tinyint`. `Antibiotic.cs:8-12` exactly three fields; `AntibioticConfiguration.cs:14-16`. `CultureAntibioticAttachment.cs:6-21` composite PK only — **no threshold**; `CultureAntibioticAttachmentConfiguration.cs:11-13`. `CultureAntibioticDisplay.cs:5` `ChildAgeThresholdYears = 12`; `GetCultureEntryGridQueryHandler.cs:33` the one buggy site. `SaveCultureResultsCommand.cs:8` `int`; validator `:9` `is >= 0 and <= 3`; handler `:5` delete-all-then-reinsert plus a hard cast; `CultureEntryViewModel.cs:223-225` `Where(HasValue)` drops nulls; `:52-60` `SensitivityOptions`; `:331-358` `PrintAsync`. `GetCultureReportQueryHandler.cs:26` `FirstOrDefault()` without `Id == 1`; `:28-33` antibiotic catalogue loaded whole + sensitivity rows. `CultureResultDtos.cs:3-4` (`int?` on the read side), `:11-16` `CultureReportDto`. `CultureEntryView.xaml:107-119` flat 4-column grid with the WP-03 `SelectedValue` pattern at `:111-114`; `:141` already binds `OrganismC`. `AntibioticDto` `AntibioticDtos.cs:3-7`; `AttachedAntibioticDto` `:9-13`; `GetAntibioticsQueryHandler.cs:30-37`; `GetCultureAntibioticsQueryHandler.cs:48-59`. `ReportCultureSection.cs:8-14` 6 positional params, `HasAnyContent` `:16`, `BuildLines()` `:24-51`; sole construction site `ReportContentBuilder.cs:248-254`. `ReportDocumentContent.ContainsEnglishLabels()` `:132-136` — new Arabic must not trip it.
+
+**WP-29:** `IAppLogger.cs:7-10` single method; consumers are only `LoggingBehavior.cs:17,19` and `DailyBackupHostedService.cs:18,24`; `FileAppLogger.cs:9-11` documents the privacy guarantee, `:20-23` the `%ProgramData%\TopLab\logs` path, `:46-49` never-throws. `AddTestsToVisitCommandHandler.cs:112` `createdIds.Add(0)`, `:117-122` `OrderByDescending(pt.Id).Take(createdIds.Count)` over all of the patient's tests. `PatientEditorViewModel.cs:883` `ApplyConditionDeltasAsync`, `:918` `ApplyTestDeltasAsync`. `SettleAccountInFullCommandHandler.cs:42-77` unlocked read-then-write. `grep "UPDLOCK|FromSql|IsolationLevel|rowversion|ConcurrencyToken|IsConcurrencyToken"` ⇒ **zero**. Unbounded materialisations: `PatientHistoryReader.cs:29-31`, `WorkSheetHelpers.cs:104-107` (`.ToList().Where(`). Bounded catalogue loads at 28 sites — leave them. `PdfPreviewService.cs:28-29` `%TEMP%\TopLab-PDF-Preview` is already an app-owned folder. `ReportPrintingService.cs:62` and `BarcodeService.cs:69` write straight into `%TEMP%`. `IApplicationDbContext` does **not** expose `Database` (`ApplicationDbContext.cs:29-36`); the concrete context in Infrastructure does.
+
+**Migrations:** 11 files (8 original + 3 Wave 1), timestamps ascending, chain monotonic (`SensitivityCategory` becomes `byte?` exactly at `20260930163921`). Last designer matches the snapshot except for boilerplate. 45 entities, **no entity/property drift** between `ApplicationDbContextModelSnapshot.cs` and the live model.
+
+---
+
+## Global Validation Gates
+
+- **G0 (once, before Slice 1): RE-MEASURE IT YOURSELF, then compare.** The table below is the owner's recorded measurement — it is a **reference, not your baseline**. Run the build and **all five** test projects yourself on this machine, record your own numbers in the *Agent's own G0 confirmation* row, and only then diff yours against the table. Never adopt the owner's figures as your own baseline: the S-00…S-07 protocol requires the executing agent to measure its own baseline, otherwise "no count may fall below baseline" means nothing. If your numbers differ from the table, **STOP and report the delta before Slice 1** — do not proceed against a baseline you did not measure.
+- **G1 (every slice):** build 0/0; no test count below baseline; slice `VG-nn` item by item; migrations policy; `git status` clean after commit.
+
+### Zero-drift gate (every slice, no exceptions)
+
+```
+dotnet-ef migrations has-pending-model-changes \
+  --project src/TopLab.Infrastructure/TopLab.Infrastructure.csproj \
+  --startup-project src/TopLab.Presentation/TopLab.Presentation.csproj \
+  -- -p:EnableWindowsTargeting=true
+git diff -- src/TopLab.Infrastructure/Persistence/
+```
+Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended new migration plus the snapshot change.
+
+### Migrations policy (every slice)
+
+- New migration files **only** in **S7, S9, S10**.
+- **Never** edit the eleven existing migrations or their `.Designer.cs`.
+- **Never** a `DropColumn` on `PatientTests` / `ProfileResultItems` (SD-1).
+- **Never** a commercial-name table or column (SD-2).
+- **Never** hand-edit `ApplicationDbContextModelSnapshot.cs`.
+- **Never** `dotnet ef database update` on the owner's database without coordination.
+
+---
+
+## Quality Gate (a slice is complete ONLY when ALL hold)
+
+1. Scope matches `W-02.md` (SD-10).
+2. `dotnet build TopLab.sln -p:EnableWindowsTargeting=true` (or VS MSBuild) → **0 errors, 0 warnings**.
+3. No test count below the recorded baseline; no new warning anywhere.
+4. The slice's `VG-nn` passes item by item, zero-drift gate included.
+5. Local commit only (SD-9), explicit paths staged.
+
+---
+
+## Stop/Continue Rule
+
+- **Continue automatically** after a passing gate plus a local commit (SD-9).
+- **STOP** on: plan/code mismatch (SD-10) · deleting `MarkResultPrinted` **without** recorded owner authorization (SD-16/C-26) · S9 before S2 (SD-13) · any need for a fourth migration (SD-11) · any `DropColumn` on the two entities (SD-1) · any commercial-name artefact (SD-2) · any attempt to widen `IAppLogger` or log a patient identifier (SD-5) · touching `BarcodeService.ToAscii` or `TestDisplayNameResolver` (SD-7) · the Infrastructure baseline not being 221/221 at S1 · the same failure **5 consecutive** times · any unlisted ambiguity.
+- Write the Stop Report below and wait.
+
+---
+
+## Baseline
+
+**Two columns of truth. The first is the owner's recorded measurement (reference only). The second is yours — fill it in at Slice 1 Stage 1 before touching any code.**
+
+### Owner's recorded measurement (reference — NOT your baseline)
+
+| Item | Value |
+|---|---|
+| Date measured | 2026-10-01 |
+| Toolchain | VS MSBuild; .NET 8 SDK for `dotnet` / `dotnet-ef` 8.0.30 |
+| `git rev-parse HEAD` | `94292c2b2c953f9a2767cf7e81392ade0f01187d` ✓ |
+| `git status --short` | clean except the three untracked W-02 package files (expected) |
+| Build warnings / errors | **0 / 0** |
+| TopLab.Domain.Tests | **484 / 484** |
+| TopLab.Application.Tests | **1502 / 1502** |
+| TopLab.Infrastructure.Tests | **221 / 221** |
+| TopLab.Presentation.Tests | **57 / 57** |
+| TopLab.Persistence.Tests | **13 passed + 1 skipped** (Docker absent — honest skip) |
+| **Full suite** | **2277 passed + 1 skipped** |
+| `has-pending-model-changes` | **no changes** |
+| `git diff -- src/TopLab.Infrastructure/Persistence/` | empty |
+| Migration file count | **11** |
+| Docker | absent (Persistence container tests skip) |
+| Agent's own G0 confirmation | ✅ **MEASURED 2026-10-01 by the executing agent — all Δ = 0** (see table below) |
+
+### Executing agent's own measurement (MUST be filled before Slice 1 — this is the real baseline)
+
+| Item | Agent's measured value | Δ vs owner's table |
+|---|---|---|
+| Toolchain | .NET SDK 8.0.425 (`dotnet`), SDK 9.0.318 also installed; `dotnet-ef` **8.0.30** (`dotnet ef --version`) | matches |
+| Build warnings / errors | **0 / 0** (`dotnet build TopLab.sln -p:EnableWindowsTargeting=true`) | **0** |
+| TopLab.Domain.Tests | **484 / 484** (Passed 484, Failed 0, Skipped 0) | **0** |
+| TopLab.Application.Tests | **1502 / 1502** (Passed 1502, Failed 0, Skipped 0) | **0** |
+| TopLab.Infrastructure.Tests | **221 / 221** (Passed 221, Failed 0, Skipped 0) — **GDI+/Linux failures absent on Windows, as predicted** | **0** |
+| TopLab.Presentation.Tests | **57 / 57** (Passed 57, Failed 0, Skipped 0) | **0** |
+| TopLab.Persistence.Tests (passed / skipped) | **13 passed / 1 skipped** (Total 14) | **0** |
+| Full suite (passed / skipped) | **2277 passed / 1 skipped** | **0** |
+| `has-pending-model-changes` | **`No changes have been made to the model since the last migration.`** | **0** |
+| `git diff -- src/TopLab.Infrastructure/Persistence/` | **empty** | **0** |
+| `dotnet-ef --version` | **8.0.30** | **0** |
+| Docker available? | **No** (`docker: command not found`) ⇒ Persistence container tests skip honestly | **0** |
+| `git rev-parse HEAD` | **`94292c2b2c953f9a2767cf7e81392ade0f01187d`** ✓ | **0** |
+| `git status --porcelain` | only the three untracked W-02 package files (`W-02.md`, `W-02-memory.md`, `W-02-Execution-Prompt.md`) | **0** |
+| Migration file count | **11** (+ `ApplicationDbContextModelSnapshot.cs` = 12 `.cs` files in the folder) | **0** |
+
+**Verdict: G0 PASSES. Every Δ is zero, Infrastructure is 221/221. Slice 1 is authorised to start.**
+
+*Note on the `has-pending-model-changes` line:* it emits two hosting-DI warnings (`IDatabaseMaintenanceService` into `DailyBackupHostedService`, `IDateTimeProvider` into `MainWindow` — scoped-into-singleton) and then continues without the service provider. That is pre-existing at the pinned commit, unrelated to this wave, and does not affect the verdict.
+
+**If any Δ is non-zero, or Infrastructure is not 221/221, STOP and report before Slice 1.**
+
+*Context only, not the target:* on a Linux host Infrastructure shows 16 failures caused by `System.Drawing.Common` / GDI+ inside `ArabicFontResolver` (`ArabicFontResolver.cs:14,48,62`). Those are environmental and absent on Windows. Infrastructure **must** be 221/221 here.
+
+---
+
+## Slice Validation Gates (from plan)
+
+| Slice | Gate | Key checks |
+|---|---|---|
+| 1 | VG-01 | `Unspecified` persists as NULL; no null-row deletion; enum unchanged; no migration |
+| 2 | VG-02 | existing row keeps its id; partial add/remove; idempotent; `Remove(old)` gone |
+| 3 | VG-03 | `AgeRules_Month11_IsChild`; infant grid test; BR-04 matching untouched |
+| 4 | VG-04 | build-fails ⇒ no print call; print-fails ⇒ not marked; **zero** `MarkPrinted` in the coordinator |
+| 5 | VG-05 | Arabic success/error texts; no hardcoded «تم الطباعة.»; **C-21/C-26 default = wire**, all four test files untouched |
+| 6 | VG-06 | per-patient `Failed`; others continue; **zero** `MarkPrinted`; balance gate intact |
+| 7 | VG-07 | two `bit NOT NULL` + `UpdateData`; eleven old migrations untouched; no `DropColumn` |
+| 8 | VG-08 | outside-lab note both ways; comments aggregated in one query; sub-title flag; no migration |
+| 9 | VG-09 | **S2 commit present**; three operations; **negative** no-commercial-column test; zone survives re-save |
+| 10 | VG-10 | exactly two `AddColumn`s; **negative** no-commercial-column test; optional-field round trip |
+| 11 | VG-11 | sensitivity grid rendered; microscopy block; `SingleOrDefault(Id==1)`; no N+1; invariant decimals |
+| 12 | VG-12 | date + test filters; multi-patient public; dead type test gone; matrix pivot; **bounded SQL candidate set**; no `EF.Functions.Collate` |
+| 13 | VG-13 | `IAppLogger` reflection pinned; diagnostics never throws; no patient identifier in the line |
+| 14 | VG-14 | ids of rows inserted only; `Take()` gone; three rollback tests; settlement lock |
+| 15 | VG-15 | no full-table load; cleanup ignores other directories; layering guard pins existing debt |
+| 16 | VG-16 | **wave DoD**: 2277+1, three migrations, zero drift, SD-1…SD-16 honoured |
+
+---
+
+## Slice Index
+
+| # | Slice Title | Package | Migration | Status | Gate |
+|---|---|---|---|---|---|
+| 1 | Culture sensitivity write path accepts NULL (C-19) | WP-14 | — | ✅ done | VG-01 ✅ |
+| 2 | SaveCultureResults updates rows instead of recreating them | WP-14 | — | ⬜ | VG-02 |
+| 3 | AgeRules + infant child detection (C-20) | WP-14 | — | ⬜ | VG-03 |
+| 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | ⬜ | VG-04 |
+| 5 | Entry screens print through the coordinator + C-21 | WP-06 | — | ⬜ | VG-05 |
+| 6 | Bulk print through the coordinator, reports Failed | WP-06 | — | ⬜ | VG-06 |
+| 7 | ReportSettings print flags + `AddCombinedReportPrintOptions` | WP-13 | **M1** | ⬜ | VG-07 |
+| 8 | Combined-report options, outside-lab note, test comments | WP-13 | — | ⬜ | VG-08 |
+| 9 | `AddCultureMicroscopyAndZone` | WP-14 | **M2** | ⬜ | VG-09 |
+| 10 | `AddAntibioticMasterFields` | WP-14 | **M3** | ⬜ | VG-10 |
+| 11 | Culture sensitivity table + microscopy block in the report | WP-14 | — | ⬜ | VG-11 |
+| 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | ⬜ | VG-12 |
+| 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | ⬜ | VG-13 |
+| 14 | Unit of work, visit deltas, id recovery, settlement lock | WP-29 | — | ⬜ | VG-14 |
+| 15 | Narrow hot readers, own the temp dir, layering guard | WP-29 | — | ⬜ | VG-15 |
+| 16 | WP-07 regression net + wave DoD | WP-07 | — | ⬜ | VG-16 |
+
+---
+
+## Per-slice 10-stage checklists
+
+### Slice 1 — Culture sensitivity write path accepts NULL (C-19, WP-14)
+
+- **Goal:** make the WP-03 nullable column reachable; stop a saved row being deleted when the user picks «Unspecified».
+- **Touches:** `SaveCultureResultsCommand.cs:8` · `SaveCultureResultsCommandValidator.cs:9` · `SaveCultureResultsCommandHandler.cs:5` · `CultureEntryViewModel.cs:223-226` · `SaveCultureResultsMappingTests.cs`.
+- **Gate:** VG-01. Migration: none.
+- **Expected test-count change:** Application strictly **above** baseline.
+
+#### Stage 1 — Pre-Execution Verification (measured 2026-10-01)
+
+| Item | Measured | Δ vs agent G0 |
+|---|---|---|
+| `git rev-parse HEAD` | `94292c2b2c953f9a2767cf7e81392ade0f01187d` ✓ | 0 |
+| `git status --porcelain` | 3 untracked W-02 package files only | 0 |
+| Build | 0 warnings / 0 errors | 0 |
+| Domain / Application / Infrastructure / Presentation | 484 / 1502 / 221 / 57 — all 100% | 0 |
+| Persistence | 13 passed + 1 skipped | 0 |
+| `has-pending-model-changes` | `No changes have been made to the model since the last migration.` | 0 |
+
+#### Stage 3 — File Analysis (every anchor re-opened and confirmed)
+
+| Anchor | Confirmed | Match? |
+|---|---|---|
+| `SaveCultureResultsCommand.cs:8` | `public sealed record CultureSensitivityInput(int AntibioticId, int SensitivityCategory);` — **`int`, not `int?`** | ✓ C-19 |
+| `SaveCultureResultsCommandValidator.cs:9` | `RuleForEach(x => x.Sensitivities).Must(x => x.SensitivityCategory is >= 0 and <= 3);` — `null` impossible | ✓ |
+| `SaveCultureResultsCommandHandler.cs:5` | `_db.Remove(old)` for **every** existing row, then `Create(... CultureAntibioticResultId.Create(0) ...)` with the hard cast `(SensitivityCategory)item.SensitivityCategory` | ✓ |
+| `CultureEntryViewModel.cs:223-225` | `.Where(r => r.SensitivityCategory.HasValue)` then `.Select(r => new CultureSensitivityInput(r.AntibioticId, r.SensitivityCategory!.Value))` | ✓ |
+| `CultureAntibioticResult.cs:14` | `public SensitivityCategory? SensitivityCategory { get; private set; }` — already nullable in the domain | ✓ |
+| `CultureEntryViewModel.cs:55-59` | `SensitivityOptions`: `new(null, "Unspecified")` + the four SD-4 English labels | ✓ SD-4 |
+| `SensitivityCategory` enum | `HighlyFor=0, ModerateFor=1, LowFor=2, ResistantFor=3` | ✓ SD-4 |
+| `CultureResultCommandHandlerTests.cs` | the only handler test; seeds via `CultureAntibioticAttachment` and asserts `Assert.Single(db.CultureAntibioticResults)` | ✓ new home for the handler-level VG items |
+
+**The defect chain is confirmed live:** nullable column (WP-03) ⇄ `int` on write ⇄ `.Where(HasValue)` in the view model ⇄ delete-all-then-reinsert in the handler ⇒ picking «Unspecified» for a saved antibiotic **removes the row from the database** while the grid still shows it.
+
+#### Stage 4 — Planning (exact edits)
+
+1. **`SaveCultureResultsCommand.cs:8`** — `CultureSensitivityInput.SensitivityCategory`: `int` ⇒ **`int?`**. A *type change on an existing member*, not a new positional parameter, so SD-6's append-only rule is not engaged.
+2. **`SaveCultureResultsCommandValidator.cs:9`** — `Must(x => x.SensitivityCategory is null or (>= 0 and <= 3))`. `null` is now valid (that is the whole point); `4` and `-1` stay rejected. The duplicate-`AntibioticId` rule at `:10` is untouched.
+3. **`SaveCultureResultsCommandHandler.cs:5`** — replace the hard cast with `item.SensitivityCategory.HasValue ? (SensitivityCategory)item.SensitivityCategory.Value : (SensitivityCategory?)null`. **No new enum** (SD-4). The not-attached guard, the reviewed/printed/delivered guard, and the header `Create`/`Update` branch stay byte-identical.
+4. **`CultureEntryViewModel.cs:223-225`** — **delete** `.Where(r => r.SensitivityCategory.HasValue)`; the select passes `r.SensitivityCategory` straight through (now `int?`, so the `!` is no longer needed and the null row reaches the handler).
+5. **Not touched** (explicitly, per plan): `CultureSensitivityRow.SensitivityCategory` · `CultureSensitivityRowDto.SensitivityCategory` · `CultureEntryView.xaml:108-117` `SelectedValue` binding.
+6. **Tests** — extend `SaveCultureResultsMappingTests.cs` (validator level) and `CultureResultCommandHandlerTests.cs` (handler level, via `FakeApplicationDbContext`) with the VG-01 items. Hand-rolled fakes only, **no mocking library**.
+7. **No migration.** `git diff -- src/TopLab.Infrastructure/Persistence/` must stay empty.
+
+#### Stages 5–7 — Execution, Verification, Validation Gate (VG-01)
+
+**Edits made (4 production files + 2 test files):**
+
+| File | Edit |
+|---|---|
+| `SaveCultureResultsCommand.cs:8` | `int SensitivityCategory` ⇒ `int? SensitivityCategory` |
+| `SaveCultureResultsCommandValidator.cs:9` | `is >= 0 and <= 3` ⇒ `is null or (>= 0 and <= 3)` |
+| `SaveCultureResultsCommandHandler.cs:5` | `(SensitivityCategory)item.SensitivityCategory` ⇒ `item.SensitivityCategory.HasValue ? (SensitivityCategory)item.SensitivityCategory.Value : (SensitivityCategory?)null` |
+| `CultureEntryViewModel.cs:223-225` | **deleted** `.Where(r => r.SensitivityCategory.HasValue)`; select now passes `r.SensitivityCategory` through as `int?` |
+| `SaveCultureResultsMappingTests.cs` | +4 tests (null accepted · null+non-null coexist · **enum values pinned** · a `using` was missing on the first build attempt and added) |
+| `CultureResultCommandHandlerTests.cs` | +6 handler-level tests through `FakeApplicationDbContext` |
+
+**Stage 6 — build:** `Build succeeded. 0 Warning(s) 0 Error(s)`.
+
+**Stage 7 — VG-01, item by item:**
+
+| VG-01 item | Result | Evidence |
+|---|---|---|
+| Build 0/0, no count below baseline | ✅ | 0/0. Domain 484 (**Δ 0**) · Application 1511 (**Δ +9**) · Infrastructure 221 (**Δ 0**) · Presentation 57 (**Δ 0**) · Persistence 13+1 skipped (**Δ 0**) |
+| `SaveCulture_PersistsUnspecifiedAsNull` — null reaches the store as NULL, not `HighlyFor` | ✅ | added; `Assert.Null(row.SensitivityCategory)` |
+| `SaveCulture_PersistsSensitiveAsHighlyFor` | ✅ | added |
+| `SaveCulture_PersistsIntermediateAsModerateFor` | ✅ | added |
+| `SaveCulture_PersistsLowSensitivityAsLowFor` | ✅ | added |
+| `SaveCulture_PersistsResistantAsResistantFor` | ✅ | added |
+| `SaveCulture_NullAndNonNullRows_Coexist` | ✅ | added; both rows survive, null row stays null |
+| `SaveCulture_OutOfRangeValue_IsRejected` (pre-existing, stays green) | ✅ | pre-existing test, still passing (`4` rejected) |
+| `CultureSensitivityCategoryEnum_ValuesUnchanged` (SD-4) | ✅ | added; 0/1/2/3 + exactly 4 enum members |
+| `grep -rn "SensitivityCategory is >= 0" src/` ⇒ **0** | ✅ | **0** — the old pattern is gone |
+| `git diff -- src/TopLab.Infrastructure/Persistence/` ⇒ empty, no migration | ✅ | `git diff --stat` printed nothing; `git status --porcelain` on that folder empty |
+| zero-drift: `has-pending-model-changes` ⇒ no changes | ✅ | `No changes have been made to the model since the last migration.` |
+
+**Two things the plan did not anticipate, handled honestly:**
+
+1. **`CultureSensitivityInput` is used in existing tests with `int` literals.** `new CultureSensitivityInput(5, category)` still compiles because an `int` literal implicitly converts to `int?`. No pre-existing test needed editing — but this also means the type change alone does **not** prove nullability: that is why the six new handler-level tests exist and assert the stored value.
+2. **My own counting error, caught and corrected.** A `grep`-based migration count using `-v Snapshot` returned **10**, because it also filtered `20260908175555_AddPatientTestReferenceRangeSnapshots`. The correct count — excluding only `.Designer.cs` and `ApplicationDbContextModelSnapshot.cs` — is **11**, matching both the owner's table and `git ls-files` (23 tracked files = 11 migrations × 2 + snapshot). **Recorded because this wave relies on that count at S7/S9/S10/S16.** The right filter is `grep -v "\.Designer\.cs$" | grep -v "^ApplicationDbContextModelSnapshot\.cs$"`.
+
+**Deliberately not done:** no enum change (SD-4) · no `CultureSensitivityRow`/`CultureSensitivityRowDto`/`CultureEntryView.xaml` binding change · no migration · no `AgeRules` work (S3) · the delete-all-then-reinsert behaviour is **still there** — S1 only makes `null` writable; S2 removes the delete-and-recreate.
+
+- [x] **Stage 8 — Documentation Update:** no user-facing string changed (the validator message for out-of-range is the FluentValidation default, unchanged; `ReportDocumentContent.ContainsEnglishLabels()` untouched). UI-texts register: **no new entry needed.**
+- [x] **Stage 9 — Memory Status Update:** Slice Index S1 → ✅ · Execution Log appended · Current Status 1/16.
+- [x] **Stage 10 — Git:** local commit `[W-02] Slice 1/16: Culture sensitivity write path accepts NULL (C-19, WP-14) — loop-engineering`; explicit paths only.
+
+
+
+### Slice 2 — SaveCultureResults updates rows instead of recreating them (WP-14)
+
+- **Goal:** stop delete-all-then-reinsert so row identity and any future column survive a re-save.
+- **Touches:** `SaveCultureResultsCommandHandler.cs:5` · tests.
+- **Gate:** VG-02. Migration: none.
+- **SD-13:** this slice **must** land before S9.
+
+- [ ] 1–10. Plan: add `CultureAntibioticResult.UpdateSensitivity(SensitivityCategory?)`; dictionary keyed by `AntibioticId`; update-in-place / create-new / remove-missing; header branch untouched; the not-attached guard kept verbatim.
+
+### Slice 3 — AgeRules + infant child detection (C-20, WP-14)
+
+- **Goal:** an 11-month-old is a child; one site changes, not a sweep.
+- **Touches:** new `Domain/Common/AgeRules.cs` · `CultureAntibioticDisplay.cs:5` · `GetCultureEntryGridQueryHandler.cs:33` · new `AgeRulesTests.cs`.
+- **Gate:** VG-03. Migration: none.
+
+- [ ] 1–10. Plan: `ToWholeYears` + `IsUnderTwelve`; document that BR-04 governs range matching, not age classification; replace the single site; do **not** touch the validator or the editor view models.
+
+### Slice 4 — IResultPrintCoordinator (WP-06)
+
+- **Goal:** one honest path — build, print, and never mark.
+- **Touches:** new `IResultPrintCoordinator.cs` + `ResultPrintCoordinator.cs` + `ResultPrintCoordinatorTests.cs`; `Application/DependencyInjection.cs`.
+- **Gate:** VG-04. Migration: none. **Owns `ReportPrintingService.cs` from here on (SD-14).**
+
+- [ ] 1–10. Plan: reuse `FakeReportPrintingService`; build-fails ⇒ zero tokens; print-fails ⇒ `Printed=false` + verbatim Arabic error; **zero** `MarkPrinted` references.
+
+### Slice 5 — Entry screens print through the coordinator + C-21 (WP-06)
+
+- **Goal:** the two dishonest buttons become honest; the dead command is resolved.
+- **Touches:** `ProfileEntryViewModel.cs:343-365` · `CultureEntryViewModel.cs:331-358` · (optionally) delete `MarkResultPrinted/` and its tests.
+- **Gate:** VG-05. Migration: none.
+
+- [ ] 1–10. **SD-16 default = WIRE.** Decision recorded here: ____________. If *delete* is chosen, it needs explicit owner authorization, all four C-26 test files updated, and the report must state that two structural gates were weakened. Texts: «تمت الطباعة (ملف: <اسم الملف>).» and «تعذّرت الطباعة: <السبب>». Keep `IsBusy` try/finally. Do **not** relocate the Infrastructure calls (SD-12).
+
+### Slice 6 — Bulk print through the coordinator (WP-06)
+
+- **Goal:** bulk print reports `Failed` per patient instead of claiming success.
+- **Touches:** `ExecuteBulkPrintCommandHandler.cs:18-26,71-87` · `BulkPrintDtos.cs:20-27` · `BulkCommandHandlerTests.cs`.
+- **Gate:** VG-06. Migration: none. Reprint-confirmation behaviour **unchanged** here (WP-13's flag arrives in S8).
+
+- [ ] 1–10. Plan: add `BulkPrintOutcomes.Failed`; coordinator per patient test; keep the balance gate; one failure does not abort the batch.
+
+### Slice 7 — ReportSettings print flags + `AddCombinedReportPrintOptions` (WP-13) — **M1**
+
+- **Goal:** two persistent flags, no behaviour change at default `false`.
+- **Touches:** `ReportSettings.cs:27,37-52,95-99` · `ReportSettingsConfiguration.cs:23-25` · `UpdateReportSettingsCommand.cs:8-19` · `UpdateReportSettingsCommandHandler.cs:30` · `SettingsDtos.cs:20-28` · `GetReportSettingsQueryHandler.cs:35` · new migration + Designer · migration test.
+- **Gate:** VG-07. Migration: **M1**.
+
+- [ ] 1–10. Plan: Domain → Config (`IsRequired().HasDefaultValue(false)` + `HasData` update) → append command/DTO params with defaults → `dotnet ef migrations add AddCombinedReportPrintOptions` → expect exactly two `AddColumn`s plus the intended `UpdateData` → verify drift. **No new permission code.**
+
+### Slice 8 — Combined-report options, off-lab note, test comments (WP-13)
+
+- **Goal:** `IsTakenOutsideLab` and `TestComment` reach the report; the reprint flag is honoured.
+- **Touches:** `ReportDtos.cs:32-38,40-52,70-83` · `BuildCombinedReportCommandHandler.cs:95-97,138-143,147-159` · `PatientHistoryReader.cs:84-98` · `HistoryInsertion.cs:11-26` · `ReportContentBuilder.cs:188-281,317-375` · `ExecuteBulkPrintCommandHandler.cs:54-59` · new `GetTestCommentsForResults/` · new picker window + VM.
+- **Gate:** VG-08. Migration: **none** — `TestComment` already has its table.
+
+- [ ] 1–10. Plan: append-with-default only (SD-6); one aggregated query, no N+1; off-lab note verbatim «العينة أُخذت خارج المعمل»; `SuppressReprintMessage` read from `ReportSettings` PK=1. C-6 note: the comment button on `SimpleResultEntryView` is independent of printing.
+
+### Slice 9 — `AddCultureMicroscopyAndZone` (WP-14) — **M2** ⚠️
+
+- **Goal:** microscopy storage plus inhibition-zone and attachment-threshold columns.
+- **Touches:** new `CultureMicroscopy.cs` + `CultureMicroscopyConfiguration.cs` + migration + Designer + migration test · `CultureAntibioticResult.cs` · `CultureAntibioticAttachment.cs` · their two configurations · `ApplicationDbContext.DbSets.cs`.
+- **Gate:** VG-09. Migration: **M2**.
+- **SD-13: Stage 1 must confirm the S2 commit exists in `git log`.** Hash: ________
+
+- [ ] 1–10. Plan: 1:1 on `PatientTestId` mirroring `CultureResultConfiguration.cs:11,19`; `decimal(4,1)` nullable for both new columns; 20-char field cap; Config before migration; negative test asserting no commercial column.
+
+### Slice 10 — `AddAntibioticMasterFields` (WP-14) — **M3**
+
+- **Goal:** symbol and scientific name on the antibiotic master; nothing commercial.
+- **Touches:** `Antibiotic.cs` · `AntibioticConfiguration.cs` · Create/Update antibiotic commands + validators + handlers · `AntibioticDtos.cs:3-13` · both query handlers · `AntibioticEditorViewModel.cs` · `AntibioticsView.xaml` · `AntibioticEditorWindow.xaml` · new migration + Designer + migration test.
+- **Gate:** VG-10. Migration: **M3**.
+
+- [ ] 1–10. Plan: two nullable columns only; append optional command parameters; append DTO members with defaults; assert `AddColumnOperations.Count == 2`; assert zero "commercial" hits.
+
+### Slice 11 — Culture sensitivity table + microscopy block in the report (WP-14)
+
+- **Goal:** the microbiology report becomes a real sensitivity table with a microscopy block.
+- **Touches:** `ReportDtos.cs:32-38` · `BuildCombinedReportCommandHandler.cs:138-143` · `PatientHistoryReader.cs:84-98` · `HistoryInsertion.cs:11-26` · `CultureResultDtos.cs:3-4,11-16` · `GetCultureReportQueryHandler.cs:26,28-35` · `GetCultureEntryGridQueryHandler.cs:38` · `ReportCultureSection.cs:8-51` · `ReportContentBuilder.cs:246-256` · `CultureEntryView.xaml:106-121` · `CultureEntryViewModel.cs` · new `CultureReportSectionTests.cs`.
+- **Gate:** VG-11. Migration: **none**.
+
+- [ ] 1–10. Plan: fix `SingleOrDefault(Id==1)`; two aggregated queries, no N+1; `BuildSensitivityGrid()` on `ReportCultureSection`; separate `ReportSection` carrying the grid; invariant decimal formatting; SD-4 English labels for «الفئة», registered as reuse; no commercial column.
+
+### Slice 12 — History filters + CBC matrix + dead-code cleanup (WP-10)
+
+- **Goal:** real filters, a real matrix, and the three dead-code defects closed.
+- **Touches:** three history queries + the duplicate handler · `InsertHistoryResultCommandHandler.cs` · `PatientHistoryReader.cs:19-46,48-103` · `ReportDtos.cs:70-95` · `ReportPageComposer.cs` (only if wrapping is needed) · `HistoryReportsViewModel.cs:30,155-161,204-216` · `InsertHistoryDialogViewModel.cs:88-90` · `HistoryReportsView.xaml` · new `HistoryMatrixBuilder.cs` + `HistoryMatrixRow.cs` · two test files.
+- **Gate:** VG-12. Migration: **none**.
+
+- [ ] 1–10. Plan: append filter parameters with defaults; **delete the handler, keep the query** (C-25); push filters into SQL; pivot matrix; split into two grids rather than changing `ReportPageComposer`; clear `Entries` with an error instead of the always-true type test.
+
+### Slice 13 — Swallowed print exceptions reach a diagnostics sink (WP-29)
+
+- **Goal:** a swallowed failure leaves a trace — through a new port, never through `IAppLogger`.
+- **Touches:** new `IPrintingDiagnostics.cs` + `PrintingDiagnostics.cs` + tests · `Infrastructure/DependencyInjection.cs` · `ReportPrintingService.cs:20-32,73-76` ⚠️ · `BarcodeService.cs:80-83` (not `ToAscii`) · `ExportPatientReportPdfCommandHandler.cs:161-168`.
+- **Gate:** VG-13. Migration: **none**.
+
+- [ ] 1–10. Plan: reflection test pinning `IAppLogger`'s single method; fixed `component`/`operation` strings only — **never** a patient id or a temp path; writer never throws; `OperationCanceledException` still re-thrown before the general catch in both services; no behaviour change in any returned `Result`.
+
+### Slice 14 — Unit of work, visit deltas, id recovery, settlement lock (WP-29)
+
+- **Goal:** visit edits are all-or-nothing, ids are the rows actually inserted, settlement is serialised.
+- **Touches:** new `IAppUnitOfWork.cs` + `AppUnitOfWork.cs` + `ApplyVisitDeltas/` + `ApplyConditionDeltas/` + tests · `ApplicationDbContext.cs` (internal accessor only) · `PatientEditorViewModel.cs:883-916,918-976` · `AddTestsToVisitCommandHandler.cs:112,117-122` · `SettleAccountInFullCommandHandler.cs:42-77` · `Infrastructure/DependencyInjection.cs`.
+- **Gate:** VG-14. Migration: **none**.
+
+- [ ] 1–10. Plan: no `DbContext` in the Application interface; read ids from the change tracker before `SaveChangesAsync` and delete both `createdIds.Add(0)` and `Take()`; one scoped `FromSqlInterpolated` with `UPDLOCK, HOLDLOCK` **on that call site only**; concurrency tests in Persistence with an honest skip when Docker is absent.
+
+### Slice 15 — Narrow hot readers, own the temp dir, layering guard (WP-29)
+
+- **Goal:** stop the two unbounded loads, stop `%TEMP%` accumulation, stop layer drift.
+- **Touches:** `PatientHistoryReader.cs:29-31` · `WorkSheetHelpers.cs:104-107` · new `TempPdfCleanupService.cs` + tests · new `PresentationLayeringTests.cs` · `Infrastructure/DependencyInjection.cs` · `ReportPrintingService.cs:62` · `BarcodeService.cs:69` · comments on the three bounded catalogue sites.
+- **Gate:** VG-15. Migration: **none**.
+
+- [ ] 1–10. Plan: own `%TEMP%\TopLab\Print\`; cleanup by `LastWriteTimeUtc`, app-owned folder only; catalogue loads annotated, not rewritten; layering test **pins** the three existing violations as numbered debt rather than refactoring them.
+
+### Slice 16 — WP-07 regression net + wave DoD (WP-07)
+
+- **Goal:** re-pin the whole range-comment chain after WP-13/WP-14 reshaped the same DTOs, then close the wave.
+- **Touches:** tests only — new `RangeCommentFeedingTests.cs`; extend `CultureReportSectionTests.cs`.
+- **Gate:** VG-16 = **wave DoD**.
+
+- [ ] 1–10 + wave DoD. Measured final: Domain ___ · Application ___ · Infrastructure ___ · Presentation ___ · Persistence ___ · Migration files = 14.
+
+---
+
+## Migration Register
+
+| Slice | Migration name | Operations | Backup | Review agent |
+|---|---|---|---|---|
+| 7 | `AddCombinedReportPrintOptions` | `ReportSettings.PrintGroupSubTitle` `bit NOT NULL default false` · `ReportSettings.SuppressReprintMessage` `bit NOT NULL default false` · `UpdateData` for the seeded PK=1 row | n/a | pending |
+| 9 | `AddCultureMicroscopyAndZone` | `CreateTable CultureMicroscopies` (PK `PatientTestId`, 1:1 → `CultureResult`, cascade) · `CultureAntibioticResults.InhibitionZoneMm decimal(4,1) NULL` · `CultureAntibioticAttachments.SensitivityThresholdMm decimal(4,1) NULL` | n/a | pending |
+| 10 | `AddAntibioticMasterFields` | `Antibiotics.Symbol nvarchar(10) NULL` · `Antibiotics.ScientificName nvarchar(150) NULL` | n/a | pending |
+
+**Never edited:** `20260828052248_BaselineDataModel` · `20260828123530_RenamePkColumns` · `20260906093902_AddTestCodeAndLifecycleColumns` · `20260907162756_AddPatientIsDeletedAndPatientTestSampleDrawnIndex` · `20260908175555_AddPatientTestReferenceRangeSnapshots` · `20260909033414_AddAnalyteProfileDomain` · `20260910213833_AddPregnancyMedicalConditionTypeSeed` · `20260916113704_AddInvoiceIssues` · `20260930163921_FixCultureSensitivityCategoryOffByOne` · `20260930165920_AddExternalEntityEmail` · `20260930170644_AddBranchNumber`.
+
+**Housekeeping outside the repo (SD-1, owner-run — NOT a migration):**
+
+| Step | Command (development DB only) | Result | Recorded by |
+|---|---|---|---|
+| Verify | `SELECT COUNT(*) FROM PatientTests WHERE IsPrinted=1 OR PrintCount>0;` | ⬜ | owner |
+| Verify | `SELECT COUNT(*) FROM ProfileResultItems WHERE IsPrinted=1 OR PrintCount>0;` | ⬜ | owner |
+| Zero (only if non-zero) | `UPDATE PatientTests SET IsPrinted=0, PrintCount=0, LastPrintedByUserId=NULL, LastPrintedAtUtc=NULL;` and the same for `ProfileResultItems` | ⬜ n/a · ⬜ run | owner |
+
+**Never create a migration for this.** Per the owner's attestation the system never ran in production, so the expected result is **zero rows** and no action. Record the outcome here regardless.
+
+---
+
+## Created UI Texts Register
+
+Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan does not supply is `TBD-AR` and is **not invented**.
+
+**Two separate tables, deliberately.** Table A holds **new** user-facing strings this wave creates. Table B holds **pre-existing** strings this wave only **re-uses** — they are *not* new content, and mixing them into Table A would make the `ContainsEnglishLabels()` guard look like a violation when it is not.
+
+### Table A — new strings created by Wave 2
+
+| Slice | Screen / path | Text | Kind | Source |
+|---|---|---|---|---|
+| 5 | `ProfileEntryViewModel`, `CultureEntryViewModel` — success | «تمت الطباعة (ملف: \<اسم الملف\>).» | Status | plan WP-06 (verbatim) |
+| 5 | `ProfileEntryViewModel`, `CultureEntryViewModel` — failure | «تعذّرت الطباعة: \<السبب\>» | Error | plan WP-06 (verbatim) |
+| 7 | `ReportSettingsView.xaml` | «طباعة العنوان الفرعي (اسم المجموعة) في التقرير» | CheckBox label | plan WP-13 (verbatim) |
+| 7 | `ReportSettingsView.xaml` | «طباعة الاختبار المطبوع مرة أخرى دون رسالة» | CheckBox label | plan WP-13 (verbatim) |
+| 8 | Combined report | «العينة أُخذت خارج المعمل» | Report line | plan WP-13 (verbatim) |
+| 8 | `CombinedReportView.xaml` | «طباعة العنوان الفرعي (اسم المجموعة) في التقرير» · «طباعة الاختبار المطبوع مرة أخرى دون رسالة» | CheckBox labels | plan WP-13 (verbatim) |
+| 8 | Entry views | «تعليق» | Button | plan WP-13 (verbatim) |
+| 11 | Culture report grid headers | «المضاد» · «الفئة» · «منطقة التثبيط (مم)» · «الاسم العلمي» | Table headers | plan WP-14; commercial header replaced per SD-2 |
+| 11 | `CultureEntryView.xaml` group | «الفحص المجهري» | GroupBox header | plan WP-14 (verbatim) |
+| 11 | `CultureEntryView.xaml` group | «صديدية» · «كريات حمراء» · «خلايا بطانية» · «بلورات» · «فطريات» · «أخرى» (×3) · «مباشر؟» | Field labels | plan WP-14 (verbatim) |
+| 11 | `CultureEntryView.xaml` group | «الحساسية» | GroupBox header | plan WP-14 (verbatim) |
+| 11 | `CultureEntryView.xaml` column | «منطقة التثبيط (مم)» | Column header | plan WP-14 (verbatim) |
+| 11 | `CultureAttachmentView.xaml` column | «العتبة (مم)» | Column header | plan WP-14 (verbatim) |
+| 10 | `AntibioticsView.xaml`, `AntibioticEditorWindow.xaml` | «الاسم العلمي» · «الرمز» | Column / field label | plan WP-14 (scientific name); **no** «الاسم التجاري» per SD-2 |
+| 12 | `HistoryReportsView.xaml` | `FromDate` · `ToDate` · `SelectedTestId` · `PrintSeparately` · `SortMode` are property names, not labels — any visible label must be taken verbatim from the plan or marked `TBD-AR` | Property names | plan WP-10 |
+| — | — | `TBD-AR` items (record as discovered) | — | — |
+
+### Table B — pre-existing strings RE-USED by Wave 2 (NOT new content)
+
+| Slice | Where re-used | Text | Origin | Why it is safe |
+|---|---|---|---|---|
+| 11 | Report «الفئة» column cells, microbiology report | `Unspecified` · `Sensitive` · `Intermediate` · `Low Sensitivity` · `Resistant` | **Already shipped** at `CultureEntryViewModel.cs:55-59` under SD-4/WP-01 | The stage plan supplies **no Arabic** for these five category values, and inventing Arabic is forbidden by SD-8. `ReportDocumentContent.ContainsEnglishLabels()` (`:132-136`) only forbids the tokens `LabId:`, `PatientId:`, `Name:`, `Paper:`, `TopSpace:`, `HeaderFooter:`, `Doctor Signature:`, `Sex:`, `Age: `, `Doctor:`, `Referral:`, `Flag:`, `Range:`, `Reviewed:`, `SortMode:`, `AutoDisplay:` — **none of the five labels contains any of them**, so the guard passes legitimately. Assert this explicitly in VG-11. |
+| 8 | `CombinedReportView.xaml` checkboxes | same two labels as Table A | identical to the permanent `ReportSettingsView.xaml` checkboxes | One wording, two screens — do not diverge |
+
+**Rule:** if a string appears in Table A, Wave 2 created it and it must come verbatim from the plan. If it appears in Table B, Wave 2 did not create it and must not restate it as Arabic.
+
+---
+
+## Execution Log
+
+| Date | Slice | Stage | Action | Result |
+|---|---|---|---|---|
+| 2026-10-01 | — | authoring | Wave 2 package authored against `94292c2` from the W-01/S-06/S-07 loop-engineering trios; 25 plan-vs-code corrections registered; 16 slices, 3 migrations. | OK |
+| 2026-10-01 | — | G0 | **Agent measured its own baseline** (build + all 5 test projects + drift gate). Domain 484 · Application 1502 · Infrastructure 221 · Presentation 57 · Persistence 13+1 · full 2277+1 · build 0/0 · `has-pending-model-changes` = no changes · Docker absent · `dotnet-ef` 8.0.30. **Every Δ vs the owner's table = 0.** | ✅ PASS |
+| 2026-10-01 | S1 | 1–10 | C-19: `CultureSensitivityInput.SensitivityCategory` `int`⇒`int?` · validator accepts `null` · conditional cast in the handler · deleted `.Where(HasValue)` in `CultureEntryViewModel`. +10 tests. VG-01 fully green: build 0/0, Application **1511 (+9)**, all others Δ 0, old validator pattern `0` hits, Persistence diff empty, zero-drift "no changes". One self-caught counting error on the migration count (see Slice 1 note). | ✅ committed |
+
+---
+
+## Current Status
+
+- Slices complete: **1 / 16**.
+- Current slice: **Slice 2** — SaveCultureResults updates rows instead of recreating them (SD-13: must land before S9).
+- Baseline: **MEASURED BY THE AGENT** — all Δ = 0, Infrastructure 221/221 (see the agent's own G0 table).
+- Commits: 1.
+- **Agent's measured baseline, binding from here on:** Domain **484** · Application **1502** (grew to 1511 in S1) · Infrastructure **221** · Presentation **57** · Persistence **13 + 1 skipped**. **Full suite 2277 + 1 skipped.** Build **0/0**.
+- Notes: **S2 must land before S9.** **S4 must land before S13.** SD-16 (C-21) is decided in S5 Stage 4. SD-2 forbids any commercial-name artefact.
+
+---
+
+## Stop Report
+
+(none — no stop condition has triggered)
