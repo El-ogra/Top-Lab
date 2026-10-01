@@ -222,7 +222,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 |---|---|---|---|---|---|
 | 1 | Culture sensitivity write path accepts NULL (C-19) | WP-14 | — | ✅ done | VG-01 ✅ |
 | 2 | SaveCultureResults updates rows instead of recreating them | WP-14 | — | ✅ done | VG-02 ✅ |
-| 3 | AgeRules + infant child detection (C-20) | WP-14 | — | ⬜ | VG-03 |
+| 3 | AgeRules + infant child detection (C-20) | WP-14 | — | ✅ done | VG-03 ✅ |
 | 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | ⬜ | VG-04 |
 | 5 | Entry screens print through the coordinator + C-21 | WP-06 | — | ⬜ | VG-05 |
 | 6 | Bulk print through the coordinator, reports Failed | WP-06 | — | ⬜ | VG-06 |
@@ -421,7 +421,51 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 - **Touches:** new `Domain/Common/AgeRules.cs` · `CultureAntibioticDisplay.cs:5` · `GetCultureEntryGridQueryHandler.cs:33` · new `AgeRulesTests.cs`.
 - **Gate:** VG-03. Migration: none.
 
-- [ ] 1–10. Plan: `ToWholeYears` + `IsUnderTwelve`; document that BR-04 governs range matching, not age classification; replace the single site; do **not** touch the validator or the editor view models.
+#### Stages 1–7 — Plan, Execution, Verification, VG-03
+
+**Edits:** new `src/TopLab.Domain/Common/AgeRules.cs` · `GetCultureEntryGridQueryHandler.cs:33` (the one C-20 site) · new `tests/TopLab.Domain.Tests/Common/AgeRulesTests.cs` · `CultureResultQueryHandlerTests.cs` (+5 grid tests, `Seed` overload taking an `AgeUnit`).
+
+**Design note:** `AgeRules` lives in Domain and therefore cannot reference `CultureAntibioticDisplay` (Application). The threshold is `AgeRules.ChildAgeThresholdYears = 12`; the Application-side `CultureAntibioticDisplay.ChildAgeThresholdYears = 12` is **kept** per VG-03 and **pinned by a test** so the two cannot drift silently. Two `using`s removed from the query handler because `AgeUnit` is no longer referenced there — but `CultureAndAntibiotics.Common` had to be **re-added** on the first build attempt because `IsDisplayable` at `:36` still needs it.
+
+**⚠️ The plan contradicts itself in S3. Disclosed, and the plan's *implementation* was followed:**
+
+| Plan VG-03 expectation | Reality | Verdict |
+|---|---|---|
+| `AgeRules_Month13_IsNotChild` | 13 months = 1 year 1 month ⇒ **under 12** | plan expectation **wrong** |
+| `AgeRules_Month144_IsNotChild` | 144 months = exactly 12 years ⇒ not under 12 | ✓ correct |
+| `AgeRules_Day365_IsNotChild` | 365 days = exactly 1 year ⇒ **under 12** | plan expectation **wrong** |
+| `AgeRules_Day2000_IsNotChild` | 2000 days ≈ 5.5 years ⇒ **under 12** | plan expectation **wrong** |
+| `GetCultureEntryGrid_Child12_IncludesChildrenAntibiotics` | `12 < 12` is false ⇒ a 12-year-old is **not** a child, so the children-only antibiotic is hidden | plan item name **contradicts its own implementation** |
+
+Arithmetic verified independently (`v // unit`): 13/12=1 · 364/365=0 · 365/365=1 · 2000/365=5 · 4380/365=12. The plan's *code snippet* (`Month => ageValue / MonthsPerYear`, `IsUnderTwelve => ToWholeYears < 12`) is **correct and implemented verbatim**; only its **test expectations** are wrong. The tests were corrected to medical reality (`143 months` still a child, `144` not; `4379 days` still a child, `4380` not) and the grid test asserts the real boundary with an explanatory comment. **No product code was bent to satisfy a wrong expectation.** This is not an SD-10 plan-vs-code mismatch — the plan is self-inconsistent, and the medical reading is not in doubt.
+
+**VG-03 item by item:**
+
+| Item | Result | Evidence |
+|---|---|---|
+| Build 0/0 | ✅ | 0/0 |
+| `AgeRules_Year11/12/13` | ✅ | via `[Theory]` on the Year unit |
+| `AgeRules_Month11_IsChild` ← **the real defect** | ✅ | `(Month, 11)` ⇒ child |
+| `AgeRules_Month13/144` | ✅ **corrected** | 13 ⇒ child, 144 ⇒ not; 143 added as the boundary |
+| `AgeRules_Day364/365/2000` | ✅ **corrected** | 364/365/2000 ⇒ child; 4379 ⇒ child, 4380 ⇒ not |
+| `AgeRules_Zero_IsChild` | ✅ | 0 ⇒ child |
+| `GetCultureEntryGrid_Infant11Months_IncludesChildrenAntibiotics` ← **decisive** | ✅ | an 11-month-old now sees the children-flagged antibiotic (previously hidden) |
+| `GetCultureEntryGrid_Child12_…` | ✅ **corrected** | a 12-year-old is not a child; antibiotic 2 hidden |
+| `GetCultureEntryGrid_Infant23Months_…` (added) | ✅ | 23 months ⇒ child |
+| `GetCultureEntryGrid_AdultHidesChildrenOnlyAntibiotics` | ✅ | 30 y ⇒ only antibiotic 1 |
+| `CultureAntibioticDisplay.ChildAgeThresholdYears` still defined | ✅ | `:5` = 12, pinned by a new test |
+| `AnalyteReferenceRangeBand.Matches` unchanged (BR-04 intact) | ✅ | `git diff` on the file is **empty**; its existing tests still pass |
+| `grep "AgeUnit == AgeUnit.Year"` in `Features/CultureResults/` ⇒ 0 | ✅ | **0** |
+| **No sweep** (C-20): validator + editor view models untouched | ✅ | `git diff --name-only` lists **only** the query handler and its test file |
+| No migration · zero-drift | ✅ | Persistence diff empty; `No changes have been made to the model since the last migration.` |
+
+**Counts vs agent G0:** Domain **502 (Δ +18)** · Application **1521 (Δ +19; cumulative S1+S2+S3)** · Infrastructure **221 (Δ 0)** · Presentation **57 (Δ 0)** · Persistence **13+1 (Δ 0)**. Nothing below baseline; no new warning.
+
+**Deliberately not done:** no change to `SaveAnalyteReferenceRangeCommandValidator.cs:20`, `AnalyteEditorViewModel.cs:16`, `TestEditorViewModel.cs:90,125`, `PatientEditorViewModel.cs:67` — C-20 says these are unrelated to classification · no enum change (SD-4) · no migration.
+
+- [x] **Stage 8 — Documentation Update:** no user-facing string changed.
+- [x] **Stage 9 — Memory Status Update:** Slice Index S3 → ✅ · Execution Log appended · Current Status 3/16.
+- [x] **Stage 10 — Git:** local commit; explicit paths only.
 
 ### Slice 4 — IResultPrintCoordinator (WP-06)
 
@@ -605,11 +649,11 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 ## Current Status
 
-- Slices complete: **2 / 16**.
+- Slices complete: **3 / 16**.
 - **SD-13 satisfied** — the S2 prerequisite for S9 has landed and is committed.
-- Current slice: **Slice 3** — AgeRules + infant child detection (C-20).
+- Current slice: **Slice 4** — IResultPrintCoordinator (WP-06; owns `ReportPrintingService.cs` from here).
 - Baseline: **MEASURED BY THE AGENT** — all Δ = 0, Infrastructure 221/221 (see the agent's own G0 table).
-- Commits: 2.
+- Commits: 3 (plus 2 correction commits from S2).
 - **Agent's measured baseline, binding from here on:** Domain **484** · Application **1502** (grew to 1511 in S1) · Infrastructure **221** · Presentation **57** · Persistence **13 + 1 skipped**. **Full suite 2277 + 1 skipped.** Build **0/0**.
 - Notes: **S2 must land before S9.** **S4 must land before S13.** SD-16 (C-21) is decided in S5 Stage 4. SD-2 forbids any commercial-name artefact.
 

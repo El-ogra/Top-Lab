@@ -28,12 +28,59 @@ public class CultureResultQueryHandlerTests
     }
 
     [Fact]
-    public async Task Grid_ShowsChildrenFlaggedAntibiotic_WhenChildIsUnder12()
-    {
-        var db = Seed(age: 11);
-        var result = await new GetCultureEntryGridQueryHandler(db).Handle(new GetCultureEntryGridQuery(10), CancellationToken.None);
-        Assert.Equal(new[] { 1, 2 }, result.Value!.Rows.Select(x => x.AntibioticId));
-    }
+        public async Task Grid_ShowsChildrenFlaggedAntibiotic_WhenChildIsUnder12()
+        {
+            var db = Seed(11);
+            var result = await new GetCultureEntryGridQueryHandler(db).Handle(new GetCultureEntryGridQuery(10), CancellationToken.None);
+            Assert.Equal(new[] { 1, 2 }, result.Value!.Rows.Select(x => x.AntibioticId));
+        }
+
+        // ---- W-02 Slice 3 / C-20: the decisive infant case ----
+
+        /// <summary>The original defect: stored as (Month, 11), the child antibiotic was hidden.</summary>
+        [Fact]
+        public async Task GetCultureEntryGrid_Infant11Months_IncludesChildrenAntibiotics()
+        {
+            var db = Seed(11, AgeUnit.Month);
+            var result = await new GetCultureEntryGridQueryHandler(db).Handle(new GetCultureEntryGridQuery(10), CancellationToken.None);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(new[] { 1, 2 }, result.Value!.Rows.Select(x => x.AntibioticId));
+        }
+
+        [Fact]
+            public async Task GetCultureEntryGrid_Child12_IncludesChildrenAntibiotics()
+            {
+                // Boundary note: 12 is NOT < 12, so a 12-year-old is not classified as a child and the
+                // children-only antibiotic is hidden. The plan's VG-03 item name
+                // "GetCultureEntryGrid_Child12_IncludesChildrenAntibiotics" contradicts its own
+                // implementation ("< 12"); the implementation is correct and is what ships.
+                var db = Seed(12, AgeUnit.Year);
+                var result = await new GetCultureEntryGridQueryHandler(db).Handle(new GetCultureEntryGridQuery(10), CancellationToken.None);
+                Assert.Equal(new[] { 1 }, result.Value!.Rows.Select(x => x.AntibioticId));
+            }
+
+            [Fact]
+            public async Task GetCultureEntryGrid_Infant23Months_IncludesChildrenAntibiotics()
+            {
+                var db = Seed(23, AgeUnit.Month);
+                var result = await new GetCultureEntryGridQueryHandler(db).Handle(new GetCultureEntryGridQuery(10), CancellationToken.None);
+                Assert.Equal(new[] { 1, 2 }, result.Value!.Rows.Select(x => x.AntibioticId));
+            }
+
+        [Fact]
+        public async Task GetCultureEntryGrid_AdultHidesChildrenOnlyAntibiotics()
+        {
+            var db = Seed(30, AgeUnit.Year);
+            var result = await new GetCultureEntryGridQueryHandler(db).Handle(new GetCultureEntryGridQuery(10), CancellationToken.None);
+            Assert.Equal(new[] { 1 }, result.Value!.Rows.Select(x => x.AntibioticId));
+        }
+
+        /// <summary>The Application-side threshold constant is kept (plan VG-03) and pinned here.</summary>
+        [Fact]
+        public void CultureAntibioticDisplay_ChildAgeThresholdYears_IsStillTwelve()
+        {
+            Assert.Equal(12, TopLab.Application.Features.CultureAndAntibiotics.Common.CultureAntibioticDisplay.ChildAgeThresholdYears);
+        }
 
     [Fact]
     public async Task Report_UsesSavedRowsOnlyAndEchoesSetting()
@@ -50,8 +97,14 @@ public class CultureResultQueryHandlerTests
 
     private static FakeApplicationDbContext Seed(int age)
     {
+        return Seed(age, AgeUnit.Year);
+    }
+
+    /// <summary>W-02 C-20: the age unit matters — an infant is stored as (Month, 11), not (Year, 0).</summary>
+    private static FakeApplicationDbContext Seed(int age, AgeUnit unit)
+    {
         var db = new FakeApplicationDbContext();
-        db.Patients.Add(Patient.Create(PatientId.Create(1), "Patient", Sex.Female, age, AgeUnit.Year, DateTime.UtcNow));
+        db.Patients.Add(Patient.Create(PatientId.Create(1), "Patient", Sex.Female, age, unit, DateTime.UtcNow));
         db.Tests.Add(Test.Create(TestId.Create(1), "Culture", "Culture report", "Culture", "CULT", 1, 100m, ResultKind.Culture, isCultureType: true));
         db.PatientTests.Add(PatientTest.Create(PatientTestId.Create(10), PatientId.Create(1), TestId.Create(1), 100m));
         db.Antibiotics.Add(Antibiotic.Create(AntibioticId.Create(1), "Normal"));

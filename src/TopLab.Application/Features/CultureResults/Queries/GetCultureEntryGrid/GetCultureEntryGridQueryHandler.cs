@@ -3,7 +3,7 @@ using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.CultureAndAntibiotics.Common;
 using TopLab.Application.Features.CultureResults.Common;
-using TopLab.Domain.Common.Enums;
+using TopLab.Domain.Common;
 using TopLab.Domain.Patients;
 using TopLab.Domain.Results;
 using TopLab.Domain.Tests;
@@ -30,7 +30,7 @@ public sealed class GetCultureEntryGridQueryHandler : IRequestHandler<GetCulture
                              on conditionJoin.MedicalConditionTypeId.Value equals conditionType.Id.Value
                          select conditionType.Category;
         var pregnant = PregnancySignal.IsPregnancyIndicated(categories);
-        var child = patient.AgeUnit == AgeUnit.Year && patient.AgeValue < CultureAntibioticDisplay.ChildAgeThresholdYears;
+        var child = AgeRules.IsUnderTwelve(patient.AgeValue, patient.AgeUnit);
         var saved = _db.Set<CultureAntibioticResult>().Where(x => x.PatientTestId.Value == pt.Id.Value).ToDictionary(x => x.AntibioticId.Value);
         var attachedIds = _db.Set<CultureAntibioticAttachment>().Where(x => x.TestId.Value == test.Id.Value).Select(x => x.AntibioticId.Value).ToHashSet();
         var antibiotics = _db.Set<Antibiotic>().Where(x => attachedIds.Contains(x.Id.Value)).ToList();
