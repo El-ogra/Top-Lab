@@ -11,6 +11,7 @@ public sealed class CultureAntibioticAttachmentConfiguration : IEntityTypeConfig
         b.HasKey(e => new { e.TestId, e.AntibioticId });
         b.Property(e => e.TestId).HasConversion(v => v.Value, v => TopLab.Domain.Common.Ids.TestId.Create(v));
         b.Property(e => e.AntibioticId).HasConversion(v => v.Value, v => TopLab.Domain.Common.Ids.AntibioticId.Create(v));
+        b.Property(e => e.SensitivityThresholdMm).HasColumnType("decimal(4,1)").HasPrecision(4, 1).IsRequired(false);
         // FK via convention (removed explicit HasOne to avoid shadow)
 
         // FK via convention (removed explicit HasOne to avoid shadow)

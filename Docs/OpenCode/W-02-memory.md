@@ -228,7 +228,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 6 | Bulk print through the coordinator, reports Failed | WP-06 | — | ✅ done | VG-06 ✅ |
 | 7 | ReportSettings print flags + `AddCombinedReportPrintOptions` | WP-13 | **M1** | ✅ done | VG-07 ✅ |
 | 8 | Combined-report options, outside-lab note, test comments | WP-13 | — | [x] DONE | VG-08 PASS |
-| 9 | `AddCultureMicroscopyAndZone` | WP-14 | **M2** | ⬜ | VG-09 |
+| 9 | `AddCultureMicroscopyAndZone` | WP-14 | **M2** | [x] DONE | VG-09 PASS |
 | 10 | `AddAntibioticMasterFields` | WP-14 | **M3** | ⬜ | VG-10 |
 | 11 | Culture sensitivity table + microscopy block in the report | WP-14 | — | ⬜ | VG-11 |
 | 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | ⬜ | VG-12 |
@@ -797,7 +797,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Gate:** VG-09. Migration: **M2**.
 - **SD-13: Stage 1 must confirm the S2 commit exists in `git log`.** Hash: ________
 
-- [ ] 1–10. Plan: 1:1 on `PatientTestId` mirroring `CultureResultConfiguration.cs:11,19`; `decimal(4,1)` nullable for both new columns; 20-char field cap; Config before migration; negative test asserting no commercial column.
+- [x] 1–10. **DONE.** SD-13 confirmed at Stage 1 (`15e51bc` in `git log`). Domain → Config → `migrations add` order kept. `decimal(4,1)` nullable for both columns (C-24 pattern). Self-corrections during the slice: (1) two xUnit2031 warnings fixed (predicate overload); (2) two metadata tests initially asserted `GetColumnType()` which needs a relational provider — replaced with provider-agnostic assertions (presence/nullability/CLR type), column type pinned by the migration-ops tests. VG-09 green item-by-item: S2-commit gate, `has-pending` before (changes detected), build 0/0, CreateTable PK+cascade, both `decimal(4,1)` nullable, Down drops all, negative commercial test, microscopy 20-char cap + cascade metadata, zone-survives-resave (proves S2), 11 old untouched, drift clean after.
 
 ### Slice 10 — `AddAntibioticMasterFields` (WP-14) — **M3**
 

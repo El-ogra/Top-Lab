@@ -13,6 +13,9 @@ public sealed class CultureAntibioticResult : Entity<CultureAntibioticResultId>
     /// <summary>Nullable after WP-03 repair (0→NULL / Unspecified); values 0–3 unchanged (SD-9).</summary>
     public SensitivityCategory? SensitivityCategory { get; private set; }
 
+    /// <summary>W-02 S9 (WP-14): inhibition-zone diameter in millimetres (0.1 mm).</summary>
+    public decimal? InhibitionZoneMm { get; private set; }
+
     private CultureAntibioticResult()
     {
     }
@@ -35,5 +38,16 @@ public sealed class CultureAntibioticResult : Entity<CultureAntibioticResultId>
         public void UpdateSensitivity(SensitivityCategory? value)
         {
             SensitivityCategory = value;
+        }
+
+        /// <summary>W-02 S9 (WP-14): zone diameter in millimetres, 0–100.</summary>
+        public void SetInhibitionZone(decimal? millimetres)
+        {
+            if (millimetres is < 0 or > 100)
+            {
+                throw new ArgumentException("Inhibition zone must be between 0 and 100 mm.", nameof(millimetres));
+            }
+
+            InhibitionZoneMm = millimetres;
         }
     }

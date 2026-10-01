@@ -40,6 +40,7 @@ public partial class ApplicationDbContext
     public Microsoft.EntityFrameworkCore.DbSet<ProfileResultAmendment> ProfileResultAmendments => Set<ProfileResultAmendment>();
     public Microsoft.EntityFrameworkCore.DbSet<CultureResult> CultureResults => Set<CultureResult>();
     public Microsoft.EntityFrameworkCore.DbSet<CultureAntibioticResult> CultureAntibioticResults => Set<CultureAntibioticResult>();
+    public Microsoft.EntityFrameworkCore.DbSet<CultureMicroscopy> CultureMicroscopies => Set<CultureMicroscopy>();
     public Microsoft.EntityFrameworkCore.DbSet<PaymentOperation> PaymentOperations => Set<PaymentOperation>();
     public Microsoft.EntityFrameworkCore.DbSet<InvoiceIssue> InvoiceIssues => Set<InvoiceIssue>();
     public Microsoft.EntityFrameworkCore.DbSet<PriceList> PriceLists => Set<PriceList>();
