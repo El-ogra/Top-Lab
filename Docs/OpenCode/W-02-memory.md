@@ -223,7 +223,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 1 | Culture sensitivity write path accepts NULL (C-19) | WP-14 | — | ✅ done | VG-01 ✅ |
 | 2 | SaveCultureResults updates rows instead of recreating them | WP-14 | — | ✅ done | VG-02 ✅ |
 | 3 | AgeRules + infant child detection (C-20) | WP-14 | — | ✅ done | VG-03 ✅ |
-| 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | ⬜ | VG-04 |
+| 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | 🔴 blocked | VG-04 — **owner decision needed** |
 | 5 | Entry screens print through the coordinator + C-21 | WP-06 | — | ⬜ | VG-05 |
 | 6 | Bulk print through the coordinator, reports Failed | WP-06 | — | ⬜ | VG-06 |
 | 7 | ReportSettings print flags + `AddCombinedReportPrintOptions` | WP-13 | **M1** | ⬜ | VG-07 |
@@ -475,6 +475,68 @@ Arithmetic verified independently (`v // unit`): 13/12=1 · 364/365=0 · 365/365
 
 - [ ] 1–10. Plan: reuse `FakeReportPrintingService`; build-fails ⇒ zero tokens; print-fails ⇒ `Printed=false` + verbatim Arabic error; **zero** `MarkPrinted` references.
 
+#### Stages 1–3 — STOPPED at Stage 3 (SD-10)
+
+**Stage 1 — Pre-Execution Verification:** HEAD `d8457da7630b119026bcf3fcecd6b232b4c198fa` (S3) · `git status --porcelain` = 2 untracked W-02 package files only · build 0/0 · Domain **502** · Application **1521** · Infrastructure **221** · Presentation **57** · Persistence **13+1** — all at or above baseline.
+
+**Stage 3 — File Analysis found TWO plan-vs-code contradictions, both material to what S4 must build. Per SD-10 the loop halts here, before any edit.**
+
+---
+
+### 🔴 STOP REPORT — S4 (SD-10, plan contradicts live code)
+
+#### STOP #1 — `BuildProfileReportQuery` does not exist
+
+W-02.md §5 (S4) line: «لكل `kind`: `BuildProfileReportQuery` (موجود)» — "existing".
+
+```bash
+$ grep -rn "BuildProfileReportQuery" src/ tests/ --include=*.cs | wc -l
+0
+```
+
+**Reality:** zero occurrences anywhere. The real query is **`GetProfileReportQuery`** at `src/TopLab.Application/Features/ProfileResults/Queries/GetProfileReport/GetProfileReportQuery.cs:9`, returning `Result<ProfileReportDto>` (`ProfileResultDtos.cs:52-62`). This is the **same class of error as C-23** (a named symbol that does not exist), already corrected once in §1 and repeated here.
+
+**Why it changes what S4 builds:** the coordinator's `ProfileReport` branch has no command to send. Either the plan meant `GetProfileReportQuery`, or the profile path needs a new `BuildProfileReportCommand` — which is **not in S4's scope table** and would be a new command + handler + DTO envelope the plan never mentions.
+
+#### STOP #2 — `ResultPrintOutcome.PdfPath` cannot be populated, and no port can supply it
+
+W-02.md §5 specifies `ResultPrintOutcome(int PatientTestId, ResultPrintKind Kind, bool Printed, string? PdfPath, string? ErrorMessage)` and VG-04 asserts `ResultPrintCoordinator_BuildSucceedsPrintSucceeds_ReturnsPdfPath`.
+
+**Reality:**
+
+```bash
+$ grep -n "Task<Result>" src/TopLab.Application/Common/Interfaces/IReportPrintingService.cs
+11:    Task<Result> PrintReportAsync(string reportToken, CancellationToken cancellationToken = default);
+```
+
+`ReportPrintingService.cs:62-67` writes the PDF to a temp path **and discards it**, returning bare `Result.Success()` with a comment «The temp PDF is intentionally left in the OS temp directory». **No port in the entire codebase returns a produced PDF path** — the only `Result<string>` is `IDatabaseMaintenanceService.BackupNowAsync` (a backup destination, unrelated). `IPatientReportPdfExporter.ExportAsync` takes a path *in* rather than returning one.
+
+**Why it changes what S4 builds:** `PdfPath` is unsatisfiable without **changing `IReportPrintingService`'s signature**. Blast radius: **10 files** (3 production print handlers + the interface + the Infrastructure service + `FakeReportPrintingService` + 5 Infrastructure test call sites + `FakeReportPrintingService`'s consumers).
+
+**None of those files is in S4's scope table**, and S4 explicitly says «`IAppUnitOfWork`-type widening of a port is not authorised» in spirit (SD-5 freezes `IAppLogger`; the same reasoning would apply to another frozen port). SD-14 also reserves `ReportPrintingService.cs` for S4 but S13 returns to it — a signature change would collide with that two-slice ownership.
+
+**This also breaks S5's mandated user-facing text**, which is byte-for-byte from the plan: «تمت الطباعة (ملف: <اسم الملف>).» — there is no file name to interpolate.
+
+#### What I did NOT do, deliberately
+
+- **No edit to any file.** The working tree is clean; S4 has produced **zero** changes.
+- **I did not widen `IReportPrintingService`.** That is a port-signature change to a shared abstraction used by 3 shipped print handlers, driven by a plan field the plan never scoped. Choosing between "change the port", "drop `PdfPath`", and "add an exporter that writes to a known path" is an **architecture decision the plan does not make** ⇒ «بانتظار قرار المالك — غير مُدرج في القائمة الأصلية».
+- **I did not** invent a `BuildProfileReportCommand`.
+
+#### The three options (owner decision required)
+
+| Option | Change | Consequence |
+|---|---|---|
+| **A** | Drop `PdfPath` from `ResultPrintOutcome`; S5 text becomes «تمت الطباعة.» | 0 changes to existing ports. But S5's registered Arabic text loses the file name, and the plan's registered UI string must change. |
+| **B** | Change `IReportPrintingService` to return the path | 10 files, 3 shipped handlers, 2 Infrastructure behaviours. Widens a shared port — architectural. |
+| **C** | Add a **new** read-only port (e.g. `ILastPrintedPdfLocator`) that returns the temp path of the last dispatch | New abstraction; S15 already owns temp-dir work, so this interacts with S15's owned-folder change. |
+
+#### Recommendation (mine, not a decision)
+
+**Option A.** It is the smallest change that keeps every existing port frozen, and the Arabic text still communicates the outcome honestly. The file name adds little to a lab operator — the sheet comes out of the printer either way. Options B and C both touch a frozen/shared abstraction for cosmetic gain, which is exactly what SD-5 and SD-7 exist to prevent.
+
+**Awaiting the owner's decision. The loop is stopped per SD-10 and will not proceed to S5 until this is settled.**
+
 ### Slice 5 — Entry screens print through the coordinator + C-21 (WP-06)
 
 - **Goal:** the two dishonest buttons become honest; the dead command is resolved.
@@ -641,6 +703,7 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 | 2026-10-01 | — | authoring | Wave 2 package authored against `94292c2` from the W-01/S-06/S-07 loop-engineering trios; 25 plan-vs-code corrections registered; 16 slices, 3 migrations. | OK |
 | 2026-10-01 | — | G0 | **Agent measured its own baseline** (build + all 5 test projects + drift gate). Domain 484 · Application 1502 · Infrastructure 221 · Presentation 57 · Persistence 13+1 · full 2277+1 · build 0/0 · `has-pending-model-changes` = no changes · Docker absent · `dotnet-ef` 8.0.30. **Every Δ vs the owner's table = 0.** | ✅ PASS |
 | 2026-10-01 | S2 | 9 | **Process deviation, disclosed:** I first wrote S1's hash (`871332f`) into the SD-13 checkpoint by mistake, because the S2 commit did not exist yet when the row was drafted. I committed S2 (`15e51bc`), then corrected the hash in a **second** commit (`c04e88f`). That means S2 spans **two** commits instead of one, which is a deviation from SD-9's "one local commit per verified slice". **`amend`/`reset` are forbidden, so the extra commit was not rewritten away.** Both are local; nothing was pushed. From S3 on: read the hash *after* committing, or write the row with the short hash resolved in the next commit. | ⚠️ disclosed |
+| 2026-10-01 | S4 | 3 | **STOP (SD-10).** Two plan claims contradicted live code: (1) `BuildProfileReportQuery` — **0 occurrences repo-wide**, real name is `GetProfileReportQuery`; (2) `ResultPrintOutcome.PdfPath` is unsatisfiable — `IReportPrintingService` returns bare `Result` and `ReportPrintingService:62-67` discards the temp path; widening it touches **10 files** and 3 shipped handlers, none in S4's scope. **No file edited; tree clean. Awaiting owner decision: drop `PdfPath` (A, recommended) / widen the port (B) / add a locator port (C).** | 🔴 STOP |
 | 2026-10-01 | S2 | 1–10 | SD-13 prerequisite landed: `CultureAntibioticResult.UpdateSensitivity` + three-way diff in `SaveCultureResultsCommandHandler` (update-in-place / create-new / remove-missing). VG-02 green: build 0/0, Application **1516 (+5)**, all others Δ 0, `_db.Remove(old)` now **0** hits, migration count **11**, Persistence diff empty, zero-drift "no changes". Caught 3 self-inflicted issues honestly: a wrong assertion about `CultureResult` trimming (fixed in the test, product code untouched), the fake `SaveChangesAsync` assigning no ids, and a brace-placement error. | ✅ committed |
 | 2026-10-01 | S2 | SD-13 | **SD-13 checkpoint — the S2 prerequisite commit hash is `15e51bc` (full: `15e51bcb…`; resolve with `git log --oneline` or `git rev-parse 15e51bc`).** S9 Stage 1 MUST find this commit in `git log` before creating `AddCultureMicroscopyAndZone`; if absent, STOP. | pinned |
 | 2026-10-01 | S1 | 1–10 | C-19: `CultureSensitivityInput.SensitivityCategory` `int`⇒`int?` · validator accepts `null` · conditional cast in the handler · deleted `.Where(HasValue)` in `CultureEntryViewModel`. +10 tests. VG-01 fully green: build 0/0, Application **1511 (+9)**, all others Δ 0, old validator pattern `0` hits, Persistence diff empty, zero-drift "no changes". One self-caught counting error on the migration count (see Slice 1 note). | ✅ committed |
@@ -649,9 +712,9 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 ## Current Status
 
-- Slices complete: **3 / 16**.
+- Slices complete: **3 / 16** — **loop STOPPED at S4 Stage 3 (SD-10).**
 - **SD-13 satisfied** — the S2 prerequisite for S9 has landed and is committed.
-- Current slice: **Slice 4** — IResultPrintCoordinator (WP-06; owns `ReportPrintingService.cs` from here).
+- Current slice: **Slice 4** — BLOCKED on an owner decision (see Stop Report).
 - Baseline: **MEASURED BY THE AGENT** — all Δ = 0, Infrastructure 221/221 (see the agent's own G0 table).
 - Commits: 3 (plus 2 correction commits from S2).
 - **Agent's measured baseline, binding from here on:** Domain **484** · Application **1502** (grew to 1511 in S1) · Infrastructure **221** · Presentation **57** · Persistence **13 + 1 skipped**. **Full suite 2277 + 1 skipped.** Build **0/0**.
@@ -661,4 +724,17 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 ## Stop Report
 
-(none — no stop condition has triggered)
+**🔴 STOP — S4, 2026-10-01, SD-10 (plan contradicts live code).**
+
+Two claims in W-02.md §5 (S4) are false against the pinned code:
+
+1. **`BuildProfileReportQuery` does not exist.** `grep -rn "BuildProfileReportQuery" src/ tests/ --include=*.cs | wc -l` ⇒ **0**. The real query is `GetProfileReportQuery` (`Features/ProfileResults/Queries/GetProfileReport/GetProfileReportQuery.cs:9`). Same class of error as C-23.
+2. **`ResultPrintOutcome.PdfPath` is unsatisfiable.** `IReportPrintingService.PrintReportAsync` returns bare `Task<Result>` (`:11`); `ReportPrintingService.cs:62-67` writes the temp PDF and **discards the path**, returning `Result.Success()`. No port in the codebase returns a produced PDF path. Populating `PdfPath` requires changing a shared port's signature — **10 files**, 3 shipped print handlers, none in S4's scope table. It also breaks S5's mandated Arabic text «تمت الطباعة (ملف: \<اسم الملف\>).», which has no filename to interpolate.
+
+**Status:** S1–S3 complete and committed (`871332f`, `15e51bc`, `d8457da`). **S4 has made zero edits — the working tree is clean.** Awaiting an owner decision among:
+
+- **A (recommended)** drop `PdfPath`; S5 success text becomes «تمت الطباعة.»
+- **B** change `IReportPrintingService` to return the path (widens a shared port)
+- **C** add a new read-only port returning the temp path of the last dispatch
+
+Not a defect I may decide: choosing between freezing or widening a shared port is an architecture decision absent from §0. Reported as «بانتظار قرار المالك — غير مُدرج في القائمة الأصلية».
