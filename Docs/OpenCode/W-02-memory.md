@@ -223,7 +223,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 1 | Culture sensitivity write path accepts NULL (C-19) | WP-14 | — | ✅ done | VG-01 ✅ |
 | 2 | SaveCultureResults updates rows instead of recreating them | WP-14 | — | ✅ done | VG-02 ✅ |
 | 3 | AgeRules + infant child detection (C-20) | WP-14 | — | ✅ done | VG-03 ✅ |
-| 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | 🔴 blocked | VG-04 — **owner decision needed** |
+| 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | ✅ done (AD-1/AD-2) | VG-04 ✅ |
 | 5 | Entry screens print through the coordinator + C-21 | WP-06 | — | ⬜ | VG-05 |
 | 6 | Bulk print through the coordinator, reports Failed | WP-06 | — | ⬜ | VG-06 |
 | 7 | ReportSettings print flags + `AddCombinedReportPrintOptions` | WP-13 | **M1** | ⬜ | VG-07 |
@@ -536,6 +536,49 @@ $ grep -n "Task<Result>" src/TopLab.Application/Common/Interfaces/IReportPrintin
 **Option A.** It is the smallest change that keeps every existing port frozen, and the Arabic text still communicates the outcome honestly. The file name adds little to a lab operator — the sheet comes out of the printer either way. Options B and C both touch a frozen/shared abstraction for cosmetic gain, which is exactly what SD-5 and SD-7 exist to prevent.
 
 **Awaiting the owner's decision. The loop is stopped per SD-10 and will not proceed to S5 until this is settled.**
+#### Owner decision applied — Stages 4–7 (AD-1 + AD-2), VG-04
+
+**AD-1 implemented:** `ResultPrintOutcome(PatientTestId, Kind, Printed, ErrorMessage)` — **no `PdfPath`**. `IReportPrintingService` **untouched** (`git diff` on both the interface and `ReportPrintingService.cs` is **empty**) — exactly the owner-approved Option A.
+**AD-2 implemented:** the profile branch sends `GetProfileReportQuery`; **no new `BuildProfileReportCommand` invented**.
+
+**Files:** new `IResultPrintCoordinator.cs` + `ResultPrintCoordinator.cs` (Application) · `Application/DependencyInjection.cs` (`AddScoped`) · `BulkPrintDtos.cs` (`BulkPrintOutcomes.Failed` for S6) · new `ResultPrintCoordinatorTests.cs` · `FakeSender` **extended** (culture/profile/build-command helpers) — `FakeReportPrintingService` reused as the plan requires, **not** duplicated.
+
+**Design notes worth recording:**
+- The coordinator injects **only** `ISender` + `IReportPrintingService` — **no `IApplicationDbContext`**, so there is literally no state to change. That is how "never mark" is enforced structurally, not just by convention.
+- The patient id needed by `BuildCombinedReportCommand`/`BuildBlankReportCommand` is resolved through the feature's own read queries (`GetCultureReportQuery`, then `GetProfileReportQuery`) rather than by opening a second ownership rule.
+- The culture/simple/blank branches all wrap in a `ReportPrintEnvelope` internally; the profile branch re-wraps `ProfileReportDto` as a single-line `CombinedReportDto`.
+
+**Stage 6 — build:** `Build succeeded. 0 Warning(s) 0 Error(s)`.
+
+**VG-04, item by item:**
+
+| VG-04 item | Result | Evidence |
+|---|---|---|
+| Build 0/0, no count below baseline | ✅ | 0/0. Domain **502 (Δ0)** · Application **1529 (+8)** · Infrastructure **221 (Δ0)** · Presentation **57 (Δ0)** · Persistence **13+1 (Δ0)** |
+| `..._BuildSucceedsPrintSucceeds_ReturnsPdfPath` | ✅ **superseded by AD-1** | `ResultPrintCoordinator_BuildSucceedsPrintSucceeds_ReturnsPrintedTrue` — `Printed=true`, `ErrorMessage=null`, exactly one token |
+| `..._PrintFails_ReturnsPrintedFalseAndNoMarking` ← decisive | ✅ | printer returns `Error.Unexpected("تعذر طباعة التقرير.")` ⇒ `Printed=false` and the message is **verbatim**, not reworded |
+| `..._BuildFails_DoesNotCallPrinting` | ✅ | `printing.Tokens` **empty** — a failed build never reaches the printer |
+| `..._ReturnsArabicErrorMessage` | ✅ | `Error.NotFound("التحليل غير موجود")` surfaced unchanged |
+| `..._BlankReport_PrintsWithoutResultLines` | ✅ | Blank envelope path, one token |
+| `..._CultureReport_BuildsThroughCultureQuery` | ✅ | culture branch goes through `GetCultureReportQuery` |
+| `..._ProfileReport_…` (AD-2) | ✅ | `GetCultureEntryGridProfileReport_BuildsThroughGetProfileReportQuery` via `GetProfileReportQuery` |
+| `..._NeverCallsMarkPrinted` — structural | ✅ | `grep -c "MarkPrinted" ResultPrintCoordinator.cs` ⇒ **0** |
+| No new port widening (AD-1) | ✅ | `IReportPrintingService.cs` and `ReportPrintingService.cs` diffs **empty** |
+| No migration · zero-drift | ✅ | `No changes have been made to the model since the last migration.`; migration count **11**; Persistence diff empty |
+
+**⚠️ One transient Infrastructure failure — investigated, not waved away.** A full-suite run reported `Failed: 1, Passed: 220`. A targeted re-run passed 221/221, and **three** further consecutive full runs all passed 221/221. The failing test name could not be reproduced or captured in any subsequent run, so it is recorded as **flaky/environmental**, **not** as a pass and **not** as a regression. Infrastructure's committed state is 221/221.
+
+**Self-corrections during the slice (recorded):**
+1. My first draft of `ResolvePatientAndTestAsync` returned `PrintOwnership(0)` for the culture branch — a real defect that would have built a report for patient 0. Caught on review and rewritten.
+2. `FrozenRangeDto` exists in **two** namespaces with different shapes; my first mapping referenced the wrong one. Fixed — the profile-side record is already the type the combined line expects.
+3. `CultureReportDto` ctor arity (19, not 22) and `WithResponse` type-inference failures in the new tests — both fixed.
+4. The SD-1 doc comment originally contained the forbidden method name, which would have made VG-04's structural grep return 1 instead of 0. Reworded so the grep is genuinely clean.
+
+**Deliberately not done:** no `MarkPrinted` anywhere · no port widening (AD-1) · no `BuildProfileReportCommand` (AD-2) · no new permission code · `BulkPrintOutcomes.Failed` added as data only, S6 does the wiring · no Arabic string invented in this slice.
+
+- [x] **Stage 8 — Documentation Update:** UI-texts register **Table A row for S5 is amended by AD-1**: the success text becomes «تمت الطباعة.» (file name dropped). No new string in S4 itself.
+- [x] **Stage 9 — Memory Status Update:** Slice Index S4 → ✅ · Stop Report marked resolved by owner decision · Execution Log appended.
+- [x] **Stage 10 — Git:** local commit; explicit paths only.
 
 ### Slice 5 — Entry screens print through the coordinator + C-21 (WP-06)
 
@@ -543,7 +586,7 @@ $ grep -n "Task<Result>" src/TopLab.Application/Common/Interfaces/IReportPrintin
 - **Touches:** `ProfileEntryViewModel.cs:343-365` · `CultureEntryViewModel.cs:331-358` · (optionally) delete `MarkResultPrinted/` and its tests.
 - **Gate:** VG-05. Migration: none.
 
-- [ ] 1–10. **SD-16 default = WIRE.** Decision recorded here: ____________. If *delete* is chosen, it needs explicit owner authorization, all four C-26 test files updated, and the report must state that two structural gates were weakened. Texts: «تمت الطباعة (ملف: <اسم الملف>).» and «تعذّرت الطباعة: <السبب>». Keep `IsBusy` try/finally. Do **not** relocate the Infrastructure calls (SD-12).
+- [ ] 1–10. **SD-16 default = WIRE.** Decision recorded here: ____________. If *delete* is chosen, it needs explicit owner authorization, all four C-26 test files updated, and the report must state that two structural gates were weakened. Texts: **«تمت الطباعة.»** (amended by AD-1 — file name dropped) and «تعذّرت الطباعة: <السبب>». Keep `IsBusy` try/finally. Do **not** relocate the Infrastructure calls (SD-12).
 
 ### Slice 6 — Bulk print through the coordinator (WP-06)
 
@@ -668,7 +711,7 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 | Slice | Screen / path | Text | Kind | Source |
 |---|---|---|---|---|
-| 5 | `ProfileEntryViewModel`, `CultureEntryViewModel` — success | «تمت الطباعة (ملف: \<اسم الملف\>).» | Status | plan WP-06 (verbatim) |
+| 5 | `ProfileEntryViewModel`, `CultureEntryViewModel` — success | «تمت الطباعة.» | Status | plan WP-06, **amended by AD-1** — the file name was dropped because no port can report a PDF path |
 | 5 | `ProfileEntryViewModel`, `CultureEntryViewModel` — failure | «تعذّرت الطباعة: \<السبب\>» | Error | plan WP-06 (verbatim) |
 | 7 | `ReportSettingsView.xaml` | «طباعة العنوان الفرعي (اسم المجموعة) في التقرير» | CheckBox label | plan WP-13 (verbatim) |
 | 7 | `ReportSettingsView.xaml` | «طباعة الاختبار المطبوع مرة أخرى دون رسالة» | CheckBox label | plan WP-13 (verbatim) |
@@ -702,6 +745,7 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 |---|---|---|---|---|
 | 2026-10-01 | — | authoring | Wave 2 package authored against `94292c2` from the W-01/S-06/S-07 loop-engineering trios; 25 plan-vs-code corrections registered; 16 slices, 3 migrations. | OK |
 | 2026-10-01 | — | G0 | **Agent measured its own baseline** (build + all 5 test projects + drift gate). Domain 484 · Application 1502 · Infrastructure 221 · Presentation 57 · Persistence 13+1 · full 2277+1 · build 0/0 · `has-pending-model-changes` = no changes · Docker absent · `dotnet-ef` 8.0.30. **Every Δ vs the owner's table = 0.** | ✅ PASS |
+| 2026-10-01 | S4 | 4–10 | **Owner approved Option A (AD-1) + AD-2.** `ResultPrintOutcome` carries no `PdfPath`; `IReportPrintingService` untouched; profile branch uses `GetProfileReportQuery`. Coordinator injects only `ISender` + `IReportPrintingService` — no DbContext, so "never mark" is structural. VG-04 green: build 0/0, Application **1529 (+8)**, all others Δ 0, `grep MarkPrinted` ⇒ **0**, port diffs empty, migration count 11, zero-drift. **One transient Infrastructure failure (1/221) investigated: 3 consecutive full re-runs passed 221/221 — recorded as flaky, not as a pass.** Four self-corrections logged (incl. a draft bug returning patient 0). | ✅ committed |
 | 2026-10-01 | S2 | 9 | **Process deviation, disclosed:** I first wrote S1's hash (`871332f`) into the SD-13 checkpoint by mistake, because the S2 commit did not exist yet when the row was drafted. I committed S2 (`15e51bc`), then corrected the hash in a **second** commit (`c04e88f`). That means S2 spans **two** commits instead of one, which is a deviation from SD-9's "one local commit per verified slice". **`amend`/`reset` are forbidden, so the extra commit was not rewritten away.** Both are local; nothing was pushed. From S3 on: read the hash *after* committing, or write the row with the short hash resolved in the next commit. | ⚠️ disclosed |
 | 2026-10-01 | S4 | 3 | **STOP (SD-10).** Two plan claims contradicted live code: (1) `BuildProfileReportQuery` — **0 occurrences repo-wide**, real name is `GetProfileReportQuery`; (2) `ResultPrintOutcome.PdfPath` is unsatisfiable — `IReportPrintingService` returns bare `Result` and `ReportPrintingService:62-67` discards the temp path; widening it touches **10 files** and 3 shipped handlers, none in S4's scope. **No file edited; tree clean. Awaiting owner decision: drop `PdfPath` (A, recommended) / widen the port (B) / add a locator port (C).** | 🔴 STOP |
 | 2026-10-01 | S2 | 1–10 | SD-13 prerequisite landed: `CultureAntibioticResult.UpdateSensitivity` + three-way diff in `SaveCultureResultsCommandHandler` (update-in-place / create-new / remove-missing). VG-02 green: build 0/0, Application **1516 (+5)**, all others Δ 0, `_db.Remove(old)` now **0** hits, migration count **11**, Persistence diff empty, zero-drift "no changes". Caught 3 self-inflicted issues honestly: a wrong assertion about `CultureResult` trimming (fixed in the test, product code untouched), the fake `SaveChangesAsync` assigning no ids, and a brace-placement error. | ✅ committed |
@@ -712,9 +756,9 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 ## Current Status
 
-- Slices complete: **3 / 16** — **loop STOPPED at S4 Stage 3 (SD-10).**
+- Slices complete: **4 / 16**.
 - **SD-13 satisfied** — the S2 prerequisite for S9 has landed and is committed.
-- Current slice: **Slice 4** — BLOCKED on an owner decision (see Stop Report).
+- Current slice: **Slice 5** — entry screens print through the coordinator + C-21/SD-16.
 - Baseline: **MEASURED BY THE AGENT** — all Δ = 0, Infrastructure 221/221 (see the agent's own G0 table).
 - Commits: 3 (plus 2 correction commits from S2).
 - **Agent's measured baseline, binding from here on:** Domain **484** · Application **1502** (grew to 1511 in S1) · Infrastructure **221** · Presentation **57** · Persistence **13 + 1 skipped**. **Full suite 2277 + 1 skipped.** Build **0/0**.
@@ -724,7 +768,7 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 ## Stop Report
 
-**🔴 STOP — S4, 2026-10-01, SD-10 (plan contradicts live code).**
+**✅ RESOLVED — S4 stop, 2026-10-01 (SD-10).**
 
 Two claims in W-02.md §5 (S4) are false against the pinned code:
 
@@ -738,3 +782,16 @@ Two claims in W-02.md §5 (S4) are false against the pinned code:
 - **C** add a new read-only port returning the temp path of the last dispatch
 
 Not a defect I may decide: choosing between freezing or widening a shared port is an architecture decision absent from §0. Reported as «بانتظار قرار المالك — غير مُدرج في القائمة الأصلية».
+
+### ✅ OWNER DECISION — 2026-10-01: **Option A**
+
+The owner reviewed the three options and **approved the recommended Option A**. This is now a **binding decision** and is equivalent in force to a §0 entry.
+
+**AD-1 (owner, 2026-10-01) — `ResultPrintOutcome` carries no `PdfPath`.**
+`ResultPrintOutcome(PatientTestId, Kind, Printed, ErrorMessage)`. `IReportPrintingService` is **not** widened — its signature stays `Task<Result>` and every existing port and handler is untouched. Consequences, all accepted by the owner:
+- VG-04's `ResultPrintCoordinator_BuildSucceedsPrintSucceeds_ReturnsPdfPath` is **superseded** by `ResultPrintCoordinator_BuildSucceedsPrintSucceeds_ReturnsPrintedTrue`.
+- S5's mandated success text becomes **«تمت الطباعة.»** (not «تمت الطباعة (ملف: \<اسم الملف\>).»). The UI-texts register row for S5 is **superseded** accordingly.
+- SD-5's principle — never widen a shared port for cosmetic gain — is upheld.
+
+**AD-2 (owner-approved consequence of AD-1) — the profile branch uses `GetProfileReportQuery`.**
+`BuildProfileReportQuery` does not exist (0 repo-wide hits). The real query is `GetProfileReportQuery` (`Features/ProfileResults/Queries/GetProfileReport/GetProfileReportQuery.cs:9`), returning `Result<ProfileReportDto>`. The coordinator wraps it in an internally-generated `Combined` envelope, exactly as the plan already prescribes for the culture branch. **No new `BuildProfileReportCommand` is invented.**

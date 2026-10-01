@@ -24,4 +24,7 @@ public static class BulkPrintOutcomes
     public const string BlockedByBalance = "BlockedByBalance";
     public const string NoVerifiedResults = "NoVerifiedResults";
     public const string PatientNotFound = "PatientNotFound";
+
+    /// <summary>W-02 S4/S6 (WP-06): printing was attempted and did not produce a sheet.</summary>
+    public const string Failed = "Failed";
 }

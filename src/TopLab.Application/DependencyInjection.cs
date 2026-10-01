@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Behaviors;
+using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Commands.CreateTest;
 
 namespace TopLab.Application;
@@ -28,6 +29,10 @@ public static class DependencyInjection
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
         });
 
-        return services;
-    }
-}
+        // W-02 S4 (WP-06): the one honest print path. Scoped, because it depends on the
+                // scoped IReportPrintingService.
+                services.AddScoped<IResultPrintCoordinator, ResultPrintCoordinator>();
+
+                return services;
+            }
+        }
