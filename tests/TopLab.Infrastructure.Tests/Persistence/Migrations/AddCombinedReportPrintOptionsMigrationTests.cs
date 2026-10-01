@@ -59,6 +59,15 @@ public class AddCombinedReportPrintOptionsMigrationTests
         // EF 8 exposes KeyValues as a 2-D array indexed [row, column].
         var keyValues = seed.KeyValues;
         Assert.Equal(1, Convert.ToInt32(keyValues[0, 0]));
+        // W-02 S7 fixup (F1): an empty Columns/Values UpdateData emits
+        // "UPDATE [ReportSettings] SET WHERE ..." — invalid T-SQL. Pin both.
+        Assert.Equal(
+            new[] { "PrintGroupSubTitle", "SuppressReprintMessage" },
+            seed.Columns);
+        Assert.Equal(1, seed.Values.GetLength(0));
+        Assert.Equal(2, seed.Values.GetLength(1));
+        Assert.Equal(false, seed.Values[0, 0]);
+        Assert.Equal(false, seed.Values[0, 1]);
     }
 
     [Fact]

@@ -24,12 +24,14 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                 nullable: false,
                 defaultValue: false);
 
+            // W-02 S7 fixup (F1): explicit seed values — an empty UpdateData emits
+            // "UPDATE [ReportSettings] SET WHERE ..." which is invalid T-SQL.
             migrationBuilder.UpdateData(
                 table: "ReportSettings",
                 keyColumn: "ReportSettingsId",
                 keyValue: 1,
-                columns: new string[0],
-                values: new object[0]);
+                columns: new[] { "PrintGroupSubTitle", "SuppressReprintMessage" },
+                values: new object[] { false, false });
         }
 
         /// <inheritdoc />
