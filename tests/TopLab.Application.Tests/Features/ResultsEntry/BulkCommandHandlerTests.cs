@@ -97,7 +97,7 @@ public class BulkCommandHandlerTests
         db.PatientTests.Add(fresh);
         var before = fresh.PrintCount;
 
-        var handler = new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService { UserId = 1 }, new FakeDateTimeProvider());
+        var handler = new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService { UserId = 1 }, new FakeResultPrintCoordinator());
         var result = await handler.Handle(new ExecuteBulkPrintCommand(new[]
         {
             new BulkPrintDecision(1, ConfirmReprint: false),
@@ -108,8 +108,10 @@ public class BulkCommandHandlerTests
         Assert.Equal(2, result.Value!.Count);
         Assert.Equal(BulkPrintOutcomes.Skipped, result.Value!.First(o => o.PatientId == 1).Outcome);
         Assert.Equal(BulkPrintOutcomes.Printed, result.Value!.First(o => o.PatientId == 2).Outcome);
+        // W-02 S6 / SD-1: bulk print no longer stamps PrintCount, so both stay as seeded.
+        // These two assertions previously pinned the counting behaviour WP-06 removes.
         Assert.Equal(1, printed.PrintCount);
-        Assert.Equal(before + 1, fresh.PrintCount);
+        Assert.Equal(before, fresh.PrintCount);
     }
 
     [Fact]
@@ -123,7 +125,7 @@ public class BulkCommandHandlerTests
         var before = pt.PrintCount;
         db.PatientTests.Add(pt);
 
-        var handler = new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService { UserId = 1 }, new FakeDateTimeProvider());
+        var handler = new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService { UserId = 1 }, new FakeResultPrintCoordinator());
         var result = await handler.Handle(new ExecuteBulkPrintCommand(new[]
         {
             new BulkPrintDecision(1, ConfirmReprint: true),
@@ -131,7 +133,8 @@ public class BulkCommandHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(BulkPrintOutcomes.Printed, result.Value![0].Outcome);
-        Assert.Equal(before + 1, pt.PrintCount);
+        // W-02 S6 / SD-1: the reprint is printed but not counted on the row any more.
+        Assert.Equal(before, pt.PrintCount);
     }
 
     [Fact]
@@ -148,7 +151,7 @@ public class BulkCommandHandlerTests
         db.Users.Add(User.Create(UserId.Create(5), "c", "h", "h2", false, 0, true));
 
         var user = new FakeCurrentUserService { UserId = 5, IsAbsolutePermission = false };
-        var handler = new ExecuteBulkPrintCommandHandler(db, user, new FakeDateTimeProvider());
+        var handler = new ExecuteBulkPrintCommandHandler(db, user, new FakeResultPrintCoordinator());
         var result = await handler.Handle(new ExecuteBulkPrintCommand(new[]
         {
             new BulkPrintDecision(1, ConfirmReprint: true),

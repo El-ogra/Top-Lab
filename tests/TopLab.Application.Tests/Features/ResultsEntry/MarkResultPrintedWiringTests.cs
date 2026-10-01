@@ -18,12 +18,16 @@ public sealed class FakeResultPrintCoordinator : IResultPrintCoordinator
 
     public string? ErrorMessage { get; set; }
 
+    /// <summary>W-02 S6: fails only this patient test id, so one row in a batch can be made to fail.</summary>
+    public int? FailForPatientTestId { get; set; }
+
     public Task<ResultPrintOutcome> PrintAsync(
         int patientTestId, ResultPrintKind kind, CancellationToken ct = default)
     {
         Calls.Add((patientTestId, kind));
+        var ok = Printed && FailForPatientTestId != patientTestId;
         return Task.FromResult(new ResultPrintOutcome(
-            patientTestId, kind, Printed, Printed ? null : ErrorMessage ?? "تعذر طباعة التقرير."));
+            patientTestId, kind, ok, ok ? null : ErrorMessage ?? "تعذر طباعة التقرير."));
     }
 }
 

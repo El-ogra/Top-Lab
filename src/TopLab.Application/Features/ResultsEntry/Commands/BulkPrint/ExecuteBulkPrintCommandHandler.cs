@@ -13,16 +13,16 @@ public sealed class ExecuteBulkPrintCommandHandler
 {
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUserService _currentUser;
-    private readonly IDateTimeProvider _clock;
+    private readonly IResultPrintCoordinator _printCoordinator;
 
     public ExecuteBulkPrintCommandHandler(
         IApplicationDbContext db,
         ICurrentUserService currentUser,
-        IDateTimeProvider clock)
+        IResultPrintCoordinator printCoordinator)
     {
         _db = db;
         _currentUser = currentUser;
-        _clock = clock;
+        _printCoordinator = printCoordinator;
     }
 
     public async Task<Result<IReadOnlyList<BulkPrintOutcomeDto>>> Handle(
@@ -68,22 +68,29 @@ public sealed class ExecuteBulkPrintCommandHandler
                 continue;
             }
 
+            // W-02 S6 (WP-06): build then print, never mark (SD-1). One failure does not abort
+            // the batch — the remaining tests for this patient, and every later patient, continue.
             var printed = 0;
+            string? failure = null;
             foreach (var pt in verified)
             {
-                try
+                var outcome = await _printCoordinator.PrintAsync(
+                    pt.Id.Value, ResultPrintKind.SimpleResult, cancellationToken);
+
+                if (outcome.Printed)
                 {
-                    pt.MarkPrinted(_currentUser.UserId, _clock.UtcNow);
                     printed++;
                 }
-                catch (InvalidOperationException)
+                else if (failure is null)
                 {
-                    continue;
+                    failure = outcome.ErrorMessage;
                 }
             }
 
-            await _db.SaveChangesAsync(cancellationToken);
-            outcomes.Add(new BulkPrintOutcomeDto(patient.Id.Value, BulkPrintOutcomes.Printed, printed));
+            // Printed only when every verified test produced a sheet; otherwise report Failed.
+            outcomes.Add(failure is null
+                ? new BulkPrintOutcomeDto(patient.Id.Value, BulkPrintOutcomes.Printed, printed)
+                : new BulkPrintOutcomeDto(patient.Id.Value, BulkPrintOutcomes.Failed, printed));
         }
 
         return Result<IReadOnlyList<BulkPrintOutcomeDto>>.Success(outcomes);

@@ -225,7 +225,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 3 | AgeRules + infant child detection (C-20) | WP-14 | — | ✅ done | VG-03 ✅ |
 | 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | ✅ done (AD-1/AD-2) | VG-04 ✅ |
 | 5 | Entry screens print through the coordinator + C-21 | WP-06 | — | ✅ done | VG-05 ✅ |
-| 6 | Bulk print through the coordinator, reports Failed | WP-06 | — | ⬜ | VG-06 |
+| 6 | Bulk print through the coordinator, reports Failed | WP-06 | — | ✅ done | VG-06 ✅ |
 | 7 | ReportSettings print flags + `AddCombinedReportPrintOptions` | WP-13 | **M1** | ⬜ | VG-07 |
 | 8 | Combined-report options, outside-lab note, test comments | WP-13 | — | ⬜ | VG-08 |
 | 9 | `AddCultureMicroscopyAndZone` | WP-14 | **M2** | ⬜ | VG-09 |
@@ -666,7 +666,55 @@ $ grep -n "Task<Result>" src/TopLab.Application/Common/Interfaces/IReportPrintin
 - **Touches:** `ExecuteBulkPrintCommandHandler.cs:18-26,71-87` · `BulkPrintDtos.cs:20-27` · `BulkCommandHandlerTests.cs`.
 - **Gate:** VG-06. Migration: none. Reprint-confirmation behaviour **unchanged** here (WP-13's flag arrives in S8).
 
-- [ ] 1–10. Plan: add `BulkPrintOutcomes.Failed`; coordinator per patient test; keep the balance gate; one failure does not abort the batch.
+#### Stage 3 — File Analysis
+
+`ExecuteBulkPrintCommandHandler.cs` (91 lines) confirmed: injects only db/user/clock (`:18-26`); `:54` `verified.Any(pt => pt.IsPrinted)`; `:71-83` the `try { pt.MarkPrinted } catch { continue }` loop; `:85` `SaveChangesAsync`; `:86` **always** reports `BulkPrintOutcomes.Printed`. The defect is exactly as the plan describes — the UI claims success without a single sheet.
+
+`BulkPrintDtos.cs` — `BulkPrintOutcomes` already carries `Failed` from S4.
+
+#### Stage 4 — Plan
+
+1. Inject `IResultPrintCoordinator`. **Keep** `_currentUser` (balance gate `:61-69` still needs the user row) and **drop** `_clock`, which existed only to stamp `MarkPrinted`.
+2. Replace `:71-86` with: for each `verified` row call the coordinator with `ResultPrintKind.SimpleResult`; count successes; **one failure does not abort the batch** (the others keep going, preserving the existing continue-on-failure behaviour).
+3. Outcome per patient: `Printed` **only if every** verified test printed; otherwise `Failed` with the reason.
+4. `IsPrinted` is neither read nor written after this change, except the pre-existing `:54` confirmation check, which **stays** in S6 — WP-13's `SuppressReprintMessage` arrives in S8 (plan step 6).
+5. No migration.
+#### Stages 5–7 — Execution, Verification, VG-06
+
+**Edits:** `ExecuteBulkPrintCommandHandler.cs` (field + ctor + the `:71-86` block) · new `BulkPrintHonestyTests.cs` (7 tests) · `BulkCommandHandlerTests.cs` (ctor arg ×3 + 2 assertions) · `FakeResultPrintCoordinator` gained `FailForPatientTestId`.
+
+`_clock` was **removed** (it existed only to stamp the marking); `_currentUser` is **kept** because the balance gate still reads the user row. `:54` `verified.Any(pt => pt.IsPrinted)` is **deliberately untouched** — WP-13's `SuppressReprintMessage` arrives in S8 (plan step 6).
+
+**Stage 6 — build:** `0 Warning(s) 0 Error(s)`.
+
+**VG-06, item by item:**
+
+| VG-06 item | Result | Evidence |
+|---|---|---|
+| Build 0/0 | ✅ | 0/0 |
+| `BulkPrint_AllPatientsPrint_ReportsPrinted` | ✅ | both patients `Printed`, 2 coordinator calls |
+| `BulkPrint_OnePatientFails_ReportsFailedForThatPatientOnly` ← decisive | ✅ | patient 1 ⇒ `Failed`; patient 2 ⇒ `Printed` with `PrintedCount == 1` — **the batch continues** |
+| `BulkPrint_PrintServiceFails_ReportsFailedForEveryPatient` | ✅ | all `Failed`, all `PrintedCount == 0` |
+| `BulkPrint_NeverMarksPrinted` — structural | ✅ | `grep -n "MarkPrinted" ExecuteBulkPrintCommandHandler.cs` ⇒ **0**; plus a behavioural test asserting `IsPrinted == false` and `PrintCount == 0` after a successful bulk print |
+| `BulkPrint_BalanceBlocked_StillReportsBlockedByBalance` | ✅ | pre-existing test still green |
+| `BulkPrint_NoVerifiedResults_StillReportsNoVerifiedResults` | ✅ | re-asserted |
+| `BulkPrint_RequiresReprintConfirmation_Unchanged` | ✅ | `Skipped` still returned when `ConfirmReprint == false` |
+| `BulkPrintOutcomes_Failed_ConstantExists` | ✅ | present (added in S4) |
+| Patient-not-found path | ✅ | still `PatientNotFound` |
+| No migration · zero-drift | ✅ | `No changes have been made to the model since the last migration.`; migrations still **11** |
+
+**Counts vs baseline:** Domain **502 (Δ0)** · Application **1540 (Δ +7)** · Infrastructure **221 (Δ0)** · Presentation **57 (Δ0)** · Persistence **13+1 (Δ0)**.
+
+**⚠️ Two pre-existing assertions pinned the behaviour SD-1 forbids — changed and disclosed:**
+- `Execute_Confirm_Reprints_And_Increments` asserted `pt.PrintCount == before + 1`.
+- `Execute_Cancel_Skips_EntireReport_And_Continues` asserted `fresh.PrintCount == before + 1`.
+Both now assert the count is **unchanged**. Together with S5's single inverted assertion, that is **3 behavioural assertions in the whole wave**, all of which asserted the counting/marking behaviour that WP-06 removes. None of them tested anything else.
+
+**Deliberately not done:** no change to the reprint-confirmation check (S8) · no `SuppressReprintMessage` read yet · no new permission · no Arabic string invented · no migration.
+
+- [x] **Stage 8 — Documentation Update:** no user-facing string changed.
+- [x] **Stage 9 — Memory Status Update:** Slice Index S6 → ✅ · Execution Log appended.
+- [x] **Stage 10 — Git:** local commit; explicit paths only.
 
 ### Slice 7 — ReportSettings print flags + `AddCombinedReportPrintOptions` (WP-13) — **M1**
 
@@ -817,6 +865,7 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 |---|---|---|---|---|
 | 2026-10-01 | — | authoring | Wave 2 package authored against `94292c2` from the W-01/S-06/S-07 loop-engineering trios; 25 plan-vs-code corrections registered; 16 slices, 3 migrations. | OK |
 | 2026-10-01 | — | G0 | **Agent measured its own baseline** (build + all 5 test projects + drift gate). Domain 484 · Application 1502 · Infrastructure 221 · Presentation 57 · Persistence 13+1 · full 2277+1 · build 0/0 · `has-pending-model-changes` = no changes · Docker absent · `dotnet-ef` 8.0.30. **Every Δ vs the owner's table = 0.** | ✅ PASS |
+| 2026-10-01 | S6 | 1–10 | Bulk print goes through the coordinator and reports `Failed` honestly; `_clock` removed, balance gate kept, reprint check left for S8. VG-06 green: build 0/0, Application **1540 (+7)**, all others Δ 0, `MarkPrinted` ⇒ **0**, migration count 11, zero-drift. **Two pre-existing `PrintCount == before + 1` assertions inverted** — they pinned the counting behaviour SD-1 forbids (3 such assertions in the wave so far, all disclosed). | ✅ committed |
 | 2026-10-01 | S5 | 1–10 | **SD-16 = WIRE (binding default).** Both entry view models now print through the coordinator; `MarkResultPrintedCommandHandler` delegates to it with `ResultPrintKind.SimpleResult` and all guards verbatim. VG-05 green: build 0/0, Application **1533 (+4)**, all others Δ 0, `grep "تم الطباعة\."` ⇒ **0**, `MarkPrinted` in the handler ⇒ **0**, three structural gate files **untouched**, zero-drift. **Two plan conflicts disclosed:** (1) SD-16's "don't edit the four test files" vs its own "wire" — resolved with an optional ctor param + retained clock overload so `ReviewPrintDeliver` compiles with zero edits; (2) `Print_Allowed_When_UserFlagOff` asserted `IsPrinted == true`, i.e. it pinned the bug — that one assertion inverted to `False`. | ✅ committed |
 | 2026-10-01 | S4 | 4–10 | **Owner approved Option A (AD-1) + AD-2.** `ResultPrintOutcome` carries no `PdfPath`; `IReportPrintingService` untouched; profile branch uses `GetProfileReportQuery`. Coordinator injects only `ISender` + `IReportPrintingService` — no DbContext, so "never mark" is structural. VG-04 green: build 0/0, Application **1529 (+8)**, all others Δ 0, `grep MarkPrinted` ⇒ **0**, port diffs empty, migration count 11, zero-drift. **One transient Infrastructure failure (1/221) investigated: 3 consecutive full re-runs passed 221/221 — recorded as flaky, not as a pass.** Four self-corrections logged (incl. a draft bug returning patient 0). | ✅ committed |
 | 2026-10-01 | S2 | 9 | **Process deviation, disclosed:** I first wrote S1's hash (`871332f`) into the SD-13 checkpoint by mistake, because the S2 commit did not exist yet when the row was drafted. I committed S2 (`15e51bc`), then corrected the hash in a **second** commit (`c04e88f`). That means S2 spans **two** commits instead of one, which is a deviation from SD-9's "one local commit per verified slice". **`amend`/`reset` are forbidden, so the extra commit was not rewritten away.** Both are local; nothing was pushed. From S3 on: read the hash *after* committing, or write the row with the short hash resolved in the next commit. | ⚠️ disclosed |
@@ -829,9 +878,9 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 ## Current Status
 
-- Slices complete: **5 / 16**.
+- Slices complete: **6 / 16**.
 - **SD-13 satisfied** — the S2 prerequisite for S9 has landed and is committed.
-- Current slice: **Slice 6** — bulk print through the coordinator, reports Failed.
+- Current slice: **Slice 7** — ReportSettings print flags + **M1** `AddCombinedReportPrintOptions`.
 - Baseline: **MEASURED BY THE AGENT** — all Δ = 0, Infrastructure 221/221 (see the agent's own G0 table).
 - Commits: 3 (plus 2 correction commits from S2).
 - **Agent's measured baseline, binding from here on:** Domain **484** · Application **1502** (grew to 1511 in S1) · Infrastructure **221** · Presentation **57** · Persistence **13 + 1 skipped**. **Full suite 2277 + 1 skipped.** Build **0/0**.
