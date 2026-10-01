@@ -13,7 +13,10 @@ public sealed record UpdateReportSettingsCommand(
     HeaderFooterMode HeaderFooterMode,
     bool DoctorSignatureEnabled,
     HistorySortMode HistorySortMode,
-    bool HistoryAutoDisplayEnabled)
+    bool HistoryAutoDisplayEnabled,
+    // W-02 S7 (WP-13): appended with defaults so every existing caller keeps compiling (SD-6).
+    bool PrintGroupSubTitle = false,
+    bool SuppressReprintMessage = false)
     : IRequest<Result>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

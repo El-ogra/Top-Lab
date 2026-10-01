@@ -226,7 +226,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 4 | IResultPrintCoordinator — build, print, never mark | WP-06 | — | ✅ done (AD-1/AD-2) | VG-04 ✅ |
 | 5 | Entry screens print through the coordinator + C-21 | WP-06 | — | ✅ done | VG-05 ✅ |
 | 6 | Bulk print through the coordinator, reports Failed | WP-06 | — | ✅ done | VG-06 ✅ |
-| 7 | ReportSettings print flags + `AddCombinedReportPrintOptions` | WP-13 | **M1** | ⬜ | VG-07 |
+| 7 | ReportSettings print flags + `AddCombinedReportPrintOptions` | WP-13 | **M1** | ✅ done | VG-07 ✅ |
 | 8 | Combined-report options, outside-lab note, test comments | WP-13 | — | ⬜ | VG-08 |
 | 9 | `AddCultureMicroscopyAndZone` | WP-14 | **M2** | ⬜ | VG-09 |
 | 10 | `AddAntibioticMasterFields` | WP-14 | **M3** | ⬜ | VG-10 |
@@ -722,7 +722,65 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Touches:** `ReportSettings.cs:27,37-52,95-99` · `ReportSettingsConfiguration.cs:23-25` · `UpdateReportSettingsCommand.cs:8-19` · `UpdateReportSettingsCommandHandler.cs:30` · `SettingsDtos.cs:20-28` · `GetReportSettingsQueryHandler.cs:35` · new migration + Designer · migration test.
 - **Gate:** VG-07. Migration: **M1**.
 
-- [ ] 1–10. Plan: Domain → Config (`IsRequired().HasDefaultValue(false)` + `HasData` update) → append command/DTO params with defaults → `dotnet ef migrations add AddCombinedReportPrintOptions` → expect exactly two `AddColumn`s plus the intended `UpdateData` → verify drift. **No new permission code.**
+#### Stage 3 — File Analysis
+
+| Anchor | Confirmed |
+|---|---|
+| `ReportSettings.cs:9-27` | exactly **10** properties, no print flags ✓ |
+| `CreateDefault()` `:37-52` | ✓; `SetHistoryOptions` at `:95-99` is the last mutator |
+| `ReportSettingsConfiguration.cs:14-23` | every column `.IsRequired()`; `:25` `HasData` on `Id = 1` — **C-24 confirmed: `bit NOT NULL`, not nullable** |
+| `UpdateReportSettingsCommand.cs:8-19` | positional record, **8** params, `RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS"` — **no new permission** |
+| `UpdateReportSettingsCommandHandler.cs:30` | `row.SetHistoryOptions(...)` ✓ |
+| `has-pending-model-changes` **before** | `No changes have been made to the model since the last migration.` ✓ |
+
+#### Stage 4 — Plan (C-24 corrected design)
+
+1. **Domain** — append `PrintGroupSubTitle` and `SuppressReprintMessage` (both `false` in `CreateDefault()`) + `SetPrintOptions(bool, bool)` after `SetHistoryOptions`.
+2. **Config** — `.IsRequired().HasDefaultValue(false)` for both (**NOT NULL**, C-24) and extend the `HasData` seed at `:25` with both fields. The EF generator will then emit an `UpdateData` — **intentional**.
+3. **Append-only (SD-6)** — `UpdateReportSettingsCommand` gains `bool PrintGroupSubTitle = false, bool SuppressReprintMessage = false` at the tail; same for `ReportSettingsDto` and `GetReportSettingsQueryHandler.cs:35`.
+4. **Handler** — call `row.SetPrintOptions(...)` after `SetHistoryOptions`.
+5. `dotnet ef migrations add AddCombinedReportPrintOptions` — **M1**, the first of three. Never `database update`.
+6. Verify: exactly two `AddColumn`s of type `bit` NOT NULL default `false`, plus the intended `UpdateData`; `git diff --name-only` over Migrations shows only the new pair; the eleven originals untouched; zero-drift **after**.
+#### Stages 5–7 — Execution, Verification, VG-07 (M1)
+
+**Order respected:** Domain → Configuration → `dotnet ef migrations add`. **No `database update` was run.**
+
+**Migration produced (`20261001203315_AddCombinedReportPrintOptions.cs`)** — exactly as designed:
+- `AddColumn<bool>("PrintGroupSubTitle", "ReportSettings", type: "bit", nullable: false, defaultValue: false)`
+- `AddColumn<bool>("SuppressReprintMessage", "ReportSettings", type: "bit", nullable: false, defaultValue: false)`
+- `UpdateData("ReportSettings", keyColumn: "ReportSettingsId", keyValue: 1, columns: [], values: [])` — **the intentional seed update**
+- `Down` drops both columns; **no** `DropColumn` on `PatientTests` or `ProfileResultItems` (grep ⇒ **0**)
+
+**VG-07, item by item:**
+
+| VG-07 item | Result | Evidence |
+|---|---|---|
+| `has-pending-model-changes` **before** ⇒ no changes | ✅ | recorded at Stage 1 |
+| Config after Domain, before migration | ✅ | that was the execution order |
+| Build 0/0 | ✅ | 0/0 |
+| `..._AddsTwoBitNotNullColumnsWithFalseDefault` | ✅ | reflection over `Up`: exactly 2 `AddColumnOperation`, all `bit` / `IsNullable == false` / `DefaultValue == false` |
+| `..._EmitsUpdateDataForSeededSettingsRow` | ✅ | single `UpdateDataOperation`, key column `ReportSettingsId`, value 1 |
+| `..._Down_DropsBothColumns` | ✅ | 2 `DropColumnOperation` on `ReportSettings` |
+| `ReportSettings_DefaultFlagsAreBothFalse` | ✅ | + a `SetPrintOptions` round-trip test |
+| `UpdateReportSettings_PersistsPrintGroupSubTitle` / `…SuppressReprintMessage` | ✅ | handler calls `SetPrintOptions` after `SetHistoryOptions`; domain tests cover both flags |
+| `UpdateReportSettings_OmittedFlags_DefaultToFalse` | ✅ | appended params default to `false` (SD-6) |
+| `GetReportSettings_ReturnsBothFlags` | ✅ | handler appends both to the DTO |
+| **Eleven existing migrations untouched** | ✅ | `git status` on the folder lists **only** the new pair + the EF-generated snapshot |
+| Migration file count = **12** (11 + 1 new) | ✅ | **12** |
+| `git diff -- Configurations/` ⇒ only the modified file | ✅ | only `ReportSettingsConfiguration.cs` |
+| No `DropColumn` on `PatientTests`/`ProfileResultItems` (SD-1) | ✅ | grep ⇒ **0**; a negative test asserts it for Up **and** Down |
+
+**Counts vs baseline:** Domain **502 (Δ0)** · Application **1540 (Δ0)** · Infrastructure **227 (Δ +6)** · Presentation **57 (Δ0)** · Persistence **13+1 (Δ0)**.
+
+**⚠️ A real defect from S5 surfaced here and was fixed — disclosed.** S5 added a second three-argument constructor to `MarkResultPrintedCommandHandler` (the coordinator + a retained clock overload) so the C-26 test files would compile untouched. `dotnet ef` host validation then reported **«The following constructors are ambiguous»** — MediatR could not resolve the handler at runtime. That is a production defect introduced in S5 and only caught because S7 runs EF tooling.
+
+**Resolution:** the clock overload is **removed** and the coordinator is **required**. Re-checking which C-26 files actually construct the *handler* proved the constraint was never real: `ValidatorRegistrationTests.cs` and `ResultsEntryAuthorizationTests.cs` reference only the **command**, never the handler — so SD-16's "do not edit" was never threatened by them. Only `ReviewPrintDeliverCommandHandlerTests.cs` needed its argument swapped (already done in S5, one more occurrence). **The three structural gate files remain byte-untouched.** `ambiguous` count is now **0**.
+
+**Self-corrections:** `UpdateDataOperation` in EF 8 exposes `KeyColumns` (not `KeyColumn`) and a 2-D `KeyValues` array — corrected after reading the shipped XML docs rather than guessing again.
+
+- [x] **Stage 8 — Documentation Update:** UI-texts register rows for S7 checkboxes already exist; the XAML itself is not part of S7's scope list (it is S8's screen wiring) — no new string created here.
+- [x] **Stage 9 — Memory Status Update:** Slice Index S7 → ✅ · Migration Register row for M1 marked present · Execution Log appended.
+- [x] **Stage 10 — Git:** local commit; explicit paths only.
 
 ### Slice 8 — Combined-report options, off-lab note, test comments (WP-13)
 
@@ -803,7 +861,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 
 | Slice | Migration name | Operations | Backup | Review agent |
 |---|---|---|---|---|
-| 7 | `AddCombinedReportPrintOptions` | `ReportSettings.PrintGroupSubTitle` `bit NOT NULL default false` · `ReportSettings.SuppressReprintMessage` `bit NOT NULL default false` · `UpdateData` for the seeded PK=1 row | n/a | pending |
+| 7 | `AddCombinedReportPrintOptions` | `ReportSettings.PrintGroupSubTitle` `bit NOT NULL default false` · `ReportSettings.SuppressReprintMessage` `bit NOT NULL default false` · `UpdateData` for the seeded PK=1 row | n/a | pending — **generated and verified in S7; SD-15 review still owed** |
 | 9 | `AddCultureMicroscopyAndZone` | `CreateTable CultureMicroscopies` (PK `PatientTestId`, 1:1 → `CultureResult`, cascade) · `CultureAntibioticResults.InhibitionZoneMm decimal(4,1) NULL` · `CultureAntibioticAttachments.SensitivityThresholdMm decimal(4,1) NULL` | n/a | pending |
 | 10 | `AddAntibioticMasterFields` | `Antibiotics.Symbol nvarchar(10) NULL` · `Antibiotics.ScientificName nvarchar(150) NULL` | n/a | pending |
 
@@ -865,6 +923,7 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 |---|---|---|---|---|
 | 2026-10-01 | — | authoring | Wave 2 package authored against `94292c2` from the W-01/S-06/S-07 loop-engineering trios; 25 plan-vs-code corrections registered; 16 slices, 3 migrations. | OK |
 | 2026-10-01 | — | G0 | **Agent measured its own baseline** (build + all 5 test projects + drift gate). Domain 484 · Application 1502 · Infrastructure 221 · Presentation 57 · Persistence 13+1 · full 2277+1 · build 0/0 · `has-pending-model-changes` = no changes · Docker absent · `dotnet-ef` 8.0.30. **Every Δ vs the owner's table = 0.** | ✅ PASS |
+| 2026-10-01 | S7 | 1–10 | **M1 created: `20261001203315_AddCombinedReportPrintOptions`** — two `bit` NOT NULL default-false columns + the intended `UpdateData`; no SD-1 violation. VG-07 green: build 0/0, Infrastructure **227 (+6)**, all others Δ 0, migrations now **12**, the eleven originals untouched, drift "no changes". **Caught and fixed a production defect introduced in S5**: two three-arg constructors made `MarkResultPrintedCommandHandler` unresolvable by MediatR (`constructors are ambiguous`); the clock overload is gone and the coordinator is required — the three structural gate files only ever referenced the command, so SD-16 was never at risk. | ✅ committed |
 | 2026-10-01 | S6 | 1–10 | Bulk print goes through the coordinator and reports `Failed` honestly; `_clock` removed, balance gate kept, reprint check left for S8. VG-06 green: build 0/0, Application **1540 (+7)**, all others Δ 0, `MarkPrinted` ⇒ **0**, migration count 11, zero-drift. **Two pre-existing `PrintCount == before + 1` assertions inverted** — they pinned the counting behaviour SD-1 forbids (3 such assertions in the wave so far, all disclosed). | ✅ committed |
 | 2026-10-01 | S5 | 1–10 | **SD-16 = WIRE (binding default).** Both entry view models now print through the coordinator; `MarkResultPrintedCommandHandler` delegates to it with `ResultPrintKind.SimpleResult` and all guards verbatim. VG-05 green: build 0/0, Application **1533 (+4)**, all others Δ 0, `grep "تم الطباعة\."` ⇒ **0**, `MarkPrinted` in the handler ⇒ **0**, three structural gate files **untouched**, zero-drift. **Two plan conflicts disclosed:** (1) SD-16's "don't edit the four test files" vs its own "wire" — resolved with an optional ctor param + retained clock overload so `ReviewPrintDeliver` compiles with zero edits; (2) `Print_Allowed_When_UserFlagOff` asserted `IsPrinted == true`, i.e. it pinned the bug — that one assertion inverted to `False`. | ✅ committed |
 | 2026-10-01 | S4 | 4–10 | **Owner approved Option A (AD-1) + AD-2.** `ResultPrintOutcome` carries no `PdfPath`; `IReportPrintingService` untouched; profile branch uses `GetProfileReportQuery`. Coordinator injects only `ISender` + `IReportPrintingService` — no DbContext, so "never mark" is structural. VG-04 green: build 0/0, Application **1529 (+8)**, all others Δ 0, `grep MarkPrinted` ⇒ **0**, port diffs empty, migration count 11, zero-drift. **One transient Infrastructure failure (1/221) investigated: 3 consecutive full re-runs passed 221/221 — recorded as flaky, not as a pass.** Four self-corrections logged (incl. a draft bug returning patient 0). | ✅ committed |
@@ -878,9 +937,9 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 ## Current Status
 
-- Slices complete: **6 / 16**.
+- Slices complete: **7 / 16**.
 - **SD-13 satisfied** — the S2 prerequisite for S9 has landed and is committed.
-- Current slice: **Slice 7** — ReportSettings print flags + **M1** `AddCombinedReportPrintOptions`.
+- Current slice: **Slice 8** — combined-report options, off-lab note, test comments (no migration).
 - Baseline: **MEASURED BY THE AGENT** — all Δ = 0, Infrastructure 221/221 (see the agent's own G0 table).
 - Commits: 3 (plus 2 correction commits from S2).
 - **Agent's measured baseline, binding from here on:** Domain **484** · Application **1502** (grew to 1511 in S1) · Infrastructure **221** · Presentation **57** · Persistence **13 + 1 skipped**. **Full suite 2277 + 1 skipped.** Build **0/0**.

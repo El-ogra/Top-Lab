@@ -28,6 +28,7 @@ public sealed class UpdateReportSettingsCommandHandler : IRequestHandler<UpdateR
         row.SetHeaderFooterMode(request.HeaderFooterMode);
         row.SetDoctorSignature(request.DoctorSignatureEnabled);
         row.SetHistoryOptions(request.HistorySortMode, request.HistoryAutoDisplayEnabled);
+        row.SetPrintOptions(request.PrintGroupSubTitle, request.SuppressReprintMessage);
 
         await _db.SaveChangesAsync(cancellationToken);
 

@@ -92,7 +92,7 @@ public class ReviewPrintDeliverCommandHandlerTests
         AddSimpleTest(db, 10);
         db.PatientTests.Add(EnteredRow());
 
-        var handler = new MarkResultPrintedCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider());
+        var handler = new MarkResultPrintedCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator());
         var result = await handler.Handle(new MarkResultPrintedCommand(101), CancellationToken.None);
 
         Assert.False(result.IsSuccess);

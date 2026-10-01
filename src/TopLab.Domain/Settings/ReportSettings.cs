@@ -26,6 +26,12 @@ public sealed class ReportSettings : Entity<int>
 
     public bool HistoryAutoDisplayEnabled { get; private set; }
 
+    /// <summary>W-02 S7 (WP-13): print each group's sub-title (group name) in the report.</summary>
+    public bool PrintGroupSubTitle { get; private set; }
+
+    /// <summary>W-02 S7 (WP-13): reprint without asking for confirmation.</summary>
+    public bool SuppressReprintMessage { get; private set; }
+
     private ReportSettings()
     {
     }
@@ -47,7 +53,9 @@ public sealed class ReportSettings : Entity<int>
             HeaderColor = null,
             FooterColor = null,
             HistorySortMode = HistorySortMode.ByLabCode,
-            HistoryAutoDisplayEnabled = true
+            HistoryAutoDisplayEnabled = true,
+            PrintGroupSubTitle = false,
+            SuppressReprintMessage = false
         };
     }
 
@@ -96,5 +104,12 @@ public sealed class ReportSettings : Entity<int>
     {
         HistorySortMode = sortMode;
         HistoryAutoDisplayEnabled = autoDisplay;
+    }
+
+    /// <summary>W-02 S7 (WP-13).</summary>
+    public void SetPrintOptions(bool printGroupSubTitle, bool suppressReprintMessage)
+    {
+        PrintGroupSubTitle = printGroupSubTitle;
+        SuppressReprintMessage = suppressReprintMessage;
     }
 }

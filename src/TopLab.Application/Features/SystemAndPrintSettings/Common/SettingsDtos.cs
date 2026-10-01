@@ -25,7 +25,10 @@ public sealed record ReportSettingsDto(
     HeaderFooterMode HeaderFooterMode,
     bool DoctorSignatureEnabled,
     HistorySortMode HistorySortMode,
-    bool HistoryAutoDisplayEnabled);
+    bool HistoryAutoDisplayEnabled,
+    // W-02 S7 (WP-13): appended with defaults (SD-6).
+    bool PrintGroupSubTitle = false,
+    bool SuppressReprintMessage = false);
 
 public sealed record ReceiptSettingsDto(
     decimal TopMarginCm,

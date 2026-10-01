@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ResultsEntry.Common;
@@ -12,35 +13,24 @@ public sealed class MarkResultPrintedCommandHandler : IRequestHandler<MarkResult
 {
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUserService _currentUser;
-    private readonly IResultPrintCoordinator? _coordinator;
+    private readonly IResultPrintCoordinator _coordinator;
 
     /// <summary>
-    /// W-02 S5 / SD-16: the coordinator is an optional trailing parameter so the four C-26 test
-    /// files keep compiling untouched (SD-16 forbids editing them). Production always receives a
-    /// coordinator — it is registered in <c>AddApplication</c>. A missing coordinator is treated
-    /// as "cannot honestly print" rather than falling back to marking the row.
+    /// W-02 S5 / SD-16: the coordinator is required, so there is exactly one construction path and
+    /// MediatR's DI resolution stays unambiguous. (An earlier revision added a clock overload to
+    /// keep the C-26 tests compiling; it turned out those files reference only the *command*, so
+    /// the overload was removed in S7 and only ReviewPrintDeliver needed a one-line swap.)
     /// </summary>
     public MarkResultPrintedCommandHandler(
         IApplicationDbContext db,
         ICurrentUserService currentUser,
-        IResultPrintCoordinator? coordinator = null)
+        IResultPrintCoordinator coordinator)
     {
         _db = db;
         _currentUser = currentUser;
         _coordinator = coordinator;
     }
 
-    /// <summary>
-    /// Retained so the C-26 test files that pass a clock as the third argument keep compiling
-    /// without edits. The clock is no longer needed because the handler no longer marks the row.
-    /// </summary>
-    public MarkResultPrintedCommandHandler(
-        IApplicationDbContext db,
-        ICurrentUserService currentUser,
-        IDateTimeProvider clock)
-        : this(db, currentUser, coordinator: null)
-    {
-    }
 
     public async Task<Result> Handle(MarkResultPrintedCommand request, CancellationToken cancellationToken)
     {
@@ -74,11 +64,6 @@ public sealed class MarkResultPrintedCommandHandler : IRequestHandler<MarkResult
         // its four test files stay; this handler simply stops lying — it goes through the honest
         // coordinator instead of marking the row. The guards above are unchanged, so no error
         // contract moves.
-        if (_coordinator is null)
-        {
-            return Result.Failure(Error.Conflict("تعذّرت الطباعة: خدمة الطباعة غير متاحة."));
-        }
-
         var outcome = await _coordinator.PrintAsync(
             request.PatientTestId, ResultPrintKind.SimpleResult, cancellationToken);
 
