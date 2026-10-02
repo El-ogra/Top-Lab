@@ -943,12 +943,12 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 
 ## Current Status
 
-- Slices complete: **7 / 16**.
-- **SD-13 satisfied** — the S2 prerequisite for S9 has landed and is committed.
-- Current slice: **Slice 8** — combined-report options, off-lab note, test comments (no migration).
-- Baseline: **MEASURED BY THE AGENT** — all Δ = 0, Infrastructure 221/221 (see the agent's own G0 table).
-- Commits: 3 (plus 2 correction commits from S2).
-- **Agent's measured baseline, binding from here on:** Domain **484** · Application **1502** (grew to 1511 in S1) · Infrastructure **221** · Presentation **57** · Persistence **13 + 1 skipped**. **Full suite 2277 + 1 skipped.** Build **0/0**.
+- Slices complete: **16 / 16 — WAVE COMPLETE (chief-engineer takeover S8–S16 + S7 fixup)**.
+- **SD-13 satisfied** — the S2 prerequisite for S9 landed and is committed.
+- Current slice: **none — wave DoD passed (S16).**
+- Baseline final: Domain **507** · Application **1583** · Infrastructure **265** · Presentation **67** · Persistence **13 + 2 skipped** · full **2435 + 2 skipped** · build **0/0** · drift clean · migrations **14 classes (11 + 3)**.
+- Commits: 16 slice commits + S7 fixup + S2/S4 records, all local, no push.
+- Independent migration review (SD-15) pending — owner sends the analysis-only prompt.
 - Notes: **S2 must land before S9.** **S4 must land before S13.** SD-16 (C-21) is decided in S5 Stage 4. SD-2 forbids any commercial-name artefact.
 
 ---
