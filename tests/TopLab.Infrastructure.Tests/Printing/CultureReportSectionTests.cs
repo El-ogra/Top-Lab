@@ -84,4 +84,27 @@ public class CultureReportSectionTests
         Assert.Contains(lines, l => l.Contains("E.coli"));
         Assert.True(section.HasAnyContent);
     }
+
+    [Fact]
+    public void RangeComment_SurvivesExportPath()
+    {
+        var frozen = new TopLab.Application.Features.ResultsEntry.Common.FrozenRangeDto(
+            2, null, "Year", 1, 70, 4.5m, 6.1m, "منخفض", "مرتفع", DateTimeOffset.UtcNow);
+        var data = new TopLab.Application.Features.ResultsEntry.Common.PatientReportPdfData(
+            1, "P", null,
+            new[]
+            {
+                new TopLab.Application.Features.ResultsEntry.Common.PatientReportPdfLine(
+                    11, "Glucose", "GLU", "3.0", 1, null, frozen,
+                    Array.Empty<string>(), null)
+            });
+
+        var content = TopLab.Infrastructure.Printing.ReportContentBuilder.FromPatientExport(
+            data,
+            TopLab.Domain.Settings.ReportSettings.CreateDefault(),
+            TopLab.Domain.Settings.SystemSettings.CreateDefault());
+
+        var text = string.Join("\n", content.Sections.SelectMany(s => s.DisplayLines));
+        Assert.Contains("منخفض", text, StringComparison.Ordinal);
+    }
 }

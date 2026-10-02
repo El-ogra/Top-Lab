@@ -235,7 +235,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | [x] DONE | VG-13 PASS |
 | 14 | Unit of work, visit deltas, id recovery, settlement lock | WP-29 | — | [x] DONE | VG-14 PASS |
 | 15 | Narrow hot readers, own the temp dir, layering guard | WP-29 | — | [x] DONE | VG-15 PASS |
-| 16 | WP-07 regression net + wave DoD | WP-07 | — | ⬜ | VG-16 |
+| 16 | WP-07 regression net + wave DoD | WP-07 | — | [x] DONE | VG-16 PASS |
 
 ---
 
@@ -853,7 +853,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Touches:** tests only — new `RangeCommentFeedingTests.cs`; extend `CultureReportSectionTests.cs`.
 - **Gate:** VG-16 = **wave DoD**.
 
-- [ ] 1–10 + wave DoD. Measured final: Domain ___ · Application ___ · Infrastructure ___ · Presentation ___ · Persistence ___ · Migration files = 14.
+- [x] 1–10 + wave DoD. **DONE.** New `RangeCommentFeedingTests` (Low/High/Normal/NoSnapshot/FrozenNotLive/4-path survival) + export-path test in `CultureReportSectionTests`. **Wave DoD verified item-by-item:** S1–S16 green · exactly 3 new migrations (`AddCombinedReportPrintOptions` · `AddCultureMicroscopyAndZone` · `AddAntibioticMasterFields`), 11 old untouched · build **0/0** · Domain **507** · Application **1583** · Infrastructure **265** · Presentation **67** · Persistence **13+2 skipped** (total **2435+2**) · `has-pending-model-changes` ⇒ no changes · `IAppLogger` signature intact · `ToAscii` intact · zero `DropColumn` on `PatientTests`/`ProfileResultItems` (all 5 Drops are Down-rollback of new columns) · zero `AntibioticCommercialName` repo-wide · local commits only (no push). M2/M3 SQL scripts regenerated to temp and inspected (valid ADDs + CREATE TABLE, no empty UPDATE). Measured final recorded below.
 
 ---
 
