@@ -29,13 +29,31 @@ public sealed record ProfileReportLineDto(
     int? Flag,
     FrozenProfileRangeDto? FrozenRange);
 
+public sealed record CultureReportRowDto(
+    int AntibioticId,
+    string AntibioticName,
+    string? ScientificName,
+    int? SensitivityCategory,
+    decimal? InhibitionZoneMm,
+    decimal? ThresholdMm);
+
 public sealed record CultureReportSummaryDto(
     string? Sample,
     string? OrganismA,
     string? OrganismB,
     string? OrganismC,
     string? CultureCondition,
-    string? ColonyCount);
+    string? ColonyCount,
+    string? MicroscopyPusCells = null,
+    string? MicroscopyRedBloodCells = null,
+    string? MicroscopyEpithelialCells = null,
+    string? MicroscopyCrystals = null,
+    string? MicroscopyFungi = null,
+    string? MicroscopyOthersOne = null,
+    string? MicroscopyOthersTwo = null,
+    string? MicroscopyOthersThree = null,
+    bool MicroscopyIsDirect = false,
+    IReadOnlyList<CultureReportRowDto>? SensitivityRows = null);
 
 public sealed record CombinedReportLineDto(
     int PatientTestId,

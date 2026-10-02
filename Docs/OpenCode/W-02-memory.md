@@ -230,7 +230,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 8 | Combined-report options, outside-lab note, test comments | WP-13 | — | [x] DONE | VG-08 PASS |
 | 9 | `AddCultureMicroscopyAndZone` | WP-14 | **M2** | [x] DONE | VG-09 PASS |
 | 10 | `AddAntibioticMasterFields` | WP-14 | **M3** | [x] DONE | VG-10 PASS |
-| 11 | Culture sensitivity table + microscopy block in the report | WP-14 | — | ⬜ | VG-11 |
+| 11 | Culture sensitivity table + microscopy block in the report | WP-14 | — | [x] DONE | VG-11 PASS |
 | 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | ⬜ | VG-12 |
 | 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | ⬜ | VG-13 |
 | 14 | Unit of work, visit deltas, id recovery, settlement lock | WP-29 | — | ⬜ | VG-14 |
@@ -813,7 +813,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Touches:** `ReportDtos.cs:32-38` · `BuildCombinedReportCommandHandler.cs:138-143` · `PatientHistoryReader.cs:84-98` · `HistoryInsertion.cs:11-26` · `CultureResultDtos.cs:3-4,11-16` · `GetCultureReportQueryHandler.cs:26,28-35` · `GetCultureEntryGridQueryHandler.cs:38` · `ReportCultureSection.cs:8-51` · `ReportContentBuilder.cs:246-256` · `CultureEntryView.xaml:106-121` · `CultureEntryViewModel.cs` · new `CultureReportSectionTests.cs`.
 - **Gate:** VG-11. Migration: **none**.
 
-- [ ] 1–10. Plan: fix `SingleOrDefault(Id==1)`; two aggregated queries, no N+1; `BuildSensitivityGrid()` on `ReportCultureSection`; separate `ReportSection` carrying the grid; invariant decimal formatting; SD-4 English labels for «الفئة», registered as reuse; no commercial column.
+- [x] 1–10. **DONE.** `CultureReportRowDto` new + `CultureReportSummaryDto` appended (microscopy 9 + rows); `SingleOrDefault(Id==1)` fix; 2 aggregated queries in report handler + batched rows/microscopy in combined builder (no N+1); `ReportCultureSection` appended + `BuildSensitivityGrid` (4 cols, invariant decimals, no commercial) + `BuildMicroscopyLines`; separate `ReportSection` with grid; SD-4 English labels reused; save path extended (zone per row via invariant-text parse + microscopy upsert, null-preserving); entry grid carries zone; entry VM microscopy panel + zone column (new XAML rows 4→7 shifted). Self-correction: S9's `ZoneValue_SurvivesReSave` failed honestly under the new explicit-null-clears semantics — updated + added `ExplicitNullZone_ClearsStoredZone`. VG-11 green: build 0/0; Application **1560 (+3)** · Infrastructure **251 (+7)** · others Δ0; Migrations diff empty; drift clean.
 
 ### Slice 12 — History filters + CBC matrix + dead-code cleanup (WP-10)
 

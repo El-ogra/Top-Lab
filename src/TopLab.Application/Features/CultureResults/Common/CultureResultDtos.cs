@@ -1,12 +1,23 @@
 namespace TopLab.Application.Features.CultureResults.Common;
 
 public sealed record CultureSensitivityRowDto(int? CultureAntibioticResultId, int AntibioticId,
-    string AntibioticName, int? SensitivityCategory, bool IsPregnancyFlagged, bool IsChildrenFlagged);
+    string AntibioticName, int? SensitivityCategory, bool IsPregnancyFlagged, bool IsChildrenFlagged, decimal? InhibitionZoneMm = null);
+
+public sealed record CultureMicroscopyDto(
+    string? PusCells,
+    string? RedBloodCells,
+    string? EpithelialCells,
+    string? Crystals,
+    string? Fungi,
+    string? OthersOne,
+    string? OthersTwo,
+    string? OthersThree,
+    bool IsDirect);
 
 public sealed record CultureEntryGridDto(int PatientTestId, int PatientId, string TestName,
     string TestCode, string? Sample, string? OrganismA, string? OrganismB, string? OrganismC,
     string? CultureCondition, string? ColonyCount, IReadOnlyList<CultureSensitivityRowDto> Rows,
-    bool ParentIsReviewed, bool ParentIsPrinted);
+    bool ParentIsReviewed, bool ParentIsPrinted, CultureMicroscopyDto? Microscopy = null);
 
 public sealed record CultureReportDto(int PatientTestId, int PatientId, string PatientFullName,
     string? LabId, string PatientSex, int PatientAgeValue, string PatientAgeUnit,

@@ -273,8 +273,38 @@ public static class ReportContentBuilder
                     culture.OrganismB,
                     culture.OrganismC,
                     culture.CultureCondition,
-                    culture.ColonyCount);
+                    culture.ColonyCount,
+                    culture.MicroscopyPusCells,
+                    culture.MicroscopyRedBloodCells,
+                    culture.MicroscopyEpithelialCells,
+                    culture.MicroscopyCrystals,
+                    culture.MicroscopyFungi,
+                    culture.MicroscopyOthersOne,
+                    culture.MicroscopyOthersTwo,
+                    culture.MicroscopyOthersThree,
+                    culture.MicroscopyIsDirect,
+                    (culture.SensitivityRows ?? Enumerable.Empty<TopLab.Application.Features.ReportProduction.Common.CultureReportRowDto>())
+                        .Select(r => new ReportCultureSensitivityRow(
+                            r.AntibioticName,
+                            SensitivityLabel(r.SensitivityCategory),
+                            r.InhibitionZoneMm,
+                            r.ScientificName))
+                        .ToList());
                 body.AddRange(cultureSection.BuildLines());
+                body.AddRange(cultureSection.BuildMicroscopyLines());
+                var grid = cultureSection.BuildSensitivityGrid();
+                if (grid.Count > 0)
+                {
+                    // A culture line owns its sensitivity table as a separate section.
+                    sections.Add(ReportSection.FromLines(null, body));
+                    sections.Add(new ReportSection(
+                        "جدول الحساسية",
+                        Array.Empty<string>(),
+                        new ReportGrid(
+                            new[] { "المضاد", "الفئة", "منطقة التثبيط (مم)", "الاسم العلمي" },
+                            grid)));
+                    body = new List<string>();
+                }
             }
 
             sections.Add(ReportSection.FromLines(null, body));
@@ -401,4 +431,18 @@ public static class ReportContentBuilder
         return JsonSerializer.Deserialize<T>(envelope.ReportJson)
             ?? throw new InvalidOperationException("Report payload is empty.");
     }
+
+    /// <summary>
+    /// W-02 S11 (WP-14): SD-4 English labels, reused verbatim from
+    /// <c>CultureEntryViewModel.SensitivityOptions</c> (registered as reuse —
+    /// the stage plan supplies no Arabic for these five values).
+    /// </summary>
+    private static string SensitivityLabel(int? category) => category switch
+    {
+        0 => "Sensitive",
+        1 => "Intermediate",
+        2 => "Low Sensitivity",
+        3 => "Resistant",
+        _ => "Unspecified"
+    };
 }

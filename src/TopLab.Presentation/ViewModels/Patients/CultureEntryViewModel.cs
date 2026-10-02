@@ -31,6 +31,28 @@ public sealed class CultureSensitivityRow : ViewModelBase
         get => _sensitivityCategory;
         set => SetProperty(ref _sensitivityCategory, value);
     }
+
+    private decimal? _inhibitionZoneMm;
+    private string? _inhibitionZoneText;
+
+    public decimal? InhibitionZoneMm
+    {
+        get => _inhibitionZoneMm;
+        set
+        {
+            if (SetProperty(ref _inhibitionZoneMm, value))
+            {
+                InhibitionZoneText = value?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+    }
+
+    /// <summary>Zone text as typed; parsed with the invariant culture on save (VG-11).</summary>
+    public string? InhibitionZoneText
+    {
+        get => _inhibitionZoneText;
+        set => SetProperty(ref _inhibitionZoneText, value);
+    }
 }
 
 /// <summary>
@@ -106,6 +128,26 @@ public sealed class CultureEntryViewModel : ViewModelBase
     public string? OrganismC { get => _organismC; set => SetProperty(ref _organismC, value); }
     public string? CultureCondition { get => _cultureCondition; set => SetProperty(ref _cultureCondition, value); }
     public string? ColonyCount { get => _colonyCount; set => SetProperty(ref _colonyCount, value); }
+
+    private string? _pusCells;
+    private string? _redBloodCells;
+    private string? _epithelialCells;
+    private string? _crystals;
+    private string? _fungi;
+    private string? _othersOne;
+    private string? _othersTwo;
+    private string? _othersThree;
+    private bool _isDirectMicroscopy;
+
+    public string? PusCells { get => _pusCells; set => SetProperty(ref _pusCells, value); }
+    public string? RedBloodCells { get => _redBloodCells; set => SetProperty(ref _redBloodCells, value); }
+    public string? EpithelialCells { get => _epithelialCells; set => SetProperty(ref _epithelialCells, value); }
+    public string? Crystals { get => _crystals; set => SetProperty(ref _crystals, value); }
+    public string? Fungi { get => _fungi; set => SetProperty(ref _fungi, value); }
+    public string? OthersOne { get => _othersOne; set => SetProperty(ref _othersOne, value); }
+    public string? OthersTwo { get => _othersTwo; set => SetProperty(ref _othersTwo, value); }
+    public string? OthersThree { get => _othersThree; set => SetProperty(ref _othersThree, value); }
+    public bool IsDirectMicroscopy { get => _isDirectMicroscopy; set => SetProperty(ref _isDirectMicroscopy, value); }
 
     public bool ParentIsReviewed { get => _parentIsReviewed; private set => SetProperty(ref _parentIsReviewed, value); }
     public bool ParentIsPrinted { get => _parentIsPrinted; private set => SetProperty(ref _parentIsPrinted, value); }
@@ -204,6 +246,15 @@ public sealed class CultureEntryViewModel : ViewModelBase
                 OrganismC = grid.OrganismC;
                 CultureCondition = grid.CultureCondition;
                 ColonyCount = grid.ColonyCount;
+                PusCells = grid.Microscopy?.PusCells;
+                RedBloodCells = grid.Microscopy?.RedBloodCells;
+                EpithelialCells = grid.Microscopy?.EpithelialCells;
+                Crystals = grid.Microscopy?.Crystals;
+                Fungi = grid.Microscopy?.Fungi;
+                OthersOne = grid.Microscopy?.OthersOne;
+                OthersTwo = grid.Microscopy?.OthersTwo;
+                OthersThree = grid.Microscopy?.OthersThree;
+                IsDirectMicroscopy = grid.Microscopy?.IsDirect ?? false;
                 ParentIsReviewed = grid.ParentIsReviewed;
                 ParentIsPrinted = grid.ParentIsPrinted;
                 OnPropertyChanged(nameof(IsLocked));
@@ -219,6 +270,7 @@ public sealed class CultureEntryViewModel : ViewModelBase
                         IsPregnancyFlagged = item.IsPregnancyFlagged,
                         IsChildrenFlagged = item.IsChildrenFlagged
                     });
+                    rows[^1].InhibitionZoneMm = item.InhibitionZoneMm;
                 }
 
                 SensitivityRows = rows;
@@ -269,9 +321,27 @@ public sealed class CultureEntryViewModel : ViewModelBase
         ErrorMessage = string.Empty;
         StatusMessage = string.Empty;
 
-        var sensitivities = SensitivityRows
-            .Select(r => new CultureSensitivityInput(r.AntibioticId, r.SensitivityCategory))
-            .ToList();
+        var sensitivities = new List<CultureSensitivityInput>();
+        foreach (var r in SensitivityRows)
+        {
+            decimal? zone = null;
+            if (!string.IsNullOrWhiteSpace(r.InhibitionZoneText))
+            {
+                if (!decimal.TryParse(
+                        r.InhibitionZoneText.Trim(),
+                        System.Globalization.NumberStyles.Number,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out var parsed))
+                {
+                    ErrorMessage = "منطقة التثبيط يجب أن تكون رقماً.";
+                    return;
+                }
+
+                zone = parsed;
+            }
+
+            sensitivities.Add(new CultureSensitivityInput(r.AntibioticId, r.SensitivityCategory, zone));
+        }
 
         IsBusy = true;
         try
@@ -284,7 +354,11 @@ public sealed class CultureEntryViewModel : ViewModelBase
                 string.IsNullOrWhiteSpace(OrganismC) ? null : OrganismC,
                 string.IsNullOrWhiteSpace(CultureCondition) ? null : CultureCondition,
                 string.IsNullOrWhiteSpace(ColonyCount) ? null : ColonyCount,
-                sensitivities), cancellationToken);
+                sensitivities,
+                new CultureMicroscopyInput(
+                    BlankOrNull(PusCells), BlankOrNull(RedBloodCells), BlankOrNull(EpithelialCells),
+                    BlankOrNull(Crystals), BlankOrNull(Fungi), BlankOrNull(OthersOne),
+                    BlankOrNull(OthersTwo), BlankOrNull(OthersThree), IsDirectMicroscopy)), cancellationToken);
 
             if (result.IsSuccess)
             {
@@ -301,6 +375,9 @@ public sealed class CultureEntryViewModel : ViewModelBase
             IsBusy = false;
         }
     }
+
+    private static string? BlankOrNull(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private async Task VerifyAsync(CancellationToken cancellationToken)
     {

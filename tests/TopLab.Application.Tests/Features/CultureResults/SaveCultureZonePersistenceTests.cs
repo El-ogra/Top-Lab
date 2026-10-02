@@ -37,9 +37,27 @@ public class SaveCultureZonePersistenceTests
         row.SetInhibitionZone(18.5m);
 
         Assert.True((await save.Handle(
-            new SaveCultureResultsCommand(10, null, null, null, null, null, null, [new(1, (int)SensitivityCategory.HighlyFor)]),
+            new SaveCultureResultsCommand(10, null, null, null, null, null, null, [new(1, (int)SensitivityCategory.HighlyFor, 18.5m)]),
             default)).IsSuccess);
 
         Assert.Equal(18.5m, Assert.Single(db.CultureAntibioticResults).InhibitionZoneMm);
+    }
+
+    [Fact]
+    public async Task SaveCulture_ExplicitNullZone_ClearsStoredZone()
+    {
+        var db = Seed();
+        var save = new SaveCultureResultsCommandHandler(db);
+
+        Assert.True((await save.Handle(
+            new SaveCultureResultsCommand(10, null, null, null, null, null, null, [new(1, (int)SensitivityCategory.HighlyFor, 18.5m)]),
+            default)).IsSuccess);
+        Assert.Equal(18.5m, Assert.Single(db.CultureAntibioticResults).InhibitionZoneMm);
+
+        Assert.True((await save.Handle(
+            new SaveCultureResultsCommand(10, null, null, null, null, null, null, [new(1, (int)SensitivityCategory.HighlyFor)]),
+            default)).IsSuccess);
+
+        Assert.Null(Assert.Single(db.CultureAntibioticResults).InhibitionZoneMm);
     }
 }

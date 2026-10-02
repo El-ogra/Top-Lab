@@ -108,6 +108,40 @@ public sealed class BuildCombinedReportCommandHandler
             .Where(c => distinctIds.Contains(c.PatientTestId.Value))
             .ToDictionary(c => c.PatientTestId.Value);
 
+        // W-02 S11 (WP-14): batched sensitivity + microscopy reads for every
+        // culture line — no per-line query.
+        var cultureSensitivityByTest = distinctIds.Count == 0
+            ? new Dictionary<int, List<CultureAntibioticResult>>()
+            : _db.Set<CultureAntibioticResult>()
+                .Where(x => distinctIds.Contains(x.PatientTestId.Value))
+                .OrderBy(x => x.AntibioticId.Value)
+                .ToList()
+                .GroupBy(x => x.PatientTestId.Value)
+                .ToDictionary(g => g.Key, g => g.ToList());
+        var cultureAntibioticIds = cultureSensitivityByTest.Values
+            .SelectMany(l => l.Select(x => x.AntibioticId.Value))
+            .Distinct()
+            .ToList();
+        var cultureAntibiotics = cultureAntibioticIds.Count == 0
+            ? new Dictionary<int, Antibiotic>()
+            : _db.Set<Antibiotic>()
+                .Where(a => cultureAntibioticIds.Contains(a.Id.Value))
+                .ToDictionary(a => a.Id.Value);
+        var cultureTestIds = pts.Select(p => p.TestId.Value).Distinct().ToList();
+        var cultureThresholds = cultureTestIds.Count == 0 || cultureAntibioticIds.Count == 0
+            ? new Dictionary<(int TestId, int AntibioticId), decimal?>()
+            : _db.Set<CultureAntibioticAttachment>()
+                .Where(x => cultureTestIds.Contains(x.TestId.Value) && cultureAntibioticIds.Contains(x.AntibioticId.Value))
+                .ToList()
+                .GroupBy(x => (x.TestId.Value, x.AntibioticId.Value))
+                .ToDictionary(g => g.Key, g => g.First().SensitivityThresholdMm);
+        var microscopyByTest = distinctIds.Count == 0
+            ? new Dictionary<int, CultureMicroscopy>()
+            : _db.Set<CultureMicroscopy>()
+                .Where(m => distinctIds.Contains(m.PatientTestId.Value))
+                .ToList()
+                .ToDictionary(m => m.PatientTestId.Value);
+
         IReadOnlyList<CombinedReportLineDto> lines = selection.OrderedIds.Select(id =>
         {
             var pt = byId[id];
@@ -149,9 +183,27 @@ public sealed class BuildCombinedReportCommandHandler
             }
             else if (cultureRows.TryGetValue(id, out var cr))
             {
+                cultureSensitivityByTest.TryGetValue(id, out var sensRows);
+                microscopyByTest.TryGetValue(id, out var micro);
                 culture = new CultureReportSummaryDto(
                     cr.Sample, cr.OrganismA, cr.OrganismB, cr.OrganismC,
-                    cr.CultureCondition, cr.ColonyCount);
+                    cr.CultureCondition, cr.ColonyCount,
+                    micro?.PusCells, micro?.RedBloodCells, micro?.EpithelialCells,
+                    micro?.Crystals, micro?.Fungi, micro?.OthersOne,
+                    micro?.OthersTwo, micro?.OthersThree,
+                    micro?.IsDirect ?? false,
+                    (sensRows ?? Enumerable.Empty<CultureAntibioticResult>()).Select(x =>
+                    {
+                        cultureAntibiotics.TryGetValue(x.AntibioticId.Value, out var ab);
+                        cultureThresholds.TryGetValue((pt.TestId.Value, x.AntibioticId.Value), out var threshold);
+                        return new CultureReportRowDto(
+                            x.AntibioticId.Value,
+                            ab?.Name ?? $"[{x.AntibioticId.Value}]",
+                            ab?.ScientificName,
+                            (int?)x.SensitivityCategory,
+                            x.InhibitionZoneMm,
+                            threshold);
+                    }).ToList());
             }
 
             var (lowComment, highComment) = PatientHistoryReader.RangeComments(snap, pt.ResultFlag);
