@@ -44,6 +44,66 @@ public sealed class SearchPatientsGlobalQueryHandler
                 || phonePatientIds.Contains(p.Id));
         }
 
+        // ------------------------------------------------------------------
+        // P-01 filters. Six independent, AND-combined guard clauses (SD-5).
+        // Each is shaped like the term guard and is inert when its parameter is null.
+        // Each narrows with a conjunction; none widens with a disjunction on a
+        // patient column. The Text clause above is neither replaced nor widened.
+        // ------------------------------------------------------------------
+
+        // F1a — treating doctor (an individual physician). Separate column, separate guard.
+        if (request.TreatingDoctorId is not null)
+        {
+            var treatingDoctorId = request.TreatingDoctorId.Value;
+            query = query.Where(p => p.TreatingDoctorId != null && p.TreatingDoctorId.Value == treatingDoctorId);
+        }
+
+        // F1b — referral entity (an institution). SD-6: never merged with the clause above.
+        if (request.ReferralEntityId is not null)
+        {
+            var referralEntityId = request.ReferralEntityId.Value;
+            query = query.Where(p => p.ReferralEntityId != null && p.ReferralEntityId.Value == referralEntityId);
+        }
+
+        // F2 — patients who have a PatientTest for the chosen test (AS-3).
+        if (request.TestId is not null)
+        {
+            var testId = request.TestId.Value;
+            query = query.Where(p =>
+                _db.Set<PatientTest>().Any(pt => pt.PatientId.Value == p.Id.Value && pt.TestId.Value == testId));
+        }
+
+        // F3
+        if (request.Sex is not null)
+        {
+            var sex = request.Sex.Value;
+            query = query.Where(p => p.Sex == sex);
+        }
+
+        // F4 — band compares like with like: the stored unit must equal the band's unit,
+        // and no conversion between Day / Month / Year is performed (AS-5, BR-04).
+        if (request.Age is not null)
+        {
+            var age = request.Age;
+            query = query.Where(p =>
+                p.AgeUnit == age.Unit
+                && (age.From == null || p.AgeValue >= age.From.Value)
+                && (age.To == null || p.AgeValue <= age.To.Value));
+        }
+
+        // F5 — bounds RegistrationDateUtc, inclusive on both ends (AS-4).
+        if (request.From is not null)
+        {
+            var fromUtc = request.From.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            query = query.Where(p => p.RegistrationDateUtc >= fromUtc);
+        }
+
+        if (request.To is not null)
+        {
+            var toUtc = request.To.Value.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
+            query = query.Where(p => p.RegistrationDateUtc <= toUtc);
+        }
+
         var rows = query
             .OrderByDescending(p => p.RegistrationDateUtc)
             .Skip((request.Page - 1) * request.PageSize)

@@ -63,15 +63,41 @@ public class SearchGuardrailTests
     // ---------------------------------------------------------------------
 
     [Fact]
-    public void SearchGuardrail_Query_HasNoFilterParameter_BeforeSlice2()
+    public void SearchGuardrail_Query_OriginalThreeMembersAreIntact()
     {
-        var members = typeof(SearchPatientsGlobalQuery)
-            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+        // S2 appended six filter parameters. The guardrail is not "no filter exists" —
+        // it is that the ORIGINAL positional surface survived untouched (SD-5 clause 2):
+        // Text, Page, PageSize still exist, in that order, at the head of the record,
+        // and no filter parameter was inserted in the middle of them.
+        var parameters = typeof(SearchPatientsGlobalQuery)
+            .GetConstructors().Single()
+            .GetParameters()
             .Select(p => p.Name)
-            .OrderBy(n => n, StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(new[] { "Page", "PageSize", "Text" }, members);
+        Assert.Equal(new[] { "Text", "Page", "PageSize" }, parameters.Take(3));
+
+        // Paging parameters were never moved or re-typed by S2.
+        var pageSizeParam = parameters.Length > 2 ? parameters[2] : null;
+        Assert.Equal("PageSize", pageSizeParam);
+    }
+
+    [Fact]
+    public void SearchGuardrail_Query_PositionalShapeIsTextPagePageSize_InThatOrder()
+    {
+        var parameters = typeof(SearchPatientsGlobalQuery)
+            .GetConstructors().Single()
+            .GetParameters()
+            .Select(p => p.Name)
+            .ToArray();
+
+        // The first three positional members keep their original names AND order.
+        // Everything after them is appended (never inserted), which is the record
+        // discipline the counting trap in the package warns about.
+        Assert.Equal("Text", parameters[0]);
+        Assert.Equal("Page", parameters[1]);
+        Assert.Equal("PageSize", parameters[2]);
+        Assert.Equal(new[] { "Text", "Page", "PageSize" }, parameters.Take(3));
     }
 
     [Fact]
@@ -98,18 +124,6 @@ public class SearchGuardrailTests
             .Select(p => p.Name)
             .ToArray();
         Assert.DoesNotContain(propertyNames, n => n.Contains("Cap", StringComparison.OrdinalIgnoreCase));
-    }
-
-    [Fact]
-    public void SearchGuardrail_Query_PositionalShapeIsTextPagePageSize_InThatOrder()
-    {
-        var parameters = typeof(SearchPatientsGlobalQuery)
-            .GetConstructors().Single()
-            .GetParameters()
-            .Select(p => p.Name)
-            .ToArray();
-
-        Assert.Equal(new[] { "Text", "Page", "PageSize" }, parameters);
     }
 
     // ---------------------------------------------------------------------
