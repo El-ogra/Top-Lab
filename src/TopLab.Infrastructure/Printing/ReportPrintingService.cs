@@ -62,7 +62,10 @@ public sealed class ReportPrintingService : IReportPrintingService
                 return Result.Failure(Error.Unexpected("لم يتم تعيين طابعة لتقارير المختبر."));
             }
 
-            var pdfPath = Path.Combine(Path.GetTempPath(), $"TopLabPrint-{Guid.NewGuid():N}.pdf");
+            // W-02 S15 (WP-29): the owned temp folder, cleaned by TempPdfCleanupService.
+            var printDir = Path.Combine(Path.GetTempPath(), "TopLab", "Print");
+            Directory.CreateDirectory(printDir);
+            var pdfPath = Path.Combine(printDir, $"TopLabPrint-{Guid.NewGuid():N}.pdf");
             await _writer.WritePdfAsync(pdfPath, envelope, reportSettings, systemSettings, cancellationToken);
             await _dispatcher.DispatchAsync(pdfPath, assignment.PrinterName, cancellationToken);
 

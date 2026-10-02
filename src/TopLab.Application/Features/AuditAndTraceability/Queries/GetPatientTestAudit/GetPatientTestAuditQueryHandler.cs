@@ -58,6 +58,7 @@ public sealed class GetPatientTestAuditQueryHandler
                     ? name
                     : userId.Value.ToString();
 
+        // W-02 S15 (WP-29): intentional full-catalogue load — small and bounded.
         var catalog = _db.Set<Test>().ToDictionary(t => t.Id.Value);
         var testName = catalog.TryGetValue(patientTest.TestId.Value, out var test)
             ? test.Name

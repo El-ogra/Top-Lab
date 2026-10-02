@@ -234,7 +234,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | [x] DONE | VG-12 PASS |
 | 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | [x] DONE | VG-13 PASS |
 | 14 | Unit of work, visit deltas, id recovery, settlement lock | WP-29 | — | [x] DONE | VG-14 PASS |
-| 15 | Narrow hot readers, own the temp dir, layering guard | WP-29 | — | ⬜ | VG-15 |
+| 15 | Narrow hot readers, own the temp dir, layering guard | WP-29 | — | [x] DONE | VG-15 PASS |
 | 16 | WP-07 regression net + wave DoD | WP-07 | — | ⬜ | VG-16 |
 
 ---
@@ -845,7 +845,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Touches:** `PatientHistoryReader.cs:29-31` · `WorkSheetHelpers.cs:104-107` · new `TempPdfCleanupService.cs` + tests · new `PresentationLayeringTests.cs` · `Infrastructure/DependencyInjection.cs` · `ReportPrintingService.cs:62` · `BarcodeService.cs:69` · comments on the three bounded catalogue sites.
 - **Gate:** VG-15. Migration: **none**.
 
-- [ ] 1–10. Plan: own `%TEMP%\TopLab\Print\`; cleanup by `LastWriteTimeUtc`, app-owned folder only; catalogue loads annotated, not rewritten; layering test **pins** the three existing violations as numbered debt rather than refactoring them.
+- [x] 1–10. **DONE.** `WorkSheetHelpers` patient filter pushed into SQL; both writers + previews consolidated on `%TEMP%\TopLab\Print` with an hourly janitor (24h retention, owned folder only); layering structural test pins the 3 accepted-debt sites + documentary bypass test; catalogue sites annotated as intentional. Self-correction: my `PrintingServices_WriteIntoTheOwnedTempDirectory` asserted a literal that never appears verbatim in source — fixed to the two-segment form. VG-15 green: build 0/0; Infrastructure **264 (+5)** · Presentation **67 (+2)** · others Δ0; `IAppLogger` re-pinned; `ToAscii`/`TestDisplayNameResolver` untouched; drift clean; no migration.
 
 ### Slice 16 — WP-07 regression net + wave DoD (WP-07)
 

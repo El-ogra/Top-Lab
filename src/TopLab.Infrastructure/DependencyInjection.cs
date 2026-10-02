@@ -97,6 +97,9 @@ public static class DependencyInjection
         // Daily backup hook runs in the background independently of any UI.
         services.AddHostedService<DailyBackupHostedService>();
 
+        // W-02 S15 (WP-29): print-temp janitor for the owned folder only.
+        services.AddHostedService<Hosting.TempPdfCleanupService>();
+
         // M-23 workstation-local utility lists (SD-23-2): no database table,
         // no migration — JSON files under %ProgramData%\TopLab.
         services.AddSingleton<IPurchasesListStore, JsonPurchasesListStore>();

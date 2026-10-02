@@ -26,6 +26,8 @@ public sealed class GetCultureReportQueryHandler : IRequestHandler<GetCultureRep
         var settings = _db.Set<SystemSettings>().SingleOrDefault(s => s.Id == 1);
         if (settings is null) return Task.FromResult(Result<CultureReportDto>.Failure(Error.Unexpected("سجل الإعدادات العامة مفقود.")));
         // W-02 S11 (WP-14): two aggregated reads — antibiotics(+thresholds), then projection.
+        // W-02 S15 (WP-29): the two dictionaries below are already scoped to this
+        // report's antibiotics — not catalogue-wide loads.
         var abRows = _db.Set<CultureAntibioticResult>().Where(x => x.PatientTestId.Value == pt.Id.Value).OrderBy(x => x.AntibioticId.Value).ToList();
         var abIds = abRows.Select(x => x.AntibioticId.Value).Distinct().ToList();
         var antibiotics = abIds.Count == 0

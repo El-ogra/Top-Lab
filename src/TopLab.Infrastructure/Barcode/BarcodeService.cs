@@ -69,7 +69,10 @@ public sealed class BarcodeService : IBarcodeService
             var label = _renderer.Render(payload);
             var pdfBytes = BuildLabelPdf(label, payload);
 
-            var pdfPath = Path.Combine(Path.GetTempPath(), $"TopLabBarcode-{Guid.NewGuid():N}.pdf");
+            // W-02 S15 (WP-29): the owned temp folder, cleaned by TempPdfCleanupService.
+            var printDir = Path.Combine(Path.GetTempPath(), "TopLab", "Print");
+            Directory.CreateDirectory(printDir);
+            var pdfPath = Path.Combine(printDir, $"TopLabBarcode-{Guid.NewGuid():N}.pdf");
             await File.WriteAllBytesAsync(pdfPath, pdfBytes, cancellationToken);
             await _dispatcher.DispatchAsync(pdfPath, assignment.PrinterName, cancellationToken);
 

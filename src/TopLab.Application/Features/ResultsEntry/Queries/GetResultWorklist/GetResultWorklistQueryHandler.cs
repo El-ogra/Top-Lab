@@ -34,6 +34,8 @@ public sealed class GetResultWorklistQueryHandler
             return Task.FromResult(Result<IReadOnlyList<ResultWorklistItemDto>>.Success(Array.Empty<ResultWorklistItemDto>()));
         }
 
+        // W-02 S15 (WP-29): intentional full-catalogue load — the test catalogue is
+        // small and bounded; the unbounded paths were narrowed in S12/S15.
         var catalog = _db.Set<Test>().ToDictionary(t => t.Id.Value);
 
         var rows = _db.Set<PatientTest>()

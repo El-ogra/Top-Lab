@@ -101,10 +101,14 @@ internal static class WorkSheetLines
 
         var tests = db.Set<Test>().ToDictionary(t => t.Id.Value);
 
+        // W-02 S15 (WP-29): the patient membership test belongs in SQL, not in
+        // memory after a full-period materialisation.
+        var patientIds = patients.Keys.ToList();
+
         return db.Set<PatientTest>()
-            .Where(pt => testIds.Contains(pt.TestId.Value) && !pt.IsTakenOutsideLab)
+            .Where(pt => testIds.Contains(pt.TestId.Value) && !pt.IsTakenOutsideLab
+                && patientIds.Contains(pt.PatientId.Value))
             .ToList()
-            .Where(pt => patients.ContainsKey(pt.PatientId.Value))
             .OrderBy(pt => patients[pt.PatientId.Value].RegistrationDateUtc)
             .ThenBy(pt => pt.Id.Value)
             .Select(pt =>
