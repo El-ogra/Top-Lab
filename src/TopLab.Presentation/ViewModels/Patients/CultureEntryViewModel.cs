@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using MediatR;
-using TopLab.Application.Features.CultureResults.Commands.MarkCultureReportPrinted;
 using TopLab.Application.Features.CultureResults.Commands.SaveCultureResults;
 using TopLab.Application.Features.CultureResults.Commands.UnverifyCultureResult;
 using TopLab.Application.Features.CultureResults.Commands.VerifyCultureResult;
@@ -70,6 +69,7 @@ public sealed class CultureEntryViewModel : ViewModelBase
 
     // W-02 S5 (WP-06): the honest print path. The screen never marks a result itself.
     private readonly IResultPrintCoordinator _printCoordinator;
+    private readonly IPrintedStateRecorder _printedState;
 
     private int _patientTestId;
     private string _testName = string.Empty;
@@ -103,12 +103,14 @@ public sealed class CultureEntryViewModel : ViewModelBase
         ISender mediator,
         ResultErrorPresenter presenter,
         IDialogService dialogs,
-        IResultPrintCoordinator printCoordinator)
+        IResultPrintCoordinator printCoordinator,
+        IPrintedStateRecorder printedState)
     {
         _mediator = mediator;
         _presenter = presenter;
         _dialogs = dialogs;
         _printCoordinator = printCoordinator;
+        _printedState = printedState;
 
         SaveCommand = new AsyncRelayCommand(async (_, ct) => await SaveAsync(ct));
         VerifyCommand = new AsyncRelayCommand(async (_, ct) => await VerifyAsync(ct));
@@ -471,6 +473,18 @@ public sealed class CultureEntryViewModel : ViewModelBase
 
             if (outcome.Printed)
             {
+                // W-02 post-implementation fix (owner decision 1: printed = successful
+                // printing). Records PatientTest.IsPrinted after a successful culture report
+                // print. A culture test carries no profile result items, so
+                // RecordForPatientTestAsync resolves none and only the test row is recorded.
+                var recorded = await _printedState.RecordForPatientTestAsync(
+                    _patientTestId, cancellationToken);
+                if (!recorded.IsSuccess)
+                {
+                    ErrorMessage = recorded.Error!.Message;
+                    return;
+                }
+
                 StatusMessage = "تمت الطباعة.";
                 await LoadAsync(_patientTestId, cancellationToken);
             }

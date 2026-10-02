@@ -30,8 +30,13 @@ public static class DependencyInjection
         });
 
         // W-02 S4 (WP-06): the one honest print path. Scoped, because it depends on the
-        // scoped IReportPrintingService.
-        services.AddScoped<IResultPrintCoordinator, ResultPrintCoordinator>();
+                // scoped IReportPrintingService.
+                services.AddScoped<IResultPrintCoordinator, ResultPrintCoordinator>();
+
+                // W-02 post-implementation fix (owner decision 1: printed = successful printing).
+                // The single place where printed state is recorded, called only after the printer
+                // succeeds. Scoped because it depends on the scoped IApplicationDbContext.
+                services.AddScoped<IPrintedStateRecorder, PrintedStateRecorder>();
 
         return services;
     }

@@ -4,6 +4,7 @@ using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ReportProduction.Commands.BuildCombinedReport;
 using TopLab.Application.Features.ReportProduction.Common;
 using BalanceProbe = TopLab.Application.Features.ResultsEntry.Common.BalanceProbe;
+using IPrintedStateRecorder = TopLab.Application.Features.ResultsEntry.Common.IPrintedStateRecorder;
 using TopLab.Domain.Patients;
 using TopLab.Domain.Results;
 using TopLab.Domain.Users;
@@ -14,22 +15,23 @@ public sealed class PrintCombinedReportCommandHandler : IRequestHandler<PrintCom
 {
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUserService _currentUser;
-    private readonly IDateTimeProvider _clock;
     private readonly ISender _sender;
     private readonly IReportPrintingService _printing;
+    private readonly IPrintedStateRecorder _printedState;
 
     public PrintCombinedReportCommandHandler(
         IApplicationDbContext db,
         ICurrentUserService currentUser,
         IDateTimeProvider clock,
         ISender sender,
-        IReportPrintingService printing)
+        IReportPrintingService printing,
+        IPrintedStateRecorder printedState)
     {
         _db = db;
         _currentUser = currentUser;
-        _clock = clock;
         _sender = sender;
         _printing = printing;
+        _printedState = printedState;
     }
 
     public async Task<Result> Handle(PrintCombinedReportCommand request, CancellationToken cancellationToken)
@@ -69,20 +71,26 @@ public sealed class PrintCombinedReportCommandHandler : IRequestHandler<PrintCom
         }
 
         var ids = built.Value!.Lines.Select(l => l.PatientTestId).ToList();
-        var rows = _db.Set<PatientTest>().Where(pt => ids.Contains(pt.Id.Value)).ToList();
-        foreach (var row in rows)
+        var profileItemIds = built.Value!.Lines
+            .SelectMany(l => l.ProfileLines)
+            .Select(p => p.ProfileResultItemId)
+            .Where(id => id != 0)
+            .Distinct()
+            .ToList();
+
+        // W-02 post-implementation fix (owner decision 1: printed = successful printing).
+        // Printed state is recorded in exactly one place, through IPrintedStateRecorder,
+        // so the combined report records the same state as every other printing path.
+        // It also now records ProfileResultItem.IsPrinted for the profile lines carried
+        // by this report, which is what restores amendment after printing (decision 2).
+        // The balance gate, the "print failed" early return, and the translated domain
+        // error contract above/below are unchanged.
+        var recorded = await _printedState.RecordAsync(ids, profileItemIds, cancellationToken);
+        if (!recorded.IsSuccess)
         {
-            try
-            {
-                row.MarkPrinted(_currentUser.UserId, _clock.UtcNow);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Result.Failure(Error.Conflict(DomainFailureTranslator.Translate(ex)));
-            }
+            return recorded;
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
 }

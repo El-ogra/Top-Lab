@@ -15,15 +15,18 @@ public sealed class ExecuteBulkPrintCommandHandler
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUserService _currentUser;
     private readonly IResultPrintCoordinator _printCoordinator;
+    private readonly IPrintedStateRecorder _printedState;
 
     public ExecuteBulkPrintCommandHandler(
         IApplicationDbContext db,
         ICurrentUserService currentUser,
-        IResultPrintCoordinator printCoordinator)
+        IResultPrintCoordinator printCoordinator,
+        IPrintedStateRecorder printedState)
     {
         _db = db;
         _currentUser = currentUser;
         _printCoordinator = printCoordinator;
+        _printedState = printedState;
     }
 
     public async Task<Result<IReadOnlyList<BulkPrintOutcomeDto>>> Handle(
@@ -85,6 +88,26 @@ public sealed class ExecuteBulkPrintCommandHandler
 
                 if (outcome.Printed)
                 {
+                    // W-02 post-implementation fix (owner decision 1: printed = successful
+                    // printing). Bulk print now records printed state too, through the same
+                    // single service every other printing path uses. Recorded only for the
+                    // sheets that actually printed — a failure leaves the row untouched.
+                    // This is what makes the reprint prompt (requiresConfirmation, which
+                    // reads IsPrinted) work again after the fix.
+                    // Profile items are resolved by the service from the patient test id,
+                    // so the printed sheet and the recorded items always agree.
+                    var recorded = await _printedState.RecordForPatientTestAsync(
+                        pt.Id.Value, cancellationToken);
+                    if (!recorded.IsSuccess)
+                    {
+                        if (failure is null)
+                        {
+                            failure = recorded.Error!.Message;
+                        }
+
+                        continue;
+                    }
+
                     printed++;
                 }
                 else if (failure is null)

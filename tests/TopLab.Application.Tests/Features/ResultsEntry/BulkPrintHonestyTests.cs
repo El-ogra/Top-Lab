@@ -25,7 +25,7 @@ public class BulkPrintHonestyTests
         db.PatientTests.Add(Reviewed(102, 2));
         var coordinator = new FakeResultPrintCoordinator();
 
-        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), coordinator)
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), coordinator, new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[]
             {
                 new BulkPrintDecision(1, true),
@@ -53,7 +53,7 @@ public class BulkPrintHonestyTests
             FailForPatientTestId = 101
         };
 
-        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), coordinator)
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), coordinator, new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[]
             {
                 new BulkPrintDecision(1, true),
@@ -79,7 +79,7 @@ public class BulkPrintHonestyTests
         db.PatientTests.Add(Reviewed(102, 2));
         var coordinator = new FakeResultPrintCoordinator { Printed = false };
 
-        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), coordinator)
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), coordinator, new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[]
             {
                 new BulkPrintDecision(1, true),
@@ -90,16 +90,40 @@ public class BulkPrintHonestyTests
         Assert.All(result.Value!, o => Assert.Equal(0, o.PrintedCount));
     }
 
-    /// <summary>SD-1: bulk print must not write IsPrinted/PrintCount any more.</summary>
+    /// <summary>
+    /// W-02 post-implementation fix (owner decision 1: printed = successful printing).
+    /// Bulk print now records printed state after a successful print. The old SD-1
+    /// expectation (never mark) was correct for the half-fixed Wave 2 state and is now
+    /// wrong: honesty means "no sheet, no mark", not "no sheet, ever".
+    /// </summary>
     [Fact]
-    public async Task BulkPrint_NeverMarksPrinted()
+    public async Task BulkPrint_SuccessfulPrint_RecordsPrintedState()
     {
         var db = new FakeApplicationDbContext();
         AddPatient(db, 1);
         var row = Reviewed(101, 1);
         db.PatientTests.Add(row);
 
-        await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator())
+        await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db))
+            .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(1, true) }), CancellationToken.None);
+
+        Assert.True(row.IsPrinted);
+        Assert.Equal(1, row.PrintCount);
+    }
+
+    /// <summary>
+    /// The other half of honesty: a sheet that did NOT print must leave the row untouched.
+    /// </summary>
+    [Fact]
+    public async Task BulkPrint_FailedPrint_LeavesPrintedStateUnset()
+    {
+        var db = new FakeApplicationDbContext();
+        AddPatient(db, 1);
+        var row = Reviewed(101, 1);
+        db.PatientTests.Add(row);
+        var coordinator = new FakeResultPrintCoordinator { Printed = false };
+
+        await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), coordinator, new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(1, true) }), CancellationToken.None);
 
         Assert.False(row.IsPrinted);
@@ -112,7 +136,7 @@ public class BulkPrintHonestyTests
         var db = new FakeApplicationDbContext();
         AddPatient(db, 1);
 
-        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator())
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(1, true) }), CancellationToken.None);
 
         Assert.Equal(BulkPrintOutcomes.NoVerifiedResults, result.Value![0].Outcome);
@@ -127,7 +151,7 @@ public class BulkPrintHonestyTests
         row.MarkPrinted(1, DateTime.UtcNow);
         db.PatientTests.Add(row);
 
-        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator())
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(1, false) }), CancellationToken.None);
 
         Assert.Equal(BulkPrintOutcomes.Skipped, result.Value![0].Outcome);
@@ -138,7 +162,7 @@ public class BulkPrintHonestyTests
     {
         var db = new FakeApplicationDbContext();
 
-        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator())
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(99, true) }), CancellationToken.None);
 
         Assert.Equal(BulkPrintOutcomes.PatientNotFound, result.Value![0].Outcome);
@@ -157,7 +181,7 @@ public class BulkPrintHonestyTests
         settings.SetPrintOptions(false, true);
         db.ReportSettings.Add(settings);
 
-        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator())
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(1, false) }), CancellationToken.None);
 
         Assert.Equal(BulkPrintOutcomes.Printed, result.Value![0].Outcome);
@@ -173,7 +197,7 @@ public class BulkPrintHonestyTests
         db.PatientTests.Add(row);
         db.ReportSettings.Add(TopLab.Domain.Settings.ReportSettings.CreateDefault());
 
-        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator())
+        var result = await new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService(), new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db))
             .Handle(new ExecuteBulkPrintCommand(new[] { new BulkPrintDecision(1, false) }), CancellationToken.None);
 
         Assert.Equal(BulkPrintOutcomes.Skipped, result.Value![0].Outcome);

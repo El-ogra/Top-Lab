@@ -54,7 +54,7 @@ public class PrintCombinedReportCommandHandlerTests
     {
         var (db, sender, printing, user, clock) = Build();
 
-        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintCombinedReportCommand(1, new[] { 101 }), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -80,7 +80,7 @@ public class PrintCombinedReportCommandHandlerTests
         db.Users.Add(User.Create(UserId.Create(5), "cashier", "h", "h2", false, 0, true));
         user.UserId = 5;
 
-        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintCombinedReportCommand(1, new[] { 101 }), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -99,7 +99,7 @@ public class PrintCombinedReportCommandHandlerTests
         user.UserId = 5;
         user.IsAbsolutePermission = true;
 
-        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintCombinedReportCommand(1, new[] { 101 }), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -112,7 +112,7 @@ public class PrintCombinedReportCommandHandlerTests
     {
         var (db, sender, printing, user, clock) = Build();
 
-        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintCombinedReportCommand(999, new[] { 101 }), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -127,7 +127,7 @@ public class PrintCombinedReportCommandHandlerTests
         var (db, sender, printing, user, clock) = Build();
         user.UserId = 42;
 
-        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintCombinedReportCommand(1, new[] { 101 }), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -145,7 +145,7 @@ public class PrintCombinedReportCommandHandlerTests
             new BuildCombinedReportCommand(1, new[] { 101 }),
             Result<CombinedReportDto>.Failure(Error.Conflict("تعذر تكوين التقرير.")));
 
-        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintCombinedReportCommand(1, new[] { 101 }), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -164,7 +164,7 @@ public class PrintCombinedReportCommandHandlerTests
             new BuildCombinedReportCommand(1, new[] { 99 }),
             Result<CombinedReportDto>.Failure(Error.Forbidden("أحد التحاليل المحددة لا يخص هذا المريض.")));
 
-        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintCombinedReportCommand(1, new[] { 99 }), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -180,7 +180,7 @@ public class PrintCombinedReportCommandHandlerTests
         var (db, sender, printing, user, clock) = Build();
         printing.NextResult = Result.Failure(Error.Unexpected("تعذر طباعة التقرير."));
 
-        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintCombinedReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintCombinedReportCommand(1, new[] { 101 }), CancellationToken.None);
 
         Assert.False(result.IsSuccess);

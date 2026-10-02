@@ -97,7 +97,7 @@ public class BulkCommandHandlerTests
         db.PatientTests.Add(fresh);
         var before = fresh.PrintCount;
 
-        var handler = new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService { UserId = 1 }, new FakeResultPrintCoordinator());
+        var handler = new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService { UserId = 1 }, new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db));
         var result = await handler.Handle(new ExecuteBulkPrintCommand(new[]
         {
             new BulkPrintDecision(1, ConfirmReprint: false),
@@ -108,10 +108,13 @@ public class BulkCommandHandlerTests
         Assert.Equal(2, result.Value!.Count);
         Assert.Equal(BulkPrintOutcomes.Skipped, result.Value!.First(o => o.PatientId == 1).Outcome);
         Assert.Equal(BulkPrintOutcomes.Printed, result.Value!.First(o => o.PatientId == 2).Outcome);
-        // W-02 S6 / SD-1: bulk print no longer stamps PrintCount, so both stay as seeded.
-        // These two assertions previously pinned the counting behaviour WP-06 removes.
+        // W-02 post-implementation fix (owner decision 1: printed = successful printing).
+        // Bulk print now records printed state after a successful print, so the freshly
+        // printed row is stamped. The already-printed row is skipped (reprint not
+        // confirmed), so it keeps its original count of 1.
         Assert.Equal(1, printed.PrintCount);
-        Assert.Equal(before, fresh.PrintCount);
+        Assert.Equal(before + 1, fresh.PrintCount);
+        Assert.True(fresh.IsPrinted);
     }
 
     [Fact]
@@ -125,7 +128,7 @@ public class BulkCommandHandlerTests
         var before = pt.PrintCount;
         db.PatientTests.Add(pt);
 
-        var handler = new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService { UserId = 1 }, new FakeResultPrintCoordinator());
+        var handler = new ExecuteBulkPrintCommandHandler(db, new FakeCurrentUserService { UserId = 1 }, new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db));
         var result = await handler.Handle(new ExecuteBulkPrintCommand(new[]
         {
             new BulkPrintDecision(1, ConfirmReprint: true),
@@ -133,8 +136,10 @@ public class BulkCommandHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(BulkPrintOutcomes.Printed, result.Value![0].Outcome);
-        // W-02 S6 / SD-1: the reprint is printed but not counted on the row any more.
-        Assert.Equal(before, pt.PrintCount);
+        // W-02 post-implementation fix: a successful reprint is recorded, so the
+        // counter advances exactly once.
+        Assert.Equal(before + 1, pt.PrintCount);
+        Assert.True(pt.IsPrinted);
     }
 
     [Fact]
@@ -151,7 +156,7 @@ public class BulkCommandHandlerTests
         db.Users.Add(User.Create(UserId.Create(5), "c", "h", "h2", false, 0, true));
 
         var user = new FakeCurrentUserService { UserId = 5, IsAbsolutePermission = false };
-        var handler = new ExecuteBulkPrintCommandHandler(db, user, new FakeResultPrintCoordinator());
+        var handler = new ExecuteBulkPrintCommandHandler(db, user, new FakeResultPrintCoordinator(), new FakePrintedStateRecorder(db, user));
         var result = await handler.Handle(new ExecuteBulkPrintCommand(new[]
         {
             new BulkPrintDecision(1, ConfirmReprint: true),
@@ -159,6 +164,8 @@ public class BulkCommandHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(BulkPrintOutcomes.BlockedByBalance, result.Value![0].Outcome);
+        // The balance gate blocks before any sheet is produced, so nothing is recorded.
         Assert.False(row.IsPrinted);
+        Assert.Equal(0, row.PrintCount);
     }
 }

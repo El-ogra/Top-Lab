@@ -61,7 +61,7 @@ public class PrintHistoryReportCommandHandlerTests
     {
         var (db, sender, printing, user, clock) = Build();
 
-        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintHistoryReportCommand(1), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -100,7 +100,7 @@ public class PrintHistoryReportCommandHandlerTests
                     new(102, 1, 3, "Urea", "UREA", 0, null, null, false, DateTime.UtcNow, null)
                 })));
 
-        var result = await new PrintHistoryReportCommandHandler(db, user, clock, noReviewed, printing)
+        var result = await new PrintHistoryReportCommandHandler(db, user, clock, noReviewed, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintHistoryReportCommand(1), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -117,7 +117,7 @@ public class PrintHistoryReportCommandHandlerTests
         db.Users.Add(User.Create(UserId.Create(5), "cashier", "h", "h2", false, 0, true));
         user.UserId = 5;
 
-        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintHistoryReportCommand(1), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -135,7 +135,7 @@ public class PrintHistoryReportCommandHandlerTests
         user.UserId = 5;
         user.IsAbsolutePermission = true;
 
-        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintHistoryReportCommand(1), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -148,7 +148,7 @@ public class PrintHistoryReportCommandHandlerTests
     {
         var (db, sender, printing, user, clock) = Build();
 
-        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintHistoryReportCommand(999), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -163,7 +163,7 @@ public class PrintHistoryReportCommandHandlerTests
         var (db, sender, printing, user, clock) = Build();
         user.UserId = 42;
 
-        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintHistoryReportCommand(1), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -181,7 +181,7 @@ public class PrintHistoryReportCommandHandlerTests
             new GetSeparateHistoryReportQuery(1),
             Result<PatientHistoryDto>.Failure(Error.Unexpected("فشل تحميل السجل.")));
 
-        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintHistoryReportCommand(1), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -195,7 +195,7 @@ public class PrintHistoryReportCommandHandlerTests
         var (db, sender, printing, user, clock) = Build();
         printing.NextResult = Result.Failure(Error.Unexpected("تعذر طباعة التقرير."));
 
-        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing)
+        var result = await new PrintHistoryReportCommandHandler(db, user, clock, sender, printing, new FakePrintedStateRecorder(db, user, clock))
             .Handle(new PrintHistoryReportCommand(1), CancellationToken.None);
 
         Assert.False(result.IsSuccess);

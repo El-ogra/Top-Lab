@@ -4,7 +4,6 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Features.ProfileResults.Commands.AmendProfileResult;
-using TopLab.Application.Features.ProfileResults.Commands.MarkProfilePrinted;
 using TopLab.Application.Features.ProfileResults.Commands.SaveProfileResults;
 using TopLab.Application.Features.ProfileResults.Commands.UnverifyProfileResults;
 using TopLab.Application.Features.ProfileResults.Commands.VerifyProfileResults;
@@ -78,6 +77,9 @@ public sealed class ProfileEntryViewModel : ViewModelBase
     // W-02 S5 (WP-06): the honest print path. The screen never marks a result itself.
     private readonly IResultPrintCoordinator _printCoordinator;
 
+    // W-02 post-implementation fix: records printed state after a successful print.
+    private readonly IPrintedStateRecorder _printedState;
+
     private int _patientTestId;
     private int _testId;
     private string _patientFullName = string.Empty;
@@ -97,7 +99,8 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         IServiceProvider services,
         IPdfPreviewService pdfPreview,
         IApplicationDbContext db,
-        IResultPrintCoordinator printCoordinator)
+        IResultPrintCoordinator printCoordinator,
+        IPrintedStateRecorder printedState)
     {
         _mediator = mediator;
         _presenter = presenter;
@@ -106,6 +109,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         _pdfPreview = pdfPreview;
         _db = db;
         _printCoordinator = printCoordinator;
+        _printedState = printedState;
 
         SaveCommand = new AsyncRelayCommand(async (_, ct) => await SaveAsync(ct));
         VerifyCommand = new AsyncRelayCommand(async (_, ct) => await VerifyAsync(ct));
@@ -368,6 +372,18 @@ public sealed class ProfileEntryViewModel : ViewModelBase
 
             if (outcome.Printed)
             {
+                // W-02 post-implementation fix (owner decision 1: printed = successful
+                // printing). Records PatientTest.IsPrinted AND the profile items'
+                // ProfileResultItem.IsPrinted — which is what makes post-print amendment
+                // available (owner decision 2). Recorded only after a successful print.
+                var recorded = await _printedState.RecordForPatientTestAsync(
+                    _patientTestId, cancellationToken);
+                if (!recorded.IsSuccess)
+                {
+                    ErrorMessage = recorded.Error!.Message;
+                    return;
+                }
+
                 StatusMessage = "تمت الطباعة.";
                 await LoadAsync(_patientTestId, cancellationToken);
             }

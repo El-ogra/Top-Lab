@@ -4,6 +4,7 @@ using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ReportProduction.Common;
 using TopLab.Application.Features.ReportProduction.Queries.GetSeparateHistoryReport;
 using BalanceProbe = TopLab.Application.Features.ResultsEntry.Common.BalanceProbe;
+using IPrintedStateRecorder = TopLab.Application.Features.ResultsEntry.Common.IPrintedStateRecorder;
 using TopLab.Domain.Patients;
 using TopLab.Domain.Results;
 using TopLab.Domain.Users;
@@ -14,22 +15,23 @@ public sealed class PrintHistoryReportCommandHandler : IRequestHandler<PrintHist
 {
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUserService _currentUser;
-    private readonly IDateTimeProvider _clock;
     private readonly ISender _sender;
     private readonly IReportPrintingService _printing;
+    private readonly IPrintedStateRecorder _printedState;
 
     public PrintHistoryReportCommandHandler(
         IApplicationDbContext db,
         ICurrentUserService currentUser,
         IDateTimeProvider clock,
         ISender sender,
-        IReportPrintingService printing)
+        IReportPrintingService printing,
+        IPrintedStateRecorder printedState)
     {
         _db = db;
         _currentUser = currentUser;
-        _clock = clock;
         _sender = sender;
         _printing = printing;
+        _printedState = printedState;
     }
 
     public async Task<Result> Handle(PrintHistoryReportCommand request, CancellationToken cancellationToken)
@@ -74,20 +76,18 @@ public sealed class PrintHistoryReportCommandHandler : IRequestHandler<PrintHist
         }
 
         var ids = history.Value!.Entries.Where(e => e.IsReviewed).Select(e => e.PatientTestId).ToList();
-        var rows = _db.Set<PatientTest>().Where(pt => ids.Contains(pt.Id.Value)).ToList();
-        foreach (var row in rows)
+
+        // W-02 post-implementation fix (owner decision 1: printed = successful printing).
+        // Printed state is recorded in exactly one place, through IPrintedStateRecorder.
+        // No profile item ids are passed: the history report payload (HistoryEntryDto)
+        // never carries profile lines — PatientHistoryReader does not read
+        // ProfileResultItem — so there is nothing to record at item level here.
+        var recorded = await _printedState.RecordAsync(ids, Array.Empty<int>(), cancellationToken);
+        if (!recorded.IsSuccess)
         {
-            try
-            {
-                row.MarkPrinted(_currentUser.UserId, _clock.UtcNow);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Result.Failure(Error.Conflict(DomainFailureTranslator.Translate(ex)));
-            }
+            return recorded;
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
 }
