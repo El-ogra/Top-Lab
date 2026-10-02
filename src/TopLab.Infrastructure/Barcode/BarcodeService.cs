@@ -25,17 +25,20 @@ public sealed class BarcodeService : IBarcodeService
     private readonly BarcodeLabelRenderer _renderer;
     private readonly IDateTimeProvider _clock;
     private readonly IPdfPrinterDispatcher _dispatcher;
+    private readonly IPrintingDiagnostics _diagnostics;
 
     public BarcodeService(
         IApplicationDbContext db,
         BarcodeLabelRenderer renderer,
         IDateTimeProvider clock,
-        IPdfPrinterDispatcher dispatcher)
+        IPdfPrinterDispatcher dispatcher,
+        IPrintingDiagnostics diagnostics)
     {
         _db = db;
         _renderer = renderer;
         _clock = clock;
         _dispatcher = dispatcher;
+        _diagnostics = diagnostics;
     }
 
     public async Task<Result> PrintBarcodeAsync(string value, CancellationToken cancellationToken = default)
@@ -77,8 +80,10 @@ public sealed class BarcodeService : IBarcodeService
         {
             throw;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            // W-02 S13 (WP-29): observed, not silent — behaviour unchanged.
+            _diagnostics.ReportSwallowed("BarcodeService", nameof(PrintBarcodeAsync), ex);
             return Result.Failure(Error.Unexpected("تعذر طباعة الباركود."));
         }
     }

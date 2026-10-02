@@ -47,7 +47,7 @@ public class BarcodeServiceTests
         // EnsureCreated) — no manual seeding needed.
         var dispatcher = new RecordingDispatcher();
         var clock = new FakeDateTimeProvider();
-        var service = new BarcodeService(db, new BarcodeLabelRenderer(), clock, dispatcher);
+        var service = new BarcodeService(db, new BarcodeLabelRenderer(), clock, dispatcher, new RecordingDiagnostics());
         return (service, dispatcher, clock, db);
     }
 

@@ -20,15 +20,18 @@ public sealed class ReportPrintingService : IReportPrintingService
     private readonly IApplicationDbContext _db;
     private readonly IReportPdfWriter _writer;
     private readonly IPdfPrinterDispatcher _dispatcher;
+    private readonly IPrintingDiagnostics _diagnostics;
 
     public ReportPrintingService(
         IApplicationDbContext db,
         IReportPdfWriter writer,
-        IPdfPrinterDispatcher dispatcher)
+        IPdfPrinterDispatcher dispatcher,
+        IPrintingDiagnostics diagnostics)
     {
         _db = db;
         _writer = writer;
         _dispatcher = dispatcher;
+        _diagnostics = diagnostics;
     }
 
     public async Task<Result> PrintReportAsync(string reportToken, CancellationToken cancellationToken = default)
@@ -70,8 +73,10 @@ public sealed class ReportPrintingService : IReportPrintingService
         {
             throw;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            // W-02 S13 (WP-29): the swallow is now observed — behaviour unchanged.
+            _diagnostics.ReportSwallowed("ReportPrintingService", nameof(PrintReportAsync), ex);
             return Result.Failure(Error.Unexpected("تعذر طباعة التقرير."));
         }
     }

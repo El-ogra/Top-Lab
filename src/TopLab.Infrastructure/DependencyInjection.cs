@@ -104,6 +104,9 @@ public static class DependencyInjection
 
         services.AddSingleton<IAppLogger, Logging.FileAppLogger>();
 
+        // W-02 S13 (WP-29): dedicated sink for swallowed print exceptions (SD-5).
+        services.AddSingleton<IPrintingDiagnostics, Logging.PrintingDiagnostics>();
+
         return services;
     }
 }

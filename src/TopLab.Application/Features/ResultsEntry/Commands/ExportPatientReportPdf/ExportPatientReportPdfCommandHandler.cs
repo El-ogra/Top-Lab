@@ -13,15 +13,18 @@ public sealed class ExportPatientReportPdfCommandHandler : IRequestHandler<Expor
     private readonly IApplicationDbContext _db;
     private readonly IPatientReportPdfExporter _exporter;
     private readonly IDateTimeProvider _clock;
+    private readonly IPrintingDiagnostics _diagnostics;
 
     public ExportPatientReportPdfCommandHandler(
         IApplicationDbContext db,
         IPatientReportPdfExporter exporter,
-        IDateTimeProvider clock)
+        IDateTimeProvider clock,
+        IPrintingDiagnostics diagnostics)
     {
         _db = db;
         _exporter = exporter;
         _clock = clock;
+        _diagnostics = diagnostics;
     }
 
     public async Task<Result> Handle(ExportPatientReportPdfCommand request, CancellationToken cancellationToken)
@@ -162,8 +165,10 @@ public sealed class ExportPatientReportPdfCommandHandler : IRequestHandler<Expor
         {
             await _exporter.ExportAsync(request.AbsolutePath, data, cancellationToken);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            // W-02 S13 (WP-29): observed, not silent — behaviour unchanged.
+            _diagnostics.ReportSwallowed("ExportPatientReportPdfCommandHandler", "Handle", ex);
             return Result.Failure(Error.Unexpected("فشل تصدير تقرير PDF."));
         }
 

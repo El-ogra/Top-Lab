@@ -6,6 +6,7 @@ using TopLab.Domain.Settings;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Printing;
 using TopLab.Infrastructure.Tests.Common;
+using TopLab.Infrastructure.Tests.Common.Fakes;
 using Xunit;
 
 namespace TopLab.Infrastructure.Tests.Printing;
@@ -64,7 +65,7 @@ public class ReportPrintingServiceTests
     {
         var db = BuildDb();
         var dispatcher = new RecordingDispatcher();
-        var service = new ReportPrintingService(db, new ReportPdfWriter(), dispatcher);
+        var service = new ReportPrintingService(db, new ReportPdfWriter(), dispatcher, new RecordingDiagnostics());
         return (service, dispatcher, db);
     }
 
@@ -98,7 +99,7 @@ public class ReportPrintingServiceTests
         try
         {
             var dispatcher = new RecordingDispatcher();
-            var service = new ReportPrintingService(db, new ReportPdfWriter(), dispatcher);
+            var service = new ReportPrintingService(db, new ReportPdfWriter(), dispatcher, new RecordingDiagnostics());
 
             var result = await service.PrintReportAsync(Token(), CancellationToken.None);
 
@@ -121,7 +122,7 @@ public class ReportPrintingServiceTests
         db.SaveChanges();
         try
         {
-            var service = new ReportPrintingService(db, new ReportPdfWriter(), new RecordingDispatcher());
+            var service = new ReportPrintingService(db, new ReportPdfWriter(), new RecordingDispatcher(), new RecordingDiagnostics());
 
             var result = await service.PrintReportAsync(Token(), CancellationToken.None);
 
@@ -143,7 +144,7 @@ public class ReportPrintingServiceTests
         db.SaveChanges();
         try
         {
-            var service = new ReportPrintingService(db, new ReportPdfWriter(), new RecordingDispatcher());
+            var service = new ReportPrintingService(db, new ReportPdfWriter(), new RecordingDispatcher(), new RecordingDiagnostics());
 
             var result = await service.PrintReportAsync(Token(), CancellationToken.None);
 
@@ -229,6 +230,82 @@ public class ReportPrintingServiceTests
             Assert.DoesNotContain(firstLines, l => l.Contains("رقم الملف", StringComparison.Ordinal));
             Assert.Contains(secondLines, l => l.Contains("رقم الملف: LAB-1", StringComparison.Ordinal));
             Assert.DoesNotContain(secondLines, l => l.StartsWith("الرقم:", StringComparison.Ordinal));
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>W-02 S13 (WP-29): the swallowed dispatch failure is observed.</summary>
+    [Fact]
+    public async Task PrintingService_CaughtException_IsLoggedWithTypeAndMessage()
+    {
+        var db = BuildDb();
+        var dispatcher = new RecordingDispatcher { Throw = true };
+        var diagnostics = new RecordingDiagnostics();
+        var service = new ReportPrintingService(db, new ReportPdfWriter(), dispatcher, diagnostics);
+        try
+        {
+            var result = await service.PrintReportAsync(Token(), CancellationToken.None);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal("تعذر طباعة التقرير.", result.Error!.Message);
+            var call = Assert.Single(diagnostics.Calls);
+            Assert.Equal("ReportPrintingService", call.Component);
+            Assert.Equal("PrintReportAsync", call.Operation);
+            Assert.Equal("InvalidOperationException", call.Exception.GetType().Name);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    [Fact]
+    public async Task PrintingService_OperationCanceled_NotLoggedAsError()
+    {
+        var db = BuildDb();
+        var dispatcher = new CancellingDispatcher();
+        var diagnostics = new RecordingDiagnostics();
+        var service = new ReportPrintingService(db, new ReportPdfWriter(), dispatcher, diagnostics);
+        try
+        {
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => service.PrintReportAsync(Token(), new CancellationToken(canceled: true)));
+
+            Assert.Empty(diagnostics.Calls);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    private sealed class CancellingDispatcher : IPdfPrinterDispatcher
+    {
+        public Task DispatchAsync(string pdfFilePath, string printerName, CancellationToken cancellationToken = default) =>
+            Task.FromCanceled(cancellationToken);
+    }
+
+    [Fact]
+    public async Task ReportPrintingService_StillReturnsSameArabicError()
+    {
+        var db = BuildDb();
+        try
+        {
+            var service = new ReportPrintingService(
+                db, new ReportPdfWriter(), new RecordingDispatcher(), new RecordingDiagnostics());
+
+            // Garbage input fails deserialization inside the guarded region.
+            var garbage = await service.PrintReportAsync("not-json", CancellationToken.None);
+            Assert.False(garbage.IsSuccess);
+            Assert.Equal("تعذر طباعة التقرير.", garbage.Error!.Message);
+
+            // A JSON null token reaches the explicit null guard.
+            var nullToken = await service.PrintReportAsync("null", CancellationToken.None);
+            Assert.False(nullToken.IsSuccess);
+            Assert.Equal("بيانات التقرير غير صالحة.", nullToken.Error!.Message);
         }
         finally
         {

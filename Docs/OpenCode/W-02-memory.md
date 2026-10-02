@@ -232,7 +232,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 10 | `AddAntibioticMasterFields` | WP-14 | **M3** | [x] DONE | VG-10 PASS |
 | 11 | Culture sensitivity table + microscopy block in the report | WP-14 | — | [x] DONE | VG-11 PASS |
 | 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | [x] DONE | VG-12 PASS |
-| 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | ⬜ | VG-13 |
+| 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | [x] DONE | VG-13 PASS |
 | 14 | Unit of work, visit deltas, id recovery, settlement lock | WP-29 | — | ⬜ | VG-14 |
 | 15 | Narrow hot readers, own the temp dir, layering guard | WP-29 | — | ⬜ | VG-15 |
 | 16 | WP-07 regression net + wave DoD | WP-07 | — | ⬜ | VG-16 |
@@ -829,7 +829,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Touches:** new `IPrintingDiagnostics.cs` + `PrintingDiagnostics.cs` + tests · `Infrastructure/DependencyInjection.cs` · `ReportPrintingService.cs:20-32,73-76` ⚠️ · `BarcodeService.cs:80-83` (not `ToAscii`) · `ExportPatientReportPdfCommandHandler.cs:161-168`.
 - **Gate:** VG-13. Migration: **none**.
 
-- [ ] 1–10. Plan: reflection test pinning `IAppLogger`'s single method; fixed `component`/`operation` strings only — **never** a patient id or a temp path; writer never throws; `OperationCanceledException` still re-thrown before the general catch in both services; no behaviour change in any returned `Result`.
+- [x] 1–10. **DONE.** New port + file sink (fixed strings only, never throws, `%ProgramData%\TopLab\logs`); all three swallow sites report with unchanged behaviour and preserved `OperationCanceledException` re-throw order; `RecordingDiagnostics` doubles in both test projects; 7 `ExportPatientReportPdf` call sites updated to the new ctor; `IAppLogger` reflection-pinned. Self-corrections: (1) two of my own new tests asserted wrong expectations (catch-all vs null-guard message; exact vs any exception type) — both were test bugs, product correct, fixed in tests; (2) ctor widening required updating 4 pre-existing `ReportPrintingService` + 1 `BarcodeService` constructions. VG-13 green: build 0/0; Infrastructure **259 (+8)** · Application Δ0 (export tests updated, green) · others Δ0; `LoggingBehavior` diff empty; Persistence diff empty; drift clean.
 
 ### Slice 14 — Unit of work, visit deltas, id recovery, settlement lock (WP-29)
 

@@ -82,7 +82,7 @@ public class ExportPatientReportPdfCommandHandlerTests
 
         try
         {
-            var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider());
+            var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider(), new FakePrintingDiagnostics());
             var result = await handler.Handle(new ExportPatientReportPdfCommand(1, path), CancellationToken.None);
 
             Assert.True(result.IsSuccess);
@@ -118,7 +118,7 @@ public class ExportPatientReportPdfCommandHandlerTests
 
         try
         {
-            var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider());
+            var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider(), new FakePrintingDiagnostics());
             var result = await handler.Handle(new ExportPatientReportPdfCommand(1, pdfPath), CancellationToken.None);
 
             Assert.False(result.IsSuccess);
@@ -143,7 +143,7 @@ public class ExportPatientReportPdfCommandHandlerTests
     {
         var db = new FakeApplicationDbContext();
         var exporter = new FakeReportPdfExporter();
-        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider());
+        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider(), new FakePrintingDiagnostics());
         var result = await handler.Handle(new ExportPatientReportPdfCommand(1, relative), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -157,7 +157,7 @@ public class ExportPatientReportPdfCommandHandlerTests
         var absolute = Path.Combine(Path.GetTempPath(), "report.txt");
         var db = new FakeApplicationDbContext();
         var exporter = new FakeReportPdfExporter();
-        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider());
+        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider(), new FakePrintingDiagnostics());
         var result = await handler.Handle(new ExportPatientReportPdfCommand(1, absolute), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -176,7 +176,7 @@ public class ExportPatientReportPdfCommandHandlerTests
         db.PatientTests.Add(pt);
         var exporter = new FakeReportPdfExporter();
 
-        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider());
+        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider(), new FakePrintingDiagnostics());
         var result = await handler.Handle(new ExportPatientReportPdfCommand(1, NewTempPdfPath()), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -195,7 +195,7 @@ public class ExportPatientReportPdfCommandHandlerTests
         db.PatientTests.Add(row);
         var exporter = new FakeReportPdfExporter { ThrowOnExport = true };
 
-        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider());
+        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider(), new FakePrintingDiagnostics());
         var result = await handler.Handle(new ExportPatientReportPdfCommand(1, NewTempPdfPath()), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
@@ -217,7 +217,7 @@ public class ExportPatientReportPdfCommandHandlerTests
         db.PaymentOperations.Add(extra);
         var exporter = new FakeReportPdfExporter();
 
-        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider());
+        var handler = new ExportPatientReportPdfCommandHandler(db, exporter, new FakeDateTimeProvider(), new FakePrintingDiagnostics());
 
         // Make the second row verified too so the report is eligible despite the balance.
         var second = db.PatientTests.First(p => p.Id.Value == 102);
