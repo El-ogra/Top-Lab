@@ -14,5 +14,7 @@ public sealed class AntibioticConfiguration : IEntityTypeConfiguration<Antibioti
         b.Property(e => e.Name).HasMaxLength(150).IsRequired();
         b.Property(e => e.IsPregnancyFlagged).IsRequired();
         b.Property(e => e.IsChildrenFlagged).IsRequired();
+        b.Property(e => e.Symbol).HasMaxLength(10).IsRequired(false);
+        b.Property(e => e.ScientificName).HasMaxLength(150).IsRequired(false);
     }
 }

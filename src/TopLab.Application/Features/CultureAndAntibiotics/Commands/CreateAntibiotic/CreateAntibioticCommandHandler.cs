@@ -34,7 +34,9 @@ public sealed class CreateAntibioticCommandHandler
                 AntibioticId.Create(0),
                 trimmed,
                 request.IsPregnancyFlagged,
-                request.IsChildrenFlagged);
+                request.IsChildrenFlagged,
+                request.Symbol,
+                request.ScientificName);
         }
         catch (ArgumentException ex)
         {

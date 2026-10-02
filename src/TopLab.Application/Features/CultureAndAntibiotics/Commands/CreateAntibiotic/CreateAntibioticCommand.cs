@@ -7,7 +7,9 @@ namespace TopLab.Application.Features.CultureAndAntibiotics.Commands.CreateAntib
 public sealed record CreateAntibioticCommand(
     string Name,
     bool IsPregnancyFlagged,
-    bool IsChildrenFlagged)
+    bool IsChildrenFlagged,
+    string? Symbol = null,
+    string? ScientificName = null)
     : IRequest<Result<int>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

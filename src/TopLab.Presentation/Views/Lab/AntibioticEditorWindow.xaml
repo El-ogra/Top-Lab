@@ -1,7 +1,7 @@
 <Window x:Class="TopLab.Presentation.Views.Lab.AntibioticEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="بيانات المضاد الحيوي" Height="280" Width="440"
+        Title="بيانات المضاد الحيوي" Height="420" Width="440"
         FlowDirection="RightToLeft"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
@@ -15,6 +15,10 @@
         <StackPanel>
             <TextBlock Text="الاسم:" Margin="0,0,0,2" />
             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+            <TextBlock Text="الاسم العلمي:" Margin="0,0,0,2" />
+            <TextBox Text="{Binding ScientificName, UpdateSourceTrigger=PropertyChanged}" MaxLength="150" Margin="0,0,0,12" />
+            <TextBlock Text="الرمز:" Margin="0,0,0,2" />
+            <TextBox Text="{Binding Symbol, UpdateSourceTrigger=PropertyChanged}" MaxLength="10" Margin="0,0,0,12" />
             <CheckBox Content="معلَّم للحوامل" IsChecked="{Binding IsPregnancyFlagged}" Margin="0,0,0,8" />
             <CheckBox Content="معلَّم للأطفال" IsChecked="{Binding IsChildrenFlagged}" />
         </StackPanel>

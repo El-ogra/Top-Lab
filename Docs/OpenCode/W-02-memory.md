@@ -229,7 +229,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 7 | ReportSettings print flags + `AddCombinedReportPrintOptions` | WP-13 | **M1** | ✅ done | VG-07 ✅ |
 | 8 | Combined-report options, outside-lab note, test comments | WP-13 | — | [x] DONE | VG-08 PASS |
 | 9 | `AddCultureMicroscopyAndZone` | WP-14 | **M2** | [x] DONE | VG-09 PASS |
-| 10 | `AddAntibioticMasterFields` | WP-14 | **M3** | ⬜ | VG-10 |
+| 10 | `AddAntibioticMasterFields` | WP-14 | **M3** | [x] DONE | VG-10 PASS |
 | 11 | Culture sensitivity table + microscopy block in the report | WP-14 | — | ⬜ | VG-11 |
 | 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | ⬜ | VG-12 |
 | 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | ⬜ | VG-13 |
@@ -805,7 +805,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Touches:** `Antibiotic.cs` · `AntibioticConfiguration.cs` · Create/Update antibiotic commands + validators + handlers · `AntibioticDtos.cs:3-13` · both query handlers · `AntibioticEditorViewModel.cs` · `AntibioticsView.xaml` · `AntibioticEditorWindow.xaml` · new migration + Designer + migration test.
 - **Gate:** VG-10. Migration: **M3**.
 
-- [ ] 1–10. Plan: two nullable columns only; append optional command parameters; append DTO members with defaults; assert `AddColumnOperations.Count == 2`; assert zero "commercial" hits.
+- [x] 1–10. **DONE.** Optional tail params (SD-6) on Create/Update + validators (10/150) + handlers; DTOs appended; projections pass both; editor VM+window (height 280→420 for the two fields); M3 = exactly 2 nullable columns, Down drops both, negative commercial test; pre-existing antibiotic tests untouched and green (signature defaults). VG-10 green: build 0/0; Application **1557 (+6)** · Infrastructure **244 (+5)** · others Δ0; `grep commercial` on Antibiotic surfaces ⇒ **0**; 11 old untouched; drift clean.
 
 ### Slice 11 — Culture sensitivity table + microscopy block in the report (WP-14)
 

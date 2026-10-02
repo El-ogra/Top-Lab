@@ -8,7 +8,9 @@ public sealed record UpdateAntibioticCommand(
     int Id,
     string Name,
     bool IsPregnancyFlagged,
-    bool IsChildrenFlagged)
+    bool IsChildrenFlagged,
+    string? Symbol = null,
+    string? ScientificName = null)
     : IRequest<Result>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

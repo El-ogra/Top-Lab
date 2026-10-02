@@ -21,6 +21,8 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
     private string _name = string.Empty;
     private bool _isPregnancyFlagged;
     private bool _isChildrenFlagged;
+    private string? _symbol;
+    private string? _scientificName;
     private string _errorMessage = string.Empty;
     private bool _isBusy;
 
@@ -35,6 +37,8 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
     public string Name { get => _name; set => SetProperty(ref _name, value); }
     public bool IsPregnancyFlagged { get => _isPregnancyFlagged; set => SetProperty(ref _isPregnancyFlagged, value); }
     public bool IsChildrenFlagged { get => _isChildrenFlagged; set => SetProperty(ref _isChildrenFlagged, value); }
+    public string? Symbol { get => _symbol; set => SetProperty(ref _symbol, value); }
+    public string? ScientificName { get => _scientificName; set => SetProperty(ref _scientificName, value); }
     public string ErrorMessage { get => _errorMessage; private set => SetProperty(ref _errorMessage, value); }
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
 
@@ -47,6 +51,8 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
         Name = string.Empty;
         IsPregnancyFlagged = false;
         IsChildrenFlagged = false;
+        Symbol = null;
+        ScientificName = null;
     }
 
     public void InitializeEdit(AntibioticDto dto)
@@ -56,6 +62,8 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
         Name = dto.Name;
         IsPregnancyFlagged = dto.IsPregnancyFlagged;
         IsChildrenFlagged = dto.IsChildrenFlagged;
+        Symbol = dto.Symbol;
+        ScientificName = dto.ScientificName;
     }
 
     public async Task<bool> SaveAsync()
@@ -67,7 +75,8 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
             if (!_isEditMode)
             {
                 var result = await _mediator.Send(new CreateAntibioticCommand(
-                    Name.Trim(), IsPregnancyFlagged, IsChildrenFlagged));
+                    Name.Trim(), IsPregnancyFlagged, IsChildrenFlagged,
+                    BlankToNull(Symbol), BlankToNull(ScientificName)));
                 if (!result.IsSuccess)
                 {
                     ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;
@@ -79,7 +88,8 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
             else
             {
                 var result = await _mediator.Send(new UpdateAntibioticCommand(
-                    _editingId, Name.Trim(), IsPregnancyFlagged, IsChildrenFlagged));
+                    _editingId, Name.Trim(), IsPregnancyFlagged, IsChildrenFlagged,
+                    BlankToNull(Symbol), BlankToNull(ScientificName)));
                 if (!result.IsSuccess)
                 {
                     ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;
@@ -94,4 +104,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
             IsBusy = false;
         }
     }
+
+    private static string? BlankToNull(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

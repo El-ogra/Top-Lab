@@ -33,7 +33,9 @@ public sealed class GetAntibioticsQueryHandler
                 a.Id.Value,
                 a.Name,
                 a.IsPregnancyFlagged,
-                a.IsChildrenFlagged))
+                a.IsChildrenFlagged,
+                a.Symbol,
+                a.ScientificName))
             .ToList();
 
         return Task.FromResult(Result<IReadOnlyList<AntibioticDto>>.Success(items));

@@ -30,6 +30,8 @@
         <DataGrid ItemsSource="{Binding Antibiotics}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,8,0,0">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="الاسم" Binding="{Binding Name}" Width="*" />
+                <DataGridTextColumn Header="الاسم العلمي" Binding="{Binding ScientificName}" Width="*" />
+                <DataGridTextColumn Header="الرمز" Binding="{Binding Symbol}" Width="80" />
                 <DataGridCheckBoxColumn Header="معلَّم للحوامل" Binding="{Binding IsPregnancyFlagged}" Width="110" />
                 <DataGridCheckBoxColumn Header="معلَّم للأطفال" Binding="{Binding IsChildrenFlagged}" Width="110" />
                 <DataGridTemplateColumn Header="إجراءات" Width="170">
