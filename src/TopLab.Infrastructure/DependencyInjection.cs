@@ -107,6 +107,9 @@ public static class DependencyInjection
         // W-02 S13 (WP-29): dedicated sink for swallowed print exceptions (SD-5).
         services.AddSingleton<IPrintingDiagnostics, Logging.PrintingDiagnostics>();
 
+        // W-02 S14 (WP-29): visit-edit transaction boundary.
+        services.AddScoped<TopLab.Application.Common.Interfaces.IAppUnitOfWork, Persistence.AppUnitOfWork>();
+
         return services;
     }
 }

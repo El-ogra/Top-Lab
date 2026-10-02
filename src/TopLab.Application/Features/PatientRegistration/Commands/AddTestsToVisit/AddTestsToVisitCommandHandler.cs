@@ -72,7 +72,10 @@ public sealed class AddTestsToVisitCommandHandler : IRequestHandler<AddTestsToVi
         var groupPrices = new Dictionary<TestId, decimal>();
         var accountType = patient.AccountType;
 
-        var createdIds = new List<int>();
+        // W-02 S14 [C14]: keep the created instances and read their ids after the
+        // single save — never re-query with Take(), which can return another
+        // session's concurrent inserts for the same patient.
+        var created = new List<PatientTest>();
 
         foreach (var req in request.Tests)
         {
@@ -109,18 +112,11 @@ public sealed class AddTestsToVisitCommandHandler : IRequestHandler<AddTestsToVi
                 req.IsTakenOutsideLab);
 
             _db.Add(pt);
-            createdIds.Add(0);
+            created.Add(pt);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        var newIds = _db.Set<PatientTest>()
-            .Where(pt => pt.PatientId.Equals(patient.Id))
-            .OrderByDescending(pt => pt.Id.Value)
-            .Take(createdIds.Count)
-            .Select(pt => pt.Id.Value)
-            .ToList();
-
-        return Result<IReadOnlyList<int>>.Success(newIds);
+        return Result<IReadOnlyList<int>>.Success(created.Select(p => p.Id.Value).ToList());
     }
 }

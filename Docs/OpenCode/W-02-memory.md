@@ -233,7 +233,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 11 | Culture sensitivity table + microscopy block in the report | WP-14 | — | [x] DONE | VG-11 PASS |
 | 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | [x] DONE | VG-12 PASS |
 | 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | [x] DONE | VG-13 PASS |
-| 14 | Unit of work, visit deltas, id recovery, settlement lock | WP-29 | — | ⬜ | VG-14 |
+| 14 | Unit of work, visit deltas, id recovery, settlement lock | WP-29 | — | [x] DONE | VG-14 PASS |
 | 15 | Narrow hot readers, own the temp dir, layering guard | WP-29 | — | ⬜ | VG-15 |
 | 16 | WP-07 regression net + wave DoD | WP-07 | — | ⬜ | VG-16 |
 
@@ -837,7 +837,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Touches:** new `IAppUnitOfWork.cs` + `AppUnitOfWork.cs` + `ApplyVisitDeltas/` + `ApplyConditionDeltas/` + tests · `ApplicationDbContext.cs` (internal accessor only) · `PatientEditorViewModel.cs:883-916,918-976` · `AddTestsToVisitCommandHandler.cs:112,117-122` · `SettleAccountInFullCommandHandler.cs:42-77` · `Infrastructure/DependencyInjection.cs`.
 - **Gate:** VG-14. Migration: **none**.
 
-- [ ] 1–10. Plan: no `DbContext` in the Application interface; read ids from the change tracker before `SaveChangesAsync` and delete both `createdIds.Add(0)` and `Take()`; one scoped `FromSqlInterpolated` with `UPDLOCK, HOLDLOCK` **on that call site only**; concurrency tests in Persistence with an honest skip when Docker is absent.
+- [x] 1–10. **DONE.** `IAppUnitOfWork` (+`Serializable` overload — no `DbContext` leak, reflection-pinned) + `AppUnitOfWork` (EF transaction, rollback on failure/exception); `ApplyVisitDeltas`/`ApplyConditionDeltas` (validate-all-before-write + single save inside UoW); VM sends one command each; `[C14]` fixed (created instances → ids, `Take()` + `Add(0)` gone); settlement wrapped in `Serializable` (no raw SQL: `IApplicationDbContext` exposes no `Database` facade, so isolation-on-the-new-port serialises without leaking EF — deviation from the plan's UPDLOCK sketch, documented here). Self-corrections: fake applies list mutations immediately, so atomicity tests pin the save boundary (`SaveChangesCallCount`) + failure, not store state; 2 test compile errors (namespace + `AddTestInput` qualification) fixed. VG-14 green: build 0/0; Application **1577 (+6)** · others Δ0 (Persistence now 13+2 skipped — new concurrency test skips honestly without Docker); drift clean; no migration.
 
 ### Slice 15 — Narrow hot readers, own the temp dir, layering guard (WP-29)
 

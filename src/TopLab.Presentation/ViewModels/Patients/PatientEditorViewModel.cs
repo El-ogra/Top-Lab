@@ -11,6 +11,8 @@ using TopLab.Application.Features.PatientBilling.Commands.RecordPayment;
 using TopLab.Application.Features.PatientBilling.Commands.SettleAccountInFull;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
 using TopLab.Application.Features.PatientRegistration.Commands.AddCustomGroupToVisit;
+using TopLab.Application.Features.PatientRegistration.Commands.ApplyConditionDeltas;
+using TopLab.Application.Features.PatientRegistration.Commands.ApplyVisitDeltas;
 using TopLab.Application.Features.PatientRegistration.Commands.AddMedicalCondition;
 using TopLab.Application.Features.PatientRegistration.Commands.AddProfileToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.AddTestsToVisit;
@@ -882,34 +884,12 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     private async Task<bool> ApplyConditionDeltasAsync(int patientId, IReadOnlyList<int> wanted, CancellationToken cancellationToken)
     {
-        var detail = await _mediator.Send(new GetPatientByIdQuery(patientId), cancellationToken);
-        if (!detail.IsSuccess)
+        // W-02 S14 (WP-29): one atomic command instead of N separate saves.
+        var result = await _mediator.Send(new ApplyConditionDeltasCommand(patientId, wanted), cancellationToken);
+        if (!result.IsSuccess)
         {
-            ErrorMessage = _presenter.Present(detail.Error!);
+            ErrorMessage = _presenter.Present(result.Error!);
             return false;
-        }
-
-        var current = detail.Value!.MedicalConditions.Select(m => m.MedicalConditionTypeId).ToHashSet();
-        var target = wanted.ToHashSet();
-
-        foreach (var typeId in target.Where(t => !current.Contains(t)))
-        {
-            var added = await _mediator.Send(new AddMedicalConditionCommand(patientId, typeId), cancellationToken);
-            if (!added.IsSuccess)
-            {
-                ErrorMessage = _presenter.Present(added.Error!);
-                return false;
-            }
-        }
-
-        foreach (var typeId in current.Where(t => !target.Contains(t)))
-        {
-            var removed = await _mediator.Send(new RemoveMedicalConditionCommand(patientId, typeId), cancellationToken);
-            if (!removed.IsSuccess)
-            {
-                ErrorMessage = _presenter.Present(removed.Error!);
-                return false;
-            }
         }
 
         return true;
@@ -928,48 +908,37 @@ public sealed class PatientEditorViewModel : ViewModelBase
         var persistedSamples = sheet.Value.Samples.ToDictionary(s => s.PatientTestId);
         var currentIds = SelectedTests.Where(t => !t.IsNew).Select(t => t.PatientTestId).ToHashSet();
 
-        foreach (var line in persisted.Values.Where(l => !currentIds.Contains(l.PatientTestId)))
-        {
-            var removed = await _mediator.Send(new RemoveTestFromVisitCommand(line.PatientTestId), cancellationToken);
-            if (!removed.IsSuccess)
-            {
-                ErrorMessage = _presenter.Present(removed.Error!);
-                return false;
-            }
-        }
-
+        var removedIds = persisted.Values
+            .Where(l => !currentIds.Contains(l.PatientTestId))
+            .Select(l => l.PatientTestId)
+            .ToList();
         var added = SelectedTests.Where(t => t.IsNew).ToList();
-        if (added.Count > 0)
-        {
-            var addResult = await _mediator.Send(new AddTestsToVisitCommand(
-                patientId,
-                added.Select(t => new AddTestInput(t.TestId, t.IsUrine, t.IsStool, t.IsBlood, t.IsSemen, t.IsCsf, t.IsTakenOutsideLab)).ToList()), cancellationToken);
-            if (!addResult.IsSuccess)
+        var flagUpdates = SelectedTests
+            .Where(t => !t.IsNew && persisted.ContainsKey(t.PatientTestId))
+            .Where(t =>
             {
-                ErrorMessage = _presenter.Present(addResult.Error!);
-                return false;
-            }
-        }
+                persistedSamples.TryGetValue(t.PatientTestId, out var flags);
+                return flags is null
+                    || flags.IsUrine != t.IsUrine
+                    || flags.IsStool != t.IsStool
+                    || flags.IsBlood != t.IsBlood
+                    || flags.IsSemen != t.IsSemen
+                    || flags.IsCsf != t.IsCsf
+                    || flags.IsTakenOutsideLab != t.IsTakenOutsideLab;
+            })
+            .Select(t => new VisitFlagUpdate(
+                t.PatientTestId, t.IsUrine, t.IsStool, t.IsBlood, t.IsSemen, t.IsCsf, t.IsTakenOutsideLab))
+            .ToList();
 
-        foreach (var item in SelectedTests.Where(t => !t.IsNew && persisted.ContainsKey(t.PatientTestId)))
+        // W-02 S14 (WP-29): one atomic command instead of N separate saves.
+        var applied = await _mediator.Send(new ApplyVisitDeltasCommand(
+            patientId, removedIds,
+            added.Select(t => new AddTestInput(t.TestId, t.IsUrine, t.IsStool, t.IsBlood, t.IsSemen, t.IsCsf, t.IsTakenOutsideLab)).ToList(),
+            flagUpdates), cancellationToken);
+        if (!applied.IsSuccess)
         {
-            persistedSamples.TryGetValue(item.PatientTestId, out var flags);
-            if (flags is null
-                || flags.IsUrine != item.IsUrine
-                || flags.IsStool != item.IsStool
-                || flags.IsBlood != item.IsBlood
-                || flags.IsSemen != item.IsSemen
-                || flags.IsCsf != item.IsCsf
-                || flags.IsTakenOutsideLab != item.IsTakenOutsideLab)
-            {
-                var flagged = await _mediator.Send(new UpdatePatientTestSampleFlagsCommand(
-                    item.PatientTestId, item.IsUrine, item.IsStool, item.IsBlood, item.IsSemen, item.IsCsf, item.IsTakenOutsideLab), cancellationToken);
-                if (!flagged.IsSuccess)
-                {
-                    ErrorMessage = _presenter.Present(flagged.Error!);
-                    return false;
-                }
-            }
+            ErrorMessage = _presenter.Present(applied.Error!);
+            return false;
         }
 
         return true;

@@ -105,7 +105,7 @@ public class SettleAccountInFullCommandHandlerTests
     {
         var db = new FakeApplicationDbContext();
         SeedAccount(db);
-        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider());
+        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider(), new FakeAppUnitOfWork());
 
         var result = await handler.Handle(new SettleAccountInFullCommand(1), CancellationToken.None);
 
@@ -126,7 +126,7 @@ public class SettleAccountInFullCommandHandlerTests
     {
         var db = new FakeApplicationDbContext();
         db.Patients.Add(Patient.Create(PatientId.Create(1), "Ahmed", Sex.Male, 30, AgeUnit.Year, DateTime.UtcNow));
-        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider());
+        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider(), new FakeAppUnitOfWork());
 
         var result = await handler.Handle(new SettleAccountInFullCommand(1), CancellationToken.None);
 
@@ -143,7 +143,7 @@ public class SettleAccountInFullCommandHandlerTests
         db.PatientTests.Add(PatientTest.Create(PatientTestId.Create(100), PatientId.Create(1), TestId.Create(10), 100m));
         db.PaymentOperations.Add(PaymentOperation.Create(
             PaymentOperationId.Create(5), PatientId.Create(1), 150m, 7, DateTime.UtcNow));
-        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider());
+        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider(), new FakeAppUnitOfWork());
 
         var result = await handler.Handle(new SettleAccountInFullCommand(1), CancellationToken.None);
 
@@ -156,12 +156,28 @@ public class SettleAccountInFullCommandHandlerTests
     public async Task UnknownPatient_ReturnsNotFound()
     {
         var db = new FakeApplicationDbContext();
-        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider());
+        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider(), new FakeAppUnitOfWork());
 
         var result = await handler.Handle(new SettleAccountInFullCommand(9), CancellationToken.None);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ErrorType.NotFound, result.Error!.Type);
+    }
+
+    /// <summary>W-02 S14 (WP-29): settlement runs under a serial lock so two
+    /// concurrent settlements cannot both observe a balance.</summary>
+    [Fact]
+    public async Task Settle_ReadsBalanceUnderRowLock()
+    {
+        var db = new FakeApplicationDbContext();
+        SeedAccount(db);
+        var uow = new FakeAppUnitOfWork();
+        var handler = new SettleAccountInFullCommandHandler(db, new FakeCurrentUserService(), new FakeDateTimeProvider(), uow);
+
+        var result = await handler.Handle(new SettleAccountInFullCommand(1), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Contains(System.Data.IsolationLevel.Serializable, uow.RequestedIsolations);
     }
 }
 
