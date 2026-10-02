@@ -11,6 +11,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -33,8 +34,19 @@
             <RadioButton Content="منفصل" IsChecked="{Binding IsSeparateMode}" GroupName="HistoryMode"/>
         </StackPanel>
 
-        <!-- Actions -->
+        <!-- Filters -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="من:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <DatePicker SelectedDate="{Binding FromDate}" Width="130" Margin="0,0,12,0"/>
+            <TextBlock Text="إلى:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <DatePicker SelectedDate="{Binding ToDate}" Width="130" Margin="0,0,12,0"/>
+            <TextBlock Text="التحليل:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox Text="{Binding TestIdText, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0,0,12,0"/>
+            <CheckBox Content="طباعة منفصلة" IsChecked="{Binding PrintSeparately}" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Actions -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8">
             <Button Content="عرض (مريض واحد)" Margin="0,0,6,0" Padding="10,5" Command="{Binding LoadSingleCommand}"/>
             <Button Content="عرض (متعدد)" Margin="0,0,6,0" Padding="10,5" Command="{Binding LoadMultiCommand}"/>
             <Button Content="عرض (منفصل)" Margin="0,0,6,0" Padding="10,5" Command="{Binding LoadSeparateCommand}"/>
@@ -43,7 +55,7 @@
         </StackPanel>
 
         <!-- Loading -->
-        <ProgressBar Grid.Row="3" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+        <ProgressBar Grid.Row="4" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
             <ProgressBar.Style>
                 <Style TargetType="ProgressBar">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -57,7 +69,7 @@
         </ProgressBar>
 
         <!-- Empty state -->
-        <TextBlock Grid.Row="4" Text="لا يوجد تاريخ مرضي لهذا المريض." Foreground="#666666"
+        <TextBlock Grid.Row="5" Text="لا يوجد تاريخ مرضي لهذا المريض." Foreground="#666666"
                    HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock.Style>
                 <Style TargetType="TextBlock">
@@ -72,7 +84,7 @@
         </TextBlock>
 
         <!-- Entries Grid -->
-        <DataGrid Grid.Row="4"
+        <DataGrid Grid.Row="5"
                   ItemsSource="{Binding Entries}"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
@@ -97,7 +109,7 @@
         </DataGrid>
 
         <!-- Messages -->
-        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
-        <TextBlock Grid.Row="6" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="6" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="7" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
     </Grid>
 </UserControl>

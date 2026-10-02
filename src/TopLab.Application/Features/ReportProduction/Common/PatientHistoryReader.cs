@@ -26,8 +26,18 @@ internal static class PatientHistoryReader
             var key = PatientHistoryResolver.ResolveKey(
                 HistorySortMode.ByPatientName, null, patient.FullName);
 
+            // W-02 S12/S15 (WP-10/WP-29): never materialise the whole Patient table.
+            // Pull a bounded candidate set in SQL (trimmed upper-cased names starting
+            // with the key's first token — all translatable: TRIM/UPPER/LIKE), then apply
+            // the exact normalised comparison in memory. NOTE: the SQL pre-filter uses
+            // ToUpper() (the only translatable fold) while the exact match uses
+            // ToUpperInvariant(); under exotic collations/cultures a candidate could be
+            // missed by the pre-filter — the exact comparison, not the pre-filter,
+            // defines membership, and any miss surfaces as a missing visit, never as
+            // another patient's data.
+            var firstToken = key.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? key;
             return db.Set<Patient>()
-                .Where(p => !p.IsDeleted)
+                .Where(p => !p.IsDeleted && p.FullName != null && p.FullName.Trim().ToUpper().StartsWith(firstToken))
                 .ToList()
                 .Where(p => !string.IsNullOrWhiteSpace(p.FullName)
                     && PatientHistoryResolver.ResolveKey(
@@ -47,17 +57,26 @@ internal static class PatientHistoryReader
 
     internal static IReadOnlyList<HistoryEntryDto> BuildEntries(
         IApplicationDbContext db,
-        IReadOnlyList<Patient> patients)
+        IReadOnlyList<Patient> patients,
+        DateOnly? from = null,
+        DateOnly? to = null,
+        int? testId = null)
     {
         if (patients.Count == 0)
         {
             return Array.Empty<HistoryEntryDto>();
         }
 
+        var fromStart = from?.ToDateTime(TimeOnly.MinValue);
+        var toEnd = to?.ToDateTime(TimeOnly.MaxValue);
+
         var patientsById = patients.ToDictionary(p => p.Id.Value);
         var catalog = db.Set<Test>().ToDictionary(t => t.Id.Value);
         var rows = db.Set<PatientTest>()
-            .Where(pt => patientsById.Keys.Contains(pt.PatientId.Value))
+            .Where(pt => patientsById.Keys.Contains(pt.PatientId.Value)
+                && (!testId.HasValue || pt.TestId.Value == testId.Value)
+                && (!fromStart.HasValue || (pt.EnteredAtUtc.HasValue && pt.EnteredAtUtc.Value >= fromStart.Value))
+                && (!toEnd.HasValue || (pt.EnteredAtUtc.HasValue && pt.EnteredAtUtc.Value <= toEnd.Value)))
             .ToList();
 
         var rowsByPatient = rows
@@ -111,7 +130,8 @@ internal static class PatientHistoryReader
                     lowComment,
                     highComment,
                     pt.IsTakenOutsideLab,
-                    testComments);
+                    testComments,
+                    pt.EnteredAtUtc is null ? null : DateOnly.FromDateTime(pt.EnteredAtUtc.Value));
             })
             .ToList();
 

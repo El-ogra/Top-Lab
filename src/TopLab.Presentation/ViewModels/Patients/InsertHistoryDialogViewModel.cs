@@ -85,8 +85,12 @@ public sealed class InsertHistoryDialogViewModel : ViewModelBase
             var result = await _mediator.Send(new GetPatientTestHistoryQuery(patientId), cancellationToken);
             if (result.IsSuccess && result.Value is not null)
             {
-                // Filter entries for the same test (by TestId from the target)
-                var allEntries = result.Value.Entries;
+                // W-02 S12 (WP-10): same-test filter — entries whose test name matches
+                // the insertion target. Name-based (the dialog knows the target name,
+                // not its id); documented, not silent.
+                var allEntries = result.Value.Entries
+                    .Where(e => e.TestName == TargetTestName)
+                    .ToList();
                 Entries = new ObservableCollection<HistoryEntryDto>(allEntries);
             }
             else if (result.Error is not null)

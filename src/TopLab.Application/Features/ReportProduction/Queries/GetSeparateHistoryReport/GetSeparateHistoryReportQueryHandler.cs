@@ -2,11 +2,16 @@ using MediatR;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ReportProduction.Common;
-using TopLab.Domain.Patients;
-using TopLab.Domain.Settings;
+using TopLab.Application.Features.ReportProduction.Queries.GetPatientTestHistory;
 
 namespace TopLab.Application.Features.ReportProduction.Queries.GetSeparateHistoryReport;
 
+/// <summary>
+/// W-02 S12 (WP-10, C-25): the old twin handler was byte-identical to
+/// <see cref="GetPatientTestHistoryQueryHandler"/>. The duplicate is deleted;
+/// this thin handler keeps the query type (still consumed by the history screen
+/// and the history print path) and delegates to the single implementation.
+/// </summary>
 public sealed class GetSeparateHistoryReportQueryHandler
     : IRequestHandler<GetSeparateHistoryReportQuery, Result<PatientHistoryDto>>
 {
@@ -20,41 +25,8 @@ public sealed class GetSeparateHistoryReportQueryHandler
     public Task<Result<PatientHistoryDto>> Handle(
         GetSeparateHistoryReportQuery request, CancellationToken cancellationToken)
     {
-        var patient = _db.Set<Patient>().FirstOrDefault(p => p.Id.Value == request.PatientId);
-        if (patient is null || patient.IsDeleted)
-        {
-            return Task.FromResult(Result<PatientHistoryDto>.Failure(
-                Error.NotFound("المريض غير موجود.")));
-        }
-
-        var settings = _db.Set<ReportSettings>().SingleOrDefault(s => s.Id == 1);
-        if (settings is null)
-        {
-            return Task.FromResult(Result<PatientHistoryDto>.Failure(
-                Error.Unexpected("سجل إعدادات التقرير مفقود.")));
-        }
-
-        IReadOnlyList<Patient> visits;
-        try
-        {
-            visits = PatientHistoryReader.ResolveVisitPatients(_db, patient, settings);
-        }
-        catch (ArgumentException ex)
-        {
-            return Task.FromResult(Result<PatientHistoryDto>.Failure(
-                Error.Conflict(DomainFailureTranslator.Translate(ex))));
-        }
-
-        var entries = PatientHistoryReader.BuildEntries(_db, visits);
-
-        var dto = new PatientHistoryDto(
-            patient.Id.Value,
-            patient.FullName,
-            patient.LabId?.Value,
-            settings.HistorySortMode.ToString(),
-            settings.HistoryAutoDisplayEnabled,
-            entries);
-
-        return Task.FromResult(Result<PatientHistoryDto>.Success(dto));
+        return new GetPatientTestHistoryQueryHandler(_db).Handle(
+            new GetPatientTestHistoryQuery(request.PatientId, request.FromUtc, request.ToUtc, request.TestId),
+            cancellationToken);
     }
 }

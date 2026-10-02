@@ -59,7 +59,7 @@ public sealed class GetMultiPatientHistoryQueryHandler
         }
 
         var ordered = PatientHistoryReader.OrderByIdentity(union.Values.ToList(), settings.HistorySortMode);
-        var entries = PatientHistoryReader.BuildEntries(_db, ordered);
+        var entries = PatientHistoryReader.BuildEntries(_db, ordered, request.FromUtc, request.ToUtc, request.TestId);
 
         var dto = new MultiPatientHistoryDto(
             settings.HistorySortMode.ToString(),

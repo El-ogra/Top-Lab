@@ -231,7 +231,7 @@ Expected: "no changes" and an empty diff, except in S7/S9/S10 where the intended
 | 9 | `AddCultureMicroscopyAndZone` | WP-14 | **M2** | [x] DONE | VG-09 PASS |
 | 10 | `AddAntibioticMasterFields` | WP-14 | **M3** | [x] DONE | VG-10 PASS |
 | 11 | Culture sensitivity table + microscopy block in the report | WP-14 | — | [x] DONE | VG-11 PASS |
-| 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | ⬜ | VG-12 |
+| 12 | History filters + CBC matrix + dead-code cleanup | WP-10 | — | [x] DONE | VG-12 PASS |
 | 13 | Swallowed print exceptions reach a diagnostics sink | WP-29 | — | ⬜ | VG-13 |
 | 14 | Unit of work, visit deltas, id recovery, settlement lock | WP-29 | — | ⬜ | VG-14 |
 | 15 | Narrow hot readers, own the temp dir, layering guard | WP-29 | — | ⬜ | VG-15 |
@@ -821,7 +821,7 @@ Both now assert the count is **unchanged**. Together with S5's single inverted a
 - **Touches:** three history queries + the duplicate handler · `InsertHistoryResultCommandHandler.cs` · `PatientHistoryReader.cs:19-46,48-103` · `ReportDtos.cs:70-95` · `ReportPageComposer.cs` (only if wrapping is needed) · `HistoryReportsViewModel.cs:30,155-161,204-216` · `InsertHistoryDialogViewModel.cs:88-90` · `HistoryReportsView.xaml` · new `HistoryMatrixBuilder.cs` + `HistoryMatrixRow.cs` · two test files.
 - **Gate:** VG-12. Migration: **none**.
 
-- [ ] 1–10. Plan: append filter parameters with defaults; **delete the handler, keep the query** (C-25); push filters into SQL; pivot matrix; split into two grids rather than changing `ReportPageComposer`; clear `Entries` with an error instead of the always-true type test.
+- [x] 1–10. **DONE.** Appended `FromUtc/ToUtc/TestId` defaults to all three queries and pushed them into `BuildEntries` SQL; separate handler deleted, thin delegator kept the query (C-25); `ByPatientName` no longer materialises the table (bounded `Trim().ToUpper().StartsWith` candidate set + exact in-memory match, caveat documented); `HistoryMatrixBuilder` pivot (pure, no DB); VM: public `MultiPatientIds`, `FromDate/ToDate/TestIdText/PrintSeparately` (XAML-native types, converted on send), C-22 null-clears with message, per-patient separate printing; `InsertHistoryDialog` filters by target test name (documented name-based); `EnteredAtLocalDate` filled. Self-corrections: (1) my `StartsWith(firstToken)` broke 2 pre-existing ByPatientName tests on untrimmed/cased names — fixed with trim+upper pre-filter; (2) my seed lacked LabIds (ByLabCode needs them); (3) VM test needed the single-load canned response; (4) tuple-type + async warnings fixed. VG-12 green: build 0/0; Application **1571 (+11)** · Presentation **65 (+5)** · others Δ0; Migrations diff empty; drift clean.
 
 ### Slice 13 — Swallowed print exceptions reach a diagnostics sink (WP-29)
 
@@ -906,7 +906,8 @@ Arabic strings are byte-for-byte from the stage plan (SD-8). Anything the plan d
 | 11 | `CultureEntryView.xaml` column | «منطقة التثبيط (مم)» | Column header | plan WP-14 (verbatim) |
 | 11 | `CultureAttachmentView.xaml` column | «العتبة (مم)» | Column header | plan WP-14 (verbatim) |
 | 10 | `AntibioticsView.xaml`, `AntibioticEditorWindow.xaml` | «الاسم العلمي» · «الرمز» | Column / field label | plan WP-14 (scientific name); **no** «الاسم التجاري» per SD-2 |
-| 12 | `HistoryReportsView.xaml` | `FromDate` · `ToDate` · `SelectedTestId` · `PrintSeparately` · `SortMode` are property names, not labels — any visible label must be taken verbatim from the plan or marked `TBD-AR` | Property names | plan WP-10 |
+| 12 | `HistoryReportsView.xaml` | «من:» · «إلى:» · «التحليل:» · «طباعة منفصلة» | Filter labels | created S12 |
+| 12 | `HistoryReportsViewModel` | «لا توجد بيانات تاريخية لهذا المريض.» (null-payload clear) | Status | created S12 |
 | — | — | `TBD-AR` items (record as discovered) | — | — |
 
 ### Table B — pre-existing strings RE-USED by Wave 2 (NOT new content)

@@ -103,7 +103,8 @@ public sealed record HistoryEntryDto(
     string? LowComment = null,
     string? HighComment = null,
     bool IsTakenOutsideLab = false,
-    IReadOnlyList<string>? TestComments = null);
+    IReadOnlyList<string>? TestComments = null,
+    DateOnly? EnteredAtLocalDate = null);
 
 public sealed record PatientHistoryDto(
     int PatientId,

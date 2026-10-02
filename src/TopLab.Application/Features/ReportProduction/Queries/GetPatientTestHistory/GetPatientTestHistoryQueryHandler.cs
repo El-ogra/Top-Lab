@@ -45,7 +45,7 @@ public sealed class GetPatientTestHistoryQueryHandler
                 Error.Conflict(DomainFailureTranslator.Translate(ex))));
         }
 
-        var entries = PatientHistoryReader.BuildEntries(_db, visits);
+        var entries = PatientHistoryReader.BuildEntries(_db, visits, request.FromUtc, request.ToUtc, request.TestId);
 
         var dto = new PatientHistoryDto(
             patient.Id.Value,
