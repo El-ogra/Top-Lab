@@ -5,6 +5,7 @@ using TopLab.Application.Features.ExternalEntities.Queries.SearchExternalEntitie
 using TopLab.Application.Features.PatientSearch.Common;
 using TopLab.Application.Features.PatientSearch.Queries.GetPatientByLabId;
 using TopLab.Application.Features.PatientSearch.Queries.SearchPatientsGlobal;
+using TopLab.Application.Features.PatientRegistration.Commands.PrintBarcode;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Queries.SearchTestCatalog;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Common.Ids;
@@ -33,6 +34,7 @@ public sealed class PatientSearchViewModel : ViewModelBase
     private int _totalCount;
     private bool _isBusy;
     private string _errorMessage = string.Empty;
+    private string _statusMessage = string.Empty;
     private PatientSearchHitDto? _selectedItem;
 
     // --- P-01 F1–F5 filter state. Six separate properties (SD-6). ---
@@ -61,6 +63,10 @@ public sealed class PatientSearchViewModel : ViewModelBase
         NextPageCommand = new AsyncRelayCommand(async (_, ct) => { Page++; await SearchAsync(ct); });
         PreviousPageCommand = new AsyncRelayCommand(async (_, ct) => { if (Page > 1) { Page--; await SearchAsync(ct); } });
         OpenPatientCommand = new RelayCommand(param => OpenPatient(param as PatientSearchHitDto));
+        // P-02 A-12: enabled only when a patient is selected — no half-wired state.
+        ReprintBarcodeCommand = new AsyncRelayCommand(
+            async (_, ct) => await ReprintBarcodeAsync(ct),
+            _ => SelectedItem is not null);
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientsHubViewModel>());
         // WP-15 / SD-2 / C-7: no Patient.BranchNumber — honest notice only.
         BranchFilterNoticeCommand = new RelayCommand(_ =>
@@ -123,8 +129,27 @@ public sealed class PatientSearchViewModel : ViewModelBase
     public PatientSearchHitDto? SelectedItem
     {
         get => _selectedItem;
-        set => SetProperty(ref _selectedItem, value);
+        set
+        {
+            if (SetProperty(ref _selectedItem, value))
+            {
+                // P-02 A-12: the reprint is only meaningful for a selected patient.
+                ReprintBarcodeCommand.RaiseCanExecuteChanged();
+            }
+        }
     }
+
+    /// <summary>
+    /// P-02 A-12 (SD-6) — reprints the selected patient's card barcode, exactly as the
+    /// reference describes for a lost card (REF3 p.16 §14): search for the patient and
+    /// *"طباعة الباركود الخاص به مرة اخري وال يعطى رقم اخر جديد"* — print his barcode again
+    /// and <b>do not issue a new number</b>.
+    ///
+    /// This dispatches the EXISTING <c>PrintBarcodeCommand</c>, which re-prints the patient's
+    /// current identifier. No new command was created, no identifier is minted, and
+    /// <c>GetNextLabId</c> is not called — the reference forbids that here.
+    /// </summary>
+    public AsyncRelayCommand ReprintBarcodeCommand { get; }
 
     public ObservableCollection<PatientSearchHitDto> Items
     {
@@ -158,6 +183,13 @@ public sealed class PatientSearchViewModel : ViewModelBase
     {
         get => _errorMessage;
         private set => SetProperty(ref _errorMessage, value);
+    }
+
+    /// <summary>Non-error feedback, e.g. "barcode sent to the printer". Added for P-02 A-12.</summary>
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        private set => SetProperty(ref _statusMessage, value);
     }
 
     public AsyncRelayCommand SearchCommand { get; }
@@ -609,6 +641,32 @@ public static int? ParseAgeBound(string? text)
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>
+    /// P-02 A-12: reprints the selected patient's card barcode.
+    ///
+    /// Dispatches the EXISTING <c>PrintBarcodeCommand</c> — no new command, no handler
+    /// change, no barcode-port widening. The command re-prints the patient's current
+    /// identifier, so nothing is minted and <c>LabId</c> is untouched (SD-6).
+    /// </summary>
+    private async Task ReprintBarcodeAsync(CancellationToken cancellationToken)
+    {
+        var patientId = SelectedItem?.PatientId;
+        if (patientId is null or <= 0)
+        {
+            return;
+        }
+
+        var result = await _mediator.Send(new PrintBarcodeCommand(patientId.Value), cancellationToken);
+
+        if (!result.IsSuccess && result.Error is not null)
+        {
+            ErrorMessage = _presenter.Present(result.Error);
+            return;
+        }
+
+        StatusMessage = "تم إرسال الباركود للطباعة.";
     }
 
     private void OpenPatient(PatientSearchHitDto? hit)

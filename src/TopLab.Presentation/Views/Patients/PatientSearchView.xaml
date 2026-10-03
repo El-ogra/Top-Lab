@@ -14,6 +14,11 @@
             <Button Content="جلب بالكود" Width="90" Margin="0,0,12,0" Command="{Binding FetchByLabIdCommand}"/>
             <Button Content="الفرع" Width="70" Margin="0,0,12,0" Command="{Binding BranchFilterNoticeCommand}"/>
             <Button Content="رجوع" Width="70" Command="{Binding BackCommand}"/>
+            <!-- P-02 A-12: reprint the selected patient's card barcode (lost card).
+                 Reference REF3 p.16 §14: print his barcode AGAIN and do NOT give a new
+                 number — so this re-prints the existing identifier, never mints one. -->
+            <Button Content="إعادة طباعة الباركود" Width="150" Margin="12,0,0,0"
+                    Command="{Binding ReprintBarcodeCommand}"/>
         </StackPanel>
 
         <!-- P-01 F1–F5 filter region: SIX distinct controls (C-2). -->
