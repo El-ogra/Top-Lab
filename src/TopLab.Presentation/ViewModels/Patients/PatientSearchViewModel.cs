@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using MediatR;
+using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ExternalEntities.Queries.SearchExternalEntities;
 using TopLab.Application.Features.PatientSearch.Common;
 using TopLab.Application.Features.PatientSearch.Queries.GetPatientByLabId;
@@ -344,7 +345,14 @@ public sealed class PatientSearchViewModel : ViewModelBase
         new AgeUnitFilterItem(AgeUnit.Year, "سنة")
     };
 
-    /// <summary>Reloads the result set whenever any filter changes, and resets to page 1.</summary>
+    /// <summary>
+    /// Reloads the result set whenever any filter changes, and resets to page 1.
+    ///
+    /// P-02 D-3: the reload used to be discarded with `_ =`, so a database fault during a
+    /// filter change was lost and a burst of changes could land out of order and show a
+    /// stale result set. It is now funnelled through <see cref="RunFilterReloadAsync"/>,
+    /// which sequences the calls and surfaces failures.
+    /// </summary>
     private void OnFilterChanged()
     {
         if (_suspendFilterReload)
@@ -352,14 +360,75 @@ public sealed class PatientSearchViewModel : ViewModelBase
             return;
         }
 
-        _ = ReloadFromFirstPageAsync();
+        _ = RunFilterReloadAsync();
     }
 
-    private async Task ReloadFromFirstPageAsync()
+    /// <summary>
+    /// P-02 D-3 — the single place a filter reload is started.
+    ///
+    /// <para>
+    /// <b>Sequencing uses a generation counter together with a
+    /// <see cref="CancellationTokenSource"/> — not the counter alone.</b> Both are kept
+    /// because they do different jobs: the token stops a superseded query early where the
+    /// provider honours it, and the generation makes correctness independent of that — a
+    /// result is discarded when its generation is no longer the current one, even if that
+    /// query already completed and ignored the token. Cancellation alone leaves that window
+    /// open; the counter alone would waste work but still be correct.
+    /// </para>
+    ///
+    /// <para>
+    /// <see cref="OperationCanceledException"/> is treated as cancellation, not as an error,
+    /// and any other failure is surfaced through <see cref="ErrorMessage"/> with the previous
+    /// result list left intact, so a database fault is never silently discarded.
+    /// </para>
+    /// </summary>
+    private async Task RunFilterReloadAsync()
     {
-        Page = 1;
-        await SearchAsync(CancellationToken.None);
+        var generation = Interlocked.Increment(ref _filterReloadGeneration);
+
+        // Supersede any in-flight reload before starting this one.
+        var previous = Interlocked.Exchange(ref _filterReloadCts, null);
+        if (previous is not null)
+        {
+            try
+            {
+                previous.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // The superseded source was already disposed by its own run.
+            }
+        }
+
+        var cts = new CancellationTokenSource();
+        Interlocked.Exchange(ref _filterReloadCts, cts);
+
+        try
+        {
+            Page = 1;
+            await SearchAsync(cts.Token, generation);
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded or cancelled — not an error, and a newer reload owns the list.
+        }
+        catch (Exception ex)
+        {
+            // D-3: a fault during a filter change must be visible, not discarded. The
+            // previous list is deliberately left untouched so the user keeps the last good set.
+            ErrorMessage = _presenter.Present(Error.Unexpected(ex.Message));
+        }
+        finally
+        {
+            // Clear the field only if it is still ours; a newer reload may have replaced it.
+            Interlocked.CompareExchange(ref _filterReloadCts, null, cts);
+            cts.Dispose();
+        }
     }
+
+    private CancellationTokenSource? _filterReloadCts;
+
+    private long _filterReloadGeneration;
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -438,7 +507,7 @@ public static int? ParseAgeBound(string? text)
         return int.TryParse(text.Trim(), out var value) ? value : null;
     }
 
-    private async Task SearchAsync(CancellationToken cancellationToken)
+    private async Task SearchAsync(CancellationToken cancellationToken, long? generation = null)
     {
         IsBusy = true;
         ErrorMessage = string.Empty;
@@ -478,6 +547,14 @@ public static int? ParseAgeBound(string? text)
                     from,
                     to),
                 cancellationToken);
+
+            // P-02 D-3: a superseded reload must never write to the view. The generation
+            // check is the second line of defence after cancellation: it also catches a
+            // query that completed successfully while a newer filter change was issued.
+            if (generation.HasValue && generation.Value != Volatile.Read(ref _filterReloadGeneration))
+            {
+                return;
+            }
 
             if (result.IsSuccess && result.Value is not null)
             {
