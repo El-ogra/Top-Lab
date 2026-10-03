@@ -270,8 +270,8 @@ public class PatientSearchFiltersTests
         vm.SelectedTest = new TestFilterItem(13, "صورة دم كاملة");
         vm.SelectedSex = Sex.Female;
         vm.SelectedAgeUnit = AgeUnit.Month;
-        vm.AgeFrom = 6;
-        vm.AgeTo = 24;
+        vm.AgeFrom = "6";
+        vm.AgeTo = "24";
         vm.FromDate = new DateTime(2026, 3, 1);
         vm.ToDate = new DateTime(2026, 3, 31);
         await Task.Yield();
@@ -328,7 +328,7 @@ public class PatientSearchFiltersTests
 
         vm.SelectedTreatingDoctor = new ExternalEntityFilterItem(11, "د. علي");
         vm.SelectedSex = Sex.Male;
-        vm.AgeFrom = 10;
+        vm.AgeFrom = "10";
         vm.FromDate = new DateTime(2026, 1, 1);
         await Task.Yield();
 

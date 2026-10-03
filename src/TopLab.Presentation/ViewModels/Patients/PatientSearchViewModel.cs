@@ -40,8 +40,8 @@ public sealed class PatientSearchViewModel : ViewModelBase
     private TestFilterItem? _selectedTest;
     private Sex? _selectedSex;
     private AgeUnit _selectedAgeUnit = AgeUnit.Year;
-    private int? _ageFrom;
-    private int? _ageTo;
+    private string? _ageFrom;
+    private string? _ageTo;
     private DateTime? _fromDate;
     private DateTime? _toDate;
 
@@ -245,8 +245,15 @@ public sealed class PatientSearchViewModel : ViewModelBase
         }
     }
 
-    /// <summary>F4 — inclusive lower age bound, in <see cref="SelectedAgeUnit"/>.</summary>
-    public int? AgeFrom
+    /// <summary>
+    /// F4 — inclusive lower age bound, in <see cref="SelectedAgeUnit"/>.
+    ///
+    /// P-02 D-4: this is <c>string</c>-backed rather than <c>int?</c> because WPF cannot
+    /// convert "" to <c>int?</c> when a TextBox is cleared, so the source silently kept its
+    /// old value and the only way to unset it was «مسح الفلاتر». Empty or unparseable text
+    /// now maps to <c>null</c>, which widens the result set back to the unfiltered state.
+    /// </summary>
+    public string? AgeFrom
     {
         get => _ageFrom;
         set
@@ -258,8 +265,11 @@ public sealed class PatientSearchViewModel : ViewModelBase
         }
     }
 
-    /// <summary>F4 — inclusive upper age bound, in <see cref="SelectedAgeUnit"/>.</summary>
-    public int? AgeTo
+    /// <summary>
+    /// F4 — inclusive upper age bound, in <see cref="SelectedAgeUnit"/>.
+    /// <c>string</c>-backed for the same reason as <see cref="AgeFrom"/> (P-02 D-4).
+    /// </summary>
+    public string? AgeTo
     {
         get => _ageTo;
         set
@@ -413,6 +423,21 @@ public sealed class PatientSearchViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+/// P-02 D-4: parses one age bound. Null, empty or whitespace means "no bound".
+/// Unparseable text also means "no bound" rather than throwing, so a stray character
+/// in the box widens the result set instead of breaking the screen.
+/// </summary>
+public static int? ParseAgeBound(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        return int.TryParse(text.Trim(), out var value) ? value : null;
+    }
+
     private async Task SearchAsync(CancellationToken cancellationToken)
     {
         IsBusy = true;
@@ -422,11 +447,15 @@ public sealed class PatientSearchViewModel : ViewModelBase
         {
             var text = string.IsNullOrWhiteSpace(SearchText) ? null : SearchText.Trim();
 
-            // The age band is only sent when at least one bound is supplied, so an empty
-            // band is inert rather than a match-everything predicate (SD-5).
-            var age = AgeFrom is null && AgeTo is null
+            // P-02 D-4: the age band is string-backed and parsed here. Empty or unparseable
+            // text means "no bound" (null), so clearing the box widens the result set
+            // back instead of silently keeping the old value. The band itself is only
+            // sent when at least one bound exists, so an empty box pair stays inert (SD-5).
+            var ageFrom = ParseAgeBound(AgeFrom);
+            var ageTo = ParseAgeBound(AgeTo);
+            var age = ageFrom is null && ageTo is null
                 ? null
-                : new AgeValueBand(SelectedAgeUnit, AgeFrom, AgeTo);
+                : new AgeValueBand(SelectedAgeUnit, ageFrom, ageTo);
 
             // F5: DateTime? -> DateOnly?, inclusive on both ends.
             DateOnly? from = FromDate.HasValue
