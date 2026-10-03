@@ -16,6 +16,50 @@
             <Button Content="رجوع" Width="70" Command="{Binding BackCommand}"/>
         </StackPanel>
 
+        <!-- P-01 F1–F5 filter region: SIX distinct controls (C-2). -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <!-- F1a — treating doctor. Separate control, separate label, separate lookup (SD-6). -->
+            <TextBlock Text="الطبيب المعالج:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox Width="150" Margin="0,0,12,0"
+                      ItemsSource="{Binding TreatingDoctorOptions}"
+                      SelectedItem="{Binding SelectedTreatingDoctor}"
+                      DisplayMemberPath="Name"/>
+            <!-- F1b — referral entity (an institution). Never merged with the control above (SD-6). -->
+            <TextBlock Text="جهة الإحالة:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox Width="150" Margin="0,0,12,0"
+                      ItemsSource="{Binding ReferralEntityOptions}"
+                      SelectedItem="{Binding SelectedReferralEntity}"
+                      DisplayMemberPath="Name"/>
+            <!-- F2 — by test -->
+            <TextBlock Text="التحليل:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox Width="150" Margin="0,0,12,0"
+                      ItemsSource="{Binding TestOptions}"
+                      SelectedItem="{Binding SelectedTest}"
+                      DisplayMemberPath="Name"/>
+            <!-- F3 — by gender -->
+            <TextBlock Text="الجنس:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox Width="90" Margin="0,0,12,0"
+                      ItemsSource="{Binding SexOptions}"
+                      SelectedItem="{Binding SelectedSex}"
+                      DisplayMemberPath="Label"/>
+            <!-- F4 — age band. Like with like: the unit applies to both the band and the stored value. -->
+            <TextBlock Text="العمر:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBox Text="{Binding AgeFrom, UpdateSourceTrigger=LostFocus}" Width="45" Margin="0,0,4,0"/>
+            <TextBlock Text="إلى" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox Text="{Binding AgeTo, UpdateSourceTrigger=LostFocus}" Width="45" Margin="0,0,6,0"/>
+            <ComboBox Width="70" Margin="0,0,12,0"
+                      ItemsSource="{Binding AgeUnitOptions}"
+                      SelectedItem="{Binding SelectedAgeUnit}"
+                      DisplayMemberPath="Label"/>
+            <!-- F5 — registration date range, inclusive on both ends -->
+            <TextBlock Text="من تاريخ:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <DatePicker SelectedDate="{Binding FromDate}" Width="120" Margin="0,0,8,0"/>
+            <TextBlock Text="إلى تاريخ:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <DatePicker SelectedDate="{Binding ToDate}" Width="120" Margin="0,0,12,0"/>
+
+            <Button Content="مسح الفلاتر" Width="90" Margin="0,0,12,0" Command="{Binding ClearFiltersCommand}"/>
+        </StackPanel>
+
         <!-- Paging -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
             <TextBlock Text="{Binding Page, StringFormat='صفحة {0}'}" VerticalAlignment="Center" Margin="0,0,8,0"/>
