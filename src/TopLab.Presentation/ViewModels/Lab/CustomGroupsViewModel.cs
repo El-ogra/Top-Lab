@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using MediatR;
+using TopLab.Application.Common.Interfaces;
+using TopLab.Application.Common.Results;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.CreateCustomGroup;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.DeleteCustomGroup;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.RemoveCustomGroupItem;
@@ -51,6 +54,8 @@ public sealed class CustomGroupsViewModel : ViewModelBase
     private readonly ISender _mediator;
     private readonly IDialogService _dialogs;
     private readonly ResultErrorPresenter _presenter;
+    private readonly ICustomGroupPdfWriter _customGroupPdfWriter;
+    private readonly ILabPrintTextStore _labPrintTextStore;
 
     private ObservableCollection<CustomGroupSummaryDto> _groups = new();
     private CustomGroupSummaryDto? _selectedGroup;
@@ -67,11 +72,15 @@ public sealed class CustomGroupsViewModel : ViewModelBase
     public CustomGroupsViewModel(
         ISender mediator,
         IDialogService dialogs,
-        ResultErrorPresenter presenter)
+        ResultErrorPresenter presenter,
+        ICustomGroupPdfWriter customGroupPdfWriter,
+        ILabPrintTextStore labPrintTextStore)
     {
         _mediator = mediator;
         _dialogs = dialogs;
         _presenter = presenter;
+        _customGroupPdfWriter = customGroupPdfWriter;
+        _labPrintTextStore = labPrintTextStore;
 
         LoadGroupsCommand = new AsyncRelayCommand(_ => LoadAsync());
         NewCommand = new RelayCommand(_ => ClearEditor());
@@ -79,6 +88,8 @@ public sealed class CustomGroupsViewModel : ViewModelBase
         DeleteGroupCommand = new AsyncRelayCommand(_ => DeleteGroupAsync());
         AddItemCommand = new AsyncRelayCommand(_ => AddItemAsync());
         SaveItemPriceCommand = new AsyncRelayCommand((p, _) => SaveItemPriceAsync(p as CustomGroupItemRow));
+        // P-01 F9: enabled only when a group is selected — no half-wired state.
+        PrintGroupCommand = new AsyncRelayCommand(_ => PrintGroupAsync(), () => SelectedGroup is not null);
         RemoveItemCommand = new AsyncRelayCommand((p, _) => RemoveItemAsync(p as CustomGroupItemRow));
     }
 
@@ -92,6 +103,8 @@ public sealed class CustomGroupsViewModel : ViewModelBase
             if (SetProperty(ref _selectedGroup, value))
             {
                 GroupName = value?.Name ?? string.Empty;
+                // P-01 F9: keep the print command's enabled state in step with the selection.
+                PrintGroupCommand.RaiseCanExecuteChanged();
                 _ = ReloadItemsAsync();
             }
         }
@@ -125,6 +138,9 @@ public sealed class CustomGroupsViewModel : ViewModelBase
     public AsyncRelayCommand AddItemCommand { get; }
     public AsyncRelayCommand SaveItemPriceCommand { get; }
     public AsyncRelayCommand RemoveItemCommand { get; }
+
+    /// <summary>P-01 F9 — print the selected custom test-group list as a PDF.</summary>
+    public AsyncRelayCommand PrintGroupCommand { get; }
 
     public async Task LoadAsync()
     {
@@ -160,6 +176,67 @@ public sealed class CustomGroupsViewModel : ViewModelBase
         GroupName = string.Empty;
         Items = new ObservableCollection<CustomGroupItemRow>();
         OnPropertyChanged(nameof(ShowItemsEmpty));
+    }
+
+    /// <summary>
+    /// P-01 F9 (PP-03): prints the selected custom test-group list to a PDF at a path
+    /// the user chooses. Goes through the Application-layer <see cref="ICustomGroupPdfWriter"/>
+    /// port; this ViewModel names no Infrastructure type (SD-10).
+    /// </summary>
+    private async Task PrintGroupAsync()
+    {
+        if (SelectedGroup is null)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var detailResult = await _mediator.Send(new GetCustomGroupByIdQuery(SelectedGroup.Id));
+            if (!detailResult.IsSuccess || detailResult.Value is null)
+            {
+                ErrorMessage = detailResult.Error is not null
+                    ? _presenter.Present(detailResult.Error)
+                    : "تعذّر تحميل المجموعة.";
+                return;
+            }
+
+            var path = await _dialogs.PickPdfSavePathAsync($"{SelectedGroup.Name}.pdf");
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            var labTextResult = await _labPrintTextStore.GetAsync(LabPrintTextScope.Report);
+            if (!labTextResult.IsSuccess || labTextResult.Value is null)
+            {
+                ErrorMessage = labTextResult.Error is not null
+                    ? _presenter.Present(labTextResult.Error)
+                    : "تعذّر تحميل بيانات المعمل للطباعة.";
+                return;
+            }
+
+            await _customGroupPdfWriter.WritePdfAsync(path, detailResult.Value, labTextResult.Value);
+            StatusMessage = "تم إنشاء ملف المجموعة.";
+        }
+        catch (IOException)
+        {
+            ErrorMessage = "الملف موجود مسبقًا؛ لم يتم الكتابة فوقه.";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            ErrorMessage = "لا توجد صلاحية للكتابة في المسار المحدد.";
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            ErrorMessage = _presenter.Present(Error.Unexpected(ex.Message));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private async Task ReloadItemsAsync()

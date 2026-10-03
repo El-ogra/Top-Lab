@@ -14,6 +14,9 @@
                 <Button Content="جديد" Width="70" Margin="0,0,8,0" Command="{Binding NewCommand}" />
                 <Button Content="حفظ" Width="70" Margin="0,0,8,0" Command="{Binding SaveGroupCommand}" />
                 <Button Content="حذف" Width="70" Command="{Binding DeleteGroupCommand}" />
+                <!-- P-01 F9: print the selected custom test-group list as a PDF.
+                     Enabled only when a group is selected (the command's CanExecute). -->
+                <Button Content="طباعة" Width="70" Margin="0,0,8,0" Command="{Binding PrintGroupCommand}" />
             </StackPanel>
             <TextBox DockPanel.Dock="Bottom" Margin="0,8,0,0" Text="{Binding GroupName, UpdateSourceTrigger=PropertyChanged}" />
             <ListBox ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" DisplayMemberPath="Name" />

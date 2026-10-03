@@ -83,6 +83,10 @@ public static class DependencyInjection
         // P-01 PP-03 (F8): price-list printing. Deliberately NOT a generic "list writer" —
         // the custom test-group list gets its own port and writer in S6 (C-6, AS-6).
         services.AddScoped<IPriceListPdfWriter, PriceListPdfWriter>();
+
+        // P-01 PP-03 (F9): custom test-group list printing. Its own port and its own writer;
+        // no shared class and no shared DTO with the price-list path above (C-6).
+        services.AddScoped<ICustomGroupPdfWriter, CustomGroupPdfWriter>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
         // WP-01: Arabic report document + on-screen preview (never prints).
