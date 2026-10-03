@@ -71,6 +71,17 @@ public sealed class GetResultWorklistQueryHandler
                 && (int)test.ResultKind == request.ResultKind.Value).ToList();
         }
 
+        // P-01 F6: results-not-printed filter.
+        // The HasValue guard is the whole point. `request.IsPrinted.Value` is read INSIDE the
+        // guard only, so null means "no filter" and false means "ONLY unprinted rows".
+        // Writing `pt.IsPrinted == request.IsPrinted` outside the guard, or treating false as
+        // absent, would return every row — the failure mode C-4 warns about.
+        if (request.IsPrinted.HasValue)
+        {
+            var isPrinted = request.IsPrinted.Value;
+            rows = rows.Where(pt => pt.IsPrinted == isPrinted).ToList();
+        }
+
         rows = rows
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)

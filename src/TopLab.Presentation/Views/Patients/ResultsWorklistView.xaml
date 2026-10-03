@@ -9,6 +9,22 @@
             <DatePicker SelectedDate="{Binding Day, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,8,0" />
             <TextBlock Text="لدي نتيجة:" VerticalAlignment="Center" Margin="0,0,8,0" />
             <CheckBox IsChecked="{Binding HasResult, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" />
+            <!-- P-01 F7: IsReviewed filter. The property and its dispatch already existed
+                 (C-3); only the control was missing. The «مُراجعة» GRID COLUMN further down
+                 is a separate, display-only thing and both remain. -->
+            <TextBlock Text="مُراجعة:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <CheckBox IsChecked="{Binding IsReviewed, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" />
+            <!-- P-01 F6: results-not-printed filter.
+                 IsThreeState maps to the bool? tri-state as:
+                   indeterminate -> null   = no filter
+                   unchecked     -> false = ONLY unprinted rows
+                   checked       -> true  = ONLY printed rows
+                 A two-state CheckBox could not express "no filter" at all, which is
+                 exactly why the query parameter is bool? and not bool (C-4). -->
+            <TextBlock Text="مطبوعة:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <CheckBox IsThreeState="True"
+                      IsChecked="{Binding IsPrinted, UpdateSourceTrigger=PropertyChanged}"
+                      Margin="0,0,8,0" />
             <Button Content="تحديث" Width="80" Margin="0,0,8,0" Command="{Binding LoadCommand}" />
         </StackPanel>
 

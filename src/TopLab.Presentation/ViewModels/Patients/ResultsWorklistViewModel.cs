@@ -22,6 +22,7 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
     private DateOnly? _day = DateOnly.FromDateTime(DateTime.UtcNow);
     private bool? _hasResult = null;
     private bool? _isReviewed = null;
+    private bool? _isPrinted = null;
     private int? _testGroupId;
     private int? _resultKind;
     private int _page = 1;
@@ -77,6 +78,22 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
     {
         get => _testGroupId;
         set => SetProperty(ref _testGroupId, value);
+    }
+
+    /// <summary>
+    /// P-01 F6 — results-not-printed filter. Tri-state: null = no filter, false = only
+    /// unprinted, true = only printed. Same shape and same reset idiom as <see cref="HasResult"/>.
+    /// </summary>
+    public bool? IsPrinted
+    {
+        get => _isPrinted;
+        set
+        {
+            if (SetProperty(ref _isPrinted, value))
+            {
+                Page = 1;
+            }
+        }
     }
 
     public int? ResultKind
@@ -159,7 +176,7 @@ public sealed class ResultsWorklistViewModel : ViewModelBase
         try
         {
             var result = await _mediator.Send(new GetResultWorklistQuery(
-                Day, HasResult, IsReviewed, TestGroupId, ResultKind, Page, PageSize), cancellationToken);
+                Day, HasResult, IsReviewed, TestGroupId, ResultKind, Page, PageSize, IsPrinted), cancellationToken);
             if (result.IsSuccess && result.Value is not null)
             {
                 Items = new ObservableCollection<ResultWorklistItemDto>(result.Value);
