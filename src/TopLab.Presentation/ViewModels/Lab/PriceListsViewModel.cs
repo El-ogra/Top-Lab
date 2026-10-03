@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using MediatR;
+using TopLab.Application.Common.Interfaces;
+using TopLab.Application.Common.Results;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.CreatePriceList;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.DeletePriceList;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Commands.RemovePriceListItem;
@@ -44,13 +47,20 @@ public sealed class PriceListItemRow : ViewModelBase
 
 /// <summary>
 /// Price-lists master-detail tab (S-02 Slice 7): row-by-row price save with
-/// a «محفوظ» badge. No print control exists (unresolved owner decision).
+/// a «محفوظ» badge.
+///
+/// P-01 F8 (PP-03): printing added. It goes through the Application-layer
+/// <see cref="IPriceListPdfWriter"/> port, so this ViewModel never names an
+/// Infrastructure type (SD-10). The command is disabled with no selection —
+/// no half-wired state.
 /// </summary>
 public sealed class PriceListsViewModel : ViewModelBase
 {
     private readonly ISender _mediator;
     private readonly IDialogService _dialogs;
     private readonly ResultErrorPresenter _presenter;
+    private readonly IPriceListPdfWriter _priceListPdfWriter;
+    private readonly ILabPrintTextStore _labPrintTextStore;
 
     private ObservableCollection<PriceListSummaryDto> _lists = new();
     private PriceListSummaryDto? _selectedList;
@@ -67,11 +77,15 @@ public sealed class PriceListsViewModel : ViewModelBase
     public PriceListsViewModel(
         ISender mediator,
         IDialogService dialogs,
-        ResultErrorPresenter presenter)
+        ResultErrorPresenter presenter,
+        IPriceListPdfWriter priceListPdfWriter,
+        ILabPrintTextStore labPrintTextStore)
     {
         _mediator = mediator;
         _dialogs = dialogs;
         _presenter = presenter;
+        _priceListPdfWriter = priceListPdfWriter;
+        _labPrintTextStore = labPrintTextStore;
 
         LoadListsCommand = new AsyncRelayCommand(_ => LoadAsync());
         NewCommand = new RelayCommand(_ => ClearEditor());
@@ -80,6 +94,8 @@ public sealed class PriceListsViewModel : ViewModelBase
         AddItemCommand = new AsyncRelayCommand(_ => AddItemAsync());
         SaveItemPriceCommand = new AsyncRelayCommand((p, _) => SaveItemPriceAsync(p as PriceListItemRow));
         RemoveItemCommand = new AsyncRelayCommand((p, _) => RemoveItemAsync(p as PriceListItemRow));
+        // P-01 F8: enabled only when a list is selected — no half-wired state.
+        PrintListCommand = new AsyncRelayCommand(_ => PrintListAsync(), () => SelectedList is not null);
     }
 
     public ObservableCollection<PriceListSummaryDto> Lists { get => _lists; private set => SetProperty(ref _lists, value); }
@@ -92,6 +108,8 @@ public sealed class PriceListsViewModel : ViewModelBase
             if (SetProperty(ref _selectedList, value))
             {
                 ListName = value?.Name ?? string.Empty;
+                // P-01 F8: keep the print command's enabled state in step with the selection.
+                PrintListCommand.RaiseCanExecuteChanged();
                 _ = ReloadItemsAsync();
             }
         }
@@ -125,6 +143,9 @@ public sealed class PriceListsViewModel : ViewModelBase
     public AsyncRelayCommand AddItemCommand { get; }
     public AsyncRelayCommand SaveItemPriceCommand { get; }
     public AsyncRelayCommand RemoveItemCommand { get; }
+
+    /// <summary>P-01 F8 — print the selected price list as a PDF.</summary>
+    public AsyncRelayCommand PrintListCommand { get; }
 
     public async Task LoadAsync()
     {
@@ -162,7 +183,63 @@ public sealed class PriceListsViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowItemsEmpty));
     }
 
-    private async Task ReloadItemsAsync()
+    private async Task PrintListAsync()
+    {
+    if (SelectedList is null)
+    {
+        return;
+    }
+
+    IsBusy = true;
+    ErrorMessage = string.Empty;
+    try
+    {
+        var detailResult = await _mediator.Send(new GetPriceListByIdQuery(SelectedList.Id));
+        if (!detailResult.IsSuccess || detailResult.Value is null)
+        {
+            ErrorMessage = detailResult.Error is not null
+                ? _presenter.Present(detailResult.Error)
+                : "تعذّر تحميل قائمة الأسعار.";
+            return;
+        }
+
+        var path = await _dialogs.PickPdfSavePathAsync($"{SelectedList.Name}.pdf");
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        var labTextResult = await _labPrintTextStore.GetAsync(LabPrintTextScope.Report);
+        if (!labTextResult.IsSuccess || labTextResult.Value is null)
+        {
+            ErrorMessage = labTextResult.Error is not null
+                ? _presenter.Present(labTextResult.Error)
+                : "تعذّر تحميل بيانات المعمل للطباعة.";
+            return;
+        }
+
+        await _priceListPdfWriter.WritePdfAsync(path, detailResult.Value, labTextResult.Value);
+        StatusMessage = "تم إنشاء ملف قائمة الأسعار.";
+    }
+    catch (IOException)
+    {
+        ErrorMessage = "الملف موجود مسبقًا؛ لم يتم الكتابة فوقه.";
+    }
+    catch (UnauthorizedAccessException)
+    {
+        ErrorMessage = "لا توجد صلاحية للكتابة في المسار المحدد.";
+    }
+    catch (Exception ex) when (ex is not OperationCanceledException)
+    {
+        ErrorMessage = _presenter.Present(Error.Unexpected(ex.Message));
+    }
+    finally
+    {
+        IsBusy = false;
+    }
+}
+
+private async Task ReloadItemsAsync()
     {
         OnPropertyChanged(nameof(ShowItemsEmpty));
         if (SelectedList is null)

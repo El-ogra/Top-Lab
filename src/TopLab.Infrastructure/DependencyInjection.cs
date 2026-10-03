@@ -79,6 +79,10 @@ public static class DependencyInjection
         // Visit-worksheet printing: per-visit bench sheet (S-01 S4).
         services.AddScoped<IWorkSheetPrintingService, WorkSheetPrintingService>();
         services.AddScoped<IWorkSheetPdfWriter, WorkSheetPdfWriter>();
+
+        // P-01 PP-03 (F8): price-list printing. Deliberately NOT a generic "list writer" —
+        // the custom test-group list gets its own port and writer in S6 (C-6, AS-6).
+        services.AddScoped<IPriceListPdfWriter, PriceListPdfWriter>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
         // WP-01: Arabic report document + on-screen preview (never prints).

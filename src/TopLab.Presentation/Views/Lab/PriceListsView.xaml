@@ -13,7 +13,10 @@
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Content="جديد" Width="70" Margin="0,0,8,0" Command="{Binding NewCommand}" />
                 <Button Content="حفظ" Width="70" Margin="0,0,8,0" Command="{Binding SaveListCommand}" />
-                <Button Content="حذف" Width="70" Command="{Binding DeleteListCommand}" />
+                <Button Content="حذف" Width="70" Margin="0,0,8,0" Command="{Binding DeleteListCommand}" />
+                <!-- P-01 F8: print the selected price list as a PDF.
+                     Enabled only when a list is selected (the command's CanExecute). -->
+                <Button Content="طباعة" Width="70" Command="{Binding PrintListCommand}" />
             </StackPanel>
             <TextBox DockPanel.Dock="Bottom" Margin="0,8,0,0" Text="{Binding ListName, UpdateSourceTrigger=PropertyChanged}" />
             <ListBox ItemsSource="{Binding Lists}" SelectedItem="{Binding SelectedList}" DisplayMemberPath="Name" />
