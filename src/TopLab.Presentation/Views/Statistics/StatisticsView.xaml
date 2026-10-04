@@ -64,6 +64,8 @@
                     <CheckBox Content="حسب جهة الإحالة" IsChecked="{Binding ByReferralEntity}" Margin="0,0,8,0"/>
                     <CheckBox Content="حسب نوع الحساب" IsChecked="{Binding ByAccountType}" Margin="0,0,8,0"/>
                     <CheckBox Content="تجميع شهري" IsChecked="{Binding GroupByMonth}" Margin="0,0,8,0"/>
+                    <CheckBox Content="حسب يوم الشهر" IsChecked="{Binding GroupByDayOfMonth}" Margin="0,0,8,0"/>
+                    <CheckBox Content="عرض المدفوعات" IsChecked="{Binding IncludeMoneyRow}" Margin="0,0,8,0"/>
                     <Button Content="عرض" Width="70" Command="{Binding LoadPatientsCommand}"/>
                 </StackPanel>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -146,6 +148,34 @@
                                 <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
                             </DataGrid.Columns>
                         </DataGrid>
+                        <DataGrid ItemsSource="{Binding PatientStats.DayOfMonthCounts}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,8" MaxHeight="200">
+                            <DataGrid.Style>
+                                <Style TargetType="DataGrid">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding GroupByDayOfMonth}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Style>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="اليوم" Binding="{Binding Day}" Width="80"/>
+                                <DataGridTextColumn Header="العدد" Binding="{Binding Count}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="{Binding MoneyRowText}" FontWeight="Bold" Margin="0,4,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasMoneyRow}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>

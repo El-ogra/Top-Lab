@@ -192,8 +192,8 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 | 2 | R-F05-S2 — Banded-monitor PDF port + writer | R-F05 | create 2 · modify 1 | [x] **COMPLETE** ✅ VG-02 passed | VG-02 |
 | 3 | R-F05-S3 — Banded-monitor VM + XAML | R-F05 | create 1 · modify 2 | [x] **COMPLETE** ✅ VG-03 passed | VG-03 |
 | 4 | R-F01-S1 — Day-of-month + money row in the Application layer | R-F01 | modify 3 · modify 1 test | [x] **COMPLETE** ✅ VG-04 passed | VG-04 |
-| 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [ ] **IN PROGRESS** | VG-05 |
-| 6 | R-A04-S1 — First-registration guard in the Application handler | R-A04 | modify 1 · modify 1 test | [ ] NOT STARTED | VG-06 |
+| 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [x] **COMPLETE** ✅ VG-05 passed | VG-05 |
+| 6 | R-A04-S1 — First-registration guard in the Application handler | R-A04 | modify 1 · modify 1 test | [ ] **IN PROGRESS** | VG-06 |
 | 7 | R-A04-S2 — First-registration guard in the UI | R-A04 | modify 2 · create 1 test | [ ] NOT STARTED | VG-07 |
 | 8 | R-A04-S3 — Outside-lab note on the profile printed report | R-A04 | modify 3 · modify 1 test | [ ] NOT STARTED | VG-08 |
 
@@ -226,7 +226,7 @@ Every slice runs the same ten stages. Record the outcome of each in the Executio
 - [x] **Slice 2** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 3** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 4** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
-- [ ] **Slice 5** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
+- [x] **Slice 5** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [ ] **Slice 6** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 7** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 8** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
@@ -257,8 +257,9 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 | 9 | `التاريخ` / `المريض` / `الرقم` / `الجنس` / `العمر` / `جهة الإحالة` / `التحليل` / `النتيجة` / `الحالة` | Presentation + PDF | 1, 2, 3 | **CREATED ONCE in Slice 2** — exact text: `التاريخ`, `المريض`, `الرقم`, `الجنس`, `العمر`, `جهة الإحالة`, `التحليل`, `النتيجة`, `الحالة`. Reuse verbatim in the ViewModel/XAML (Slice 3). Pinned by `BuildTextLines_YieldsTheNineGridHeaders` |
 | 10 | `تم التسليم` / `تمت الطباعة` / `معتمد` / `غير معتمد` | Presentation + PDF | 1, 2, 3 | BR-F05-10 — **TO BE CREATED ONCE** — record here |
 | 11 | `بدون جهة إحالة` | Application + Presentation + PDF | 1, 2, 3 | BR-F05-12 — **frozen**, copied from `GetPatientCountStatisticsQueryHandler.cs:14` |
-| 12 | `المدفوعات: {AmountsPaid}` | Presentation | 5 | BR-F01-12 — **TO BE CREATED ONCE** — record here |
-| 13 | `حسب يوم الشهر` / `اليوم` / `العدد` | Presentation | 5 | BR-F01-5 — **TO BE CREATED ONCE** — record here |
+| 12 | `المدفوعات: {AmountsPaid}` | Presentation | 5 | **CREATED ONCE in Slice 5** — exact text `المدفوعات: ` + the invariant-formatted amount (e.g. `المدفوعات: 1234.5`). Formatted with `CultureInfo.InvariantCulture` so a comma can never appear. Pinned by `IncludeMoneyRow_IsPassedThrough_AndRendersTheMoneyLine`, which also asserts `DoesNotContain(",")` |
+| 13 | `حسب يوم الشهر` / `اليوم` / `العدد` | Presentation | 5 | **CREATED ONCE in Slice 5** — exact texts above. `العدد` already existed in the three pre-existing grids of this view and is reused; `اليوم` is new |
+| 13a | `عرض المدفوعات` | Presentation | 5 | **CREATED ONCE in Slice 5** — the checkbox label for `IncludeMoneyRow`. The plan registers the rendered line (#12) but names no control label |
 | 14 | `عدد النتائج: {n}` | PDF | 2 | **CREATED ONCE in Slice 2** — exact text: `عدد النتائج: ` + the invariant count (e.g. `عدد النتائج: 3`). Pinned by `BuildTextLines_MapsEveryRow` and `BuildTextLines_EmptyRows_StillYieldsHeaderAndCriteria` |
 | 15 | `التحليل: {test} — النطاق: {min} إلى {max} — الفترة: {from} إلى {to}` | PDF | 2 | **CREATED ONCE in Slice 2** — the criteria line: the em-dashes are `—` (U+2014), the values are invariant-formatted (`0.####` for the band, `yyyy/MM/dd` for the dates). Pinned by `BuildTextLines_YieldsLabHeaderAndCriteriaLine` |
 
@@ -408,7 +409,36 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 - **Deliberately NOT done:** no UI controls (Slice 5) · no migration · no change to `ResultFlagComputer` · no touch to `ReportContentBuilder`/`ReportDtos` · no push.
 
 ### Slice 5 — R-F01-S2 — Day-of-month + money row in the UI
-*(same fields)*
+- **Date / agent:** 2026-10-04 · executing agent (resumed after the owner's `--amend` correction)
+- **Files created:** none. The facts live in the **existing** `StatisticsViewModelMonitorTests.cs` (inventory #9) because the nested fakes are `private` to that class — §E Slice R-F01-S2 step 3 says «Reuse the nested fakes added in R-F05-S3's test file», and duplicating them would have been a new file outside §C.
+- **Files modified (3 + this memory file):** `StatisticsViewModel.cs` (`MoneyRowText` + `HasMoneyRow`, with change notification) · `StatisticsView.xaml` (two checkboxes, the day grid, the money line) · `StatisticsViewModelMonitorTests.cs` (+7 facts) · `Docs/OpenCode/B-01-memory.md`
+- **Build result:** `Build succeeded. 0 Warning(s) 0 Error(s)`
+- **Test results vs baseline (as a delta):** Domain **507/507 (0)** · Application **1673/1673 (0)** · Infrastructure **295/295 (0)** · Persistence **13 passed / 2 SKIPPED / 15 (0)** · **Presentation 146 → 153/153 (+7)**
+- **Persistence diff:** **EMPTY** ✅
+- **VG-05 item-by-item result:**
+  1. Build 0 errors / 0 warnings — ✅
+  2. No project below baseline — ✅ all five ≥ baseline; Presentation +7
+  3. Persistence diff empty — ✅
+  4. Two new checkboxes bound to `GroupByDayOfMonth` and `IncludeMoneyRow` — ✅ verified in the file at `:67` `Content="حسب يوم الشهر" IsChecked="{Binding GroupByDayOfMonth}"` and `:68` `Content="عرض المدفوعات" IsChecked="{Binding IncludeMoneyRow}"`, both in the patients section beside the four existing controls. Pinned by `View_BindsBothNewControls_AndKeepsRtl`
+  5. Day grid shows **only** when the flag is true — ✅ `:151` binds `PatientStats.DayOfMonthCounts` inside a `DataGrid.Style` with `Setter Visibility=Collapsed` + `DataTrigger Binding="{Binding GroupByDayOfMonth}" Value="True"`, exactly mirroring the `تجميع شهري` grid at `:130-146`. Pinned by the same fact plus `GroupByDayOfMonth_FlagOff_LeavesTheDayListEmpty`
+  6. Money line renders with **invariant** formatting — ✅ `MoneyRowText` is `string.Format(CultureInfo.InvariantCulture, "المدفوعات: {0}", …)`. `IncludeMoneyRow_IsPassedThrough_AndRendersTheMoneyLine` asserts the exact string `المدفوعات: 1234.5` **and** `DoesNotContain(",")`, so a comma decimal separator cannot appear on this line
+  7. `StatisticsView.xaml` still RTL — ✅ `grep -c` → **1**
+  8. No `TopLab.Infrastructure` reference in the ViewModel — ✅ `grep -c` → **0**, plus the `ViewModel_StillHasNoInfrastructureReference` fact
+  9. **Migration: NONE** — ✅
+- **New UI strings — created ONCE, recorded verbatim:**
+  - #13 `حسب يوم الشهر` (checkbox), `اليوم` (column header), `العدد` (column header — **already exists** in the three pre-existing grids of this view, so it is reused rather than created)
+  - `عرض المدفوعات` (checkbox) — the plan registers `المدفوعات: {AmountsPaid}` (the rendered line) but names no checkbox label; this one was created for the control
+  - #12 `المدفوعات: {AmountsPaid}` — exact text `المدفوعات: ` + the invariant-formatted amount (e.g. `المدفوعات: 1234.5`). Pinned by `IncludeMoneyRow_IsPassedThrough_AndRendersTheMoneyLine`
+- **Deviation from the plan (and why):**
+  - **No new test file.** §E R-F01-S2 step 3 says «Reuse the nested fakes added in R-F05-S3's test file»; those fakes are `private sealed class` members of `StatisticsViewModelMonitorTests`, so the facts were **added to that same file** (already inventory #9) instead of creating a new one. A second file would have needed its own copy of `MonitorSender`/`FixedDialogService`/`FakeLabPrintText`/`NoOpNavigation` — duplication for no gain, and a new path outside §C.
+  - A `HasMoneyRow` boolean was added beside `MoneyRowText` so the XAML can hide the line via a `DataTrigger` without string-formatting a null. `MoneyRowText` alone would render an empty `TextBlock` and a visible blank line.
+  - `PatientCountStatisticsDto.TotalCount` in the fake was raised from 0 to 3 so `HasPatientStats` is true and the grids have a plausible non-empty context; this is test-fixture data only.
+- **Commit hash:** Slice 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · Slice 5's own hash recorded at Slice 6 Stage 8
+- **`git status --short` after the commit:** recorded at Slice 6 Stage 8
+- **Anything noticed that the plan did not anticipate:**
+  - The plan's §F lists a `MoneyRowText`-style assertion but does not name a checkbox label for `IncludeMoneyRow`; created and recorded above rather than left implicit.
+  - `grep -c` **exits 1 when the count is 0**, which silently aborted a chained VG-evidence command (the `TopLab.Infrastructure` count of 0 is the *pass* condition). Re-ran the remaining checks separately. Worth knowing for later slices: never chain a `grep -c` whose success case is zero matches with `&&`.
+- **Deliberately NOT done:** no change to the Application layer (done in Slice 4) · no `Fakes.cs` edit · no new ViewModel · no migration · no push.
 
 ### Slice 6 — R-A04-S1 — First-registration guard in the Application handler
 *(same fields)*
@@ -425,12 +455,12 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 
 | Field | Value |
 |---|---|
-| Slices complete | **4 of 8** |
-| Current slice | **Slice 5 — R-F01-S2 (in progress)** |
+| Slices complete | **5 of 8** |
+| Current slice | **Slice 6 — R-A04-S1 (in progress)** |
 | Baseline recorded at G0 | **YES — 2026-10-04, build 0/0; 507/507 · 1638/1638 · 284/284 · 13 passed + 2 skipped · 133/133** |
 | `BASELINE_HEAD` | **`55b4370f80cc428f477c281b1387c1680dd7d2f6`** (Step 0 — verified: descendant of `e765f87`, `src/`+`tests/` identical, branch `main`, tree clean) |
 | Build/test SDK | 8.0.425 via direct invocation (SD-22) — confirmed `8.0.425` |
-| Last commit made by the agent | Slice 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 = see Execution Log |
+| Last commit made by the agent | 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · 5 = see Execution Log |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
 | Files outside the `B-01.md` §C inventory modified | **0** |

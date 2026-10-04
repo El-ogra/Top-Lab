@@ -192,12 +192,28 @@ public sealed class StatisticsViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(HasPatientStats));
                 OnPropertyChanged(nameof(ShowPatientsEmpty));
+                OnPropertyChanged(nameof(MoneyRowText));
+                OnPropertyChanged(nameof(HasMoneyRow));
             }
         }
     }
 
     public bool HasPatientStats => _patientStats is not null && _patientStats.TotalCount > 0;
     public bool ShowPatientsEmpty => _patientStats is not null && _patientStats.TotalCount == 0 && !IsBusy;
+
+    /// <summary>
+    /// BR-F01-12: one line under the grids, formatted with InvariantCulture so the digits
+    /// and the decimal point do not depend on the operator's machine locale. Null while
+    /// <c>IncludeMoneyRow</c> is off (BR-F01-11), which is what keeps the row hidden.
+    /// </summary>
+    public string? MoneyRowText => _patientStats?.Money is null
+        ? null
+        : string.Format(
+            CultureInfo.InvariantCulture,
+            "المدفوعات: {0}",
+            _patientStats.Money.AmountsPaid);
+
+    public bool HasMoneyRow => MoneyRowText is not null;
 
     // Section 2 properties
     public int? TestGroupId { get => _testGroupId; set => SetProperty(ref _testGroupId, value); }

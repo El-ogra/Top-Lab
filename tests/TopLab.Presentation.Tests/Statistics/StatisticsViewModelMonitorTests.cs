@@ -64,6 +64,8 @@ public class StatisticsViewModelMonitorTests
     {
         public int BandQueryCount { get; private set; }
 
+        public GetPatientCountStatisticsQuery? LastStatsQuery { get; private set; }
+
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
         {
             if (request is SearchTestCatalogQuery)
@@ -76,10 +78,11 @@ public class StatisticsViewModelMonitorTests
                 return Task.FromResult((TResponse)(object)Result<IReadOnlyList<TestSummaryDto>>.Success(catalog));
             }
 
-            if (request is GetPatientCountStatisticsQuery)
+            if (request is GetPatientCountStatisticsQuery stats)
             {
+                LastStatsQuery = stats;
                 return Task.FromResult((TResponse)(object)Result<PatientCountStatisticsDto>
-                    .Success(EmptyPatientStats()));
+                    .Success(PatientStats(stats)));
             }
 
             // The pre-existing LoadFilterItemsAsync also loads sections 2–4; these stubs keep
@@ -138,17 +141,24 @@ public class StatisticsViewModelMonitorTests
             LabToLabPrice: null,
             IsActive: true);
 
-        private static PatientCountStatisticsDto EmptyPatientStats() => new(
+        /// <summary>
+        /// Echoes the request's two new flags back, so the pass-through can be asserted:
+        /// day buckets when GroupByDayOfMonth is set, and a money row when IncludeMoneyRow
+        /// is set. Everything else stays empty.
+        /// </summary>
+        private static PatientCountStatisticsDto PatientStats(GetPatientCountStatisticsQuery q) => new(
             new DateOnly(2026, 3, 1),
             new DateOnly(2026, 3, 31),
-            0,
+            3,
             Array.Empty<ClassificationCountDto>(),
             Array.Empty<ClassificationCountDto>(),
             Array.Empty<ClassificationCountDto>(),
             Array.Empty<MonthlyCountDto>(),
             Array.Empty<MonthlyClassificationCountDto>(),
-            Array.Empty<DayOfMonthCountDto>(),
-            null);
+            q.GroupByDayOfMonth
+                ? [new DayOfMonthCountDto(1, 2), new DayOfMonthCountDto(15, 1)]
+                : Array.Empty<DayOfMonthCountDto>(),
+            q.IncludeMoneyRow ? new PeriodMoneyDto(1234.5m, 7) : null);
 
         public Task<object?> Send(object request, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
@@ -445,6 +455,109 @@ public class StatisticsViewModelMonitorTests
         {
             Assert.Contains(name, xaml, StringComparison.Ordinal);
         }
+    }
+
+    // =====================================================================
+    // R-F01-S2 (VG-05) — day-of-month + money row in the UI
+    // =====================================================================
+
+    [Fact]
+    public async Task GroupByDayOfMonth_IsPassedThrough_ToTheQuery()
+    {
+        var (vm, _, sender) = await LoadedAsync();
+        vm.GroupByDayOfMonth = true;
+
+        await RunAsync(vm.LoadPatientsCommand);
+
+        Assert.True(sender.LastStatsQuery!.GroupByDayOfMonth);
+        Assert.Equal(2, vm.PatientStats!.DayOfMonthCounts.Count);
+        Assert.Equal(1, vm.PatientStats.DayOfMonthCounts[0].Day);
+        Assert.Equal(2, vm.PatientStats.DayOfMonthCounts[0].Count);
+        Assert.Equal(15, vm.PatientStats.DayOfMonthCounts[1].Day);
+    }
+
+    [Fact]
+    public async Task GroupByDayOfMonth_FlagOff_LeavesTheDayListEmpty()
+    {
+        var (vm, _, sender) = await LoadedAsync();
+        vm.GroupByDayOfMonth = false;
+
+        await RunAsync(vm.LoadPatientsCommand);
+
+        Assert.False(sender.LastStatsQuery!.GroupByDayOfMonth);
+        Assert.Empty(vm.PatientStats!.DayOfMonthCounts);
+    }
+
+    [Fact]
+    public async Task IncludeMoneyRow_IsPassedThrough_AndRendersTheMoneyLine()
+    {
+        var (vm, _, sender) = await LoadedAsync();
+        vm.IncludeMoneyRow = true;
+
+        await RunAsync(vm.LoadPatientsCommand);
+
+        Assert.True(sender.LastStatsQuery!.IncludeMoneyRow);
+        Assert.True(vm.HasMoneyRow);
+        // BR-F01-12: invariant formatting — a dot decimal separator, never a comma.
+        Assert.Equal("المدفوعات: 1234.5", vm.MoneyRowText);
+        Assert.DoesNotContain(",", vm.MoneyRowText!, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task IncludeMoneyRow_FlagOff_HidesTheMoneyLine()
+    {
+        var (vm, _, sender) = await LoadedAsync();
+        vm.IncludeMoneyRow = false;
+
+        await RunAsync(vm.LoadPatientsCommand);
+
+        Assert.False(sender.LastStatsQuery!.IncludeMoneyRow);
+        Assert.Null(vm.MoneyRowText);
+        Assert.False(vm.HasMoneyRow);
+    }
+
+    [Fact]
+    public async Task MoneyRowText_IsNull_BeforeAnythingIsLoaded()
+    {
+        var (vm, _, _) = await LoadedAsync();
+        vm.IncludeMoneyRow = true;
+
+        // LoadAsync runs the patients query with the flag already set, so clear the state
+        // by asking for a screen that has never loaded.
+        var fresh = Screen(out _, out _);
+        Assert.Null(fresh.MoneyRowText);
+        Assert.False(fresh.HasMoneyRow);
+    }
+
+    [Fact]
+    public void View_BindsBothNewControls_AndKeepsRtl()
+    {
+        var xaml = ReadPresentationFile(Path.Combine("Views", "Statistics", "StatisticsView.xaml"));
+
+        // two new checkboxes bound to the two new flags (BR-F01-5)
+        Assert.Contains("Content=\"حسب يوم الشهر\" IsChecked=\"{Binding GroupByDayOfMonth}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Content=\"عرض المدفوعات\" IsChecked=\"{Binding IncludeMoneyRow}\"", xaml, StringComparison.Ordinal);
+
+        // the day grid, hidden unless the flag is true (BR-F01-5)
+        Assert.Contains("ItemsSource=\"{Binding PatientStats.DayOfMonthCounts}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Binding=\"{Binding GroupByDayOfMonth}\" Value=\"True\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Header=\"اليوم\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Header=\"العدد\"", xaml, StringComparison.Ordinal);
+
+        // the money line (BR-F01-12)
+        Assert.Contains("Text=\"{Binding MoneyRowText}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Binding=\"{Binding HasMoneyRow}\" Value=\"True\"", xaml, StringComparison.Ordinal);
+
+        // RTL preserved (PresentationStructuralTests scans every Views/**/*.xaml)
+        Assert.Contains("FlowDirection=\"RightToLeft\"", xaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ViewModel_StillHasNoInfrastructureReference()
+    {
+        var source = ReadPresentationFile(Path.Combine("ViewModels", "Statistics", "StatisticsViewModel.cs"));
+
+        Assert.DoesNotContain("TopLab.Infrastructure", source, StringComparison.Ordinal);
     }
 
     private static string ReadPresentationFile(string relativePath)
