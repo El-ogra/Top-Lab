@@ -547,7 +547,83 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 | Last commit made by the agent | 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · 5 `d61ea66` · 6 `65ca4a6` · 7 `9e5ad13` · 8 = see Execution Log |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
-| Files outside the `B-01.md` §C inventory modified | **0** |
+| Files outside the `B-01.md` §C inventory modified | **0** — the final diff is exactly the 28 §C files + this memory file |
+
+---
+
+## FINAL GATE — 2026-10-04 — **PASS**
+
+```
+dotnet "C:\Program Files\dotnet\sdk\8.0.425\dotnet.dll" build TopLab.sln -p:EnableWindowsTargeting=true
+    Build succeeded.  0 Warning(s)  0 Error(s)
+
+dotnet "C:\Program Files\dotnet\sdk\8.0.425\dotnet.dll" test  TopLab.sln -p:EnableWindowsTargeting=true
+    TopLab.Domain.Tests          :  507 /  507   (G0 507/507, Δ   0)
+    TopLab.Application.Tests     : 1688 / 1688   (G0 1638/1638, Δ +50)
+    TopLab.Infrastructure.Tests  :  295 /  295   (G0 284/284,  Δ +11)
+    TopLab.Persistence.Tests     :   13 passed / 2 SKIPPED / 15  (G0 identical, Δ 0 — skips, not passes)
+    TopLab.Persistence.Tests     :   164 /  164   (G0 133/133,  Δ +31)
+
+git status --short
+    (empty)
+
+git log --oneline -9
+    da99d23 [B-01] Slice 8/8 ...
+    9e5ad13 [B-01] Slice 7/8 ...
+    65ca4a6 [B-01] Slice 6/8 ...
+    d61ea66 [B-01] Slice 5/8 ...
+    c8b9bd5 [B-01] Slice 4/8 ...
+    838ba95 [B-01] Slice 3/8 ...
+    6e88e1f [B-01] Slice 2/8 ...
+    e84c19c [B-01] Slice 1/8 ...
+    55b4370 B-01 R2: align plan, memory and execution prompt ...   ← BASELINE_HEAD
+
+git diff --stat BASELINE_HEAD -- src/TopLab.Infrastructure/Persistence/
+    (empty)                                                          ← zero migrations, as promised
+
+git diff --name-only BASELINE_HEAD | wc -l
+    29                                                               ← 28 §C files + this memory file
+```
+
+**The 29 paths were verified individually, not just counted.** All 28 §C inventory entries are
+present and there is nothing else: no `ReportContentBuilder.cs`, no `ReportDtos.cs`, no
+`PatientReportPdfPort.cs`, no `tests/.../Common/Fakes.cs`, no
+`tests/.../Common/Fakes/FakeSender.cs`, no `B-01.md`, and nothing under
+`src/TopLab.Infrastructure/Persistence/`.
+
+| Gate expectation | Result |
+|---|---|
+| Build 0 errors / 0 warnings | ✅ `0 Warning(s) 0 Error(s)` |
+| No test project below the recorded G0 baseline | ✅ all five ≥ baseline (+0/+50/+11/0/+31) |
+| `git status --short` empty | ✅ |
+| `BASELINE_HEAD` plus **exactly eight** slice commits | ✅ `55b4370` + 8 |
+| Persistence diff empty | ✅ |
+| `git diff --name-only` = exactly 29 paths | ✅ verified by name, not by count |
+| Migrations created / edited / applied | **0** |
+| Pushes made by the agent | **0** |
+
+**The agent stops here. Nothing was pushed. The owner reviews the eight commits and pushes
+personally.**
+
+### Batch outcome
+
+- **R-F05 (banded result monitor)** — complete: `GetBandedResultMonitorQuery` + validator + handler under the existing `STATISTICS` gate; a separate `IBandedResultMonitorPdfWriter` port and `BandedResultMonitorPdfWriter` that never overwrites; a fifth section inside `StatisticsViewModel` with its own XAML, a `SearchTestCatalogQuery` picker and a print action. The min/max inputs are **dot-only**; a comma is rejected with `استخدم النقطة (.) للفاصلة العشرية، والفاصلة (,) غير مقبولة.` and the mediator is never reached.
+- **R-F01 (patient statistics extension)** — complete: day-of-month grouping and a money row reporting cash **received in the period**, anchored on `OperationAtUtc` alone and summed through `PatientAccountCalculator.TotalPaid`, **including payments of soft-deleted patients** (pinned by test).
+- **R-A04 (test-order edit gestures)** — complete: the first-registration guard in the **Application handler** (24-hour and result-entered rules kept, unchanged), the disabled `مسح الكل` button driven by a ViewModel check refreshed at a single point, and the real `IsTakenOutsideLab` now reaching the **specialised-profile printed report** as the **13th** argument of `CombinedReportLineDto`.
+
+### Reported, deliberately NOT fixed (out of scope by instruction)
+
+1. **F-1 — `ResultFlagComputer.TryParse` reads a comma as a thousands separator**, so `"3,5"` parses to **35**. The method was widened to `internal` for the monitor (its body is byte-identical) but the defect stands. Consequence: the monitor filters on exactly the number the existing flag logic already used.
+2. **F-2 — `PatientEditorViewModel` parses a payment amount with `NumberStyles.Number`**, which also accepts `,`. A latent billing-input defect.
+3. **F-3 — dead `livePatientIds` local** in `GetCashDrawerInventoryQueryHandler.cs`.
+4. **Three known outside-lab gaps remain open** by OD-4 = Option B: the patient PDF export, the history report grid, and the profile **preview** path.
+5. **The UI guard has one unavoidable structural limitation**, recorded during Slice 7: SD-18's single insertion point inside `LoadVisitTestsAsync` runs *before* `LoadVisitHistoryAsync`, so the existing `VisitHistory.CollectionChanged` handler was also extended to re-evaluate. Without that second trigger the button would be inert.
+
+### Honest notes on the run
+
+- **One policy violation occurred and was reported, not concealed:** the Slice 4 `--amend`. The owner responded with a binding correction, after which the "Forbidden" list was treated as a Stop Rule and **nothing further on it was run at any point in Slices 5–8**.
+- **Four build-failure cycles** were resolved inside their own slices, none reaching the 5-consecutive threshold: Slice 3 (fake sender missing four canned responses), Slice 4 (test arithmetic, three consecutive failures of one new test), Slice 7 (`xUnit2013` warning treated as a regression), Slice 8 (`CS1503` — the SD-12 off-by-one, caught by the compiler exactly as SD-12 predicted).
+- **Presentation tests are fully verified here**, not deferred: `TopLab.Presentation.Tests` runs on this Windows host (resolving the plan's U-1/U-2).
 | Blocking issues | none |
 
 ---
