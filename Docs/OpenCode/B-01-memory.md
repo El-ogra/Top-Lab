@@ -193,8 +193,8 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 | 3 | R-F05-S3 — Banded-monitor VM + XAML | R-F05 | create 1 · modify 2 | [x] **COMPLETE** ✅ VG-03 passed | VG-03 |
 | 4 | R-F01-S1 — Day-of-month + money row in the Application layer | R-F01 | modify 3 · modify 1 test | [x] **COMPLETE** ✅ VG-04 passed | VG-04 |
 | 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [x] **COMPLETE** ✅ VG-05 passed | VG-05 |
-| 6 | R-A04-S1 — First-registration guard in the Application handler | R-A04 | modify 1 · modify 1 test | [ ] **IN PROGRESS** | VG-06 |
-| 7 | R-A04-S2 — First-registration guard in the UI | R-A04 | modify 2 · create 1 test | [ ] NOT STARTED | VG-07 |
+| 6 | R-A04-S1 — First-registration guard in the Application handler | R-A04 | modify 1 · modify 1 test | [x] **COMPLETE** ✅ VG-06 passed | VG-06 |
+| 7 | R-A04-S2 — First-registration guard in the UI | R-A04 | modify 2 · create 1 test | [ ] **IN PROGRESS** | VG-07 |
 | 8 | R-A04-S3 — Outside-lab note on the profile printed report | R-A04 | modify 3 · modify 1 test | [ ] NOT STARTED | VG-08 |
 
 **Cross-slice file overlap (expected, and the reason for this order):** `StatisticsViewModel.cs` and `StatisticsView.xaml` are modified by slices 3 and 5; `StatisticsAuthorizationTests.cs` by slices 1 and 4. No two slices are ever open at the same time, because execution is strictly sequential.
@@ -227,7 +227,7 @@ Every slice runs the same ten stages. Record the outcome of each in the Executio
 - [x] **Slice 3** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 4** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 5** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
-- [ ] **Slice 6** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
+- [x] **Slice 6** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [ ] **Slice 7** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 8** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 
@@ -441,7 +441,35 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 - **Deliberately NOT done:** no change to the Application layer (done in Slice 4) · no `Fakes.cs` edit · no new ViewModel · no migration · no push.
 
 ### Slice 6 — R-A04-S1 — First-registration guard in the Application handler
-*(same fields)*
+- **Date / agent:** 2026-10-04 · executing agent
+- **Files created:** none
+- **Files modified (2 + this memory file):** `ClearAllTestsCommandHandler.cs` (**guard inserted, nothing removed**) · `ClearAllTestsCommandHandlerTests.cs` (+12 facts) · `Docs/OpenCode/B-01-memory.md`
+- **Build result:** `Build succeeded. 0 Warning(s) 0 Error(s)`
+- **Test results vs baseline (as a delta):** Domain **507/507 (0)** · **Application 1673 → 1685/1685 (+12)** · Infrastructure **295/295 (0)** · **Presentation 153/153 (0)** · Persistence **13 passed / 2 SKIPPED / 15 (0)**
+- **Persistence diff:** **EMPTY** ✅
+- **VG-06 item-by-item result:**
+  1. Build 0 errors / 0 warnings — ✅
+  2. No project below baseline — ✅ all five ≥ baseline
+  3. Persistence diff empty — ✅
+  4. Guard sits **between** the soft-delete check and the 24-hour check — ✅ verified in the file: inserted after `if (patient.IsDeleted) { … }` and before `if ((_clock.UtcNow - patient.CreatedAtUtc).TotalHours > 24)`
+  5. A non-first visit yields `Error.Conflict` with `لا يمكن مسح التحاليل إلا عند إضافة المريض أول مرة.` — ✅ `Clear_NonFirstVisit_Conflict` asserts both the type and the exact string
+  6. **The 24-hour and result-entered messages are unchanged and still fire** — ✅ `Clear_OlderThanTwentyFourHours_StillBlocked` asserts the pre-existing 24-hour string verbatim; `Clear_ResultEntered_Conflict` asserts `لا يمكن مسح تحاليل تم تسجيل نتائج لها.` verbatim; `Clear_SoftDeletedPatient_StillSoftDeleteConflict` asserts `المريض محذوف.` and explicitly proves the soft-delete check runs before the new guard
+  7. A soft-deleted prior visit does not block — ✅ `Clear_DeletedPriorVisitDoesNotBlock`
+  8. A tie on `RegistrationDateUtc` is broken by the lower `PatientId` — ✅ `Clear_TieOnRegistrationDate_BreaksByPatientId` (this visit has the higher id → conflict)
+  9. **`Clear_HappyPath_RemovesAll` (`:14-30`) and `Clear_TestWithResult_Conflict` (`:32-47`) still pass unmodified** — ✅ both untouched in the diff and both passing; no `Patient.LabId`, so each is the only row in its (null) group and clears under BR-A04-1 exactly as the plan predicted
+  10. The guard performs **no write** on the refusal path — ✅ `Clear_Guard_PerformsNoWriteOnRefusal` asserts `db.SaveChangesCallCount == 0` and the `PatientTest` list unchanged
+  11. **Migration: NONE** — ✅
+  - Extra facts beyond the plan's nine: `Clear_FirstVisit_Succeeds` (also proves a **different** `LabId` group is not a prior visit) and `Clear_LaterRegistrationDateIsTheFirstVisit` (guards against an inverted comparison) and `Handler_ExposesTheSharedArabicLiteral` (SD-17)
+- **New UI strings:** **none new.** Register #1 `لا يمكن مسح التحاليل إلا عند إضافة المريض أول مرة.` is now a **`public const` on the handler** (`ClearAllTestsCommandHandler.FirstRegistrationOnlyMessage`) so Slice 7's ViewModel short-circuit and both test files reuse **one** literal byte-for-byte (SD-17). Pinned by `Handler_ExposesTheSharedArabicLiteral`.
+- **Deviation from the plan (and why):**
+  - The guard was expressed as a **two-key `Any` comparison** (`RegistrationDateUtc < registered || (== && Id < patientId)`) rather than `OrderBy(...).ThenBy(...).FirstOrDefault()` + null-check. Both encode BR-A04-1 identically; this form avoids materialising an ordered row and is cheaper in SQL. An exact tie on `PatientId` is impossible, so the comparison is total.
+  - The EF predicate uses `p.LabId != null` and an **hoisted local** `labId` rather than `p.LabId is not null` and `patient.LabId.Value`, because **an EF expression tree rejects `is` pattern-matching operators (CS8122)**. Same semantics; verified by the passing suite. Recorded because it is a real constraint on any future guard written here.
+- **Commit hash:** 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · 5 `d61ea66` · Slice 6's own hash recorded at Slice 7 Stage 8
+- **`git status --short` after the commit:** recorded at Slice 7 Stage 8
+- **Anything noticed that the plan did not anticipate — and one real trap caught:**
+  - **`isFirstRegistration` must mean "nothing sorts *before* me", NOT "no other row exists".** My first attempt used `!Any(otherRow)` and would have refused the **first** visit itself — the guard would have inverted into blocking every visit. It was caught before commit by `Clear_FirstVisit_Succeeds` and `Clear_LaterRegistrationDateIsTheFirstVisit`, which exist precisely to distinguish the two readings. Worth flagging as the highest-risk line in the batch.
+  - **The pre-existing 24-hour rule reads `CreatedAtUtc`, not `RegistrationDateUtc`** (the plan's H-10 asymmetry). My `Clear_OlderThanTwentyFourHours_StillBlocked` fact initially set only `RegistrationDateUtc`, so the 24-hour rule did not fire and the test failed. Both timestamps are now set 25 h back, and the asymmetry is asserted in a comment so the next reader does not re-introduce the mistake. **The two columns were deliberately NOT unified** — that would change shipped behaviour.
+- **Deliberately NOT done:** no UI (Slice 7) · no removal or rewording of any existing guard (BR-A04-4) · no change to `Patient.Update`/`RegistrationDateUtc` mutability · no migration · no push.
 
 ### Slice 7 — R-A04-S2 — First-registration guard in the UI
 *(same fields)*
@@ -455,12 +483,12 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 
 | Field | Value |
 |---|---|
-| Slices complete | **5 of 8** |
-| Current slice | **Slice 6 — R-A04-S1 (in progress)** |
+| Slices complete | **6 of 8** |
+| Current slice | **Slice 7 — R-A04-S2 (in progress)** |
 | Baseline recorded at G0 | **YES — 2026-10-04, build 0/0; 507/507 · 1638/1638 · 284/284 · 13 passed + 2 skipped · 133/133** |
 | `BASELINE_HEAD` | **`55b4370f80cc428f477c281b1387c1680dd7d2f6`** (Step 0 — verified: descendant of `e765f87`, `src/`+`tests/` identical, branch `main`, tree clean) |
 | Build/test SDK | 8.0.425 via direct invocation (SD-22) — confirmed `8.0.425` |
-| Last commit made by the agent | 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · 5 = see Execution Log |
+| Last commit made by the agent | 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · 5 `d61ea66` · 6 = see Execution Log |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
 | Files outside the `B-01.md` §C inventory modified | **0** |
