@@ -2,6 +2,7 @@ using MediatR;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.Statistics.Common;
+using TopLab.Domain.Billing;
 using TopLab.Domain.ExternalEntities;
 using TopLab.Domain.Patients;
 
@@ -105,6 +106,17 @@ public sealed class GetPatientCountStatisticsQueryHandler
                 .ToList()
             : [];
 
+        // BR-F01-2/3/4: the day-of-month ORDINAL across the whole period, not a
+        // (Year, Month, Day) tuple. Zero-count days are not emitted, and the list is
+        // empty unless the flag is true — the same convention as MonthlyCounts above.
+        var dayOfMonthCounts = request.GroupByDayOfMonth
+            ? patients
+                .GroupBy(p => p.RegistrationDateUtc.Day)
+                .OrderBy(g => g.Key)
+                .Select(g => new DayOfMonthCountDto(g.Key, g.Count()))
+                .ToList()
+            : [];
+
         var monthlySexCounts = request.GroupByMonth && request.BySex
             ? patients
                 .GroupBy(p => (Year: p.RegistrationDateUtc.Year, Month: p.RegistrationDateUtc.Month, p.Sex))
@@ -120,6 +132,27 @@ public sealed class GetPatientCountStatisticsQueryHandler
                 .ToList()
             : [];
 
+        // BR-F01-7/8/9 (OD-2 = Option A): the money RECEIVED in the period. The candidate
+        // set is filtered on OperationAtUtc ALONE — it is deliberately NOT routed through
+        // the period's `patients` list, so a payment collected in March for a December
+        // visit counts in March. Payments of soft-deleted patients are INCLUDED: the
+        // repository's own mechanism for "this money is not real" is IsVoided, which
+        // TotalPaid already filters, and excluding on the patient row's current soft-delete
+        // flag would reintroduce exactly the patient-state coupling OD-2 removed.
+        PeriodMoneyDto? money = null;
+        if (request.IncludeMoneyRow)
+        {
+            var periodOperations = _db.Set<PaymentOperation>()
+                .Where(o => o.OperationAtUtc >= fromStart && o.OperationAtUtc < toEndExclusive)
+                .ToList();
+
+            // Reuse the settled formula verbatim — never a third rule (BR-F01-7, H-7).
+            var qualifying = periodOperations.Where(o => !o.IsVoided && !o.IsExtraCharge).ToList();
+            money = new PeriodMoneyDto(
+                PatientAccountCalculator.TotalPaid(periodOperations),
+                qualifying.Count);
+        }
+
         var dto = new PatientCountStatisticsDto(
             from,
             to,
@@ -128,7 +161,9 @@ public sealed class GetPatientCountStatisticsQueryHandler
             referralCounts,
             accountTypeCounts,
             monthlyCounts,
-            monthlySexCounts);
+            monthlySexCounts,
+            dayOfMonthCounts,
+            money);
 
         return Task.FromResult(Result<PatientCountStatisticsDto>.Success(dto));
     }

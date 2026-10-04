@@ -25,7 +25,28 @@ public sealed record PatientCountStatisticsDto(
     IReadOnlyList<ClassificationCountDto> ReferralEntityCounts,
     IReadOnlyList<ClassificationCountDto> AccountTypeCounts,
     IReadOnlyList<MonthlyCountDto> MonthlyCounts,
-    IReadOnlyList<MonthlyClassificationCountDto> MonthlySexCounts);
+    IReadOnlyList<MonthlyClassificationCountDto> MonthlySexCounts,
+    IReadOnlyList<DayOfMonthCountDto> DayOfMonthCounts,
+    PeriodMoneyDto? Money);
+
+/// <summary>
+/// BR-F01-2/3: the day-of-month ordinal (1…31) and how many patients registered on it
+/// inside the period. Days with zero patients are not emitted, and the list is empty
+/// unless <c>GroupByDayOfMonth</c> is true.
+/// </summary>
+public sealed record DayOfMonthCountDto(
+    int Day,
+    int Count);
+
+/// <summary>
+/// BR-F01-7/10: cash RECEIVED in the period. <c>AmountsPaid</c> is
+/// <see cref="TopLab.Domain.Billing.PatientAccountCalculator.TotalPaid"/> over the
+/// operations whose <c>OperationAtUtc</c> falls in the period; <c>PaymentCount</c> is the
+/// number of rows that were summed, so zero money and zero payments stay distinguishable.
+/// </summary>
+public sealed record PeriodMoneyDto(
+    decimal AmountsPaid,
+    int PaymentCount);
 
 public sealed record TestCountDto(
     int TestId,

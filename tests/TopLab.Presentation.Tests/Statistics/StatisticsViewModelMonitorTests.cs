@@ -146,7 +146,9 @@ public class StatisticsViewModelMonitorTests
             Array.Empty<ClassificationCountDto>(),
             Array.Empty<ClassificationCountDto>(),
             Array.Empty<MonthlyCountDto>(),
-            Array.Empty<MonthlyClassificationCountDto>());
+            Array.Empty<MonthlyClassificationCountDto>(),
+            Array.Empty<DayOfMonthCountDto>(),
+            null);
 
         public Task<object?> Send(object request, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();

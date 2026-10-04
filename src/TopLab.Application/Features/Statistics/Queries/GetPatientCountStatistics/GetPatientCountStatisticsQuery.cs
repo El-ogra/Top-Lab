@@ -11,7 +11,9 @@ public sealed record GetPatientCountStatisticsQuery(
     bool BySex,
     bool ByReferralEntity,
     bool ByAccountType,
-    bool GroupByMonth)
+    bool GroupByMonth,
+    bool GroupByDayOfMonth,
+    bool IncludeMoneyRow)
     : IRequest<Result<PatientCountStatisticsDto>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => StatisticsAccessPolicy.Statistics;

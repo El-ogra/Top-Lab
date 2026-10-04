@@ -18,7 +18,7 @@ public class StatisticsAuthorizationTests
 
     public static TheoryData<IAuthorizedRequest> ModuleQueries => new()
     {
-        { new GetPatientCountStatisticsQuery(null, null, true, true, true, false) },
+        { new GetPatientCountStatisticsQuery(null, null, true, true, true, false, false, false) },
         { new GetBandedResultMonitorQuery(10, null, null, 3m, 7m) },
         { new GetTestCountStatisticsQuery(null, null, null) },
         { new GetSentOutStatisticsQuery(null, null, null) },
@@ -40,7 +40,7 @@ public class StatisticsAuthorizationTests
         var behavior = new AuthorizationBehavior<GetPatientCountStatisticsQuery, Result<PatientCountStatisticsDto>>(user);
 
         var response = await behavior.Handle(
-            new GetPatientCountStatisticsQuery(null, null, true, true, true, false),
+            new GetPatientCountStatisticsQuery(null, null, true, true, true, false, false, false),
             _ => throw new Exception("handler must not run"),
             CancellationToken.None);
 
@@ -55,7 +55,7 @@ public class StatisticsAuthorizationTests
         var behavior = new AuthorizationBehavior<GetPatientCountStatisticsQuery, Result<PatientCountStatisticsDto>>(user);
 
         var response = await behavior.Handle(
-            new GetPatientCountStatisticsQuery(null, null, true, true, true, false),
+            new GetPatientCountStatisticsQuery(null, null, true, true, true, false, false, false),
             _ => Task.FromResult(Result<PatientCountStatisticsDto>.Success(null!)),
             CancellationToken.None);
 

@@ -47,6 +47,8 @@ public sealed class StatisticsViewModel : ViewModelBase
     private bool _byReferralEntity;
     private bool _byAccountType;
     private bool _groupByMonth;
+    private bool _groupByDayOfMonth;
+    private bool _includeMoneyRow;
     private PatientCountStatisticsDto? _patientStats;
 
     // Section 2: Test counts
@@ -178,6 +180,8 @@ public sealed class StatisticsViewModel : ViewModelBase
     public bool ByReferralEntity { get => _byReferralEntity; set => SetProperty(ref _byReferralEntity, value); }
     public bool ByAccountType { get => _byAccountType; set => SetProperty(ref _byAccountType, value); }
     public bool GroupByMonth { get => _groupByMonth; set => SetProperty(ref _groupByMonth, value); }
+    public bool GroupByDayOfMonth { get => _groupByDayOfMonth; set => SetProperty(ref _groupByDayOfMonth, value); }
+    public bool IncludeMoneyRow { get => _includeMoneyRow; set => SetProperty(ref _includeMoneyRow, value); }
 
     public PatientCountStatisticsDto? PatientStats
     {
@@ -368,7 +372,7 @@ public sealed class StatisticsViewModel : ViewModelBase
         try
         {
             var result = await _mediator.Send(
-                new GetPatientCountStatisticsQuery(From, To, BySex, ByReferralEntity, ByAccountType, GroupByMonth),
+                new GetPatientCountStatisticsQuery(From, To, BySex, ByReferralEntity, ByAccountType, GroupByMonth, GroupByDayOfMonth, IncludeMoneyRow),
                 cancellationToken);
 
             if (result.IsSuccess && result.Value is not null)

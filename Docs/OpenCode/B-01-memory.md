@@ -191,8 +191,8 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 | 1 | R-F05-S1 — Banded-monitor Application query + DTOs | R-F05 | create 4 · modify 3 | [x] **COMPLETE** ✅ VG-01 passed | VG-01 |
 | 2 | R-F05-S2 — Banded-monitor PDF port + writer | R-F05 | create 2 · modify 1 | [x] **COMPLETE** ✅ VG-02 passed | VG-02 |
 | 3 | R-F05-S3 — Banded-monitor VM + XAML | R-F05 | create 1 · modify 2 | [x] **COMPLETE** ✅ VG-03 passed | VG-03 |
-| 4 | R-F01-S1 — Day-of-month + money row in the Application layer | R-F01 | modify 3 · modify 1 test | [ ] **IN PROGRESS** | VG-04 |
-| 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [ ] NOT STARTED | VG-05 |
+| 4 | R-F01-S1 — Day-of-month + money row in the Application layer | R-F01 | modify 3 · modify 1 test | [x] **COMPLETE** ✅ VG-04 passed | VG-04 |
+| 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [ ] **IN PROGRESS** | VG-05 |
 | 6 | R-A04-S1 — First-registration guard in the Application handler | R-A04 | modify 1 · modify 1 test | [ ] NOT STARTED | VG-06 |
 | 7 | R-A04-S2 — First-registration guard in the UI | R-A04 | modify 2 · create 1 test | [ ] NOT STARTED | VG-07 |
 | 8 | R-A04-S3 — Outside-lab note on the profile printed report | R-A04 | modify 3 · modify 1 test | [ ] NOT STARTED | VG-08 |
@@ -225,7 +225,7 @@ Every slice runs the same ten stages. Record the outcome of each in the Executio
 - [x] **Slice 1** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 2** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 3** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
-- [ ] **Slice 4** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
+- [x] **Slice 4** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [ ] **Slice 5** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 6** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 7** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
@@ -378,7 +378,34 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 - **Deliberately NOT done:** no `Fakes.cs` edit (SD-14) · no new Application query/validator/authorization entry for the picker (OD-1) · no WPF element instantiated in any test (SD-19) · no split into a new ViewModel (would orphan the screen) · no `ReportContentBuilder`/`ReportDtos` touch · no migration · no push.
 
 ### Slice 4 — R-F01-S1 — Day-of-month + money row in the Application layer
-*(same fields)*
+- **Date / agent:** 2026-10-04 · executing agent
+- **Files created:** none (per §C.2 «CREATE: none»)
+- **Files modified (3 production + 2 test + this memory file):** `StatisticsDtos.cs` (added `DayOfMonthCountDto`, `PeriodMoneyDto`, and the two new `PatientCountStatisticsDto` members) · `GetPatientCountStatisticsQuery.cs` (6 → **8** positional parameters, **no defaults**) · `GetPatientCountStatisticsQueryHandler.cs` (day grouping beside `:99-106`; money row) · `StatisticsAuthorizationTests.cs` (**the three call sites fixed**) · `GetPatientCountStatisticsQueryHandlerTests.cs` (+13 facts) · `src/TopLab.Presentation/ViewModels/Statistics/StatisticsViewModel.cs` (the two pass-through properties — see deviations) · `Docs/OpenCode/B-01-memory.md`
+- **Build result:** `Build succeeded. 0 Warning(s) 0 Error(s)`
+- **Test results vs baseline (as a delta):** Domain **507/507 (0)** · **Application 1660 → 1673/1673 (+13)** · Infrastructure **295/295 (0)** · Persistence **13 passed / 2 SKIPPED / 15 (0)** · Presentation **146/146 (0)**
+- **Persistence diff:** **EMPTY** ✅
+- **VG-04 item-by-item result:**
+  1. Build 0 errors / 0 warnings — ✅
+  2. No project below baseline — ✅ all five ≥ baseline
+  3. Persistence diff empty — ✅
+  4. Positional record grew **6 → 8** and the **three** call sites at `StatisticsAuthorizationTests.cs` were fixed — ✅ verified in the file: `:21`, `:43`, `:58` all now read `GetPatientCountStatisticsQuery(null, null, true, true, true, false, false, false)`. A hard compile break, fixed inside this slice
+  5. Day grouping is on `RegistrationDateUtc.Day` **only**, ordered, zero-count days omitted, empty when the flag is false — ✅ `DayOfMonth_GroupsByDayOrdinal` (asserts `[{1,2},{15,1}]`, ordering, and `DoesNotContain(d => d.Count == 0)`), `DayOfMonth_FlagFalse_ReturnsEmpty`, `DayOfMonth_RespectsPeriodFilter`, `DayOfMonth_ExcludesDeletedPatients`
+  6. Money row filtered on **`OperationAtUtc` alone** and summed via `PatientAccountCalculator.TotalPaid` — ✅ handler `:146` is literally `.Where(o => o.OperationAtUtc >= fromStart && o.OperationAtUtc < toEndExclusive)`; the period's `patients` list is **not** referenced. Pinned by `Money_AnchoredOnOperationDate_NotRegistrationDate` (December visit, March payment, `TotalCount == 0` but money `== 300m`)
+  7. **Payments of soft-deleted patients are included** — ✅ `Money_IncludesPaymentsOfSoftDeletedPatients` exists and passes: patient soft-deleted, `TotalCount == 0`, yet `AmountsPaid == 400m` and `PaymentCount == 1`. BR-F01-9 pinned
+  8. `Money` is `null` and no `PaymentOperation` read when the flag is false — ✅ `Money_FlagFalse_ReturnsNull`; the whole `if (request.IncludeMoneyRow)` block (including the `_db.Set<PaymentOperation>()` read) is inside the guard
+  9. All five pre-existing classifications and `TotalCount` unchanged when both flags are false — ✅ `ExistingBehaviour_UnchangedWhenBothFlagsFalse` builds an all-flags-on query and asserts sex, referral + no-referral bucket, account type, month, month×sex and `TotalCount`
+  10. **Migration: NONE** — ✅
+  - Additional money facts: `Money_UsesPatientAccountCalculatorFormula` (discount added, extra charge excluded), `Money_ExcludesVoidedAndExtraCharge`, `Money_CountsPaymentOperations`, `Money_ZeroPayments_ZeroNotNull`, `Money_ExcludesOperationsOutsideThePeriod`
+- **New UI strings:** **none in this slice.** All Arabic rendering of the two new members belongs to Slice 5 (`المدفوعات: {AmountsPaid}`, `حسب يوم الشهر`, `اليوم`, `العدد` — register #12/#13, still open).
+- **Deviation from the plan (and why):**
+  - **The two new query parameters were given NO default values.** BR-F01-1/6 say "defaulting to `false` so no existing caller changes behaviour", but the plan's own VG-04 and §E demand that the 6→8 growth be **a hard compile break** fixed at the three named sites. Defaults would have silently satisfied both, defeating the gate and hiding any future caller that forgets the new flags. Required parameters make every call site explicit; the *behaviour* default is preserved because every existing caller now passes `false, false`. **The plan contradicts itself here; the compile-break reading is the one its gate and inventory require.**
+  - `StatisticsViewModel` needed the two pass-through properties **in this slice**, not Slice 5, because the existing `LoadPatientsAsync` call site at `:270` is one of the 6→8 construction sites and would not compile otherwise. Slice 5 still adds the two checkboxes, the day grid and the money line; no UI control was added here.
+- **Commit hash:** Slice 1 `e84c19c` · Slice 2 `6e88e1f` · **Slice 3 `838ba95`** · Slice 4's own hash recorded at Slice 5 Stage 8
+- **`git status --short` after the commit:** recorded at Slice 5 Stage 8
+- **Anything noticed that the plan did not anticipate:**
+  - **The `DayQuery` test helper hardcodes `ByReferralEntity: false`**, which made the all-classifications regression guard fail three times in a row before I read the helper instead of guessing. Each failure was a *different* assertion in the *same* new test, so this was **my test's arithmetic, not a production defect** — `TotalCount` is 3 not 4 (April 10 is outside the March period). Fixed by building that one query explicitly with every classification on. Recorded honestly: the loop saw three red runs of one new test, resolved inside the slice, well short of the 5-consecutive threshold.
+  - `PatientCountStatisticsDto` gained two **required** members, so the Presentation monitor test's `EmptyPatientStats()` stub needed `Array.Empty<DayOfMonthCountDto>(), null` appended — a third construction site the plan's §F does not list (it names only the two statistics-auth sites and the handler tests). It lives in the slice's own new test file, so **no inventory change**.
+- **Deliberately NOT done:** no UI controls (Slice 5) · no migration · no change to `ResultFlagComputer` · no touch to `ReportContentBuilder`/`ReportDtos` · no push.
 
 ### Slice 5 — R-F01-S2 — Day-of-month + money row in the UI
 *(same fields)*
@@ -398,12 +425,12 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 
 | Field | Value |
 |---|---|
-| Slices complete | **3 of 8** |
-| Current slice | **Slice 4 — R-F01-S1 (in progress)** |
+| Slices complete | **4 of 8** |
+| Current slice | **Slice 5 — R-F01-S2 (in progress)** |
 | Baseline recorded at G0 | **YES — 2026-10-04, build 0/0; 507/507 · 1638/1638 · 284/284 · 13 passed + 2 skipped · 133/133** |
 | `BASELINE_HEAD` | **`55b4370f80cc428f477c281b1387c1680dd7d2f6`** (Step 0 — verified: descendant of `e765f87`, `src/`+`tests/` identical, branch `main`, tree clean) |
 | Build/test SDK | 8.0.425 via direct invocation (SD-22) — confirmed `8.0.425` |
-| Last commit made by the agent | Slice 1 = `e84c19c` · Slice 2 = `6e88e1f` · Slice 3 = see Execution Log |
+| Last commit made by the agent | Slice 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 = see Execution Log |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
 | Files outside the `B-01.md` §C inventory modified | **0** |
