@@ -3,10 +3,12 @@
 - **Batch:** B-01 — R-F05 (banded result monitor), R-F01 (patient statistics extension), R-A04 (test-order edit gestures)
 - **Batch Number:** B-01
 - **Source Plan:** `Docs/OpenCode/B-01.md`
-- **Date Created:** 2026-10-03
+- **Date Created:** 2026-10-03 · **Revision R2:** 2026-10-04 (baseline commit, .NET 8 SDK rule, 29-path final gate, earlier Stop Report resolved — see SD-21…SD-24)
 - **Total Slices:** **8**
 - **Current Slice:** none — Slice 1 not started
 - **Current Branch:** `main` (the branch that is checked out; **never switch it**)
+- **Baseline:** `BASELINE_HEAD` = `git rev-parse HEAD` at Step 0 — `e765f874320cb065da8a1145f20d2865f754f53d` or a descendant of it whose `src/` and `tests/` are identical to it (SD-21). Code facts in the plan were verified at `7a2cfb505acd8f6bdac4e0b49c8059d95d19a757`; the source is identical.
+- **Build/test tooling:** .NET SDK **8.0.425** invoked directly (SD-22); never plain `dotnet`, never SDK 9.
 - **Author:** loop-engineering / module-execution (execution to be carried out by the executing agent per owner authorization; **stage-10 local commit is authorized — see SD-1**)
 - **Plan status:** **FINAL.** All owner decisions (OD-1, OD-2, OD-3, OD-4, OD-4b) are closed. Nothing in this batch is awaiting an owner decision.
 
@@ -40,10 +42,10 @@ git diff --stat src/TopLab.Infrastructure/Persistence/
 Expected, every time: **empty**. This is the proof that no slice created, edited or applied a migration, and that `ApplicationDbContextModelSnapshot.cs` is untouched.
 
 ```
-git diff --name-only <pinned-commit>
+git diff --name-only <BASELINE_HEAD>
 ```
 
-Expected at the final gate: **exactly the 28 files** listed in `B-01.md` §C, and nothing else.
+Expected at the final gate: **29 paths** — the 28 files listed in `B-01.md` §C **plus `Docs/OpenCode/B-01-memory.md`** (this file, the single permitted addition — SD-6, SD-23) — and nothing else.
 
 > `dotnet-ef migrations has-pending-model-changes` is **not** a gate of any slice. Nothing in this batch touches the EF model, so the gate would be testing nothing. If `dotnet-ef` 8.0.30 happens to be installed you may run it once at G0 for information; a failure to run is not a slice failure.
 
@@ -85,7 +87,7 @@ If any one of (a), (b), (c) fails → retry within the slice's own scope. If the
 - **SD-3 — The baseline is the agent's own measurement on the owner's machine**, recorded at G0 before Slice 1. The figures in the verification-environment table below are **context only, not the target**.
 - **SD-4 — Zero migrations.** No creating, editing, applying or deleting any file under `src/TopLab.Infrastructure/Persistence/`, and no change to `ApplicationDbContextModelSnapshot.cs`, for the entire batch. Every slice's gate asserts the persistence diff is empty.
 - **SD-5 — The application must never be launched.** `App.xaml.cs` applies EF migrations to the configured database at startup, so launching it could migrate the owner's real database. Building and running automated tests is allowed and expected.
-- **SD-6 — Only the 28 files in `B-01.md` §C may be created or modified.** No file outside that inventory may be opened for writing. The single exception is **this memory file**, which the agent updates as its progress record. It must not edit `B-01.md` or anything else under `Docs/`.
+- **SD-6 — Only the 28 files in `B-01.md` §C may be created or modified.** No file outside that inventory may be opened for writing. The single exception is **this memory file**, which the agent updates as its progress record. It must not edit `B-01.md` or anything else under `Docs/`. (Final diff = 28 + this memory file = 29 paths — SD-23.)
 - **SD-7 — R-F05 owns the `ResultFlagComputer.TryParse` widening, and it is unconditional.** `ResultFlagComputer.cs:69` goes from `private static` to `internal static`, performed in **Slice 1**. It is **not** an R-A04 file and **not** conditional on OD-4. It exists so the monitor reuses the identical parsing rule instead of inventing a second one. **Do not change the parsing behaviour itself** — see SD-8.
 - **SD-8 — `ResultFlagComputer.TryParse`'s existing behaviour is NOT fixed in this batch.** With `InvariantCulture` it treats `,` as a thousands separator, so `"3,5"` parses to **35**. This is a known pre-existing defect, reported in `B-01.md` §L.3 as finding F-1, and it is **explicitly out of scope**. Widening the method to `internal` must not change a single character of its body.
 - **SD-9 — The monitor's min/max inputs are DOT-ONLY and reject a comma** (BR-F05-17). Do **not** use `NumberStyles.Any` and do **not** use `NumberStyles.Number`: both include `AllowThousands` and read `3,5` as `35`. Reject any input containing `,` with a clear Arabic message, then parse with `AllowDecimalPoint` (add `AllowLeadingSign` only if a signed band is genuinely wanted). This is deliberately stricter than both existing repository patterns.
@@ -100,6 +102,10 @@ If any one of (a), (b), (c) fails → retry within the slice's own scope. If the
 - **SD-18 — `PatientEditorViewModel` refreshes `CanClearAllVisitTests` INSIDE `LoadVisitTestsAsync` (`:604`).** That single insertion point covers all six existing call sites (`:567, :840, :880, :1134, :1171, :1208`). Do not add six separate refresh calls.
 - **SD-19 — Presentation-layer UI behaviour is verified manually by the owner on Windows.** The repository has no UI test harness and none may be invented. The agent's Presentation tests must be **structural and ViewModel-level only — no test may instantiate a WPF element.**
 - **SD-20 — Stop threshold: 5 consecutive failures of the same single cause.** Execution order is strictly S1 → S8. No parallel slices, no reordering, no merging, no skipping ahead.
+- **SD-21 — Baseline commit (R2).** The batch baseline is `BASELINE_HEAD`, the value of `git rev-parse HEAD` at Step 0. It must be `e765f874320cb065da8a1145f20d2865f754f53d` (subject «الإستعداد للرحلة واحد») or a descendant of it. Source identity with the verified commit `7a2cfb505acd8f6bdac4e0b49c8059d95d19a757` is proven by two read-only checks: `git merge-base --is-ancestor e765f874320cb065da8a1145f20d2865f754f53d HEAD` exits with code 0, and `git diff --name-only e765f874320cb065da8a1145f20d2865f754f53d HEAD -- src tests` prints nothing. The branch must be `main` and `git status --short` must print nothing. **No `git checkout`, no `git clone`.** Wherever this file, `B-01.md` or the prompt says `<pinned>`, `<pinned-commit>` or names `7a2cfb5` as the baseline, read `BASELINE_HEAD`. Record `BASELINE_HEAD` in the baseline table below.
+- **SD-22 — .NET 8 SDK only (R2).** Every `dotnet` command (`--version`, `restore`, `build`, `test`) in this file, in `B-01.md` and in the execution prompt is executed through the .NET 8 SDK CLI invoked directly: `dotnet "C:\Program Files\dotnet\sdk\8.0.425\dotnet.dll" <command> …`. The plain `dotnet` command resolves to the newest installed SDK (9.0.318 on the owner's machine) and must NOT be used for restore/build/test; its `--version` may be run for information only. Step 0 runs `dotnet "C:\Program Files\dotnet\sdk\8.0.425\dotnet.dll" --version`; it must print `8.0.425`. If that path does not exist, locate the 8.0.x SDK with the read-only `dotnet --list-sdks` and use that folder's `dotnet.dll`; if no 8.0.x SDK exists or the printed version is not 8.0.x → STOP. **Never create `global.json`, never change environment variables, git configuration or anything inside `.git`, never use SDK 9.** The target frameworks (`net8.0`, `net8.0-windows`) are fixed in the projects and never change.
+- **SD-23 — Final diff is 29 paths, and the memory file travels with every slice commit (R2).** Each slice commit stages explicit paths: that slice's `B-01.md` §C files **plus `Docs/OpenCode/B-01-memory.md`**, so `git status --short` is empty after the commit. Consequently `git diff --name-only <BASELINE_HEAD>` at the final gate returns the 28 §C files + this memory file = **29 paths**.
+- **SD-24 — The first-run Stop Report below is RESOLVED history (R2).** It concerned 12 untracked `Docs/` files and the SDK finding. The owner has committed the documentation, the working tree is clean, the SDK rule is SD-22, nothing is pushed by the agent, and no feature branch or pull request is wanted. It is **not** a reason to stop. Overwrite the stale baseline rows with fresh measurements and keep the old report only as history.
 
 ---
 
@@ -119,7 +125,7 @@ If any one of (a), (b), (c) fails → retry within the slice's own scope. If the
 
 ### Verification-environment figures (CONTEXT ONLY — NOT the owner's baseline)
 
-Measured on Debian Linux 12 / .NET SDK 9.0.316 building the `net8.0` targets, at the pinned commit. Recorded so the agent knows what to expect, **not** as a target.
+Measured on Debian Linux 12 / .NET SDK 9.0.316 building the `net8.0` targets, at the verification commit `7a2cfb505acd8f6bdac4e0b49c8059d95d19a757` (source identical to the baseline). Recorded so the agent knows what to expect, **not** as a target. Execution uses SDK 8.0.425 (SD-22).
 
 ```
 dotnet build TopLab.sln -p:EnableWindowsTargeting=true
@@ -140,12 +146,13 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 
 | Item | Value |
 |---|---|
-| Date measured | 2026-10-03 (session start; **measurement NOT completed — loop halted at Step 0**) |
-| OS | Windows 10 (`LAP LINK`, Hermes Desktop, bash/MSYS shell) |
-| .NET SDK version | 8.0.425 present; **9.0.318 is the default selected SDK** (no `global.json` in the repo) |
-| `dotnet --version` | `9.0.318` — ⚠ **must be pinned to 8.0.425 via `DOTNET_ROOT`/a local `global.json`; the repo has none, so a bare `dotnet build` silently uses 9.x against the required .NET 8 SDK** |
-| `git rev-parse HEAD` | `7a2cfb505acd8f6bdac4e0b49c8059d95d19a757` ✓ |
-| `git status --short` | ✗ **NOT EMPTY — STOP RULE #1 TRIGGERED.** Tracked tree is pristine (`git diff HEAD --stat` empty), but 12 untracked files exist under `Docs/`: `Docs/Hermes/Batch-1-Plan.md`, `Docs/OpenCode/B-01-Execution-Prompt.md`, `Docs/OpenCode/B-01-memory.md`, `Docs/OpenCode/B-01.md`, `Docs/Remaining Tasks Folder/` (8 files). `bin/`+`obj/` are correctly gitignored, so this is not build residue. See Stop Report below. |
+| Date measured | |
+| OS | |
+| .NET SDK used for build and test (output of the SDK 8 invocation `--version`; expected `8.0.425`) | |
+| Plain `dotnet --version` (informational only; 9.x is acceptable here and is never used to build) | |
+| `BASELINE_HEAD` = `git rev-parse HEAD` at Step 0 (expected `e765f874320cb065da8a1145f20d2865f754f53d` or a docs-only descendant) | |
+| Step 0 identity checks: `git merge-base --is-ancestor e765f874320cb065da8a1145f20d2865f754f53d HEAD` exit code (expect 0) · `git diff --name-only e765f874320cb065da8a1145f20d2865f754f53d HEAD -- src tests` (expect empty) | |
+| `git branch --show-current` (expect `main`) / `git status --short` (expect empty) | |
 | Build warnings | |
 | Build errors | |
 | `TopLab.Domain.Tests` passed / total | |
@@ -298,6 +305,8 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 | Slices complete | **0 of 8** |
 | Current slice | none — Slice 1 not started |
 | Baseline recorded at G0 | **NO — blocking** |
+| `BASELINE_HEAD` | not recorded yet (Step 0) |
+| Build/test SDK | 8.0.425 via direct invocation (SD-22) |
 | Last commit made by the agent | none |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
@@ -310,7 +319,9 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 
 *(Fill in and emit if any Stop Rule triggers. Then wait.)*
 
-### STOP REPORT — B-01 halted at **Step 0**, before Slice 1
+> **R2 note (SD-24):** the report immediately below is the PREVIOUS Stop Report from the first run (halted at Step 0). It is **RESOLVED by the owner** and kept as history only; do not act on it. The blank template to fill if a NEW Stop Rule triggers is further down, headed "NEW STOP REPORT".
+
+### PREVIOUS STOP REPORT (run 1) — halted at **Step 0**, before Slice 1 — **RESOLVED by the owner; history only**
 
 - **Slice / stage where it stopped:** **Step 0 (pin the commit) — pre-Slice-1 gate. No slice was started. Zero source files were read for implementation, zero were modified, zero commits were made.**
 - **What failed:** the second Step 0 acceptance check. The prompt requires `git status --short` to **print nothing**; it prints 12 untracked paths. Stop Rule #1 («`git status --short` is not clean at the start of a slice») therefore halts the loop before the Baseline table can be completed.
@@ -353,7 +364,7 @@ $ git check-ignore -v src/TopLab.Domain/bin/x
   
   I recommend **option 1**, and additionally that the owner create a `global.json` pinning `8.0.425`, because of the unrelated blocker below.
 
-### Secondary finding — the required .NET 8 SDK is not the default SDK (not yet a Stop Rule, but it will break Stage 6)
+### Secondary finding — the required .NET 8 SDK is not the default SDK (not yet a Stop Rule, but it will break Stage 6) — **RESOLVED by SD-22**
 
 ```
 $ dotnet --version
@@ -374,6 +385,8 @@ The environment rules require the **.NET 8 SDK**, explicitly «not 9.x». There 
 | Docker | **unavailable** → `TopLab.Persistence.Tests` will self-skip via `DockerFactAttribute`; to be reported as **skipped, never as a pass** |
 | Arabic-capable fonts present | `arial.ttf` `arialbi.ttf` (Arabic), `tahoma`, `segoeui`, `calibri`, `cour`, `times` (full families present) — the Linux-host font failures in the verification env. are **not expected here**; Infrastructure/Presentation are expected to pass fully, to be **measured** |
 
+### NEW STOP REPORT — template (fill in ONLY if a Stop Rule triggers in this run)
+
 - **Slice / stage where it stopped:** 
 - **What failed:** 
 - **How many consecutive times the same failure occurred:** 
@@ -384,9 +397,9 @@ The environment rules require the **.NET 8 SDK**, explicitly «not 9.x». There 
 
 **Stop Rules — any one halts the loop immediately. Record it here and wait.**
 
-- The pinned commit cannot be reached, or `git status --short` is not clean at the start of a slice.
+- Step 0 fails (`HEAD` is not `e765f874320cb065da8a1145f20d2865f754f53d` or a descendant whose `src/` and `tests/` are identical to it; `merge-base --is-ancestor` does not exit 0; `git diff --name-only e765f874320cb065da8a1145f20d2865f754f53d HEAD -- src tests` prints something; the branch is not `main`; `git status --short` is not clean; or the SDK 8 invocation does not print 8.0.x), or `git status --short` is not clean at the start of a slice.
 - The code differs from the plan in a way that changes what the slice should do.
-- A slice appears to require a migration, a schema change, or an edit to any file outside the `B-01.md` §C inventory.
+- A slice appears to require a migration, a schema change, or an edit to any file outside the `B-01.md` §C inventory (other than this memory file).
 - The build or the tests go red and cannot be restored within the slice's scope.
 - The same failure occurs **5 consecutive times**.
 - `ResultPrintCoordinator` is about to receive a `bool` in the 10th position of `CombinedReportLineDto` — that is a compile error; stop and re-read SD-12.
