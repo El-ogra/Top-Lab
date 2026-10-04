@@ -146,26 +146,26 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 
 | Item | Value |
 |---|---|
-| Date measured | |
-| OS | |
-| .NET SDK used for build and test (output of the SDK 8 invocation `--version`; expected `8.0.425`) | |
-| Plain `dotnet --version` (informational only; 9.x is acceptable here and is never used to build) | |
-| `BASELINE_HEAD` = `git rev-parse HEAD` at Step 0 (expected `e765f874320cb065da8a1145f20d2865f754f53d` or a docs-only descendant) | |
-| Step 0 identity checks: `git merge-base --is-ancestor e765f874320cb065da8a1145f20d2865f754f53d HEAD` exit code (expect 0) · `git diff --name-only e765f874320cb065da8a1145f20d2865f754f53d HEAD -- src tests` (expect empty) | |
-| `git branch --show-current` (expect `main`) / `git status --short` (expect empty) | |
-| Build warnings | |
-| Build errors | |
-| `TopLab.Domain.Tests` passed / total | |
-| `TopLab.Application.Tests` passed / total | |
-| `TopLab.Infrastructure.Tests` passed / total | |
-| `TopLab.Infrastructure.Tests` failing test names | |
-| `TopLab.Persistence.Tests` passed / skipped / total | |
-| `TopLab.Persistence.Tests` skipped names, if any | |
-| `TopLab.Presentation.Tests` passed / total | |
-| `TopLab.Presentation.Tests` failing test names | |
-| Docker available | |
-| Migration files present (expect 14 + 14 + 1 = 29) | |
-| Arabic-capable font families present | |
+| Date measured | **2026-10-04** |
+| OS | **Windows 10** (x64), MSYS/git-bash shell; WPF runtime present so `TopLab.Presentation.Tests` is executable |
+| .NET SDK used for build and test (output of the SDK 8 invocation `--version`; expected `8.0.425`) | **`8.0.425`** — `dotnet "C:\Program Files\dotnet\sdk\8.0.425\dotnet.dll" --version` printed exactly `8.0.425` |
+| Plain `dotnet --version` (informational only; 9.x is acceptable here and is never used to build) | `9.0.318` — **never used** for restore/build/test (SD-22) |
+| `BASELINE_HEAD` = `git rev-parse HEAD` at Step 0 (expected `e765f874320cb065da8a1145f20d2865f754f53d` or a docs-only descendant) | **`55b4370f80cc428f477c281b1387c1680dd7d2f6`** — subject `B-01 R2: align plan, memory and execution prompt with current baseline and SDK 8.0.425`. A descendant of `e765f87` differing only under `Docs/` — **valid per SD-21** |
+| Step 0 identity checks: `git merge-base --is-ancestor e765f874320cb065da8a1145f20d2865f754f53d HEAD` exit code (expect 0) · `git diff --name-only e765f874320cb065da8a1145f20d2865f754f53d HEAD -- src tests` (expect empty) | **exit 0** · **empty (0 lines)** — both PASS |
+| `git branch --show-current` (expect `main`) / `git status --short` (expect empty) | **`main`** / **empty (0 lines)** — PASS |
+| Build warnings | **0** (`Build succeeded. 0 Warning(s) 0 Error(s)`) |
+| Build errors | **0** |
+| `TopLab.Domain.Tests` passed / total | **507 / 507** |
+| `TopLab.Application.Tests` passed / total | **1638 / 1638** |
+| `TopLab.Infrastructure.Tests` passed / total | **284 / 284** — fully green on this Windows host (the 22 Linux font failures do **not** occur here) |
+| `TopLab.Infrastructure.Tests` failing test names | **none** |
+| `TopLab.Persistence.Tests` passed / skipped / total | **13 passed / 2 skipped / 15 total** |
+| `TopLab.Persistence.Tests` skipped names, if any | **2 skipped — NOT verified as passing.** Docker is unavailable on this host, so the relational facts self-skip via `DockerFactAttribute` (`tests/TopLab.Persistence.Tests/RelationalIntegrationTests.cs:12-21`). Reported as skipped, never as a pass |
+| `TopLab.Presentation.Tests` passed / total | **133 / 133** — **executable** on this Windows host (resolves U-1) |
+| `TopLab.Presentation.Tests` failing test names | **none** |
+| Docker available | **NO** — `docker: command not found` |
+| Migration files present (expect 14 + 14 + 1 = 29) | **29 files** in `src/TopLab.Infrastructure/Persistence/Migrations/` = 14 migration classes + 14 `.Designer.cs` + 1 `ApplicationDbContextModelSnapshot.cs`. Matches the plan exactly; **none may be touched** |
+| Arabic-capable font families present | `arial.ttf` / `arialbi.ttf` (the Arabic face), `arialbd`/`ariali`, `tahoma`, `segoeui` (+ bold/italic/light/semilight), `calibri` (+ bold/italic/light), `cour`, `times` — full families present under `C:\Windows\Fonts`. **This is why Infrastructure 284/284 and Presentation 133/133 pass here** |
 
 ---
 
@@ -188,8 +188,8 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 
 | # | Slice | Item | Files touched | Status | Gate |
 |---|---|---|---|---|---|
-| 1 | R-F05-S1 — Banded-monitor Application query + DTOs | R-F05 | create 4 · modify 3 | [ ] NOT STARTED | VG-01 |
-| 2 | R-F05-S2 — Banded-monitor PDF port + writer | R-F05 | create 2 · modify 1 | [ ] NOT STARTED | VG-02 |
+| 1 | R-F05-S1 — Banded-monitor Application query + DTOs | R-F05 | create 4 · modify 3 | [x] **COMPLETE** ✅ VG-01 passed | VG-01 |
+| 2 | R-F05-S2 — Banded-monitor PDF port + writer | R-F05 | create 2 · modify 1 | [ ] **IN PROGRESS** | VG-02 |
 | 3 | R-F05-S3 — Banded-monitor VM + XAML | R-F05 | create 1 · modify 2 | [ ] NOT STARTED | VG-03 |
 | 4 | R-F01-S1 — Day-of-month + money row in the Application layer | R-F01 | modify 3 · modify 1 test | [ ] NOT STARTED | VG-04 |
 | 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [ ] NOT STARTED | VG-05 |
@@ -222,7 +222,7 @@ Every slice runs the same ten stages. Record the outcome of each in the Executio
 
 *(The agent copies the relevant block into the Execution Log and ticks each line.)*
 
-- [ ] **Slice 1** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
+- [x] **Slice 1** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [ ] **Slice 2** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 3** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 4** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
@@ -262,18 +262,46 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 *(One block per slice. The agent fills these in as it goes.)*
 
 ### Slice 1 — R-F05-S1 — Banded-monitor Application query + DTOs
-- **Date / agent:** 
-- **Files created:** 
-- **Files modified:** 
-- **Build result (warnings / errors):** 
-- **Test results vs baseline (per project, as a delta):** 
-- **Persistence diff:** 
-- **VG-01 item-by-item result:** 
-- **New UI strings:** 
-- **Deviation from the plan (and why):** 
-- **Commit hash:** 
-- **`git status --short` after the commit:** 
-- **Anything noticed that the plan did not anticipate:** 
+- **Date / agent:** 2026-10-04 · executing agent (loop-engineering / module-execution)
+- **Files created (4):**
+  - `src/TopLab.Application/Features/Statistics/Common/BandedResultMonitorDtos.cs` — `BandedResultRowDto` (11 members: PatientTestId, EnteredAtUtc, PatientId, FullName, Sex, AgeValue, AgeUnit, ReferralEntityName, TestName, ResultValue, StatusText) and `BandedResultMonitorDto` (From, To, TestId, TestName, MinValue, MaxValue, Rows, TotalCount)
+  - `.../Queries/GetBandedResultMonitor/GetBandedResultMonitorQuery.cs` — `IAuthorizedRequest` → `StatisticsAccessPolicy.Statistics`
+  - `.../Queries/GetBandedResultMonitor/GetBandedResultMonitorQueryValidator.cs` — two rules, both frozen Arabic messages
+  - `tests/TopLab.Application.Tests/Features/Statistics/GetBandedResultMonitorQueryHandlerTests.cs` — **22 facts**
+- **Files modified (3 + this memory file):** `ResultFlagComputer.cs` (keyword only) · `StatisticsAuthorizationTests.cs` (ModuleQueries + using) · `ValidatorRegistrationTests.cs` (M19 theory + using) · `Docs/OpenCode/B-01-memory.md`
+- **Build result (warnings / errors):** `Build succeeded. 0 Warning(s) 0 Error(s)`
+- **Test results vs baseline (per project, as a delta):**
+
+  | Project | Baseline | Slice 1 | Δ |
+  |---|---|---|---|
+  | Domain.Tests | 507/507 | **507/507** | **0** |
+  | Application.Tests | 1638/1638 | **1660/1660** | **+22** |
+  | Infrastructure.Tests | 284/284 | **284/284** | **0** |
+  | Persistence.Tests | 13 passed / 2 skipped / 15 | **13 passed / 2 SKIPPED / 15** | **0** (skips unchanged, Docker absent) |
+  | Presentation.Tests | 133/133 | **133/133** | **0** |
+
+- **Persistence diff:** `git diff --stat src/TopLab.Infrastructure/Persistence/` → **EMPTY** ✅
+- **VG-01 item-by-item result:**
+  1. Build **0 errors / 0 warnings** — ✅ (`Build succeeded. 0 Warning(s) 0 Error(s)`)
+  2. No project below baseline — ✅ all five ≥ baseline; Application +22
+  3. Persistence diff empty — ✅
+  4. `ResultFlagComputer.TryParse` is `internal` **and its body byte-identical** — ✅ `git diff` shows **exactly one line**, `private static` → `internal static`; body (`:70-78`, incl. `NumberStyles.Any` + `InvariantCulture`) untouched. SD-7/SD-8 honoured
+  5. Query carries `IAuthorizedRequest → "STATISTICS"` — ✅ `StatisticsAuthorizationTests.Queries_DeclareStatistics` passes for the new entry
+  6. Validator rejects `Min > Max` with `الحد الأدنى يجب ألا يتجاوز الحد الأقصى.` and `From > To` with `بداية الفترة يجب ألا تتجاوز نهايتها.` — ✅ 3 validator facts
+  7. Handler facts cover inclusive bounds, non-numeric exclusion, period bounds by `EnteredAtUtc`, unentered rows, profile rows with null value, soft-deleted patients, referral resolution + no-referral label, `NotFound` for unknown test, the four status labels, deterministic ordering — ✅ all present and passing
+  8. New query in `StatisticsAuthorizationTests.ModuleQueries` — ✅
+  9. New validator in `ValidatorRegistrationTests.HostBuiltLikeApp_ResolvesM19Validators` — ✅
+  10. No other file under `Features/Statistics/` touched — ✅ `git status --short -- src/TopLab.Application/Features/Statistics/` lists **only** the new DTO file and the new query folder
+  11. **Migration: NONE** — ✅
+- **New UI strings:** register entries #4 `التحليل غير موجود.` (handler, already recorded), #2/#3 validator messages, #11 `بدون جهة إحالة`, #10 status labels `تم التسليم`/`تمت الطباعة`/`معتمد`/`غير معتمد`, #9 grid headers' backend side — all recorded verbatim this slice. Nothing invented.
+- **Deviation from the plan (and why):** none material. Two implementation details the plan left open: (a) the row DTO carries `PatientAgeValue` + `PatientAgeUnit` as **separate** members (matching `GetResultEntryQueryHandler.cs:103-104`) rather than one pre-formatted string, so the Presentation/PDF layers format the age; (b) the referral fallback for an unresolvable `ReferralEntityId` is the raw id string, copying the existing convention at `GetPatientCountStatisticsQueryHandler.cs:81` — a band query is always scoped to one known test, so an unknown-referral fallback is a defensive path only.
+- **Commit hash:** _(recorded below after Stage 10)_
+- **`git status --short` after the commit:** _(must be empty)_
+- **Anything noticed that the plan did not anticipate:**
+  - `ErrorType` is **not** in any namespace the test file gets transitively; `GetBandedResultMonitorQueryHandlerTests.cs` needed `using TopLab.Application.Common.Results;` for `Assert.Equal(ErrorType.NotFound, …)`. The plan's §F name `Band_UnknownTestId_NotFound → ErrorType.NotFound` did not mention the using. Fixed within the slice's own new test file — **no inventory change**.
+  - The plan describes the test set as ~15 named facts; implementing BR-F05-1…12 faithfully produced **22** (I added period-boundary, value-outside-range, empty-band, ordering-across-time and validator-allow cases). Count is higher, not lower than planned.
+  - **`Patient.LabId` is `LabId?` — a strongly-typed wrapper, not an int.** Irrelevant to R-F05 (the monitor does not group by lab) but confirmed while reading `Patient.cs:13`; noted because Slice 6's guard must compare `LabId.Value` string equality, not ids.
+- **Deliberately NOT done in this slice:** no UI (S3), no PDF port/writer (S2), no day-of-month/money row (Slice 4), no touch to `ResultFlagComputer`'s body (SD-8), no `Fakes.cs` edit, no migration, no push. 
 
 ### Slice 2 — R-F05-S2 — Banded-monitor PDF port + writer
 *(same fields)*
@@ -302,12 +330,12 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 
 | Field | Value |
 |---|---|
-| Slices complete | **0 of 8** |
-| Current slice | none — Slice 1 not started |
-| Baseline recorded at G0 | **NO — blocking** |
-| `BASELINE_HEAD` | not recorded yet (Step 0) |
-| Build/test SDK | 8.0.425 via direct invocation (SD-22) |
-| Last commit made by the agent | none |
+| Slices complete | **1 of 8** |
+| Current slice | **Slice 2 — R-F05-S2 (in progress)** |
+| Baseline recorded at G0 | **YES — 2026-10-04, build 0/0; 507/507 · 1638/1638 · 284/284 · 13 passed + 2 skipped · 133/133** |
+| `BASELINE_HEAD` | **`55b4370f80cc428f477c281b1387c1680dd7d2f6`** (Step 0 — verified: descendant of `e765f87`, `src/`+`tests/` identical, branch `main`, tree clean) |
+| Build/test SDK | 8.0.425 via direct invocation (SD-22) — confirmed `8.0.425` |
+| Last commit made by the agent | Slice 1 (see Execution Log for the hash) |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
 | Files outside the `B-01.md` §C inventory modified | **0** |

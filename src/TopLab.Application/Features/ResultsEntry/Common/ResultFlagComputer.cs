@@ -66,7 +66,7 @@ internal static class ResultFlagComputer
         return match is null ? null : ComputeValue(value, match.MinValue, match.MaxValue);
     }
 
-    private static bool TryParse(string? resultValue, out decimal value)
+    internal static bool TryParse(string? resultValue, out decimal value)
     {
         value = 0;
         if (string.IsNullOrWhiteSpace(resultValue))

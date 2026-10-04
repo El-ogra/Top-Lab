@@ -16,6 +16,7 @@ using TopLab.Application.Features.InventoryAndAccounting.Queries.GetElementInven
 using TopLab.Application.Features.InventoryAndAccounting.Queries.GetPatientSamplesDetail;
 using TopLab.Application.Features.InventoryAndAccounting.Queries.ListCashMovements;
 using TopLab.Application.Features.Statistics.Queries.GetPatientCountStatistics;
+using TopLab.Application.Features.Statistics.Queries.GetBandedResultMonitor;
 using TopLab.Application.Features.Utilities.Commands.AddPhoneBookEntry;
 using TopLab.Application.Features.Utilities.Commands.AddPurchaseItem;
 using TopLab.Application.Features.Utilities.Commands.RemovePhoneBookEntry;
@@ -299,6 +300,7 @@ public class ValidatorRegistrationTests
 
     [Theory]
     [InlineData(typeof(IValidator<GetPatientCountStatisticsQuery>))]
+    [InlineData(typeof(IValidator<GetBandedResultMonitorQuery>))]
     [InlineData(typeof(IValidator<GetTestCountStatisticsQuery>))]
     [InlineData(typeof(IValidator<GetSentOutStatisticsQuery>))]
     [InlineData(typeof(IValidator<GetUserProductivityStatisticsQuery>))]

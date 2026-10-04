@@ -2,6 +2,7 @@ using TopLab.Application.Common.Authorization;
 using TopLab.Application.Common.Behaviors;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.Statistics.Common;
+using TopLab.Application.Features.Statistics.Queries.GetBandedResultMonitor;
 using TopLab.Application.Features.Statistics.Queries.GetPatientCountStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetSentOutStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetTestCountStatistics;
@@ -18,6 +19,7 @@ public class StatisticsAuthorizationTests
     public static TheoryData<IAuthorizedRequest> ModuleQueries => new()
     {
         { new GetPatientCountStatisticsQuery(null, null, true, true, true, false) },
+        { new GetBandedResultMonitorQuery(10, null, null, 3m, 7m) },
         { new GetTestCountStatisticsQuery(null, null, null) },
         { new GetSentOutStatisticsQuery(null, null, null) },
         { new GetUserProductivityStatisticsQuery(null, null, null) },
