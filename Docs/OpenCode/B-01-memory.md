@@ -189,8 +189,8 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 | # | Slice | Item | Files touched | Status | Gate |
 |---|---|---|---|---|---|
 | 1 | R-F05-S1 — Banded-monitor Application query + DTOs | R-F05 | create 4 · modify 3 | [x] **COMPLETE** ✅ VG-01 passed | VG-01 |
-| 2 | R-F05-S2 — Banded-monitor PDF port + writer | R-F05 | create 2 · modify 1 | [ ] **IN PROGRESS** | VG-02 |
-| 3 | R-F05-S3 — Banded-monitor VM + XAML | R-F05 | create 1 · modify 2 | [ ] NOT STARTED | VG-03 |
+| 2 | R-F05-S2 — Banded-monitor PDF port + writer | R-F05 | create 2 · modify 1 | [x] **COMPLETE** ✅ VG-02 passed | VG-02 |
+| 3 | R-F05-S3 — Banded-monitor VM + XAML | R-F05 | create 1 · modify 2 | [ ] **IN PROGRESS** | VG-03 |
 | 4 | R-F01-S1 — Day-of-month + money row in the Application layer | R-F01 | modify 3 · modify 1 test | [ ] NOT STARTED | VG-04 |
 | 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [ ] NOT STARTED | VG-05 |
 | 6 | R-A04-S1 — First-registration guard in the Application handler | R-A04 | modify 1 · modify 1 test | [ ] NOT STARTED | VG-06 |
@@ -223,7 +223,7 @@ Every slice runs the same ten stages. Record the outcome of each in the Executio
 *(The agent copies the relevant block into the Execution Log and ticks each line.)*
 
 - [x] **Slice 1** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
-- [ ] **Slice 2** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
+- [x] **Slice 2** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [ ] **Slice 3** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 4** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 5** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
@@ -247,11 +247,13 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 | 6 | `نطاق النتائج` (monitor section title) | Presentation | 3 | **TO BE CREATED ONCE** — record here |
 | 7 | `الحد الأدنى` / `الحد الأقصى` | Presentation | 3 | **TO BE CREATED ONCE** — record here |
 | 8 | `عرض` / `طباعة` | Presentation | 3 | **TO BE CREATED ONCE** — record here |
-| 9 | `التاريخ` / `المريض` / `الرقم` / `الجنس` / `العمر` / `جهة الإحالة` / `التحليل` / `النتيجة` / `الحالة` | Presentation + PDF | 1, 2, 3 | **TO BE CREATED ONCE** — record here |
+| 9 | `التاريخ` / `المريض` / `الرقم` / `الجنس` / `العمر` / `جهة الإحالة` / `التحليل` / `النتيجة` / `الحالة` | Presentation + PDF | 1, 2, 3 | **CREATED ONCE in Slice 2** — exact text: `التاريخ`, `المريض`, `الرقم`, `الجنس`, `العمر`, `جهة الإحالة`, `التحليل`, `النتيجة`, `الحالة`. Reuse verbatim in the ViewModel/XAML (Slice 3). Pinned by `BuildTextLines_YieldsTheNineGridHeaders` |
 | 10 | `تم التسليم` / `تمت الطباعة` / `معتمد` / `غير معتمد` | Presentation + PDF | 1, 2, 3 | BR-F05-10 — **TO BE CREATED ONCE** — record here |
 | 11 | `بدون جهة إحالة` | Application + Presentation + PDF | 1, 2, 3 | BR-F05-12 — **frozen**, copied from `GetPatientCountStatisticsQueryHandler.cs:14` |
 | 12 | `المدفوعات: {AmountsPaid}` | Presentation | 5 | BR-F01-12 — **TO BE CREATED ONCE** — record here |
 | 13 | `حسب يوم الشهر` / `اليوم` / `العدد` | Presentation | 5 | BR-F01-5 — **TO BE CREATED ONCE** — record here |
+| 14 | `عدد النتائج: {n}` | PDF | 2 | **CREATED ONCE in Slice 2** — exact text: `عدد النتائج: ` + the invariant count (e.g. `عدد النتائج: 3`). Pinned by `BuildTextLines_MapsEveryRow` and `BuildTextLines_EmptyRows_StillYieldsHeaderAndCriteria` |
+| 15 | `التحليل: {test} — النطاق: {min} إلى {max} — الفترة: {from} إلى {to}` | PDF | 2 | **CREATED ONCE in Slice 2** — the criteria line: the em-dashes are `—` (U+2014), the values are invariant-formatted (`0.####` for the band, `yyyy/MM/dd` for the dates). Pinned by `BuildTextLines_YieldsLabHeaderAndCriteriaLine` |
 
 **Pre-existing messages that must NOT be reworded:** `المريض غير موجود.` · `المريض محذوف.` · `لا يمكن مسح التحاليل من مريض أضيف قبل أكثر من 24 ساعة.` · `لا يمكن مسح تحاليل تم تسجيل نتائج لها.` · `احفظ بيانات المريض أولًا قبل مسح التحاليل.` · `أنت لا تملك الصلاحية لهذا العمل راجع مدير النظام` · `العينة أُخذت خارج المعمل` · `تعذّر تحميل بيانات المعمل للطباعة.` · `الملف موجود مسبقًا؛ لم يتم الكتابة فوقه.`
 
@@ -304,7 +306,33 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 - **Deliberately NOT done in this slice:** no UI (S3), no PDF port/writer (S2), no day-of-month/money row (Slice 4), no touch to `ResultFlagComputer`'s body (SD-8), no `Fakes.cs` edit, no migration, no push. 
 
 ### Slice 2 — R-F05-S2 — Banded-monitor PDF port + writer
-*(same fields)*
+- **Date / agent:** 2026-10-04 · executing agent
+- **Files created (2):** `src/TopLab.Application/Common/Interfaces/IBandedResultMonitorPdfWriter.cs` · `src/TopLab.Infrastructure/Printing/BandedResultMonitorPdfWriter.cs`
+- **Files modified (1 + this memory file):** `src/TopLab.Infrastructure/DependencyInjection.cs` (**exactly one** `AddScoped` line + a 3-line comment, beside `:89`) · `Docs/OpenCode/B-01-memory.md`
+- **Build result:** `Build succeeded. 0 Warning(s) 0 Error(s)`
+- **Test results vs baseline (as a delta):** Domain **507/507 (0)** · Application **1660/1660 (0)** · Infrastructure **284 → 295/295 (+11)** · Persistence **13 passed / 2 SKIPPED / 15 (0)** · Presentation **133/133 (0)**
+- **Persistence diff:** **EMPTY** ✅
+- **VG-02 item-by-item result:**
+  1. Build 0 errors / 0 warnings — ✅
+  2. Infrastructure not below baseline — ✅ 284 → 295
+  3. Persistence diff empty — ✅
+  4. Port and writer are **separate types over a separate DTO**, sharing nothing with `ICustomGroupPdfWriter`/`IPriceListPdfWriter` — ✅ the port takes `BandedResultMonitorDto`; `grep` confirms no shared class; the port doc-comment states the C-6/AS-6 precedent explicitly
+  5. Writer sets `Settings.License`/`Settings.UseSystemFonts` in its **own** static constructor — ✅ own `static BandedResultMonitorPdfWriter()`. **Proven, not assumed:** `--filter FullyQualifiedName~BandedResultMonitorPdfWriterTests` in isolation → **11/11 passed**, so no other writer's initialiser had run
+  6. `ArabicFontResolver.Resolve` sits inside the `CA1416` pragma pair — ✅ identical `#pragma warning disable/restore CA1416` pair; build is 0 warnings, so the pragma is doing its job
+  7. `File.Exists` → `IOException` — ✅ `NeverOverwritesAnExistingFile` (also asserts the original bytes survive)
+  8. Missing directory → `DirectoryNotFoundException` — ✅ `RejectsAMissingDirectory`
+  9. Successful write to a temp path produces a non-empty file — ✅ `ProducesNonEmptyPdf` asserts `%PDF` header **and** `%%EOF` trailer, plus `RenderedPdfIsLargerThanAnEmptyGrid` proving rows are really laid out
+  10. `BuildTextLines` yields the criteria line and the nine grid headers — ✅ `BuildTextLines_YieldsTheCriteriaLine`, `BuildTextLines_YieldsTheNineGridHeaders` (all nine asserted by name), `BuildTextLines_MapsEveryRow`
+  11. Empty-rows case still writes header and criteria — ✅ `BuildTextLines_EmptyRows_StillYieldsHeaderAndCriteria`
+  12. Exactly one new line in `Infrastructure/DependencyInjection.cs` — ✅ `git diff` shows one `AddScoped` (+ a comment)
+  13. **No new `ReportKind` constant and no `PrinterOutputType` value** — ✅ neither `ReportPrintEnvelope.cs` nor `ReportContentBuilder.cs` appears in `git status --short`; the writer bypasses the envelope entirely
+  14. **Migration: NONE** — ✅
+- **New UI strings:** register entry #9's PDF side now fixed — the nine grid headers `التاريخ`/`المريض`/`الرقم`/`الجنس`/`العمر`/`جهة الإحالة`/`التحليل`/`النتيجة`/`الحالة`; plus two created-once strings: `عدد النتائج: {n}` and the criteria-line template `التحليل: {test} — النطاق: {min} إلى {max} — الفترة: {from} إلى {to}`. Both recorded verbatim below. No copyright, address or link invented.
+- **Deviation from the plan (and why):** the plan (§E Slice R-F05-S2 step 2) says «Expose `internal static BuildTextLines(...)`». The repository has **no `InternalsVisibleTo` anywhere** (`grep` over all `.cs`/`.csproj` → 0 matches), so `internal` would make it unreachable from `TopLab.Infrastructure.Tests` and the required content assertions impossible without editing a `.csproj` outside the inventory. Made it **`public static`**, copying `PriceListPdfWriter.BuildTextLines` (`:127`) and `CustomGroupPdfWriter.BuildTextLines` (`:123`) exactly. This is the established pattern, so it is a correction of the plan's wording, not a design change.
+- **Commit hash:** Slice 1 = **`e84c19c`** (recorded here; this slice's own hash is appended at Slice 3 Stage 8 so the tree stays clean)
+- **`git status --short` after the commit:** recorded at Slice 3 Stage 8
+- **Anything noticed that the plan did not anticipate:** the plan lists `Address`/`Phone` nowhere, but `LabPrintTextDto` (`SettingsDtos.cs:58`) carries them and `ReportDocumentContent`'s own composer prints them. The writer includes them in the header when non-blank, mirroring the lab header requirement of BR-F05-15; `BuildTextLines_EmptyLabNameOmitsHeaderLines` pins that blank values are omitted rather than rendered as empty lines.
+- **Deliberately NOT done:** no `ReportKind` value, no `PrinterOutputType` seed, no routing through `PrinterAssignment`, no UI (S3), no edit to `ReportContentBuilder.cs`/`ReportDtos.cs`/`ReportDocumentContent.cs`, no migration, no push.
 
 ### Slice 3 — R-F05-S3 — Banded-monitor VM + XAML
 *(same fields; must record the exact comma-rejection message created)*
@@ -330,12 +358,12 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 
 | Field | Value |
 |---|---|
-| Slices complete | **1 of 8** |
-| Current slice | **Slice 2 — R-F05-S2 (in progress)** |
+| Slices complete | **2 of 8** |
+| Current slice | **Slice 3 — R-F05-S3 (in progress)** |
 | Baseline recorded at G0 | **YES — 2026-10-04, build 0/0; 507/507 · 1638/1638 · 284/284 · 13 passed + 2 skipped · 133/133** |
 | `BASELINE_HEAD` | **`55b4370f80cc428f477c281b1387c1680dd7d2f6`** (Step 0 — verified: descendant of `e765f87`, `src/`+`tests/` identical, branch `main`, tree clean) |
 | Build/test SDK | 8.0.425 via direct invocation (SD-22) — confirmed `8.0.425` |
-| Last commit made by the agent | Slice 1 (see Execution Log for the hash) |
+| Last commit made by the agent | Slice 1 = `e84c19c`; Slice 2 = see Execution Log |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
 | Files outside the `B-01.md` §C inventory modified | **0** |

@@ -87,6 +87,11 @@ public static class DependencyInjection
         // P-01 PP-03 (F9): custom test-group list printing. Its own port and its own writer;
         // no shared class and no shared DTO with the price-list path above (C-6).
         services.AddScoped<ICustomGroupPdfWriter, CustomGroupPdfWriter>();
+
+        // R-F05: banded result monitor printing. Its own port and its own writer over
+        // BandedResultMonitorDto; no shared class or DTO with the two list writers above,
+        // and no ReportKind / PrinterOutputType value (BR-F05-13).
+        services.AddScoped<IBandedResultMonitorPdfWriter, BandedResultMonitorPdfWriter>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
         // WP-01: Arabic report document + on-screen preview (never prints).
