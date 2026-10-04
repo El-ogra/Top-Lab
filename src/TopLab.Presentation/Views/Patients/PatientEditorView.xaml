@@ -407,7 +407,7 @@
                         <ComboBox ItemsSource="{Binding CustomGroups}" SelectedItem="{Binding SelectedCustomGroup}"
                                   DisplayMemberPath="Name" Width="160" Margin="2" />
                         <Button Content="إضافة" Margin="2" Padding="8,0" Command="{Binding AddCustomGroupCommand}" />
-                        <Button Content="مسح الكل" Margin="8,2,2,2" Padding="8,0" Command="{Binding ClearAllVisitTestsCommand}" />
+                        <Button Content="مسح الكل" Margin="8,2,2,2" Padding="8,0" Command="{Binding ClearAllVisitTestsCommand}" IsEnabled="{Binding CanClearAllVisitTests}" />
                     </WrapPanel>
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Top" Text="تحاليل المريض:" FontWeight="Bold" Margin="0,4" />

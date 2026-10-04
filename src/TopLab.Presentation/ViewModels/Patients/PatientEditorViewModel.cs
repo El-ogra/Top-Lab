@@ -61,6 +61,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     private bool _isEditMode;
     private int? _patientId;
+    private bool _canClearAllVisitTests;
     private string _labId = string.Empty;
     private string _fullName = string.Empty;
     private string? _title;
@@ -155,7 +156,13 @@ public sealed class PatientEditorViewModel : ViewModelBase
         SelectedTests.CollectionChanged += (_, _) => RefreshEmptyStates();
         CatalogTests.CollectionChanged += (_, _) => RefreshEmptyStates();
         SearchResults.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowSearchEmpty));
-        VisitHistory.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowVisitHistoryEmpty));
+        // VisitHistory is populated AFTER LoadVisitTestsAsync (:567 then :569), so the
+        // button must also re-evaluate when history arrives, not only when tests load.
+        VisitHistory.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(ShowVisitHistoryEmpty));
+            RefreshCanClearAllVisitTests();
+        };
     }
 
     public sealed class SelectedTestItem : ViewModelBase
@@ -218,6 +225,43 @@ public sealed class PatientEditorViewModel : ViewModelBase
         Enum.GetValues<AccountType>();
 
     public bool IsEditMode { get => _isEditMode; private set => SetProperty(ref _isEditMode, value); }
+
+    /// <summary>
+    /// BR-A04-5 / SD-18: true only when the Application guard would pass — i.e. this visit
+    /// IS the patient's first registration (BR-A04-1). The Application handler remains the
+    /// authority (acceptance criterion 5); this only drives the button's enabled state so the
+    /// operator is not led into a refusal.
+    ///
+    /// <para>
+    /// Computed from <see cref="VisitHistory"/>, which is exactly the <c>LabId</c> group
+    /// (all non-deleted visits sharing this visit's LabId, or the single visit when LabId is
+    /// null) and includes the current visit. A visit is first when NO other entry in that
+    /// group sorts before it on (RegistrationDateUtc, PatientId) — the same two-key rule the
+    /// handler applies (BR-A04-1, tie broken by the lower PatientId).
+    /// </para>
+    /// </summary>
+    public bool CanClearAllVisitTests
+    {
+        get => _canClearAllVisitTests;
+        private set => SetProperty(ref _canClearAllVisitTests, value);
+    }
+
+    private void RefreshCanClearAllVisitTests()
+    {
+        var can = false;
+
+        if (IsEditMode && _patientId.HasValue)
+        {
+            var current = VisitHistory.FirstOrDefault(v => v.PatientId == _patientId.Value);
+            can = current is null
+                || !VisitHistory.Any(v => v.PatientId != _patientId.Value
+                    && (v.RegistrationDateUtc < current.RegistrationDateUtc
+                        || (v.RegistrationDateUtc == current.RegistrationDateUtc
+                            && v.PatientId < current.PatientId)));
+        }
+
+        CanClearAllVisitTests = can;
+    }
 
     public string PatientIdText => _patientId?.ToString(CultureInfo.InvariantCulture) ?? "جديد";
 
@@ -603,6 +647,11 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     private async Task LoadVisitTestsAsync(CancellationToken cancellationToken)
     {
+        // SD-18: this ONE insertion point covers all six existing call sites of this method
+        // (:567, :840, :880, :1134, :1171, :1208) — add, remove and clear-all all stay in
+        // sync without touching six places.
+        RefreshCanClearAllVisitTests();
+
         SelectedTests.Clear();
         if (!_patientId.HasValue)
         {
@@ -1186,6 +1235,16 @@ public sealed class PatientEditorViewModel : ViewModelBase
         if (!IsEditMode || !_patientId.HasValue)
         {
             ErrorMessage = "احفظ بيانات المريض أولًا قبل مسح التحاليل.";
+            return;
+        }
+
+        // R-A04-5 / SD-17: a stale command (button was enabled when this visit was the
+        // first registration, then the state changed) is refused here with the SAME Arabic
+        // literal the Application handler uses, rather than reaching the mediator.
+        // The handler remains the authority — this is a courtesy short-circuit, not the gate.
+        if (!CanClearAllVisitTests)
+        {
+            ErrorMessage = ClearAllTestsCommandHandler.FirstRegistrationOnlyMessage;
             return;
         }
 
