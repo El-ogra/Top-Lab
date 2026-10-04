@@ -190,8 +190,8 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 |---|---|---|---|---|---|
 | 1 | R-F05-S1 — Banded-monitor Application query + DTOs | R-F05 | create 4 · modify 3 | [x] **COMPLETE** ✅ VG-01 passed | VG-01 |
 | 2 | R-F05-S2 — Banded-monitor PDF port + writer | R-F05 | create 2 · modify 1 | [x] **COMPLETE** ✅ VG-02 passed | VG-02 |
-| 3 | R-F05-S3 — Banded-monitor VM + XAML | R-F05 | create 1 · modify 2 | [ ] **IN PROGRESS** | VG-03 |
-| 4 | R-F01-S1 — Day-of-month + money row in the Application layer | R-F01 | modify 3 · modify 1 test | [ ] NOT STARTED | VG-04 |
+| 3 | R-F05-S3 — Banded-monitor VM + XAML | R-F05 | create 1 · modify 2 | [x] **COMPLETE** ✅ VG-03 passed | VG-03 |
+| 4 | R-F01-S1 — Day-of-month + money row in the Application layer | R-F01 | modify 3 · modify 1 test | [ ] **IN PROGRESS** | VG-04 |
 | 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [ ] NOT STARTED | VG-05 |
 | 6 | R-A04-S1 — First-registration guard in the Application handler | R-A04 | modify 1 · modify 1 test | [ ] NOT STARTED | VG-06 |
 | 7 | R-A04-S2 — First-registration guard in the UI | R-A04 | modify 2 · create 1 test | [ ] NOT STARTED | VG-07 |
@@ -224,7 +224,7 @@ Every slice runs the same ten stages. Record the outcome of each in the Executio
 
 - [x] **Slice 1** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 2** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
-- [ ] **Slice 3** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
+- [x] **Slice 3** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [ ] **Slice 4** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 5** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
 - [ ] **Slice 6** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
@@ -243,10 +243,17 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 | 2 | `الحد الأدنى يجب ألا يتجاوز الحد الأقصى.` | Application validator | 1 | BR-F05-6 — frozen |
 | 3 | `بداية الفترة يجب ألا تتجاوز نهايتها.` | Application validator | 1 | BR-F05-7 — frozen (verbatim from `GetPatientCountStatisticsQueryValidator.cs:11`) |
 | 4 | `التحليل غير موجود.` | Application handler | 1 | BR-F05-1 |
-| 5 | *(comma-rejection message for min/max)* | Presentation | 3 | **TO BE CREATED ONCE** — must be a clear Arabic sentence naming the problem; record the exact text here in Slice 3 and reuse it verbatim in the ViewModel and its test |
-| 6 | `نطاق النتائج` (monitor section title) | Presentation | 3 | **TO BE CREATED ONCE** — record here |
-| 7 | `الحد الأدنى` / `الحد الأقصى` | Presentation | 3 | **TO BE CREATED ONCE** — record here |
-| 8 | `عرض` / `طباعة` | Presentation | 3 | **TO BE CREATED ONCE** — record here |
+| 5 | `استخدم النقطة (.) للفاصلة العشرية، والفاصلة (,) غير مقبولة.` | Presentation | 3 | **CREATED ONCE in Slice 3** — exact text above, held as `StatisticsViewModel.CommaRejectedMessage` and asserted literally by `Min_WithAComma_IsRejected_AndTheMediatorIsNotCalled` and `Max_WithAComma_IsRejected_AndTheMediatorIsNotCalled`. The comma is rejected **before** any parsing, so a value can never be silently read as a different number (BR-F05-17 / SD-9) |
+| 6 | `نطاق النتائج` (monitor section title) | Presentation | 3 | **CREATED ONCE in Slice 3** — exact text above; used as the fifth RadioButton content and as the PDF suggestion filename |
+| 7 | `الحد الأدنى:` / `الحد الأقصى:` | Presentation | 3 | **CREATED ONCE in Slice 3** — exact text above **including the trailing colon**. NOTE: the *validator message* (register #2) uses the same words WITHOUT a colon: `الحد الأدنى يجب ألا يتجاوز الحد الأقصى.` — two different strings, deliberately |
+| 8 | `عرض` / `طباعة` | Presentation | 3 | **CREATED ONCE in Slice 3** — `عرض` already existed in this view (sections 1–4) and is reused for the fifth; `طباعة` is new to this view |
+| 8a | `اختر التحليل.` | Presentation | 3 | **CREATED ONCE in Slice 3** — shown when the monitor runs with no test chosen |
+| 8b | `أدخل الحد الأدنى والحد الأقصى.` | Presentation | 3 | **CREATED ONCE in Slice 3** — shown when either bound is blank |
+| 8c | `أدخل قيمة رقمية صحيحة.` | Presentation | 3 | **CREATED ONCE in Slice 3** — shown when a bound is neither blank, comma-bearing, nor a dot-decimal number |
+| 8d | `لا توجد نتائج في هذا النطاق.` | Presentation | 3 | **CREATED ONCE in Slice 3** — the empty state; mirrors `لا توجد بيانات في هذه الفترة.` used by sections 1–4 |
+| 8e | `اعرض النتائج أولًا قبل الطباعة.` | Presentation | 3 | **CREATED ONCE in Slice 3** — shown when the print command is invoked with no loaded grid. Mirrors the existing `احفظ بيانات المريض أولًا قبل مسح التحاليل.` pattern |
+| 8f | `تم إنشاء ملف نطاق النتائج.` | Presentation | 3 | **CREATED ONCE in Slice 3** — the success status. Mirrors `تم إنشاء ملف قائمة الأسعار.` |
+| 8g | `ملاحظة: النتائج التي لا تحمل قيمة رقمية (مثل Protocols و Culture) لا تظهر في this النطاق.` | Presentation | 3 | **CREATED ONCE in Slice 3** — the H-3 help line documenting that profile/culture rows carry a null `ResultValue` and are therefore excluded from any band. **Correct Arabic text as built:** `ملاحظة: النتائج التي لا تحمل قيمة رقمية (مثل Protocols و Culture) لا تظهر في هذا النطاق.` |
 | 9 | `التاريخ` / `المريض` / `الرقم` / `الجنس` / `العمر` / `جهة الإحالة` / `التحليل` / `النتيجة` / `الحالة` | Presentation + PDF | 1, 2, 3 | **CREATED ONCE in Slice 2** — exact text: `التاريخ`, `المريض`, `الرقم`, `الجنس`, `العمر`, `جهة الإحالة`, `التحليل`, `النتيجة`, `الحالة`. Reuse verbatim in the ViewModel/XAML (Slice 3). Pinned by `BuildTextLines_YieldsTheNineGridHeaders` |
 | 10 | `تم التسليم` / `تمت الطباعة` / `معتمد` / `غير معتمد` | Presentation + PDF | 1, 2, 3 | BR-F05-10 — **TO BE CREATED ONCE** — record here |
 | 11 | `بدون جهة إحالة` | Application + Presentation + PDF | 1, 2, 3 | BR-F05-12 — **frozen**, copied from `GetPatientCountStatisticsQueryHandler.cs:14` |
@@ -335,7 +342,40 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 - **Deliberately NOT done:** no `ReportKind` value, no `PrinterOutputType` seed, no routing through `PrinterAssignment`, no UI (S3), no edit to `ReportContentBuilder.cs`/`ReportDtos.cs`/`ReportDocumentContent.cs`, no migration, no push.
 
 ### Slice 3 — R-F05-S3 — Banded-monitor VM + XAML
-*(same fields; must record the exact comma-rejection message created)*
+- **Date / agent:** 2026-10-04 · executing agent
+- **Files created (1):** `tests/TopLab.Presentation.Tests/Statistics/StatisticsViewModelMonitorTests.cs` — **13 facts**, hand-rolled nested fakes
+- **Files modified (2 + this memory file):** `StatisticsViewModel.cs` · `StatisticsView.xaml` · `Docs/OpenCode/B-01-memory.md`
+- **Build result:** `Build succeeded. 0 Warning(s) 0 Error(s)`
+- **Test results vs baseline (as a delta):** Domain **507/507 (0)** · Application **1660/1660 (0)** · Infrastructure **295/295 (0)** · Persistence **13 passed / 2 SKIPPED / 15 (0)** · **Presentation 133 → 146/146 (+13)**
+- **Persistence diff:** **EMPTY** ✅
+- **VG-03 item-by-item result:**
+  1. Build 0 errors / 0 warnings — ✅
+  2. No project below baseline — ✅ all five ≥ baseline; Presentation +13
+  3. Persistence diff empty — ✅
+  4. Picker populated from `SearchTestCatalogQuery`, and **no new Application query/validator/authorization entry added for it** — ✅ `LoadFilterItemsAsync` sends `new SearchTestCatalogQuery(null, null, IncludeInactive: false)`, byte-for-byte the OD-1 form; `git status` shows no new Application file in this slice; the existing `Queries_DeclareStatistics` theory is unchanged in count-of-types (the picker query carries no `IAuthorizedRequest`, exactly as the plan states). Pinned by `Picker_PopulatesFromSearchTestCatalogQuery`
+  5. **A comma in min or max is rejected with the Arabic message and the mediator is NOT called** — ✅ two dedicated facts, `Min_WithAComma_IsRejected_AndTheMediatorIsNotCalled` and `Max_WithAComma_IsRejected_AndTheMediatorIsNotCalled`, each asserting `BandQueryCount == 0`, `BandStats is null` and the exact Arabic message. Implementation rejects `,` **before** parsing and then uses `NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign` — **neither `Any` nor `Number`** (SD-9)
+  6. A dot parses correctly — ✅ `Min_WithADot_ParsesAndReachesTheQuery` (`3.5` → `3.5m`), `Max_WithADot_ParsesCorrectly` (`12.75`)
+  7. Print command short-circuits on a `null` save path and otherwise writes exactly once with the loaded `BandStats` — ✅ `PrintCommand_DoesNothingWhenTheUserCancels` (writer `CallCount == 0`), `PrintCommand_WritesExactlyOnce_WithTheLoadedBandStats` (`CallCount == 1`, path asserted, `LastMonitor.TotalCount == loaded.TotalCount`), plus `PrintCommand_ShortCircuitsWhenNoResultsAreLoaded` and the frozen inverted-band message fact
+  8. `StatisticsView.xaml` still declares `FlowDirection="RightToLeft"` — ✅ `grep -c` → **1**; also asserted by the new `View_StaysRightToLeft_AndBindsOnlyRealProperties` fact
+  9. **`StatisticsViewModel.cs` does not contain `TopLab.Infrastructure`** — ✅ `grep -c` → **0**; the ViewModel uses `IBandedResultMonitorPdfWriter` (the port) and never constructs the writer. Also asserted by the new `ViewModel_HasNoInfrastructureReference` fact, so the exact three-file offender list in `PresentationLayeringTests:41-43` is preserved
+  10. **`tests/TopLab.Presentation.Tests/Common/Fakes.cs` unmodified** — ✅ absent from `git status --short`; nested fakes only (`RecordingMonitorPdfWriter`, `MonitorSender`, `FixedDialogService`, `FakeLabPrintText`, `NoOpNavigation`), exactly the `PriceListsPrintCommandTests.cs:26-49` pattern
+  11. Every new `{Binding …}` names a real public property — ✅ `View_StaysRightToLeft_AndBindsOnlyRealProperties` enumerates all 20 new binding names (`IsMonitorSection`, `MonitorTestItems`, `MonitorTest`, `MonitorMinInput`, `MonitorMaxInput`, `LoadBandCommand`, `PrintBandCommand`, `BandStats`, `ShowBandEmpty`, `StatusMessage` and the ten row DTO members) and asserts each appears; WPF would otherwise silently bind nothing and **no shipped test would catch it**
+  12. **Migration: NONE** — ✅
+- **New UI strings — created ONCE, recorded verbatim:**
+  - #5 comma-rejection (**the exact text**): `استخدم النقطة (.) للفاصلة العشرية، والفاصلة (,) غير مقبولة.` — created once as `StatisticsViewModel.CommaRejectedMessage`, reused verbatim in the ViewModel and asserted literally by two tests
+  - #6 monitor section title: `نطاق النتائج` (RadioButton content and PDF suggestion filename)
+  - #7 `الحد الأدنى:` / `الحد الأقصى:` — **with the trailing colon**, so the full labels are `الحد الأدنى:` and `الحد الأقصى:`
+  - #8 `عرض` / `طباعة` — `عرض` already existed in this view (four other sections use it); `طباعة` is new here
+  - Additional UI-only strings created this slice: `اختر التحليل.` · `أدخل الحد الأدنى والحد الأقصى.` · `أدخل قيمة رقمية صحيحة.` · `لا توجد نتائج في هذا النطاق.` · `اعرض النتائج أولًا قبل الطباعة.` · `تم إنشاء ملف نطاق النتائج.` · and the help line `ملاحظة: النتائج التي لا تحمل قيمة رقمية (مثل Protocols و Culture) لا تظهر في هذا النطاق.` which documents H-3
+  - Reused verbatim from pre-existing screens: `الملف موجود مسبقًا؛ لم يتم الكتابة فوقه.` · `لا توجد صلاحية للكتابة في المسار المحدد.` · `تعذّر تحميل بيانات المعمل للطباعة.`
+- **Deviation from the plan (and why):** (a) the plan names the section's ViewModel API only loosely; min/max are exposed as **free-text `string` properties** (`MonitorMinInput`/`MonitorMaxInput`) rather than `decimal?`, because a WPF `TextBox` bound to `decimal` with an `Arabic`/`en` culture would apply its own parse and could never surface the BR-F05-17 comma rejection as a message. The parse happens once, explicitly, in `TryParseBandInput`. (b) A `StatusMessage` property was added because `PriceListsViewModel` already has exactly this pattern for print outcomes and reusing it keeps the view consistent; it required **one extra `RowDefinition`** in the XAML root grid (the error text was on `Grid.Row="4"`).
+- **Commit hash:** Slice 1 = `e84c19c` · **Slice 2 = `6e88e1f`** · Slice 3's own hash is recorded at Slice 4 Stage 8 (so the tree is clean at Slice 4 Stage 1)
+- **`git status --short` after the commit:** recorded at Slice 4 Stage 8
+- **Anything noticed that the plan did not anticipate:**
+  - **`INavigationService` has four members, not two** (`CurrentViewModel`, `Navigated` event, `NavigateTo<T>() where T : ViewModelBase`, `NavigateTo(ViewModelBase)`). The plan's SD-14 mentions only the writer fake; a navigation fake is needed too because the ViewModel takes `INavigationService`. Hand-rolled inline per SD-14.
+  - **`AsyncRelayCommand.Execute` is `async void` with no `ExecuteAsync`.** The plan's §F wording ("the mediator is not called") needs a deterministic await; a small `RunAsync` helper (yield + 50 ms delay, or awaiting the writer's `TaskCompletionSource`) is used, copying `PriceListsPrintCommandTests`. **This was the cause of the only red run in this slice** — 11 failures, all `NotSupportedException: MonitorSender has no canned response for GetTestGroupsQuery`: the existing `LoadAsync` also sends `GetTestGroupsQuery`, `SearchExternalEntitiesQuery` and `GetUsersQuery` for sections 2–4, so a monitor-only fake is not enough. Four stub branches were added; **no production code changed to suit the test.**
+  - `TestSummaryDto` carries **twelve** members, not the five the plan's BR-F05-18 summary lists ("carries `Id` and `Name`, which is all the ComboBox needs" — true for the *ComboBox*, but the record must be constructed in full by a fake). Verified at `TestCatalogDtos.cs:5-17`.
+- **Deliberately NOT done:** no `Fakes.cs` edit (SD-14) · no new Application query/validator/authorization entry for the picker (OD-1) · no WPF element instantiated in any test (SD-19) · no split into a new ViewModel (would orphan the screen) · no `ReportContentBuilder`/`ReportDtos` touch · no migration · no push.
 
 ### Slice 4 — R-F01-S1 — Day-of-month + money row in the Application layer
 *(same fields)*
@@ -358,12 +398,12 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 
 | Field | Value |
 |---|---|
-| Slices complete | **2 of 8** |
-| Current slice | **Slice 3 — R-F05-S3 (in progress)** |
+| Slices complete | **3 of 8** |
+| Current slice | **Slice 4 — R-F01-S1 (in progress)** |
 | Baseline recorded at G0 | **YES — 2026-10-04, build 0/0; 507/507 · 1638/1638 · 284/284 · 13 passed + 2 skipped · 133/133** |
 | `BASELINE_HEAD` | **`55b4370f80cc428f477c281b1387c1680dd7d2f6`** (Step 0 — verified: descendant of `e765f87`, `src/`+`tests/` identical, branch `main`, tree clean) |
 | Build/test SDK | 8.0.425 via direct invocation (SD-22) — confirmed `8.0.425` |
-| Last commit made by the agent | Slice 1 = `e84c19c`; Slice 2 = see Execution Log |
+| Last commit made by the agent | Slice 1 = `e84c19c` · Slice 2 = `6e88e1f` · Slice 3 = see Execution Log |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
 | Files outside the `B-01.md` §C inventory modified | **0** |

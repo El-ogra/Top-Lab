@@ -9,6 +9,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Section selector -->
@@ -17,7 +18,8 @@
             <RadioButton Content="المرضى" IsChecked="{Binding IsPatientsSection}" GroupName="StatSection" Margin="0,0,8,0"/>
             <RadioButton Content="التحاليل" IsChecked="{Binding IsTestsSection}" GroupName="StatSection" Margin="0,0,8,0"/>
             <RadioButton Content="المرسلة" IsChecked="{Binding IsSentOutSection}" GroupName="StatSection" Margin="0,0,8,0"/>
-            <RadioButton Content="الإنتاجية" IsChecked="{Binding IsProductivitySection}" GroupName="StatSection"/>
+            <RadioButton Content="الإنتاجية" IsChecked="{Binding IsProductivitySection}" GroupName="StatSection" Margin="0,0,8,0"/>
+            <RadioButton Content="نطاق النتائج" IsChecked="{Binding IsMonitorSection}" GroupName="StatSection"/>
         </StackPanel>
 
         <!-- Period + filters -->
@@ -284,9 +286,65 @@
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>
+
+            <!-- Section 5 (R-F05): banded result monitor -->
+            <DockPanel>
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsMonitorSection}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DockPanel.Style>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="التحليل:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding MonitorTestItems}" SelectedItem="{Binding MonitorTest}" DisplayMemberPath="Name" Width="180" Margin="0,0,8,0"/>
+                    <TextBlock Text="الحد الأدنى:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox Text="{Binding MonitorMinInput, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0,0,8,0"/>
+                    <TextBlock Text="الحد الأقصى:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox Text="{Binding MonitorMaxInput, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0,0,8,0"/>
+                    <Button Content="عرض" Width="70" Command="{Binding LoadBandCommand}" Margin="0,0,8,0"/>
+                    <Button Content="طباعة" Width="70" Command="{Binding PrintBandCommand}"/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding BandStats.TotalCount, StringFormat='عدد النتائج: {0}'}" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                        <TextBlock Text="لا توجد نتائج في هذا النطاق." Foreground="#666666" Margin="0,0,0,8">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowBandEmpty}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="ملاحظة: النتائج التي لا تحمل قيمة رقمية (مثل Protocols و Culture) لا تظهر في هذا النطاق." Foreground="#666666" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <DataGrid ItemsSource="{Binding BandStats.Rows}" AutoGenerateColumns="False" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="التاريخ" Binding="{Binding EnteredAtUtc, StringFormat='yyyy/MM/dd HH:mm'}" Width="110"/>
+                                <DataGridTextColumn Header="المريض" Binding="{Binding PatientFullName}" Width="*"/>
+                                <DataGridTextColumn Header="الرقم" Binding="{Binding PatientId}" Width="60"/>
+                                <DataGridTextColumn Header="الجنس" Binding="{Binding PatientSex}" Width="70"/>
+                                <DataGridTextColumn Header="العمر" Binding="{Binding PatientAgeValue}" Width="60"/>
+                                <DataGridTextColumn Header="جهة الإحالة" Binding="{Binding ReferralEntityName}" Width="*"/>
+                                <DataGridTextColumn Header="التحليل" Binding="{Binding TestName}" Width="*"/>
+                                <DataGridTextColumn Header="النتيجة" Binding="{Binding ResultValue}" Width="80"/>
+                                <DataGridTextColumn Header="الحالة" Binding="{Binding StatusText}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </Grid>
 
         <!-- Error -->
         <TextBlock Grid.Row="4" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0"/>
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Foreground="#1B5E20" TextWrapping="Wrap" Margin="0,4,0,0"/>
     </Grid>
 </UserControl>

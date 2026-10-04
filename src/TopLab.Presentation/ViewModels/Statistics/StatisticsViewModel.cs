@@ -1,16 +1,25 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.IO;
 using MediatR;
 using TopLab.Application.Features.ExternalEntities.Queries.SearchExternalEntities;
 using TopLab.Application.Features.Statistics.Common;
+using TopLab.Application.Features.Statistics.Queries.GetBandedResultMonitor;
 using TopLab.Application.Features.Statistics.Queries.GetPatientCountStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetSentOutStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetTestCountStatistics;
 using TopLab.Application.Features.Statistics.Queries.GetUserProductivityStatistics;
+using TopLab.Application.Features.SystemAndPrintSettings.Common;
+using TopLab.Application.Features.TestCatalogAndReferenceRanges.Common;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Queries.GetTestGroups;
+using TopLab.Application.Features.TestCatalogAndReferenceRanges.Queries.SearchTestCatalog;
 using TopLab.Application.Features.UsersAndPermissions.Common;
 using TopLab.Application.Features.UsersAndPermissions.Queries.GetUsers;
 using TopLab.Domain.Common.Enums;
 using TopLab.Presentation.Common;
+using TopLab.Application.Common.Interfaces;
+using TopLab.Application.Common.Results;
+using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.Common.Navigation;
 
@@ -25,6 +34,9 @@ public sealed class StatisticsViewModel : ViewModelBase
     private readonly ISender _mediator;
     private readonly ResultErrorPresenter _presenter;
     private readonly INavigationService _navigation;
+    private readonly IDialogService _dialogs;
+    private readonly IBandedResultMonitorPdfWriter _monitorPdfWriter;
+    private readonly ILabPrintTextStore _labPrintTextStore;
 
     // Shared period
     private DateOnly? _from;
@@ -52,20 +64,44 @@ public sealed class StatisticsViewModel : ViewModelBase
     private UserProductivityStatisticsDto? _productivityStats;
     private ObservableCollection<UserSummaryDto> _userItems = new();
 
-    private int _selectedSection; // 0=patients, 1=tests, 2=sentOut, 3=productivity
+    // Section 5 (R-F05): banded result monitor
+    private TestSummaryDto? _monitorTest;
+    private string _monitorMinInput = string.Empty;
+    private string _monitorMaxInput = string.Empty;
+    private BandedResultMonitorDto? _bandStats;
+    private ObservableCollection<TestSummaryDto> _monitorTestItems = new();
+
+    // OD-4b / BR-F05-17: dot is the ONLY accepted decimal separator. A comma is rejected
+    // explicitly, because both NumberStyles.Any and NumberStyles.Number accept ',' as a
+    // thousands separator and would silently read "3,5" as 35 (finding F-1).
+    private const string CommaRejectedMessage = "استخدم النقطة (.) للفاصلة العشرية، والفاصلة (,) غير مقبولة.";
+
+    private int _selectedSection; // 0=patients, 1=tests, 2=sentOut, 3=productivity, 4=monitor
     private bool _isBusy;
     private string _errorMessage = string.Empty;
+    private string _statusMessage = string.Empty;
 
-    public StatisticsViewModel(ISender mediator, ResultErrorPresenter presenter, INavigationService navigation)
+    public StatisticsViewModel(
+        ISender mediator,
+        ResultErrorPresenter presenter,
+        INavigationService navigation,
+        IDialogService dialogs,
+        IBandedResultMonitorPdfWriter monitorPdfWriter,
+        ILabPrintTextStore labPrintTextStore)
     {
         _mediator = mediator;
         _presenter = presenter;
         _navigation = navigation;
+        _dialogs = dialogs;
+        _monitorPdfWriter = monitorPdfWriter;
+        _labPrintTextStore = labPrintTextStore;
 
         LoadPatientsCommand = new AsyncRelayCommand(async (_, ct) => await LoadPatientsAsync(ct));
         LoadTestsCommand = new AsyncRelayCommand(async (_, ct) => await LoadTestsAsync(ct));
         LoadSentOutCommand = new AsyncRelayCommand(async (_, ct) => await LoadSentOutAsync(ct));
         LoadProductivityCommand = new AsyncRelayCommand(async (_, ct) => await LoadProductivityAsync(ct));
+        LoadBandCommand = new AsyncRelayCommand(async (_, ct) => await LoadBandAsync(ct));
+        PrintBandCommand = new AsyncRelayCommand(async (_, ct) => await PrintBandAsync(ct));
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<Shell.HomeViewModel>());
     }
 
@@ -83,6 +119,7 @@ public sealed class StatisticsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsTestsSection));
                 OnPropertyChanged(nameof(IsSentOutSection));
                 OnPropertyChanged(nameof(IsProductivitySection));
+                OnPropertyChanged(nameof(IsMonitorSection));
             }
         }
     }
@@ -91,6 +128,50 @@ public sealed class StatisticsViewModel : ViewModelBase
     public bool IsTestsSection => SelectedSection == 1;
     public bool IsSentOutSection => SelectedSection == 2;
     public bool IsProductivitySection => SelectedSection == 3;
+    public bool IsMonitorSection => SelectedSection == 4;
+
+    // Section 5 properties (R-F05 banded result monitor)
+    public ObservableCollection<TestSummaryDto> MonitorTestItems
+    {
+        get => _monitorTestItems;
+        private set => SetProperty(ref _monitorTestItems, value);
+    }
+
+    public TestSummaryDto? MonitorTest
+    {
+        get => _monitorTest;
+        set => SetProperty(ref _monitorTest, value);
+    }
+
+    /// <summary>Free-text min. Parsed per BR-F05-17: dot only, comma rejected.</summary>
+    public string MonitorMinInput
+    {
+        get => _monitorMinInput;
+        set => SetProperty(ref _monitorMinInput, value);
+    }
+
+    /// <summary>Free-text max. Parsed per BR-F05-17: dot only, comma rejected.</summary>
+    public string MonitorMaxInput
+    {
+        get => _monitorMaxInput;
+        set => SetProperty(ref _monitorMaxInput, value);
+    }
+
+    public BandedResultMonitorDto? BandStats
+    {
+        get => _bandStats;
+        private set
+        {
+            if (SetProperty(ref _bandStats, value))
+            {
+                OnPropertyChanged(nameof(HasBandStats));
+                OnPropertyChanged(nameof(ShowBandEmpty));
+            }
+        }
+    }
+
+    public bool HasBandStats => _bandStats is not null && _bandStats.TotalCount > 0;
+    public bool ShowBandEmpty => _bandStats is not null && _bandStats.TotalCount == 0 && !IsBusy;
 
     // Section 1 properties
     public bool BySex { get => _bySex; set => SetProperty(ref _bySex, value); }
@@ -201,10 +282,18 @@ public sealed class StatisticsViewModel : ViewModelBase
         private set => SetProperty(ref _errorMessage, value);
     }
 
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        private set => SetProperty(ref _statusMessage, value);
+    }
+
     public AsyncRelayCommand LoadPatientsCommand { get; }
     public AsyncRelayCommand LoadTestsCommand { get; }
     public AsyncRelayCommand LoadSentOutCommand { get; }
     public AsyncRelayCommand LoadProductivityCommand { get; }
+    public AsyncRelayCommand LoadBandCommand { get; }
+    public AsyncRelayCommand PrintBandCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
@@ -245,6 +334,18 @@ public sealed class StatisticsViewModel : ViewModelBase
                 }
 
                 LabItems = items;
+            }
+        }
+
+        // OD-1: the monitor's test picker reuses the existing un-paged
+        // SearchTestCatalogQuery. No new query, no new validator, no new authorization entry.
+        if (MonitorTestItems.Count == 0)
+        {
+            var catalogResult = await _mediator.Send(
+                new SearchTestCatalogQuery(null, null, IncludeInactive: false), cancellationToken);
+            if (catalogResult.IsSuccess && catalogResult.Value is not null)
+            {
+                MonitorTestItems = new ObservableCollection<TestSummaryDto>(catalogResult.Value);
             }
         }
 
@@ -353,6 +454,145 @@ public sealed class StatisticsViewModel : ViewModelBase
             {
                 ErrorMessage = _presenter.Present(result.Error);
             }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// BR-F05-17 / OD-4b: parses a min or max the operator typed.
+    /// <para>
+    /// A value containing a comma is REJECTED outright, before any parsing is attempted.
+    /// This is deliberately stricter than both existing repository patterns
+    /// (<c>ResultFlagComputer.TryParse</c> uses <c>NumberStyles.Any</c> and
+    /// <c>PatientEditorViewModel</c> uses <c>NumberStyles.Number</c>) — both include
+    /// <c>AllowThousands</c> and would silently read "3,5" as 35. Only
+    /// <c>AllowDecimalPoint</c> is used here.
+    /// </para>
+    /// </summary>
+    private static bool TryParseBandInput(string? input, out decimal value, out string? error)
+    {
+        value = 0m;
+        error = null;
+
+        var text = input?.Trim();
+        if (string.IsNullOrEmpty(text))
+        {
+            error = "أدخل الحد الأدنى والحد الأقصى.";
+            return false;
+        }
+
+        if (text.Contains(',', StringComparison.Ordinal))
+        {
+            error = CommaRejectedMessage;
+            return false;
+        }
+
+        const NumberStyles styles = NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign;
+
+        if (!decimal.TryParse(text, styles, CultureInfo.InvariantCulture, out value))
+        {
+            error = "أدخل قيمة رقمية صحيحة.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task LoadBandAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            if (MonitorTest is null)
+            {
+                ErrorMessage = "اختر التحليل.";
+                return;
+            }
+
+            if (!TryParseBandInput(MonitorMinInput, out var min, out var minError))
+            {
+                ErrorMessage = minError!;
+                return;
+            }
+
+            if (!TryParseBandInput(MonitorMaxInput, out var max, out var maxError))
+            {
+                ErrorMessage = maxError!;
+                return;
+            }
+
+            if (min > max)
+            {
+                ErrorMessage = "الحد الأدنى يجب ألا يتجاوز الحد الأقصى.";
+                return;
+            }
+
+            var result = await _mediator.Send(
+                new GetBandedResultMonitorQuery(MonitorTest.Id, From, To, min, max),
+                cancellationToken);
+
+            if (result.IsSuccess && result.Value is not null)
+            {
+                BandStats = result.Value;
+            }
+            else if (result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task PrintBandAsync(CancellationToken cancellationToken)
+    {
+        if (BandStats is null)
+        {
+            ErrorMessage = "اعرض النتائج أولًا قبل الطباعة.";
+            return;
+        }
+
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            var path = await _dialogs.PickPdfSavePathAsync("نطاق-النتائج.pdf");
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            var labTextResult = await _labPrintTextStore.GetAsync(LabPrintTextScope.Report);
+            if (!labTextResult.IsSuccess || labTextResult.Value is null)
+            {
+                ErrorMessage = labTextResult.Error is not null
+                    ? _presenter.Present(labTextResult.Error)
+                    : "تعذّر تحميل بيانات المعمل للطباعة.";
+                return;
+            }
+
+            await _monitorPdfWriter.WritePdfAsync(path, BandStats, labTextResult.Value);
+            StatusMessage = "تم إنشاء ملف نطاق النتائج.";
+        }
+        catch (IOException)
+        {
+            ErrorMessage = "الملف موجود مسبقًا؛ لم يتم الكتابة فوقه.";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            ErrorMessage = "لا توجد صلاحية للكتابة في المسار المحدد.";
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            ErrorMessage = _presenter.Present(Error.Unexpected(ex.Message));
         }
         finally
         {
