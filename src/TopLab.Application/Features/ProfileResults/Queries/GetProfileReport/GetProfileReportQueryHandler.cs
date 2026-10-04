@@ -91,7 +91,8 @@ public sealed class GetProfileReportQueryHandler
             pt.IsReviewed,
             pt.IsPrinted,
             pt.IsDelivered,
-            lines);
+            lines,
+            pt.IsTakenOutsideLab);
 
         return Task.FromResult(Result<ProfileReportDto>.Success(dto));
     }

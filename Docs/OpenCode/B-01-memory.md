@@ -195,7 +195,7 @@ The 22 Infrastructure failures are all in `Printing` test classes — `ReportPdf
 | 5 | R-F01-S2 — Day-of-month + money row in the UI | R-F01 | modify 2 | [x] **COMPLETE** ✅ VG-05 passed | VG-05 |
 | 6 | R-A04-S1 — First-registration guard in the Application handler | R-A04 | modify 1 · modify 1 test | [x] **COMPLETE** ✅ VG-06 passed | VG-06 |
 | 7 | R-A04-S2 — First-registration guard in the UI | R-A04 | modify 2 · create 1 test | [x] **COMPLETE** ✅ VG-07 passed | VG-07 |
-| 8 | R-A04-S3 — Outside-lab note on the profile printed report | R-A04 | modify 3 · modify 1 test | [ ] **IN PROGRESS** | VG-08 |
+| 8 | R-A04-S3 — Outside-lab note on the profile printed report | R-A04 | modify 3 · modify 1 test | [x] **COMPLETE** ✅ VG-08 passed | VG-08 |
 
 **Cross-slice file overlap (expected, and the reason for this order):** `StatisticsViewModel.cs` and `StatisticsView.xaml` are modified by slices 3 and 5; `StatisticsAuthorizationTests.cs` by slices 1 and 4. No two slices are ever open at the same time, because execution is strictly sequential.
 
@@ -229,7 +229,7 @@ Every slice runs the same ten stages. Record the outcome of each in the Executio
 - [x] **Slice 5** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 6** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 - [x] **Slice 7** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
-- [ ] **Slice 8** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10
+- [x] **Slice 8** — Stage 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10 — all ten stages ticked 2026-10-04
 
 ---
 
@@ -501,8 +501,37 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
   - The `PatientEditorViewModel` constructor takes **five** dependencies including an `IServiceProvider` — the plan does not mention it. A stub returning `null` is sufficient because no code path under test resolves a service.
 - **Deliberately NOT done:** no change to the Application handler (done in Slice 6) · no new Application query or authorization entry · no `Fakes.cs` edit · no WPF element instantiated in any test (SD-19) · no migration · no push.
 
-### Slice 8 — R-A04-S3 — Outside-lab note on the profile printed report
-*(same fields)*
+### Slice 8 — R-A04-S3 — Outside-lab note on the profile printed report (UNCONDITIONAL)
+- **Date / agent:** 2026-10-04 · executing agent
+- **Files created:** none
+- **Files modified (3 production + 1 test + this memory file):** `ProfileResultDtos.cs` · `GetProfileReportQueryHandler.cs` · `ResultPrintCoordinator.cs` · `ResultPrintCoordinatorTests.cs` (+3 facts) · `Docs/OpenCode/B-01-memory.md`
+- **Build result:** `Build succeeded. 0 Warning(s) 0 Error(s)`
+- **Test results vs baseline (as a delta):** Domain **507/507 (0)** · **Application 1685 → 1688/1688 (+3)** · Infrastructure **295/295 (0)** · Persistence **13 passed / 2 SKIPPED / 15 (0)** · Presentation **164/164 (0)**
+- **Persistence diff:** **EMPTY** ✅
+- **VG-08 item-by-item result:**
+  1. Build 0 errors / 0 warnings — ✅
+  2. No project below baseline — ✅ all five ≥ baseline
+  3. Persistence diff empty — ✅
+  4. `ProfileReportDto` gained the member **as optional with a default** — ✅ `bool IsTakenOutsideLab = false` appended after `Lines`. Pinned by `ProfileReportDto_GainedTheMemberAsOptionalWithDefault`, which constructs the DTO positionally with **ten** arguments — literally the `FakeSender.BuildProfileReport` call shape — so SD-13 cannot regress without a test failing
+  5. `GetProfileReportQueryHandler` populates it from the `PatientTest` it already loads — ✅ `pt.IsTakenOutsideLab` appended to the construction at `:84-94`; the entity was already in scope at `:29`, so **no new query and no new read**
+  6. **`ResultPrintCoordinator` passes it as the 13th argument of `CombinedReportLineDto` (thirteen, not ten)** — ✅ re-read `ReportDtos.cs:58-73` first and confirmed `IsTakenOutsideLab` is the **13th** member (`:71`); the call now ends `null(Culture), null(LowComment), null(HighComment), report.IsTakenOutsideLab`. The build **failed first** with `CS1503: Argument 12: cannot convert from 'bool' to 'string?'` when only two nulls were added — the compiler caught the off-by-one that SD-12 warns about, and a third `null` fixed it
+  7. With the flag `true` the produced envelope's single line carries `IsTakenOutsideLab == true` — ✅ `ResultPrintCoordinator_ProfileReport_CarriesTheRealOutsideLabFlag`, which **decodes the actual JSON token** the coordinator handed the port (`ReportPrintEnvelope.ReportJson` → `CombinedReportDto`) rather than trusting the call site
+  8. With `false` it still does — ✅ `ResultPrintCoordinator_ProfileReport_FalseFlag_StaysFalse`, the no-regression half
+  9. **`ReportContentBuilder.cs` unmodified** — ✅ absent from `git status --short`
+  10. **`ReportDtos.cs` unmodified** — ✅ absent
+  11. **`PatientReportPdfPort.cs` unmodified** — ✅ absent
+  12. **`FromHistory` unmodified** — ✅ `ReportContentBuilder.cs` as a whole is unmodified
+  13. **`tests/.../Common/Fakes/FakeSender.cs` unmodified** — ✅ absent. **This was the trap:** the obvious way to vary the flag in the test is to add a `WithProfileReportDto` helper to `FakeSender`, but that file is **not in the §C inventory**. Used the already-public generic `FakeSender.WithResponse<TResponse>(IRequest<TResponse>, TResponse)` instead, so no edit was needed
+  14. **Migration: NONE** — ✅
+  - `git diff --name-only` for this slice lists exactly the four files VG-08 permits (three production + one test)
+- **New UI strings:** **none.** The Arabic note `العينة أُخذت خارج المعمل` is pre-existing in `ReportContentBuilder.FromCombined` and is reused verbatim; this slice only makes the flag reach it.
+- **Deviation from the plan (and why):** the plan's §F describes the test as asserting on "the produced combined envelope's single line". The coordinator's output is a **JSON token string** (`ReportPrintEnvelope.CreateToken` → `ReportJson`), not a DTO, so the test **decodes the token** and asserts on the deserialized `CombinedReportLineDto`. This is a strictly stronger assertion: it proves the flag survives the actual serialization boundary the printing port consumes, not merely that the coordinator built the right object in memory.
+- **Commit hash:** 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · 5 `d61ea66` · 6 `65ca4a6` · 7 `9e5ad13` · Slice 8's own hash recorded below
+- **`git status --short` after the commit:** recorded below
+- **Anything noticed that the plan did not anticipate:**
+  - **The compiler, not review, caught the SD-12 risk.** Adding `null, null, bool` after `Culture` produced `CS1503: Argument 12: cannot convert from 'bool' to 'string?'` — the bool landed on `HighComment`. Exactly the failure mode SD-12 and C-8 describe, surfaced as a build error rather than a silent misbehaviour. Had the member been positional 12 rather than 13, the flag would have been silently absorbed as a comment.
+  - **`FakeSender.WithResponse<TResponse>` is the escape hatch** for varying an existing fake's payload without editing it. Worth remembering for any future slice whose §C entry excludes a shared fake.
+- **Deliberately NOT done:** no `ReportContentBuilder`/`ReportDtos`/`PatientReportPdfPort`/`FromHistory`/`FakeSender`/`Fakes.cs` edit (BR-A04-8/9, SD-13) · the patient PDF export and history report remain documented known gaps per OD-4 = Option B · the profile **preview** path (`ProfileEntryViewModel.cs:443` → `FromProfileReport`) left unchanged per BR-A04-9 · no migration · no push.
 
 ---
 
@@ -510,12 +539,12 @@ Every Arabic string introduced by this batch. **Backend strings are frozen and m
 
 | Field | Value |
 |---|---|
-| Slices complete | **7 of 8** |
-| Current slice | **Slice 8 — R-A04-S3 (in progress)** |
+| Slices complete | **8 of 8 — BATCH COMPLETE** |
+| Current slice | **none — all eight slices complete; Final Gate run** |
 | Baseline recorded at G0 | **YES — 2026-10-04, build 0/0; 507/507 · 1638/1638 · 284/284 · 13 passed + 2 skipped · 133/133** |
 | `BASELINE_HEAD` | **`55b4370f80cc428f477c281b1387c1680dd7d2f6`** (Step 0 — verified: descendant of `e765f87`, `src/`+`tests/` identical, branch `main`, tree clean) |
 | Build/test SDK | 8.0.425 via direct invocation (SD-22) — confirmed `8.0.425` |
-| Last commit made by the agent | 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · 5 `d61ea66` · 6 `65ca4a6` · 7 = see Execution Log |
+| Last commit made by the agent | 1 `e84c19c` · 2 `6e88e1f` · 3 `838ba95` · 4 `c8b9bd5` · 5 `d61ea66` · 6 `65ca4a6` · 7 `9e5ad13` · 8 = see Execution Log |
 | Pushes made by the agent | **0 (and it must stay 0 — SD-1)** |
 | Migrations created / edited / applied | **0** |
 | Files outside the `B-01.md` §C inventory modified | **0** |

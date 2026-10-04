@@ -1,7 +1,9 @@
+using System.Text.Json;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.CultureResults.Common;
 using TopLab.Application.Features.ProfileResults.Common;
 using TopLab.Application.Features.ReportProduction.Common;
+using TopLab.Application.Features.ProfileResults.Queries.GetProfileReport;
 using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Application.Tests.Common.Fakes;
 using Xunit;
@@ -130,5 +132,87 @@ public class ResultPrintCoordinatorTests
     }
 
     private static CombinedReportDto Combined() => new(1, "P", null,
-        [new CombinedReportLineDto(10, 1, "Test", "C", 0, "1.0", null, null, [], null)]);
-}
+            [new CombinedReportLineDto(10, 1, "Test", "C", 0, "1.0", null, null, [], null)]);
+
+        // =====================================================================
+        // R-A04-S3 (VG-08) — the specialised-profile printed report now carries the
+        // REAL IsTakenOutsideLab. BR-A04-7 / SD-12: it is the THIRTEENTH member of
+        // CombinedReportLineDto (ReportDtos.cs:71), not the tenth.
+        // =====================================================================
+
+        /// <summary>
+        /// Builds the single-line CombinedReportDto the coordinator produces for a profile
+        /// report. The flag is supplied positionally as the THIRTEENTH argument, after
+        /// Culture, LowComment and HighComment — mirroring ResultPrintCoordinator exactly, so
+        /// a future reordering cannot silently change what is asserted.
+        /// </summary>
+        private static ProfileReportDto ProfileReport(bool isTakenOutsideLab) => new(
+            10,
+            1,
+            "Patient",
+            null,
+            "بروتوكول茶叶",
+            null,
+            false,
+            false,
+            false,
+            [],
+            isTakenOutsideLab);
+
+        /// <summary>Decodes the token the coordinator handed to the printing port.</summary>
+        private static CombinedReportDto ProfileEnvelope(string token)
+        {
+            using var outer = JsonDocument.Parse(token);
+            var json = outer.RootElement.GetProperty("ReportJson").GetString()!;
+            return JsonSerializer.Deserialize<CombinedReportDto>(json)!;
+        }
+
+        [Fact]
+        public async Task ResultPrintCoordinator_ProfileReport_CarriesTheRealOutsideLabFlag()
+        {
+            var printing = new FakeReportPrintingService();
+            var sender = new FakeSender()
+                .WithCultureReport(10, 1)
+                .WithResponse(
+                new GetProfileReportQuery(10),
+                Result<ProfileReportDto>.Success(ProfileReport(isTakenOutsideLab: true)));
+            var coordinator = new ResultPrintCoordinator(sender, printing);
+
+            var outcome = await coordinator.PrintAsync(10, ResultPrintKind.ProfileReport);
+
+            Assert.True(outcome.Printed);
+            var line = Assert.Single(ProfileEnvelope(Assert.Single(printing.Tokens)).Lines);
+            Assert.True(line.IsTakenOutsideLab);
+        }
+
+        [Fact]
+        public async Task ResultPrintCoordinator_ProfileReport_FalseFlag_StaysFalse()
+        {
+            // The no-regression half: a profile whose sample was NOT taken outside the lab must
+            // still render false, so the fix did not simply hard-code the note on.
+            var printing = new FakeReportPrintingService();
+            var sender = new FakeSender()
+                .WithCultureReport(10, 1)
+                .WithResponse(
+                new GetProfileReportQuery(10),
+                Result<ProfileReportDto>.Success(ProfileReport(isTakenOutsideLab: false)));
+            var coordinator = new ResultPrintCoordinator(sender, printing);
+
+            var outcome = await coordinator.PrintAsync(10, ResultPrintKind.ProfileReport);
+
+            Assert.True(outcome.Printed);
+            var line = Assert.Single(ProfileEnvelope(Assert.Single(printing.Tokens)).Lines);
+            Assert.False(line.IsTakenOutsideLab);
+        }
+
+        [Fact]
+        public void ProfileReportDto_GainedTheMemberAsOptionalWithDefault()
+        {
+            // SD-13: the member must be OPTIONAL so the 10-argument positional construction in
+            // tests/.../Common/Fakes/FakeSender.cs:105-106 keeps compiling untouched. This fact
+            // constructs it positionally with ten arguments — exactly that call site.
+            var tenArgs = new ProfileReportDto(10, 1, "Patient", null, "بروتوكول", null, false, false, false, []);
+
+            Assert.False(tenArgs.IsTakenOutsideLab);
+        }
+    }

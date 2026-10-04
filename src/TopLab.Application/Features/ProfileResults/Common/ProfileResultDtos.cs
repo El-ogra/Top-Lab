@@ -60,7 +60,10 @@ public sealed record ProfileReportDto(
     bool IsReviewed,
     bool IsPrinted,
     bool IsDelivered,
-    IReadOnlyList<ProfileReportLineDto> Lines);
+    IReadOnlyList<ProfileReportLineDto> Lines,
+    // SD-13 / BR-A04-7: OPTIONAL with a default, so the positional 10-argument construction
+    // in tests/.../Common/Fakes/FakeSender.cs:105-106 keeps compiling untouched.
+    bool IsTakenOutsideLab = false);
 
 public sealed record ProfileAmendmentDto(
     int Id,

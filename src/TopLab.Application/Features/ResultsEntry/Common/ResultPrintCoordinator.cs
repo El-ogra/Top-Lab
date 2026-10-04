@@ -130,7 +130,14 @@ public sealed class ResultPrintCoordinator : IResultPrintCoordinator
                             l.FrozenRange.LowComment,
                             l.FrozenRange.HighComment,
                             l.FrozenRange.CapturedAtUtc)))],
-                null)]);
+                // SD-12: CombinedReportLineDto has FIFTEEN members and IsTakenOutsideLab is
+                // the THIRTEENTH (ReportDtos.cs:71). After the Culture null we add LowComment,
+                // HighComment and IsTakenOutsideLab — thirteen arguments in total. Passing a
+                // bool in the 10th position would NOT compile: that is CultureReportSummaryDto?.
+                null,
+                null,
+                null,
+                report.IsTakenOutsideLab)]);
 
         return Result<string>.Success(ReportPrintEnvelope.CreateToken(ReportPrintEnvelope.Combined, combined));
     }
