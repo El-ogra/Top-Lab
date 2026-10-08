@@ -76,6 +76,10 @@ public static class DependencyInjection
         // Invoice printing: itemized numbered statement of services (S-01 S3).
         services.AddScoped<IInvoicePrintingService, InvoicePrintingService>();
         services.AddScoped<IInvoicePdfWriter, InvoicePdfWriter>();
+        // Patient-envelope printing: shared envelope writer + barcode pipeline
+        // (Phase 1, REF-066 — owns all shared envelope infrastructure).
+        services.AddScoped<IEnvelopePrintingService, EnvelopePrintingService>();
+        services.AddScoped<IEnvelopePdfWriter, EnvelopePdfWriter>();
         // Visit-worksheet printing: per-visit bench sheet (S-01 S4).
         services.AddScoped<IWorkSheetPrintingService, WorkSheetPrintingService>();
         services.AddScoped<IWorkSheetPdfWriter, WorkSheetPdfWriter>();

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using TopLab.Application.Features.PatientEnvelope.Commands.PrintEnvelope;
 using TopLab.Application.Features.ResultsEntry.Commands.BulkPrint;
 using TopLab.Application.Features.ResultsEntry.Commands.ExportPatientReportPdf;
 using TopLab.Application.Features.ResultsEntry.Common;
@@ -49,6 +50,7 @@ public sealed class PatientResultSheetViewModel : ViewModelBase
 
         ExportPdfCommand = new AsyncRelayCommand(async (_, ct) => await ExportPdfAsync(ct));
         BulkPrintCommand = new AsyncRelayCommand(async (_, ct) => await OpenBulkPrintAsync(ct));
+        PrintEnvelopeCommand = new AsyncRelayCommand(async (_, ct) => await PrintEnvelopeAsync(ct));
     }
 
     public PatientResultSheetDto? PatientSheet
@@ -97,6 +99,7 @@ public sealed class PatientResultSheetViewModel : ViewModelBase
     public AsyncRelayCommand LoadCommand { get; }
     public AsyncRelayCommand ExportPdfCommand { get; }
     public AsyncRelayCommand BulkPrintCommand { get; }
+    public AsyncRelayCommand PrintEnvelopeCommand { get; }
 
     public async Task LoadAsync(int patientId, CancellationToken cancellationToken = default)
     {
@@ -192,5 +195,35 @@ public sealed class PatientResultSheetViewModel : ViewModelBase
 
         // Refresh sheet after bulk print
         await LoadAsync(PatientId, cancellationToken);
+    }
+
+    /// <summary>Phase 1 REF-066: print the patient envelope on the Envelope printer.</summary>
+    private async Task PrintEnvelopeAsync(CancellationToken cancellationToken)
+    {
+        if (PatientId == 0)
+        {
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new PrintEnvelopeCommand(PatientId), cancellationToken);
+            if (result.IsSuccess)
+            {
+                StatusMessage = "تم إرسال المظروف إلى الطابعة.";
+            }
+            else if (result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 }

@@ -12,6 +12,11 @@ public class InfrastructureRegistrationTests
 {
     private static ServiceProvider BuildProvider()
     {
+        return BuildServices().BuildServiceProvider();
+    }
+
+    private static ServiceCollection BuildServices()
+    {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -21,7 +26,7 @@ public class InfrastructureRegistrationTests
 
         var services = new ServiceCollection();
         services.AddInfrastructure(configuration);
-        return services.BuildServiceProvider();
+        return services;
     }
 
     [Fact]
@@ -49,6 +54,18 @@ public class InfrastructureRegistrationTests
         Assert.NotNull(service);
         Assert.NotNull(writer);
         Assert.NotNull(dispatcher);
+    }
+
+    [Fact]
+    public void AddInfrastructure_RegistersEnvelopePrintingPipeline()
+    {
+        // Presence-only: the envelope service activates with ILabPrintTextStore,
+        // which the Presentation composition root registers (workstation-local
+        // JSON store), so full activation is covered by the service tests' fakes.
+        var services = BuildServices();
+
+        Assert.Contains(services, d => d.ServiceType == typeof(IEnvelopePrintingService));
+        Assert.Contains(services, d => d.ServiceType == typeof(IEnvelopePdfWriter));
     }
 
     [Fact]
