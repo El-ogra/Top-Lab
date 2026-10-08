@@ -5,16 +5,19 @@
 ## A. Phase Identity
 
 - Handoff ID: `PH1-ENVELOPE-20261006-7F2A`
-- Exact filename: `Handoff_Phase1_DocumentFamilySharedEnvelopeWriter_20261006-140607_7F2A.md`
-- Exact path: `Docs/Target Handoff File/Handoff_Phase1_DocumentFamilySharedEnvelopeWriter_20261006-140607_7F2A.md`
+- Exact filename: `Handoff_Phase1_DocumentFamilySharedEnvelopeWriter_20261006-140607_7F2A_AMENDED.md`
+- Exact path: `Docs/Target Handoff File/Handoff_Phase1_DocumentFamilySharedEnvelopeWriter_20261006-140607_7F2A_AMENDED.md`
 - Creation timestamp (UTC): 2026-10-06 14:06:07
 - Phase number: 1
 - Phase title: Document family: the shared envelope writer
 - Number of functions in the phase: 5
 - Plan revision: 2
 - Planning status: `PHASE_PLANNING_READY_AUTONOMOUS_DECISIONS`
-- Revision note: Revision 2 — removes all non-plan content; the Handoff is now a
-  pure work-plan document, in conformance with the Planning Framework.
+- Revision note: Revision 2 — the standalone non-plan memo sections (blockquote,
+  Execution Prohibitions, Build Agent Entry Contract) were removed. Inline
+  agent-addressed guidance that carries acceptance force (e.g. "must NOT leak",
+  "MUST trace...", "Verification mandated") remains in the plan text and is
+  considered part of the plan substance.
 
 ---
 
@@ -282,7 +285,8 @@ Not applicable (decision is `NO_MIGRATION_REQUIRED`).
   positions.
 - `GetEnvelopeSettingsQuery` posture matches sibling `Get*Settings` queries
   (verified by build agent, cited in its report).
-- No migration files added; snapshot byte-identical to baseline.
+- No migration files added; snapshot byte-identical to baseline
+  (verified via `git diff --exit-code -- src/TopLab.Infrastructure/Persistence/Migrations/ApplicationDbContextModelSnapshot.cs` against the baseline, or an equivalent SHA-256 comparison).
 - `EnvelopeSettingsDto` shape documented as the REF-066 consumer contract
   (this handoff).
 
@@ -388,8 +392,8 @@ Not applicable (decision is `NO_MIGRATION_REQUIRED`).
    requires `طباعة ظرف` among its buttons; permission precedent for
    results-screen print actions = `ResultsEntryAccessPolicy.PrintResults`
    (used by `MarkResultPrinted`, `ExecuteBulkPrint`, `ExportPatientReportPdf`).
-   Exact Location: `PatientResultSheetView.xaml:82-88`,
-   `PatientResultSheetViewModel.cs:42-52,97-99`,
+   Exact Location: `src/TopLab.Presentation/Views/Patients/PatientResultSheetView.xaml:82-88`,
+   `src/TopLab.Presentation/ViewModels/Patients/PatientResultSheetViewModel.cs:42-52,97-99`,
    `ResultsEntry/Common/ResultsEntryAccessPolicy.cs`,
    `MarkResultPrintedCommand.cs:10`, `ExecuteBulkPrintCommand.cs:12`.
    Interpretation: add `PrintEnvelopeCommand` + `طباعة ظرف` button here.
@@ -440,7 +444,7 @@ IN SCOPE:
   pattern requires it.
 - Presentation: `PrintEnvelopeCommand` (AsyncRelayCommand) on
   `PatientResultSheetViewModel` + `طباعة ظرف` button in
-  `PatientResultSheetView.xaml` action row; error via `ResultErrorPresenter`.
+  `src/TopLab.Presentation/Views/Patients/PatientResultSheetView.xaml` action row; error via `ResultErrorPresenter`.
 - Tests: handler (NotFound/deleted/missing-settings/success-token),
   validator, `BuildTextLines` mapping (positions on/off, captions on/off,
   header modes), service failure paths (missing settings/assignment/labText),
@@ -490,8 +494,8 @@ OUT OF SCOPE / non-goals:
       deterministic; throws on invalid input (writers/services map to
       `Error.Unexpected`).
    d. `DependencyInjection.cs` (MODIFY): scoped writer + service.
-4. Presentation — `PatientResultSheetViewModel.cs` (MODIFY: command),
-   `PatientResultSheetView.xaml` (MODIFY: `طباعة ظرف` button).
+4. Presentation — `src/TopLab.Presentation/ViewModels/Patients/PatientResultSheetViewModel.cs` (MODIFY: command),
+   `src/TopLab.Presentation/Views/Patients/PatientResultSheetView.xaml` (MODIFY: `طباعة ظرف` button).
 5. Tests — Application handler/validator tests; Infrastructure writer-mapping
    + service + encoder tests; Presentation VM command test if the suite
    pattern covers VM commands.
@@ -719,7 +723,7 @@ Not applicable.
    returns zero files; Application `Features/` has no order-print folder;
    registration screen (UI-03 ordering flow) buttons are
    باركود/ورقة العمل/الإيصال/الفاتورة — no order-slip action.
-   Exact Location: negative greps; `PatientEditorView.xaml:45-48` (button
+   Exact Location: negative greps; `src/TopLab.Presentation/Views/Patients/PatientEditorView.xaml:45-48` (button
    row); PRD `UI-03` line 516 (button list ends with موافق, no order print).
    Interpretation: new document slice modeled on the receipt pair.
    Confidence: CONFIRMED.
@@ -743,7 +747,7 @@ Not applicable.
    ورقة العمل already; Blueprint P-07 trigger = "S-03 ordering, sample draw";
    P-06 trigger = "sample collection / ordering flow".
    Exact Location: PRD line 516; Blueprint lines 114-115;
-   `PatientEditorViewModel.cs:125-128` (print dispatch pattern
+   `src/TopLab.Presentation/ViewModels/Patients/PatientEditorViewModel.cs:125-128` (print dispatch pattern
    `PrintAsync(ct, kind)` with `"barcode"|"receipt"|...` arms at 1381-1383).
    Interpretation: add `طلب تحاليل` button + `"laborder"` arm beside them.
    Confidence: CONFIRMED (caption wording: autonomous, D.8).
@@ -799,8 +803,8 @@ OUT OF SCOPE / non-goals:
 3. Infrastructure — CREATE `LabOrderPdfWriter`, `LabOrderPrintingService`;
    barcode image via `BarcodeLabelRenderer` + `BarcodePngEncoder` (REF-066
    shared); MODIFY `DependencyInjection.cs`.
-4. Presentation — MODIFY `PatientEditorView.xaml` (button after الفاتورة) +
-   `PatientEditorViewModel.cs` (`PrintLabOrderCommand`, dispatch arm,
+4. Presentation — MODIFY `src/TopLab.Presentation/Views/Patients/PatientEditorView.xaml` (button after الفاتورة) +
+   `src/TopLab.Presentation/ViewModels/Patients/PatientEditorViewModel.cs` (`PrintLabOrderCommand`, dispatch arm,
    error presentation via existing pattern).
 5. Tests — per D.3; include empty-test-list behavior (slip still prints
    patient block + barcode with "لا تحاليل مطلوبة" line — decision 68-D).
@@ -848,7 +852,7 @@ Not applicable.
   with sibling print actions.
 - 68-D (autonomous): empty slip prints with `لا تحاليل مطلوبة` line rather
   than refusing. Rationale: matches worksheet empty-state idiom
-  (`لا تحاليل للزيارة`, `PatientResultSheetView.xaml:38`); a refusal would
+  (`لا تحاليل للزيارة`, `src/TopLab.Presentation/Views/Patients/PatientResultSheetView.xaml:38`); a refusal would
   invent lifecycle semantics.
 
 #### D.9 Function-level status
@@ -1037,8 +1041,9 @@ artifacts are transient documents computed live at print time.
    are denied by the existing authorization behavior (standing rule).
 6. No dead UI control: both new buttons are wired to live MediatR dispatches
    and covered by tests that fail if the wiring is removed.
-7. Full test suite green; no migration files added; snapshot byte-identical;
-   no changes outside the files listed in Section D.
+7. Full test suite green; no migration files added; snapshot byte-identical
+  (verified via `git diff --exit-code -- src/TopLab.Infrastructure/Persistence/Migrations/ApplicationDbContextModelSnapshot.cs` against the baseline, or an equivalent SHA-256 comparison);
+  no changes outside the files listed in Section D.
 8. Excluded machinery untouched: no online/portal, analyser-interface,
    multi-branch, SMS/e-mail/fax, or patient-card code paths.
 
