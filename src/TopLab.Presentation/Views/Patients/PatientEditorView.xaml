@@ -46,6 +46,7 @@
                 <Button Content="ورقة العمل" Margin="4" Padding="14,2" Command="{Binding PrintWorkSheetCommand}" />
                 <Button Content="الإيصال" Margin="4" Padding="14,2" Command="{Binding PrintReceiptCommand}" />
                 <Button Content="الفاتورة" Margin="4" Padding="14,2" Command="{Binding PrintInvoiceCommand}" />
+                <Button Content="طلب تحاليل" Margin="4" Padding="14,2" Command="{Binding PrintLabOrderCommand}" />
             </WrapPanel>
             <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="4,2" />
             <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="4,0" />

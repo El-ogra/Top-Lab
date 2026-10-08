@@ -80,6 +80,10 @@ public static class DependencyInjection
         // (Phase 1, REF-066 — owns all shared envelope infrastructure).
         services.AddScoped<IEnvelopePrintingService, EnvelopePrintingService>();
         services.AddScoped<IEnvelopePdfWriter, EnvelopePdfWriter>();
+        // Laboratory-order slip printing (Phase 1, REF-068 — consumes REF-066's
+        // barcode pipeline; routes to the Reports printer, decision 68-A).
+        services.AddScoped<ILabOrderPrintingService, LabOrderPrintingService>();
+        services.AddScoped<ILabOrderPdfWriter, LabOrderPdfWriter>();
         // Visit-worksheet printing: per-visit bench sheet (S-01 S4).
         services.AddScoped<IWorkSheetPrintingService, WorkSheetPrintingService>();
         services.AddScoped<IWorkSheetPdfWriter, WorkSheetPdfWriter>();

@@ -13,10 +13,12 @@ namespace TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
 /// ordered tests (joined to the catalog for the receipt-facing names), all of
 /// the patient's payment operations including voided rows (history must show
 /// them, flagged), and resolves the receiving-user display names.
+/// Public so the Phase 1 lab-order slice (REF-068) reuses the same line source
+/// instead of duplicating the visit-lines join.
 /// </summary>
-internal static class PatientBillingReader
+public static class PatientBillingReader
 {
-    internal static PatientAccountDto ReadAccount(IApplicationDbContext db, Patient patient)
+    public static PatientAccountDto ReadAccount(IApplicationDbContext db, Patient patient)
     {
         var chargedTests = ReadChargedTests(db, patient.Id.Value);
         var operations = ReadOperations(db, patient.Id.Value);

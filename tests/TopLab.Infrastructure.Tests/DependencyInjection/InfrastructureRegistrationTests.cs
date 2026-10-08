@@ -69,6 +69,16 @@ public class InfrastructureRegistrationTests
     }
 
     [Fact]
+    public void AddInfrastructure_RegistersLabOrderPrintingPipeline()
+    {
+        // Presence-only, same reason as the envelope pipeline above.
+        var services = BuildServices();
+
+        Assert.Contains(services, d => d.ServiceType == typeof(ILabOrderPrintingService));
+        Assert.Contains(services, d => d.ServiceType == typeof(ILabOrderPdfWriter));
+    }
+
+    [Fact]
     public void SecureEntityIdCodeGenerator_ProducesDistinctWellFormedCodes()
     {
         var generator = new SecureEntityIdCodeGenerator();

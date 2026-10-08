@@ -10,6 +10,7 @@ using TopLab.Application.Features.PatientBilling.Commands.PrintReceipt;
 using TopLab.Application.Features.PatientBilling.Commands.RecordPayment;
 using TopLab.Application.Features.PatientBilling.Commands.SettleAccountInFull;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
+using TopLab.Application.Features.PatientEnvelope.Commands.PrintLabOrder;
 using TopLab.Application.Features.PatientRegistration.Commands.AddCustomGroupToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.ApplyConditionDeltas;
 using TopLab.Application.Features.PatientRegistration.Commands.ApplyVisitDeltas;
@@ -126,6 +127,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
         PrintWorkSheetCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "worksheet"));
         PrintReceiptCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "receipt"));
         PrintInvoiceCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "invoice"));
+        PrintLabOrderCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "laborder"));
         AddTestToSelectionCommand = new RelayCommand(param =>
         {
             if (param is int testId)
@@ -447,6 +449,9 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public AsyncRelayCommand PrintReceiptCommand { get; }
 
     public AsyncRelayCommand PrintInvoiceCommand { get; }
+
+    /// <summary>Phase 1 REF-068: laboratory-order slip print action.</summary>
+    public AsyncRelayCommand PrintLabOrderCommand { get; }
 
     public RelayCommand AddTestToSelectionCommand { get; }
 
@@ -1381,6 +1386,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
                     "barcode" => await _mediator.Send(new PrintBarcodeCommand(_patientId.Value), cancellationToken),
                     "worksheet" => await _mediator.Send(new PrintWorkSheetCommand(_patientId.Value), cancellationToken),
                     "receipt" => await _mediator.Send(new PrintReceiptCommand(_patientId.Value), cancellationToken),
+                    "laborder" => await _mediator.Send(new PrintLabOrderCommand(_patientId.Value), cancellationToken),
                     _ => throw new InvalidOperationException($"Unknown print document '{document}'.")
                 };
 
