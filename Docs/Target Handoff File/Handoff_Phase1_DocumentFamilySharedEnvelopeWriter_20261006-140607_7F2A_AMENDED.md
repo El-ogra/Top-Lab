@@ -1,17 +1,5 @@
 # Phase Handoff — Phase 1: Document family: the shared envelope writer
 
-> This Phase Handoff is the authoritative execution input for ALL functions in Phase 1.
-> The Build Agent MUST read this entire document before making any project change.
-> The Build Agent MUST NOT replace this plan with a newly invented independent plan.
-> It may perform targeted verification against the current repository.
-> The Build Agent MUST process the functions in the exact order given in Section C,
-> one function at a time, fully verifying each before starting the next.
-> If the baseline is incompatible, the plan is stale, a material conflict exists,
-> or a generated migration conflicts with its Migration Contract, the Build Agent
-> MUST stop and report the appropriate blocked status.
-> A BLOCKED or skipped function does NOT halt the phase: the Build Agent proceeds
-> to the next function and the phase may complete as PHASE_PARTIALLY_COMPLETE.
-
 ---
 
 ## A. Phase Identity
@@ -23,8 +11,10 @@
 - Phase number: 1
 - Phase title: Document family: the shared envelope writer
 - Number of functions in the phase: 5
-- Plan revision: 1
+- Plan revision: 2
 - Planning status: `PHASE_PLANNING_READY_AUTONOMOUS_DECISIONS`
+- Revision note: Revision 2 — removes all non-plan content; the Handoff is now a
+  pure work-plan document, in conformance with the Planning Framework.
 
 ---
 
@@ -60,8 +50,7 @@
 - Historical-baseline note: this baseline is **historical** once the build
   agent creates commits; `git rev-parse HEAD` — not the hash above — is the
   truth for current state. If HEAD has moved to an incompatible state or the
-  files cited below no longer match, treat the plan as stale per the Entry
-  Contract (Section K).
+  files cited below no longer match, treat the plan as stale.
 
 ---
 
@@ -281,7 +270,7 @@ Shared-component note: REF-065 creates no shared component; it freezes the
 
 `NO_MIGRATION_REQUIRED` — tables, keys, seeds, and the `Envelope`
 printer-assignment row all exist in the baseline migration and snapshot
-(D.2 items 1, 3). The Build Agent MUST NOT create a migration for REF-065.
+(D.2 items 1, 3). No migration is part of the work for REF-065.
 
 #### D.6 Migration Contract
 
@@ -516,7 +505,7 @@ later functions consume without re-implementation.
 `NO_MIGRATION_REQUIRED` — envelope content derives from existing tables
 (`Patient`, `EnvelopeSettings`, `EnvelopePrintItemPositions`,
 `PrinterAssignment`, `SystemSettings`, `ExternalEntity`) plus workstation-local
-lab text. The Build Agent MUST NOT create a migration for REF-066.
+lab text. No migration is part of the work for REF-066.
 
 #### D.6 Migration Contract
 
@@ -678,8 +667,7 @@ renderer; creates nothing shared.
 #### D.5 Migration decision
 
 `NO_MIGRATION_REQUIRED` — in-memory image bytes on an existing document;
-no stored state changes. The Build Agent MUST NOT create a migration for
-REF-067.
+no stored state changes. No migration is part of the work for REF-067.
 
 #### D.6 Migration Contract
 
@@ -825,7 +813,7 @@ receipt/invoice, not the slip).
 #### D.5 Migration decision
 
 `NO_MIGRATION_REQUIRED` — transient document from existing rows; no stored
-state. The Build Agent MUST NOT create a migration for REF-068.
+state. No migration is part of the work for REF-068.
 
 #### D.6 Migration Contract
 
@@ -975,7 +963,7 @@ Shared-component note: consumes REF-066's `BarcodePayload.For`,
 #### D.5 Migration decision
 
 `NO_MIGRATION_REQUIRED` — DTOs frozen, payload computed in memory, no stored
-state. The Build Agent MUST NOT create a migration for REF-127.
+state. No migration is part of the work for REF-127.
 
 #### D.6 Migration Contract
 
@@ -1021,11 +1009,7 @@ Ordered list of migrations across all functions in the phase: **none**.
 | — | (no migration) | REF-068 | — |
 | — | (no migration) | REF-127 | — |
 
-Cross-function migration dependencies: none. Creation order for the Build
-Agent: create zero migrations; if `dotnet ef migrations add` reports a model
-difference, treat it per Section 10 EF Model Difference Rule (investigate
-drift — e.g., snapshot vs configuration — do NOT scaffold a migration to
-silence it) and report.
+Cross-function migration dependencies: none. No migration is created in this phase. If `dotnet ef migrations add` reports a model difference during implementation, the difference is a diagnostic signal to be investigated (drift — e.g., snapshot vs configuration), not a reason to scaffold a migration.
 
 Count confirmation: TASK INPUT expects 5 `NO_MIGRATION` / 0 `NEW_MIGRATION`;
 this plan delivers exactly 5 / 0 / 0 blocked. Difference explanation: none
@@ -1090,9 +1074,8 @@ No function is marked BLOCKED; no `MIGRATION_DECISION_BLOCKED` exists.
    build time, REF-067/068/127 barcode work degrades to text + explicit
    record; the phase still completes (no BLOCKED propagation without cause).
 6. **No migration discipline**: the strongest phase risk is a stray
-   scaffolded migration from EF drift noise. Mitigation: Section E + Entry
-   Contract forbid it; any `ef migrations add` output must be investigated,
-   not committed.
+   scaffolded migration from EF drift noise. Mitigation: Section E;
+   any `ef migrations add` output is investigated as drift, not committed.
 
 ---
 
@@ -1116,52 +1099,3 @@ No function is marked BLOCKED; no `MIGRATION_DECISION_BLOCKED` exists.
 | 14 | Baseline truth | HEAD `7cd2585`, clean tree, 14 migrations, latest `20261002002546_AddAntibioticMasterFields`, EF 8.0.30, net8.0 |
 | 15 | Static preview + referral notes | `EnvelopeSettingsView.xaml:83-88`; `ReferralNameResolver.cs:7-15`; `PatientRegistrationDtos.cs:85-86`; `Patient.cs:13-37` |
 
----
-
-## J. Execution Prohibitions
-
-While executing this phase, the Build Agent MUST NOT:
-
-- create, modify, or delete any EF migration, the model snapshot, or seed
-  data in configurations (historical immutability; Section E = zero);
-- modify the online results portal, analyser interface, multi-branch scope,
-  or SMS/e-mail/fax sending (excluded machinery — none exists; none may be
-  introduced);
-- modify patient-card printing (excluded product surface);
-- modify report, worksheet, price-list, custom-group, or banded-monitor
-  writers/services except where Section D explicitly names a file;
-- modify `BarcodeService`, `BarcodeLabelRenderer`, or the REF-037 tube-label
-  path (read-only consumption);
-- modify the settings editor, validator ranges, seed values, or unrelated
-  ViewModels/commands/queries;
-- add NuGet packages or change pinned versions (`Directory.Packages.props`
-  is frozen for this phase);
-- commit, push, pull, merge, rebase, reset, checkout/switch, stash, or clean
-  (no repository mutations beyond working-tree file edits for the plan);
-- invent a new printer output type, lab-text scope, or document routing rule
-  beyond Sections D/E (autonomous decisions above are the closed list —
-  anything else stops per Section K).
-
----
-
-## K. Build Agent Entry Contract (MANDATORY)
-
-> «This Phase Handoff is the authoritative execution input for ALL functions
-> in Phase 1. The Build Agent MUST read this entire document before making
-> any project change. The Build Agent MUST NOT replace this plan with a
-> newly invented independent plan. It may perform targeted verification
-> against the current repository. The Build Agent MUST process the functions
-> in the exact order given in Section C, one function at a time, fully
-> verifying each before starting the next. If the baseline is incompatible,
-> the plan is stale, a material conflict exists, or a generated migration
-> conflicts with its Migration Contract, the Build Agent MUST stop and
-> report the appropriate blocked status. A BLOCKED or skipped function does
-> NOT halt the phase: the Build Agent proceeds to the next function and the
-> phase may complete as PHASE_PARTIALLY_COMPLETE.»
-
-Baseline-compatibility check (first action in build session): confirm branch
-`main`, `git rev-parse HEAD` lineage from `7cd2585`, 14 migrations with latest
-`20261002002546_AddAntibioticMasterFields`, and the absence of any
-`Envelope*PdfWriter` / `IEnvelopePrintingService` / `PrintEnvelopeCommand` /
-`PrintLabOrderCommand` symbols (if a prior session already created them, this
-plan is stale — stop and report).
