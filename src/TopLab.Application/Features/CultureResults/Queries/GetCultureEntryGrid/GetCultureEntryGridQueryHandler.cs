@@ -34,7 +34,7 @@ public sealed class GetCultureEntryGridQueryHandler : IRequestHandler<GetCulture
         var saved = _db.Set<CultureAntibioticResult>().Where(x => x.PatientTestId.Value == pt.Id.Value).ToDictionary(x => x.AntibioticId.Value);
         var attachedIds = _db.Set<CultureAntibioticAttachment>().Where(x => x.TestId.Value == test.Id.Value).Select(x => x.AntibioticId.Value).ToHashSet();
         var antibiotics = _db.Set<Antibiotic>().Where(x => attachedIds.Contains(x.Id.Value)).ToList();
-        var rows = antibiotics.Where(x => CultureAntibioticDisplay.IsDisplayable(x.IsPregnancyFlagged, x.IsChildrenFlagged, pregnant, child) || saved.ContainsKey(x.Id.Value))
+        var rows = antibiotics.Where(x => CultureAntibioticDisplay.IsDisplayable(x.IsPregnancyFlagged, x.IsChildrenFlagged, pregnant, child))
             .OrderBy(x => x.Id.Value).Select(x => { saved.TryGetValue(x.Id.Value, out var item); return new CultureSensitivityRowDto(item?.Id.Value, x.Id.Value, x.Name, item is null ? null : (int?)item.SensitivityCategory, x.IsPregnancyFlagged, x.IsChildrenFlagged, item?.InhibitionZoneMm); }).ToList();
         var header = _db.Set<CultureResult>().FirstOrDefault(x => x.PatientTestId.Value == pt.Id.Value);
         var micro = _db.Set<CultureMicroscopy>().FirstOrDefault(x => x.PatientTestId.Value == pt.Id.Value);

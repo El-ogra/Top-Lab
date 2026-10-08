@@ -23,8 +23,7 @@ public class CultureResultQueryHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Collection(result.Value!.Rows,
-            row => Assert.Equal(1, row.AntibioticId),
-            row => { Assert.Equal(2, row.AntibioticId); Assert.Equal(10, row.CultureAntibioticResultId); });
+            row => Assert.Equal(1, row.AntibioticId));
     }
 
     [Fact]
