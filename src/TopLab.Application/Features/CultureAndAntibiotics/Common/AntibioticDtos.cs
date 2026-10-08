@@ -6,7 +6,8 @@ public sealed record AntibioticDto(
     bool IsPregnancyFlagged,
     bool IsChildrenFlagged,
     string? Symbol = null,
-    string? ScientificName = null);
+    string? ScientificName = null,
+    string? CommercialName = null);
 
 public sealed record AttachedAntibioticDto(
     int AntibioticId,
@@ -14,7 +15,8 @@ public sealed record AttachedAntibioticDto(
     bool IsPregnancyFlagged,
     bool IsChildrenFlagged,
     string? Symbol = null,
-    string? ScientificName = null);
+    string? ScientificName = null,
+    string? CommercialName = null);
 
 public sealed record CultureAntibioticListDto(
     int TestId,

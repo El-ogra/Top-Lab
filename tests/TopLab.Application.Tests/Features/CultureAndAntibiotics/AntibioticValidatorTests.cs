@@ -50,6 +50,32 @@ public class AntibioticValidatorTests
     }
 
     [Fact]
+    public void Create_CommercialNameTooLong_Fails()
+    {
+        var result = _create.TestValidate(
+            new CreateAntibioticCommand("Amoxicillin", false, false, null, null, new string('x', 151)));
+        result.ShouldHaveValidationErrorFor(x => x.CommercialName);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void Create_CommercialNameEmptyOrNull_Succeeds(string? commercialName)
+    {
+        var result = _create.TestValidate(
+            new CreateAntibioticCommand("Amoxicillin", false, false, null, null, commercialName));
+        result.ShouldNotHaveValidationErrorFor(x => x.CommercialName);
+    }
+
+    [Fact]
+    public void Update_CommercialNameTooLong_Fails()
+    {
+        var result = _update.TestValidate(
+            new UpdateAntibioticCommand(1, "Amoxicillin", false, false, null, null, new string('x', 151)));
+        result.ShouldHaveValidationErrorFor(x => x.CommercialName);
+    }
+
+    [Fact]
     public void Update_IdZero_Fails()
     {
         var result = _update.TestValidate(new UpdateAntibioticCommand(0, "X", false, false));

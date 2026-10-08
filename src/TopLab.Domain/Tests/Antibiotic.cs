@@ -17,15 +17,20 @@ public sealed class Antibiotic : Entity<AntibioticId>
     /// <summary>W-02 S10 (WP-14): scientific name printed in the sensitivity table.</summary>
     public string? ScientificName { get; private set; }
 
+    /// <summary>Phase 1 REF-092: commercial (trade) name from the reference master window.</summary>
+    public string? CommercialName { get; private set; }
+
     public const int MaxSymbolLength = 10;
 
     public const int MaxScientificNameLength = 150;
+
+    public const int MaxCommercialNameLength = 150;
 
     private Antibiotic()
     {
     }
 
-    private Antibiotic(AntibioticId id, string name, bool isPregnancyFlagged, bool isChildrenFlagged, string? symbol, string? scientificName)
+    private Antibiotic(AntibioticId id, string name, bool isPregnancyFlagged, bool isChildrenFlagged, string? symbol, string? scientificName, string? commercialName)
         : base(id)
     {
         Name = name;
@@ -33,19 +38,20 @@ public sealed class Antibiotic : Entity<AntibioticId>
         IsChildrenFlagged = isChildrenFlagged;
         Symbol = symbol;
         ScientificName = scientificName;
+        CommercialName = commercialName;
     }
 
-    public static Antibiotic Create(AntibioticId id, string name, bool isPregnancyFlagged = false, bool isChildrenFlagged = false, string? symbol = null, string? scientificName = null)
+    public static Antibiotic Create(AntibioticId id, string name, bool isPregnancyFlagged = false, bool isChildrenFlagged = false, string? symbol = null, string? scientificName = null, string? commercialName = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new ArgumentException("Name is required.", nameof(name));
         }
 
-        return new Antibiotic(id, name.Trim(), isPregnancyFlagged, isChildrenFlagged, Normalize(symbol, MaxSymbolLength, nameof(symbol)), Normalize(scientificName, MaxScientificNameLength, nameof(scientificName)));
+        return new Antibiotic(id, name.Trim(), isPregnancyFlagged, isChildrenFlagged, Normalize(symbol, MaxSymbolLength, nameof(symbol)), Normalize(scientificName, MaxScientificNameLength, nameof(scientificName)), Normalize(commercialName, MaxCommercialNameLength, nameof(commercialName)));
     }
 
-    public void Update(string name, bool isPregnancyFlagged, bool isChildrenFlagged, string? symbol = null, string? scientificName = null)
+    public void Update(string name, bool isPregnancyFlagged, bool isChildrenFlagged, string? symbol = null, string? scientificName = null, string? commercialName = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -57,6 +63,7 @@ public sealed class Antibiotic : Entity<AntibioticId>
         IsChildrenFlagged = isChildrenFlagged;
         Symbol = Normalize(symbol, MaxSymbolLength, nameof(symbol));
         ScientificName = Normalize(scientificName, MaxScientificNameLength, nameof(scientificName));
+        CommercialName = Normalize(commercialName, MaxCommercialNameLength, nameof(commercialName));
     }
 
     private static string? Normalize(string? value, int maxLength, string paramName)

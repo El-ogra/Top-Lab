@@ -8,8 +8,7 @@ using TopLab.Presentation.Common.ErrorPresentation;
 namespace TopLab.Presentation.ViewModels.Lab;
 
 /// <summary>
-/// Antibiotic editor dialog VM (S-02 Slice 5): Name + the two flags only
-/// (no Abbreviation/ScientificName/SensitivityCategory exists in code).
+/// Antibiotic editor dialog VM: Name + Symbol + ScientificName + CommercialName + the two flags.
 /// </summary>
 public sealed class AntibioticEditorViewModel : ViewModelBase
 {
@@ -23,6 +22,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
     private bool _isChildrenFlagged;
     private string? _symbol;
     private string? _scientificName;
+    private string? _commercialName;
     private string _errorMessage = string.Empty;
     private bool _isBusy;
 
@@ -39,6 +39,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
     public bool IsChildrenFlagged { get => _isChildrenFlagged; set => SetProperty(ref _isChildrenFlagged, value); }
     public string? Symbol { get => _symbol; set => SetProperty(ref _symbol, value); }
     public string? ScientificName { get => _scientificName; set => SetProperty(ref _scientificName, value); }
+    public string? CommercialName { get => _commercialName; set => SetProperty(ref _commercialName, value); }
     public string ErrorMessage { get => _errorMessage; private set => SetProperty(ref _errorMessage, value); }
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
 
@@ -53,6 +54,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
         IsChildrenFlagged = false;
         Symbol = null;
         ScientificName = null;
+        CommercialName = null;
     }
 
     public void InitializeEdit(AntibioticDto dto)
@@ -64,6 +66,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
         IsChildrenFlagged = dto.IsChildrenFlagged;
         Symbol = dto.Symbol;
         ScientificName = dto.ScientificName;
+        CommercialName = dto.CommercialName;
     }
 
     public async Task<bool> SaveAsync()
@@ -76,7 +79,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
             {
                 var result = await _mediator.Send(new CreateAntibioticCommand(
                     Name.Trim(), IsPregnancyFlagged, IsChildrenFlagged,
-                    BlankToNull(Symbol), BlankToNull(ScientificName)));
+                    BlankToNull(Symbol), BlankToNull(ScientificName), BlankToNull(CommercialName)));
                 if (!result.IsSuccess)
                 {
                     ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;
@@ -89,7 +92,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
             {
                 var result = await _mediator.Send(new UpdateAntibioticCommand(
                     _editingId, Name.Trim(), IsPregnancyFlagged, IsChildrenFlagged,
-                    BlankToNull(Symbol), BlankToNull(ScientificName)));
+                    BlankToNull(Symbol), BlankToNull(ScientificName), BlankToNull(CommercialName)));
                 if (!result.IsSuccess)
                 {
                     ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;

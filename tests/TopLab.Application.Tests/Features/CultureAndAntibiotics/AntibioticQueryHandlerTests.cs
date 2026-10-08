@@ -156,4 +156,23 @@ public class AntibioticQueryHandlerTests
         Assert.Equal(ErrorType.Validation, result.Error!.Type);
         Assert.Equal("التحليل المحدد ليس مزرعة.", result.Error.Message);
     }
+
+    [Fact]
+    public async Task GetAntibiotics_And_GetCultureAntibiotics_ProjectCommercialName()
+    {
+        var db = new FakeApplicationDbContext();
+        db.Add(BuildCultureTest(1));
+        db.Add(Antibiotic.Create(AntibioticId.Create(10), "Amoxicillin", commercialName: "Amoxil"));
+        db.Add(new CultureAntibioticAttachment(TestId.Create(1), AntibioticId.Create(10)));
+
+        var master = await new GetAntibioticsQueryHandler(db).Handle(
+            new GetAntibioticsQuery(null), CancellationToken.None);
+        Assert.True(master.IsSuccess);
+        Assert.Equal("Amoxil", Assert.Single(master.Value!).CommercialName);
+
+        var attached = await new GetCultureAntibioticsQueryHandler(db).Handle(
+            new GetCultureAntibioticsQuery(1), CancellationToken.None);
+        Assert.True(attached.IsSuccess);
+        Assert.Equal("Amoxil", Assert.Single(attached.Value!.Antibiotics).CommercialName);
+    }
 }

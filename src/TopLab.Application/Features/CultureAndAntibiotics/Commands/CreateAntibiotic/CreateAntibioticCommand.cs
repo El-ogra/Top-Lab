@@ -9,7 +9,8 @@ public sealed record CreateAntibioticCommand(
     bool IsPregnancyFlagged,
     bool IsChildrenFlagged,
     string? Symbol = null,
-    string? ScientificName = null)
+    string? ScientificName = null,
+    string? CommercialName = null)
     : IRequest<Result<int>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

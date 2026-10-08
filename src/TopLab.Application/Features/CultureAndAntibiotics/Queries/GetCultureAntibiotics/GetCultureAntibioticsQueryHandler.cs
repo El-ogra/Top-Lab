@@ -56,7 +56,8 @@ public sealed class GetCultureAntibioticsQueryHandler
                     ab.IsPregnancyFlagged,
                     ab.IsChildrenFlagged,
                     ab.Symbol,
-                    ab.ScientificName);
+                    ab.ScientificName,
+                    ab.CommercialName);
             })
             .ToList();
 

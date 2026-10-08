@@ -34,7 +34,7 @@ public sealed class UpdateAntibioticCommandHandler
 
         try
         {
-            antibiotic.Update(trimmed, request.IsPregnancyFlagged, request.IsChildrenFlagged, request.Symbol, request.ScientificName);
+            antibiotic.Update(trimmed, request.IsPregnancyFlagged, request.IsChildrenFlagged, request.Symbol, request.ScientificName, request.CommercialName);
         }
         catch (ArgumentException ex)
         {

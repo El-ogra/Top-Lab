@@ -94,4 +94,75 @@ public class AntibioticMasterFieldsTests
         Assert.Equal("AMX", dto.Symbol);
         Assert.Equal("Amoxicillin trihydrate", dto.ScientificName);
     }
+
+    [Fact]
+    public async Task Antibiotic_Create_PersistsCommercialName()
+    {
+        var db = new FakeApplicationDbContext();
+
+        var result = await new CreateAntibioticCommandHandler(db).Handle(
+            new CreateAntibioticCommand("Amoxicillin", false, false, "AMX", "Amoxicillin trihydrate", "Amoxil"),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var row = Assert.Single(db.Set<TopLab.Domain.Tests.Antibiotic>());
+        Assert.Equal("Amoxil", row.CommercialName);
+    }
+
+    [Fact]
+    public async Task Antibiotic_Update_RoundTripsCommercialName()
+    {
+        var db = new FakeApplicationDbContext();
+        var created = await new CreateAntibioticCommandHandler(db).Handle(
+            new CreateAntibioticCommand("Amoxicillin", false, false),
+            CancellationToken.None);
+        Assert.True(created.IsSuccess);
+
+        var updated = await new UpdateAntibioticCommandHandler(db).Handle(
+            new UpdateAntibioticCommand(created.Value, "Amoxicillin", false, false, null, null, "Amoxil"),
+            CancellationToken.None);
+
+        Assert.True(updated.IsSuccess);
+        var row = Assert.Single(db.Set<TopLab.Domain.Tests.Antibiotic>());
+        Assert.Equal("Amoxil", row.CommercialName);
+    }
+
+    [Fact]
+    public async Task Antibiotic_CommercialNameDefaultsToNull()
+    {
+        var db = new FakeApplicationDbContext();
+
+        var result = await new CreateAntibioticCommandHandler(db).Handle(
+            new CreateAntibioticCommand("Penicillin", false, false),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var row = Assert.Single(db.Set<TopLab.Domain.Tests.Antibiotic>());
+        Assert.Null(row.CommercialName);
+    }
+
+    [Fact]
+    public async Task Antibiotic_RejectsCommercialNameOver150()
+    {
+        var result = await new CreateAntibioticCommandValidator().ValidateAsync(
+            new CreateAntibioticCommand("Amoxicillin", false, false, null, null, new string('x', 151)));
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public async Task GetAntibiotics_ReturnsCommercialName()
+    {
+        var db = new FakeApplicationDbContext();
+        await new CreateAntibioticCommandHandler(db).Handle(
+            new CreateAntibioticCommand("Amoxicillin", false, false, "AMX", "Amoxicillin trihydrate", "Amoxil"),
+            CancellationToken.None);
+
+        var result = await new GetAntibioticsQueryHandler(db).Handle(
+            new GetAntibioticsQuery(null), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var dto = Assert.Single(result.Value!);
+        Assert.Equal("Amoxil", dto.CommercialName);
+    }
 }

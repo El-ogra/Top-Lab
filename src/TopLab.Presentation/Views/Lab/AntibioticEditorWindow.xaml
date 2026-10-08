@@ -17,6 +17,8 @@
             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
             <TextBlock Text="الاسم العلمي:" Margin="0,0,0,2" />
             <TextBox Text="{Binding ScientificName, UpdateSourceTrigger=PropertyChanged}" MaxLength="150" Margin="0,0,0,12" />
+            <TextBlock Text="الاسم التجاري:" Margin="0,0,0,2" />
+            <TextBox Text="{Binding CommercialName, UpdateSourceTrigger=PropertyChanged}" MaxLength="150" Margin="0,0,0,12" />
             <TextBlock Text="الرمز:" Margin="0,0,0,2" />
             <TextBox Text="{Binding Symbol, UpdateSourceTrigger=PropertyChanged}" MaxLength="10" Margin="0,0,0,12" />
             <CheckBox Content="معلَّم للحوامل" IsChecked="{Binding IsPregnancyFlagged}" Margin="0,0,0,8" />

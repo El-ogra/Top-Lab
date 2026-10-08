@@ -16,5 +16,7 @@ public sealed class UpdateAntibioticCommandValidator : AbstractValidator<UpdateA
             .MaximumLength(10).WithMessage("الرمز يجب ألا يتجاوز 10 أحرف.");
         RuleFor(x => x.ScientificName)
             .MaximumLength(150).WithMessage("الاسم العلمي يجب ألا يتجاوز 150 حرفًا.");
+        RuleFor(x => x.CommercialName)
+            .MaximumLength(150).WithMessage("الاسم التجاري يجب ألا يتجاوز 150 حرفًا.");
     }
 }

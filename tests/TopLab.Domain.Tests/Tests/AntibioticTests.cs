@@ -100,4 +100,44 @@ public class AntibioticTests
 
         Assert.Equal(AntibioticId.Create(42), a.Id);
     }
+
+    [Fact]
+    public void Create_StoresCommercialName()
+    {
+        var a = Antibiotic.Create(AntibioticId.Create(1), "Amoxicillin", commercialName: "  Amoxil  ");
+
+        Assert.Equal("Amoxil", a.CommercialName);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Create_CommercialNameBlank_NormalisesToNull(string? commercialName)
+    {
+        var a = Antibiotic.Create(AntibioticId.Create(1), "Amoxicillin", commercialName: commercialName);
+
+        Assert.Null(a.CommercialName);
+    }
+
+    [Fact]
+    public void Create_CommercialNameOver150_Throws()
+    {
+        var ex = Assert.Throws<ArgumentException>(() =>
+            Antibiotic.Create(AntibioticId.Create(1), "Amoxicillin", commercialName: new string('x', 151)));
+
+        Assert.Equal("commercialName", ex.ParamName);
+    }
+
+    [Fact]
+    public void Update_SetsAndClearsCommercialName()
+    {
+        var a = Antibiotic.Create(AntibioticId.Create(1), "Amoxicillin");
+
+        a.Update("Amoxicillin", isPregnancyFlagged: false, isChildrenFlagged: false, commercialName: "Amoxil");
+        Assert.Equal("Amoxil", a.CommercialName);
+
+        a.Update("Amoxicillin", isPregnancyFlagged: false, isChildrenFlagged: false, commercialName: "   ");
+        Assert.Null(a.CommercialName);
+    }
 }
