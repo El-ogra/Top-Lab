@@ -5,6 +5,7 @@ using TopLab.Application.Features.PatientBilling.Common;
 using TopLab.Application.Features.SystemAndPrintSettings.Common;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Settings;
+using TopLab.Infrastructure.Barcode;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Printing;
 using TopLab.Infrastructure.Tests.Common;
@@ -73,7 +74,7 @@ public class InvoicePrintingServiceTests
         var db = new ApplicationDbContext(InMemoryContextFactory.Create());
         db.Database.EnsureCreated();
         var dispatcher = new RecordingDispatcher();
-        var service = new InvoicePrintingService(db, new InvoicePdfWriter(), new FakeLabPrintTextStore(), dispatcher);
+        var service = new InvoicePrintingService(db, new InvoicePdfWriter(new BarcodeLabelRenderer()), new FakeLabPrintTextStore(), dispatcher);
         return (service, dispatcher, db);
     }
 
@@ -162,7 +163,7 @@ public class InvoicePrintingServiceTests
     {
         var labText = new LabPrintTextDto("مختبر الشفاء", "شارع الجمهورية", "01000000000", "Arial", 12);
 
-        var lines = InvoicePdfWriter.BuildTextLines(Dto(), labText);
+        var lines = InvoicePdfWriter.BuildTextLines(Dto(), labText, "100");
 
         Assert.Contains("مختبر الشفاء", lines.Header);
         Assert.Contains("رقم الفاتورة: 42", lines.InvoiceTitle);
@@ -173,6 +174,7 @@ public class InvoicePrintingServiceTests
         Assert.Equal("100.00 L.E.", item.Price);
         Assert.Contains("إجمالي التحاليل: 100.00 L.E.", lines.Totals);
         Assert.Contains("الباقي: 50.00 L.E.", lines.Totals);
+        Assert.Equal("100", lines.BarcodePayload);
     }
 
     [Fact]
@@ -181,8 +183,29 @@ public class InvoicePrintingServiceTests
         var preview = Dto() with { InvoiceNumber = null, IssuedAtUtc = null };
         var labText = new LabPrintTextDto("مختبر الشفاء", string.Empty, string.Empty, string.Empty, 0);
 
-        var lines = InvoicePdfWriter.BuildTextLines(preview, labText);
+        var lines = InvoicePdfWriter.BuildTextLines(preview, labText, "7");
 
         Assert.Equal("معاينة — بدون رقم", lines.InvoiceTitle);
+        Assert.Equal("7", lines.BarcodePayload);
+    }
+
+    [Fact]
+    public async Task PrintInvoiceAsync_MissingSystemSettings_ReturnsUnexpected()
+    {
+        var (service, _, db) = Build();
+        db.Set<SystemSettings>().RemoveRange(db.Set<SystemSettings>().ToList());
+        db.SaveChanges();
+        try
+        {
+            var result = await service.PrintInvoiceAsync(InvoicePrintEnvelope.CreateToken(Dto()), CancellationToken.None);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorType.Unexpected, result.Error!.Type);
+            Assert.Equal("سجل إعدادات النظام مفقود.", result.Error.Message);
+        }
+        finally
+        {
+            db.Dispose();
+        }
     }
 }

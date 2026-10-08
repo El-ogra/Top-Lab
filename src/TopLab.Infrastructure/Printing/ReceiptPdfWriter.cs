@@ -8,6 +8,7 @@ using TopLab.Application.Features.PatientBilling.Common;
 using TopLab.Application.Features.SystemAndPrintSettings.Common;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Settings;
+using TopLab.Infrastructure.Barcode;
 
 namespace TopLab.Infrastructure.Printing;
 
@@ -19,6 +20,8 @@ namespace TopLab.Infrastructure.Printing;
 /// </summary>
 public sealed class ReceiptPdfWriter : IReceiptPdfWriter
 {
+    private readonly BarcodeLabelRenderer _renderer;
+
     static ReceiptPdfWriter()
     {
         // Community-eligible reconfirmed 2026-09-29 by owner decision; revisit before commercial distribution.
@@ -30,17 +33,24 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
         Settings.UseSystemFonts = true;
     }
 
+    public ReceiptPdfWriter(BarcodeLabelRenderer renderer)
+    {
+        _renderer = renderer;
+    }
+
     public Task WritePdfAsync(
         string absolutePath,
         ReceiptDto receipt,
         ReceiptSettings receiptSettings,
         LabPrintTextDto labText,
+        string barcodePayload,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(absolutePath);
         ArgumentNullException.ThrowIfNull(receipt);
         ArgumentNullException.ThrowIfNull(receiptSettings);
         ArgumentNullException.ThrowIfNull(labText);
+        ArgumentException.ThrowIfNullOrWhiteSpace(barcodePayload);
 
         var directory = Path.GetDirectoryName(absolutePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -48,7 +58,7 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
             throw new DirectoryNotFoundException($"Directory not found: {directory}");
         }
 
-        var lines = BuildTextLines(receipt, receiptSettings, labText);
+        var lines = BuildTextLines(receipt, receiptSettings, labText, barcodePayload);
 #pragma warning disable CA1416 // Windows-only WPF app
         var fontFamily = ArabicFontResolver.Resolve(labText.FontFamily);
 #pragma warning restore CA1416
@@ -58,6 +68,20 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
         if (File.Exists(absolutePath))
         {
             throw new IOException($"File already exists: {absolutePath}");
+        }
+
+        // Phase 1 REF-127: scannable identifier barcode via the shared pipeline.
+        // On renderer/encoder failure the readable identifier line below still
+        // prints (envelope fallback idiom, decision 66-A).
+        byte[]? barcodePng = null;
+        try
+        {
+            var label = _renderer.Render(lines.BarcodePayload);
+            barcodePng = BarcodePngEncoder.Encode(label.Pixels, label.Width, label.Height);
+        }
+        catch
+        {
+            barcodePng = null;
         }
 
         Document
@@ -94,6 +118,18 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
                             {
                                 column.Item().Text(line).AlignRight();
                             }
+
+                            // REF-127: barcode block immediately after the patient
+                            // identification lines (cashier scan-first workflow,
+                            // decision 127-B). The payload is the pure identifier
+                            // (digits/Latin), bidi-neutral inside the RTL layout.
+                            if (barcodePng is not null)
+                            {
+                                var png = barcodePng;
+                                column.Item().PaddingTop(6).Width(170).Height(43).Image(png);
+                            }
+
+                            column.Item().Text(lines.BarcodePayload).AlignRight();
 
                             if (lines.Items.Count > 0)
                             {
@@ -145,16 +181,20 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
     /// <summary>
     /// Pure content mapping (no PDF dependency): every line the document renders,
     /// in order. Unit-testable proof that patient/test/totals data — including
-    /// Arabic names — flows into the document verbatim.
+    /// Arabic names — flows into the document verbatim. <c>barcodePayload</c> is
+    /// the identifier-rule payload (Phase 1 REF-127) drawn as a scannable image
+    /// plus the readable line after the patient block.
     /// </summary>
     public static ReceiptTextLines BuildTextLines(
         ReceiptDto receipt,
         ReceiptSettings receiptSettings,
-        LabPrintTextDto labText)
+        LabPrintTextDto labText,
+        string barcodePayload)
     {
         ArgumentNullException.ThrowIfNull(receipt);
         ArgumentNullException.ThrowIfNull(receiptSettings);
         ArgumentNullException.ThrowIfNull(labText);
+        ArgumentException.ThrowIfNullOrWhiteSpace(barcodePayload);
 
         var header = new List<string>();
         // HeaderFooterMode.Images has no image-asset pipeline in this slice, so it
@@ -211,7 +251,7 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
             ? $"موعد الاستلام: {receiptSettings.PickupTimeDefault.Value.ToString("HH:mm", CultureInfo.InvariantCulture)}"
             : null;
 
-        return new ReceiptTextLines(header, patient, items, totals, pickup, new List<string>());
+        return new ReceiptTextLines(header, patient, items, totals, pickup, new List<string>(), barcodePayload);
     }
 
     private static string FormatMoney(decimal amount, string currency)
@@ -227,5 +267,6 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
         IReadOnlyList<ReceiptItemLine> Items,
         IReadOnlyList<string> Totals,
         string? Pickup,
-        IReadOnlyList<string> Footer);
+        IReadOnlyList<string> Footer,
+        string BarcodePayload);
 }

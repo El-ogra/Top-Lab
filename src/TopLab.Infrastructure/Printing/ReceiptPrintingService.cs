@@ -2,6 +2,7 @@ using System.Text.Json;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.PatientBilling.Common;
+using TopLab.Application.Features.PatientEnvelope.Common;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Settings;
 
@@ -67,6 +68,13 @@ public sealed class ReceiptPrintingService : IReceiptPrintingService
                 return Result.Failure(Error.Unexpected("سجل إعدادات الإيصال مفقود."));
             }
 
+            // Phase 1 REF-127: identifier selector for the receipt barcode.
+            var systemSettings = _db.Set<SystemSettings>().SingleOrDefault(s => s.Id == 1);
+            if (systemSettings is null)
+            {
+                return Result.Failure(Error.Unexpected("سجل إعدادات النظام مفقود."));
+            }
+
             var assignment = _db.Set<PrinterAssignment>().FirstOrDefault(a => a.OutputType == PrinterOutputType.Receipt);
             if (assignment is null)
             {
@@ -79,8 +87,13 @@ public sealed class ReceiptPrintingService : IReceiptPrintingService
                 return Result.Failure(labText.Error!);
             }
 
+            var barcodePayload = BarcodePayload.For(
+                receipt.PatientId,
+                receipt.LabId,
+                systemSettings.PrintLabIdInsteadOfPatientId);
+
             var pdfPath = Path.Combine(Path.GetTempPath(), $"TopLabReceipt-{Guid.NewGuid():N}.pdf");
-            await _writer.WritePdfAsync(pdfPath, receipt, receiptSettings, labText.Value!, cancellationToken);
+            await _writer.WritePdfAsync(pdfPath, receipt, receiptSettings, labText.Value!, barcodePayload, cancellationToken);
             await _dispatcher.DispatchAsync(pdfPath, assignment.PrinterName, cancellationToken);
 
             // The temp PDF is intentionally left in the OS temp directory.

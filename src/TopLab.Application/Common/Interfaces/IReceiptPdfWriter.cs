@@ -18,5 +18,6 @@ public interface IReceiptPdfWriter
         ReceiptDto receipt,
         ReceiptSettings receiptSettings,
         LabPrintTextDto labText,
+        string barcodePayload,
         CancellationToken cancellationToken = default);
 }

@@ -16,5 +16,6 @@ public interface IInvoicePdfWriter
         string absolutePath,
         InvoiceDto invoice,
         LabPrintTextDto labText,
+        string barcodePayload,
         CancellationToken cancellationToken = default);
 }

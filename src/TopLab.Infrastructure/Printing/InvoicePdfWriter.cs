@@ -6,6 +6,7 @@ using QuestPDF.Infrastructure;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Features.PatientBilling.Common;
 using TopLab.Application.Features.SystemAndPrintSettings.Common;
+using TopLab.Infrastructure.Barcode;
 
 namespace TopLab.Infrastructure.Printing;
 
@@ -17,6 +18,8 @@ namespace TopLab.Infrastructure.Printing;
 /// </summary>
 public sealed class InvoicePdfWriter : IInvoicePdfWriter
 {
+    private readonly BarcodeLabelRenderer _renderer;
+
     static InvoicePdfWriter()
     {
         // Community-eligible reconfirmed 2026-09-29 by owner decision; revisit before commercial distribution.
@@ -28,15 +31,22 @@ public sealed class InvoicePdfWriter : IInvoicePdfWriter
         Settings.UseSystemFonts = true;
     }
 
+    public InvoicePdfWriter(BarcodeLabelRenderer renderer)
+    {
+        _renderer = renderer;
+    }
+
     public Task WritePdfAsync(
         string absolutePath,
         InvoiceDto invoice,
         LabPrintTextDto labText,
+        string barcodePayload,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(absolutePath);
         ArgumentNullException.ThrowIfNull(invoice);
         ArgumentNullException.ThrowIfNull(labText);
+        ArgumentException.ThrowIfNullOrWhiteSpace(barcodePayload);
 
         var directory = Path.GetDirectoryName(absolutePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -49,11 +59,23 @@ public sealed class InvoicePdfWriter : IInvoicePdfWriter
             throw new IOException($"File already exists: {absolutePath}");
         }
 
-        var lines = BuildTextLines(invoice, labText);
+        var lines = BuildTextLines(invoice, labText, barcodePayload);
 #pragma warning disable CA1416 // Windows-only WPF app
         var fontFamily = ArabicFontResolver.Resolve(labText.FontFamily);
 #pragma warning restore CA1416
         var fontSize = labText.FontSizePt > 0 ? labText.FontSizePt : 12;
+
+        // Phase 1 REF-127: scannable identifier barcode via the shared pipeline.
+        byte[]? barcodePng = null;
+        try
+        {
+            var label = _renderer.Render(lines.BarcodePayload);
+            barcodePng = BarcodePngEncoder.Encode(label.Pixels, label.Width, label.Height);
+        }
+        catch
+        {
+            barcodePng = null;
+        }
 
         Document
             .Create(document =>
@@ -85,6 +107,16 @@ public sealed class InvoicePdfWriter : IInvoicePdfWriter
                             {
                                 column.Item().Text(line).AlignRight();
                             }
+
+                            // REF-127: barcode block immediately after the patient
+                            // identification lines (decision 127-B).
+                            if (barcodePng is not null)
+                            {
+                                var png = barcodePng;
+                                column.Item().PaddingTop(6).Width(170).Height(43).Image(png);
+                            }
+
+                            column.Item().Text(lines.BarcodePayload).AlignRight();
 
                             if (lines.Items.Count > 0)
                             {
@@ -129,11 +161,13 @@ public sealed class InvoicePdfWriter : IInvoicePdfWriter
     /// Pure content mapping (no PDF dependency): every line the document renders,
     /// in order. Unit-testable proof that invoice data — including Arabic names
     /// and frozen line prices — flows into the document verbatim.
+    /// <c>barcodePayload</c> is the identifier-rule payload (Phase 1 REF-127).
     /// </summary>
-    public static InvoiceTextLines BuildTextLines(InvoiceDto invoice, LabPrintTextDto labText)
+    public static InvoiceTextLines BuildTextLines(InvoiceDto invoice, LabPrintTextDto labText, string barcodePayload)
     {
         ArgumentNullException.ThrowIfNull(invoice);
         ArgumentNullException.ThrowIfNull(labText);
+        ArgumentException.ThrowIfNullOrWhiteSpace(barcodePayload);
 
         var header = new List<string>();
         if (!string.IsNullOrWhiteSpace(labText.LabName))
@@ -181,7 +215,7 @@ public sealed class InvoicePdfWriter : IInvoicePdfWriter
             $"الباقي: {FormatMoney(invoice.Balance, invoice.Currency)}"
         };
 
-        return new InvoiceTextLines(header, title, patient, items, totals);
+        return new InvoiceTextLines(header, title, patient, items, totals, barcodePayload);
     }
 
     private static string FormatMoney(decimal amount, string currency)
@@ -196,5 +230,6 @@ public sealed class InvoicePdfWriter : IInvoicePdfWriter
         string InvoiceTitle,
         IReadOnlyList<string> Patient,
         IReadOnlyList<InvoiceItemLine> Items,
-        IReadOnlyList<string> Totals);
+        IReadOnlyList<string> Totals,
+        string BarcodePayload);
 }

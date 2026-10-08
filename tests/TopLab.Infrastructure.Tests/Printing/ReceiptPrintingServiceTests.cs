@@ -5,6 +5,7 @@ using TopLab.Application.Features.PatientBilling.Common;
 using TopLab.Application.Features.SystemAndPrintSettings.Common;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Settings;
+using TopLab.Infrastructure.Barcode;
 using TopLab.Infrastructure.Persistence;
 using TopLab.Infrastructure.Printing;
 using TopLab.Infrastructure.Tests.Common;
@@ -87,7 +88,7 @@ public class ReceiptPrintingServiceTests
         // EnsureCreated) — no manual seeding needed.
         var dispatcher = new RecordingDispatcher();
         var labText = new FakeLabPrintTextStore();
-        var service = new ReceiptPrintingService(db, new ReceiptPdfWriter(), labText, dispatcher);
+        var service = new ReceiptPrintingService(db, new ReceiptPdfWriter(new BarcodeLabelRenderer()), labText, dispatcher);
         return (service, dispatcher, labText, db);
     }
 
@@ -216,11 +217,12 @@ public class ReceiptPrintingServiceTests
         settings.Update(1m, "L.E.", null, false, TestDetailDisplayMode.Show, false, HeaderFooterMode.Words);
         var labText = new LabPrintTextDto("مختبر الشفاء", "شارع الجمهورية", "01000000000", "Arial", 12);
 
-        var lines = ReceiptPdfWriter.BuildTextLines(Dto(), settings, labText);
+        var lines = ReceiptPdfWriter.BuildTextLines(Dto(), settings, labText, "100");
 
         Assert.Contains("مختبر الشفاء", lines.Header);
         Assert.Contains("المريض: أحمد محمد علي", lines.Patient);
         Assert.Contains("رقم المعمل: 100", lines.Patient);
+        Assert.Equal("100", lines.BarcodePayload);
         Assert.Equal(2, lines.Items.Count);
         Assert.Contains(lines.Items, i => i.Description == "CBC" && i.Price == "100.00 L.E.");
         Assert.Contains("إجمالي التحاليل: 150.00 L.E.", lines.Totals);
@@ -236,10 +238,11 @@ public class ReceiptPrintingServiceTests
         settings.Update(1m, "L.E.", null, false, TestDetailDisplayMode.Hide, false, HeaderFooterMode.None);
         var labText = new LabPrintTextDto("مختبر الشفاء", string.Empty, string.Empty, "Arial", 12);
 
-        var lines = ReceiptPdfWriter.BuildTextLines(Dto(), settings, labText);
+        var lines = ReceiptPdfWriter.BuildTextLines(Dto(), settings, labText, "100");
 
         Assert.Empty(lines.Items);
         Assert.Equal(4, lines.Totals.Count);
+        Assert.Equal("100", lines.BarcodePayload);
     }
 
     [Fact]
@@ -249,9 +252,30 @@ public class ReceiptPrintingServiceTests
         settings.Update(1m, "L.E.", new TimeOnly(18, 30), false, TestDetailDisplayMode.ShowWithCode, false, HeaderFooterMode.Words);
         var labText = new LabPrintTextDto("مختبر الشفاء", "شارع الجمهورية", "01000000000", "Arial", 12);
 
-        var lines = ReceiptPdfWriter.BuildTextLines(Dto(), settings, labText);
+        var lines = ReceiptPdfWriter.BuildTextLines(Dto(), settings, labText, "100");
 
         Assert.Contains(lines.Items, i => i.Description == "CBC — صورة دم كاملة");
         Assert.Equal("موعد الاستلام: 18:30", lines.Pickup);
+        Assert.Equal("100", lines.BarcodePayload);
+    }
+
+    [Fact]
+    public async Task PrintReceiptAsync_MissingSystemSettings_ReturnsUnexpected()
+    {
+        var (service, _, _, db) = Build();
+        db.Set<SystemSettings>().RemoveRange(db.Set<SystemSettings>().ToList());
+        db.SaveChanges();
+        try
+        {
+            var result = await service.PrintReceiptAsync(ReceiptPrintEnvelope.CreateToken(Dto()), CancellationToken.None);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorType.Unexpected, result.Error!.Type);
+            Assert.Equal("سجل إعدادات النظام مفقود.", result.Error.Message);
+        }
+        finally
+        {
+            db.Dispose();
+        }
     }
 }
