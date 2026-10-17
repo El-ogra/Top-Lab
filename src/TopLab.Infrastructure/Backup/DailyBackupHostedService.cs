@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Domain.Settings;
@@ -13,19 +14,16 @@ namespace TopLab.Infrastructure.Backup;
 /// </summary>
 public sealed class DailyBackupHostedService : BackgroundService
 {
-    private readonly IDatabaseMaintenanceService _maintenance;
-    private readonly IApplicationDbContext _db;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IAppLogger _logger;
     private readonly IDateTimeProvider _time;
 
     public DailyBackupHostedService(
-        IDatabaseMaintenanceService maintenance,
-        IApplicationDbContext db,
+        IServiceScopeFactory scopeFactory,
         IAppLogger logger,
         IDateTimeProvider time)
     {
-        _maintenance = maintenance;
-        _db = db;
+        _scopeFactory = scopeFactory;
         _logger = logger;
         _time = time;
     }
@@ -46,7 +44,11 @@ public sealed class DailyBackupHostedService : BackgroundService
     {
         try
         {
-            var systemSettings = await _db.Set<SystemSettings>()
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+            var maintenance = scope.ServiceProvider.GetRequiredService<IDatabaseMaintenanceService>();
+
+            var systemSettings = await db.Set<SystemSettings>()
                 .SingleOrDefaultAsync(s => s.Id == 1, cancellationToken: ct);
 
             if (systemSettings is null)
@@ -72,7 +74,7 @@ public sealed class DailyBackupHostedService : BackgroundService
             }
 
             var started = _time.UtcNow;
-            var result = await _maintenance.BackupNowAsync(destination, ct);
+            var result = await maintenance.BackupNowAsync(destination, ct);
             _logger.Log(
                 nameof(DailyBackupHostedService),
                 result.IsSuccess ? "backup ok" : $"backup failed: {result.Error?.Message}",

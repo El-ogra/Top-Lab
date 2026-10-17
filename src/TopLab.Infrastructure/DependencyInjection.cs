@@ -53,13 +53,13 @@ public static class DependencyInjection
         // person at a time, session lasts for app lifetime). Scoped would give
         // each request/unit-of-work a separate snapshot, causing stale/empty
         // identity across handlers and the audit interceptor. IDateTimeProvider
-        // remains Scoped (stateless, per-operation clock).
+        // is stateless and safe as Singleton (no Scoped/DB dependency).
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
 
         // External entities: stateless cryptographic code generator (M-14).
         services.AddSingleton<IEntityIdCodeGenerator, SecureEntityIdCodeGenerator>();
-        services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
+        services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddScoped<IPatientReportPdfExporter, PatientReportPdfExporter>();
 
         // Report printing: PDF-first local writer + OS shell dispatch, routed
