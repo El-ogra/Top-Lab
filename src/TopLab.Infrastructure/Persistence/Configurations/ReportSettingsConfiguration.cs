@@ -25,7 +25,10 @@ public sealed class ReportSettingsConfiguration : IEntityTypeConfiguration<Repor
         // (C-24) — not a nullable bit.
         b.Property(e => e.PrintGroupSubTitle).IsRequired().HasDefaultValue(false);
         b.Property(e => e.SuppressReprintMessage).IsRequired().HasDefaultValue(false);
+        b.Property(e => e.HeaderImagePath).HasMaxLength(300).IsRequired(false);
+        b.Property(e => e.FooterImagePath).HasMaxLength(300).IsRequired(false);
+        b.Property(e => e.NormalRangeMarker).HasMaxLength(10).IsRequired(false);
         b.ToTable(t => t.HasCheckConstraint("CK_ReportSettings_TopSpace", "[ReportTopSpaceCm] <= 8"));
-        b.HasData(new { Id = 1, PageMarginLeftCm = 1.0m, PageMarginBottomCm = 1.0m, ReportTopSpaceCm = 2.0m, PaperSize = PaperSize.A4, HeaderFooterMode = HeaderFooterMode.None, DoctorSignatureEnabled = false, HeaderColor = (string?)null, FooterColor = (string?)null, HistorySortMode = HistorySortMode.ByLabCode, HistoryAutoDisplayEnabled = true, PrintGroupSubTitle = false, SuppressReprintMessage = false });
+        b.HasData(new { Id = 1, PageMarginLeftCm = 1.0m, PageMarginBottomCm = 1.0m, ReportTopSpaceCm = 2.0m, PaperSize = PaperSize.A4, HeaderFooterMode = HeaderFooterMode.None, DoctorSignatureEnabled = false, HeaderColor = (string?)null, FooterColor = (string?)null, HistorySortMode = HistorySortMode.ByLabCode, HistoryAutoDisplayEnabled = true, PrintGroupSubTitle = false, SuppressReprintMessage = false, HeaderImagePath = (string?)null, FooterImagePath = (string?)null, NormalRangeMarker = (string?)null });
     }
 }

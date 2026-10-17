@@ -16,5 +16,25 @@ public sealed class UpdateReportSettingsCommandValidator : AbstractValidator<Upd
         RuleFor(x => x.ReportTopSpaceCm)
             .LessThanOrEqualTo(8m).WithMessage("الهامش العلوي للتقرير لا يمكن أن يتجاوز 8 سم")
             .GreaterThanOrEqualTo(0m).WithMessage("الهامش العلوي للتقرير يجب أن يكون أكبر من أو يساوي 0.");
+
+        RuleFor(x => x.HeaderColor)
+            .MaximumLength(9).WithMessage("لون الرأس لا يمكن أن يتجاوز 9 أحرف.")
+            .When(x => !string.IsNullOrWhiteSpace(x.HeaderColor));
+
+        RuleFor(x => x.FooterColor)
+            .MaximumLength(9).WithMessage("لون التذييل لا يمكن أن يتجاوز 9 أحرف.")
+            .When(x => !string.IsNullOrWhiteSpace(x.FooterColor));
+
+        RuleFor(x => x.HeaderImagePath)
+            .MaximumLength(300).WithMessage("مسار صورة الرأس لا يمكن أن يتجاوز 300 حرف.")
+            .When(x => !string.IsNullOrWhiteSpace(x.HeaderImagePath));
+
+        RuleFor(x => x.FooterImagePath)
+            .MaximumLength(300).WithMessage("مسار صورة التذييل لا يمكن أن يتجاوز 300 حرف.")
+            .When(x => !string.IsNullOrWhiteSpace(x.FooterImagePath));
+
+        RuleFor(x => x.NormalRangeMarker)
+            .MaximumLength(10).WithMessage("علامة المدى الطبيعي لا يمكن أن تتجاوز 10 أحرف.")
+            .When(x => !string.IsNullOrWhiteSpace(x.NormalRangeMarker));
     }
 }

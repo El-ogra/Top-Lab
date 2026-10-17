@@ -28,7 +28,12 @@ public sealed record ReportSettingsDto(
     bool HistoryAutoDisplayEnabled,
     // W-02 S7 (WP-13): appended with defaults (SD-6).
     bool PrintGroupSubTitle = false,
-    bool SuppressReprintMessage = false);
+    bool SuppressReprintMessage = false,
+    string? HeaderColor = null,
+    string? FooterColor = null,
+    string? HeaderImagePath = null,
+    string? FooterImagePath = null,
+    string? NormalRangeMarker = null);
 
 public sealed record ReceiptSettingsDto(
     decimal TopMarginCm,

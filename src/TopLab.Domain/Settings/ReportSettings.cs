@@ -32,6 +32,15 @@ public sealed class ReportSettings : Entity<int>
     /// <summary>W-02 S7 (WP-13): reprint without asking for confirmation.</summary>
     public bool SuppressReprintMessage { get; private set; }
 
+    /// <summary>Relative path (filename) of the header image in the app-managed asset store. Null = no image.</summary>
+    public string? HeaderImagePath { get; private set; }
+
+    /// <summary>Relative path (filename) of the footer image in the app-managed asset store. Null = no image.</summary>
+    public string? FooterImagePath { get; private set; }
+
+    /// <summary>Marker character(s) for the normal range. Null/empty = use default.</summary>
+    public string? NormalRangeMarker { get; private set; }
+
     private ReportSettings()
     {
     }
@@ -55,7 +64,10 @@ public sealed class ReportSettings : Entity<int>
             HistorySortMode = HistorySortMode.ByLabCode,
             HistoryAutoDisplayEnabled = true,
             PrintGroupSubTitle = false,
-            SuppressReprintMessage = false
+            SuppressReprintMessage = false,
+            HeaderImagePath = null,
+            FooterImagePath = null,
+            NormalRangeMarker = null
         };
     }
 
@@ -111,5 +123,30 @@ public sealed class ReportSettings : Entity<int>
     {
         PrintGroupSubTitle = printGroupSubTitle;
         SuppressReprintMessage = suppressReprintMessage;
+    }
+
+    public void SetHeaderColor(string? color)
+    {
+        HeaderColor = color;
+    }
+
+    public void SetFooterColor(string? color)
+    {
+        FooterColor = color;
+    }
+
+    public void SetHeaderImagePath(string? path)
+    {
+        HeaderImagePath = path;
+    }
+
+    public void SetFooterImagePath(string? path)
+    {
+        FooterImagePath = path;
+    }
+
+    public void SetNormalRangeMarker(string? marker)
+    {
+        NormalRangeMarker = marker;
     }
 }

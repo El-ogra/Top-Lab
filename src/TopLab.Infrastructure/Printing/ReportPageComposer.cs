@@ -12,30 +12,41 @@ namespace TopLab.Infrastructure.Printing;
 /// </summary>
 public static class ReportPageComposer
 {
-    public static void ComposeHeader(IContainer container, ReportDocumentContent content, float fontSize)
+    public static void ComposeHeader(IContainer container, ReportDocumentContent content, float fontSize, ReportSettings settings)
     {
         if (!content.DrawHeader)
         {
             return;
         }
 
+        var headerColor = ParseColor(settings.HeaderColor);
+
         container.Column(column =>
         {
-            if (!string.IsNullOrWhiteSpace(content.LabName))
+            if (!string.IsNullOrWhiteSpace(content.HeaderImagePath) && File.Exists(content.HeaderImagePath))
             {
-                column.Item().Text(content.LabName!).SemiBold().FontSize(fontSize + 2).AlignCenter();
+                column.Item().PaddingBottom(4).Image(content.HeaderImagePath);
             }
-
-            if (!string.IsNullOrWhiteSpace(content.SoftwareBar))
+            else
             {
-                column.Item().PaddingTop(2).Text(content.SoftwareBar!).FontSize(fontSize - 1).AlignCenter().FontColor(Colors.Grey.Medium);
-            }
+                if (!string.IsNullOrWhiteSpace(content.LabName))
+                {
+                    column.Item().Text(content.LabName!).SemiBold().FontSize(fontSize + 2).AlignCenter()
+                        .FontColor(headerColor);
+                }
 
-            var contact = string.Join(" · ", new[] { content.LabAddress, content.LabPhone }
-                .Where(s => !string.IsNullOrWhiteSpace(s)));
-            if (contact.Length > 0)
-            {
-                column.Item().PaddingTop(2).Text(contact).FontSize(fontSize - 1).AlignCenter();
+                if (!string.IsNullOrWhiteSpace(content.SoftwareBar))
+                {
+                    column.Item().PaddingTop(2).Text(content.SoftwareBar!).FontSize(fontSize - 1).AlignCenter()
+                        .FontColor(Colors.Grey.Medium);
+                }
+
+                var contact = string.Join(" · ", new[] { content.LabAddress, content.LabPhone }
+                    .Where(s => !string.IsNullOrWhiteSpace(s)));
+                if (contact.Length > 0)
+                {
+                    column.Item().PaddingTop(2).Text(contact).FontSize(fontSize - 1).AlignCenter();
+                }
             }
 
             column.Item().PaddingTop(4).LineHorizontal(1);
@@ -128,13 +139,15 @@ public static class ReportPageComposer
         });
     }
 
-    public static void ComposeFooter(IContainer container, ReportDocumentContent content, float fontSize)
+    public static void ComposeFooter(IContainer container, ReportDocumentContent content, float fontSize, ReportSettings settings)
     {
+        var footerColor = ParseColor(settings.FooterColor);
+
         if (!content.DrawFooter)
         {
             container.AlignCenter().Text(text =>
             {
-                text.Span("صفحة ").FontSize(fontSize - 1);
+                text.Span("صفحة ").FontSize(fontSize - 1).FontColor(footerColor);
                 text.CurrentPageNumber().FontSize(fontSize - 1);
                 text.Span(" من ").FontSize(fontSize - 1);
                 text.TotalPages().FontSize(fontSize - 1);
@@ -145,14 +158,24 @@ public static class ReportPageComposer
         container.Column(column =>
         {
             column.Item().LineHorizontal(1);
-            if (!string.IsNullOrWhiteSpace(content.ReportNumberText))
-            {
-                column.Item().PaddingTop(2).Text(content.ReportNumberText!).FontSize(fontSize - 1).AlignRight();
-            }
 
-            if (!string.IsNullOrWhiteSpace(content.ReportDateText))
+            if (!string.IsNullOrWhiteSpace(content.FooterImagePath) && File.Exists(content.FooterImagePath))
             {
-                column.Item().Text(content.ReportDateText!).FontSize(fontSize - 1).AlignRight();
+                column.Item().PaddingTop(4).Image(content.FooterImagePath);
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(content.ReportNumberText))
+                {
+                    column.Item().PaddingTop(2).Text(content.ReportNumberText!).FontSize(fontSize - 1).AlignRight()
+                        .FontColor(footerColor);
+                }
+
+                if (!string.IsNullOrWhiteSpace(content.ReportDateText))
+                {
+                    column.Item().Text(content.ReportDateText!).FontSize(fontSize - 1).AlignRight()
+                        .FontColor(footerColor);
+                }
             }
 
             column.Item().AlignCenter().Text(text =>
@@ -163,6 +186,23 @@ public static class ReportPageComposer
                 text.TotalPages().FontSize(fontSize - 1);
             });
         });
+    }
+
+    private static string ParseColor(string? colorString)
+    {
+        if (string.IsNullOrWhiteSpace(colorString))
+        {
+            return "#000000";
+        }
+
+        // Accept hex color strings (e.g. "#FF0000" or "FF0000")
+        var hex = colorString.StartsWith("#") ? colorString : "#" + colorString;
+        if (hex.Length == 7 || hex.Length == 9)
+        {
+            return hex;
+        }
+
+        return "#000000";
     }
 
     public static void ApplyPageGeometry(PageDescriptor page, ReportSettings settings)

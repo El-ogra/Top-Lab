@@ -28,32 +28,39 @@ public class GetReportSettingsQueryHandlerTests
     }
 
     [Fact]
-    public void ReportSettingsDto_HasNoColorOrImageMembers()
+    public void ReportSettingsDto_HasColorAndImageMembers()
     {
         var props = typeof(TopLab.Application.Features.SystemAndPrintSettings.Common.ReportSettingsDto)
             .GetProperties()
             .Select(p => p.Name)
             .ToList();
-        Assert.DoesNotContain(props, p => p.Contains("Color", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain(props, p => p.Contains("Image", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(props, p => p == "HeaderColor");
+        Assert.Contains(props, p => p == "FooterColor");
+        Assert.Contains(props, p => p == "HeaderImagePath");
+        Assert.Contains(props, p => p == "FooterImagePath");
+        Assert.Contains(props, p => p == "NormalRangeMarker");
     }
 
     [Fact]
-    public void AllFeatureDtos_HaveNoColorOrImageMembers()
+    public async Task GetReportSettings_ReturnsColorImageAndMarkerFields()
     {
-        var dtoTypes = typeof(TopLab.Application.Features.SystemAndPrintSettings.Common.SystemSettingsDto).Assembly
-            .GetTypes()
-            .Where(t => t.Namespace == typeof(TopLab.Application.Features.SystemAndPrintSettings.Common.SystemSettingsDto).Namespace
-                && t.IsPublic
-                && t.Name.EndsWith("Dto", StringComparison.Ordinal))
-            .ToList();
+        var db = new FakeApplicationDbContext();
+        var existing = ReportSettings.CreateDefault();
+        existing.SetHeaderColor("#FF0000");
+        existing.SetFooterColor("#00FF00");
+        existing.SetHeaderImagePath("Header.png");
+        existing.SetFooterImagePath("Footer.png");
+        existing.SetNormalRangeMarker("*");
+        db.ReportSettings.Add(existing);
 
-        Assert.NotEmpty(dtoTypes);
-        foreach (var type in dtoTypes)
-        {
-            var props = type.GetProperties().Select(p => p.Name).ToList();
-            Assert.DoesNotContain(props, p => p.Contains("Color", StringComparison.OrdinalIgnoreCase));
-            Assert.DoesNotContain(props, p => p.Contains("Image", StringComparison.OrdinalIgnoreCase));
-        }
+        var handler = new GetReportSettingsQueryHandler(db);
+        var result = await handler.Handle(new GetReportSettingsQuery(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("#FF0000", result.Value!.HeaderColor);
+        Assert.Equal("#00FF00", result.Value.FooterColor);
+        Assert.Equal("Header.png", result.Value.HeaderImagePath);
+        Assert.Equal("Footer.png", result.Value.FooterImagePath);
+        Assert.Equal("*", result.Value.NormalRangeMarker);
     }
 }

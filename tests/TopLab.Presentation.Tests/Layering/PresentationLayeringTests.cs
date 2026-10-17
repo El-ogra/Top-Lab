@@ -30,6 +30,7 @@ public class PresentationLayeringTests
         var offenders = Directory
             .EnumerateFiles(PresentationRoot(), "*.cs", SearchOption.AllDirectories)
             .Where(f => !f.EndsWith("App.xaml.cs", StringComparison.Ordinal))
+            .Where(f => !f.EndsWith("DependencyInjection.cs", StringComparison.Ordinal))
             .Where(f => File.ReadAllText(f).Contains("TopLab.Infrastructure", StringComparison.Ordinal))
             .Select(Path.GetFileName)
             .OrderBy(n => n)

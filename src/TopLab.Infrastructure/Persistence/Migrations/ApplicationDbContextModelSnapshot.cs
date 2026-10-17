@@ -1204,6 +1204,10 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                         .HasMaxLength(9)
                         .HasColumnType("nvarchar(9)");
 
+                    b.Property<string>("FooterImagePath")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<string>("HeaderColor")
                         .HasMaxLength(9)
                         .HasColumnType("nvarchar(9)");
@@ -1211,11 +1215,19 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                     b.Property<byte>("HeaderFooterMode")
                         .HasColumnType("tinyint");
 
+                    b.Property<string>("HeaderImagePath")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<bool>("HistoryAutoDisplayEnabled")
                         .HasColumnType("bit");
 
                     b.Property<byte>("HistorySortMode")
                         .HasColumnType("tinyint");
+
+                    b.Property<string>("NormalRangeMarker")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<decimal>("PageMarginBottomCm")
                         .HasPrecision(5, 2)

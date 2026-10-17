@@ -16,7 +16,12 @@ public sealed record UpdateReportSettingsCommand(
     bool HistoryAutoDisplayEnabled,
     // W-02 S7 (WP-13): appended with defaults so every existing caller keeps compiling (SD-6).
     bool PrintGroupSubTitle = false,
-    bool SuppressReprintMessage = false)
+    bool SuppressReprintMessage = false,
+    string? HeaderColor = null,
+    string? FooterColor = null,
+    string? HeaderImagePath = null,
+    string? FooterImagePath = null,
+    string? NormalRangeMarker = null)
     : IRequest<Result>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

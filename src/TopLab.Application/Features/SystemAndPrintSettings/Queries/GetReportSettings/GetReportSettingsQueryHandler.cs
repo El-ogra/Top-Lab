@@ -34,7 +34,12 @@ public sealed class GetReportSettingsQueryHandler : IRequestHandler<GetReportSet
             row.HistorySortMode,
             row.HistoryAutoDisplayEnabled,
             row.PrintGroupSubTitle,
-            row.SuppressReprintMessage);
+            row.SuppressReprintMessage,
+            row.HeaderColor,
+            row.FooterColor,
+            row.HeaderImagePath,
+            row.FooterImagePath,
+            row.NormalRangeMarker);
 
         return Task.FromResult(Result<ReportSettingsDto>.Success(dto));
     }

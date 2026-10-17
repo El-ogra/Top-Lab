@@ -26,7 +26,10 @@ public sealed record ReportDocumentContent(
     bool DrawFooter,
     bool DoctorSignatureEnabled,
     string? ReportDateText,
-    string? ReportNumberText)
+    string? ReportNumberText,
+    string? NormalRangeMarker = null,
+    string? HeaderImagePath = null,
+    string? FooterImagePath = null)
 {
     /// <summary>Every display line, in print order — used by golden content tests.</summary>
     public IReadOnlyList<string> BuildDisplayLines()

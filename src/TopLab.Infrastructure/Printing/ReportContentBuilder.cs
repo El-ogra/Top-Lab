@@ -20,7 +20,9 @@ public static class ReportContentBuilder
         string? labAddress = null,
         string? labPhone = null,
         string? softwareBar = null,
-        ITestDisplayNameResolver? nameResolver = null)
+        ITestDisplayNameResolver? nameResolver = null,
+        string? resolvedHeaderImagePath = null,
+        string? resolvedFooterImagePath = null)
     {
         ArgumentNullException.ThrowIfNull(envelope);
         ArgumentNullException.ThrowIfNull(reportSettings);
@@ -32,21 +34,24 @@ public static class ReportContentBuilder
         var drawHeader = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
         var drawFooter = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
         var doctorSignature = reportSettings.DoctorSignatureEnabled;
+        var marker = reportSettings.NormalRangeMarker;
 
         return envelope.ReportKind switch
         {
             ReportPrintEnvelope.Combined => FromCombined(
                 Deserialize<CombinedReportDto>(envelope),
                 reportSettings, preferLabId, drawHeader, drawFooter, doctorSignature,
-                labName, labAddress, labPhone, softwareBar, nameResolver),
+                labName, labAddress, labPhone, softwareBar, nameResolver, marker,
+                resolvedHeaderImagePath, resolvedFooterImagePath),
             ReportPrintEnvelope.Blank => FromBlank(
                 Deserialize<BlankReportDto>(envelope),
                 reportSettings, preferLabId, drawHeader, drawFooter, doctorSignature,
-                labName, labAddress, labPhone, softwareBar),
+                labName, labAddress, labPhone, softwareBar, resolvedHeaderImagePath, resolvedFooterImagePath),
             ReportPrintEnvelope.History => FromHistory(
                 Deserialize<PatientHistoryDto>(envelope),
                 reportSettings, preferLabId, drawHeader, drawFooter, doctorSignature,
-                labName, labAddress, labPhone, softwareBar, nameResolver),
+                labName, labAddress, labPhone, softwareBar, nameResolver, marker,
+                resolvedHeaderImagePath, resolvedFooterImagePath),
             _ => throw new InvalidOperationException($"Unknown report kind '{envelope.ReportKind}'.")
         };
     }
@@ -58,7 +63,9 @@ public static class ReportContentBuilder
         string? labName = null,
         string? labAddress = null,
         string? labPhone = null,
-        string? softwareBar = null)
+        string? softwareBar = null,
+        string? resolvedHeaderImagePath = null,
+        string? resolvedFooterImagePath = null)
     {
         ArgumentNullException.ThrowIfNull(data);
         ArgumentNullException.ThrowIfNull(reportSettings);
@@ -67,6 +74,7 @@ public static class ReportContentBuilder
         var preferLabId = systemSettings.PrintLabIdInsteadOfPatientId;
         var drawHeader = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
         var drawFooter = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
+        var marker = reportSettings.NormalRangeMarker;
 
         var sections = new List<ReportSection>();
         foreach (var line in data.Lines)
@@ -78,7 +86,7 @@ public static class ReportContentBuilder
 
             if (line.FrozenRange is { } range)
             {
-                body.Add($"المدى: {range.MinValue} - {range.MaxValue}");
+                body.Add($"{RangePrefix(marker)} {range.MinValue} - {range.MaxValue}");
                 if (line.ResultFlag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(range.LowComment))
                 {
                     body.Add(range.LowComment!);
@@ -118,7 +126,10 @@ public static class ReportContentBuilder
             DrawFooter: drawFooter,
             DoctorSignatureEnabled: reportSettings.DoctorSignatureEnabled,
             ReportDateText: DateTime.Now.ToString("yyyy/MM/dd"),
-            ReportNumberText: null);
+            ReportNumberText: null,
+            NormalRangeMarker: marker,
+            HeaderImagePath: resolvedHeaderImagePath,
+            FooterImagePath: resolvedFooterImagePath);
     }
 
     public static ReportDocumentContent FromProfileReport(
@@ -128,7 +139,9 @@ public static class ReportContentBuilder
         string? labName = null,
         string? labAddress = null,
         string? labPhone = null,
-        string? softwareBar = null)
+        string? softwareBar = null,
+        string? resolvedHeaderImagePath = null,
+        string? resolvedFooterImagePath = null)
     {
         ArgumentNullException.ThrowIfNull(dto);
         ArgumentNullException.ThrowIfNull(reportSettings);
@@ -137,6 +150,7 @@ public static class ReportContentBuilder
         var preferLabId = systemSettings.PrintLabIdInsteadOfPatientId;
         var drawHeader = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
         var drawFooter = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
+        var marker = reportSettings.NormalRangeMarker;
 
         var body = new List<string>();
         foreach (var profile in dto.Lines)
@@ -145,7 +159,7 @@ public static class ReportContentBuilder
             body.Add($"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}");
             if (profile.FrozenRange is { } fr)
             {
-                body.Add($"المدى: {fr.MinValue} - {fr.MaxValue}");
+                body.Add($"{RangePrefix(marker)} {fr.MinValue} - {fr.MaxValue}");
                 if (profile.Flag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(fr.LowComment))
                 {
                     body.Add(fr.LowComment!);
@@ -182,7 +196,10 @@ public static class ReportContentBuilder
             DrawFooter: drawFooter,
             DoctorSignatureEnabled: reportSettings.DoctorSignatureEnabled,
             ReportDateText: DateTime.Now.ToString("yyyy/MM/dd"),
-            ReportNumberText: null);
+            ReportNumberText: null,
+            NormalRangeMarker: marker,
+            HeaderImagePath: resolvedHeaderImagePath,
+            FooterImagePath: resolvedFooterImagePath);
     }
 
     private static ReportDocumentContent FromCombined(
@@ -196,7 +213,10 @@ public static class ReportContentBuilder
         string? labAddress,
         string? labPhone,
         string? softwareBar,
-        ITestDisplayNameResolver nameResolver)
+        ITestDisplayNameResolver nameResolver,
+        string? marker,
+        string? resolvedHeaderImagePath,
+        string? resolvedFooterImagePath)
     {
         var sections = new List<ReportSection>();
         string? lastGroupName = null;
@@ -226,7 +246,7 @@ public static class ReportContentBuilder
 
             if (!string.IsNullOrWhiteSpace(line.FrozenRangeText))
             {
-                body.Add($"المدى: {line.FrozenRangeText}");
+                body.Add($"{RangePrefix(marker)} {line.FrozenRangeText}");
             }
 
             // WP-07: only the matching out-of-range comment is printed.
@@ -252,7 +272,7 @@ public static class ReportContentBuilder
                 body.Add($"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}");
                 if (profile.FrozenRange is { } fr)
                 {
-                    body.Add($"المدى: {fr.MinValue} - {fr.MaxValue}");
+                    body.Add($"{RangePrefix(marker)} {fr.MinValue} - {fr.MaxValue}");
                     if (profile.Flag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(fr.LowComment))
                     {
                         body.Add(fr.LowComment!);
@@ -329,7 +349,10 @@ public static class ReportContentBuilder
             DrawFooter: drawFooter,
             DoctorSignatureEnabled: doctorSignature,
             ReportDateText: DateTime.Now.ToString("yyyy/MM/dd"),
-            ReportNumberText: null);
+            ReportNumberText: null,
+            NormalRangeMarker: marker,
+            HeaderImagePath: resolvedHeaderImagePath,
+            FooterImagePath: resolvedFooterImagePath);
     }
 
     private static ReportDocumentContent FromBlank(
@@ -342,7 +365,9 @@ public static class ReportContentBuilder
         string? labName,
         string? labAddress,
         string? labPhone,
-        string? softwareBar)
+        string? softwareBar,
+        string? resolvedHeaderImagePath,
+        string? resolvedFooterImagePath)
     {
         return new ReportDocumentContent(
             ReportTitle: "تقرير فارغ",
@@ -363,7 +388,10 @@ public static class ReportContentBuilder
             DrawFooter: drawFooter,
             DoctorSignatureEnabled: doctorSignature,
             ReportDateText: DateTime.Now.ToString("yyyy/MM/dd"),
-            ReportNumberText: null);
+            ReportNumberText: null,
+            NormalRangeMarker: null,
+            HeaderImagePath: resolvedHeaderImagePath,
+            FooterImagePath: resolvedFooterImagePath);
     }
 
     private static ReportDocumentContent FromHistory(
@@ -377,7 +405,10 @@ public static class ReportContentBuilder
         string? labAddress,
         string? labPhone,
         string? softwareBar,
-        ITestDisplayNameResolver nameResolver)
+        ITestDisplayNameResolver nameResolver,
+        string? marker,
+        string? resolvedHeaderImagePath,
+        string? resolvedFooterImagePath)
     {
         var rows = dto.Entries.Select(e =>
         {
@@ -423,8 +454,14 @@ public static class ReportContentBuilder
             DrawFooter: drawFooter,
             DoctorSignatureEnabled: doctorSignature,
             ReportDateText: DateTime.Now.ToString("yyyy/MM/dd"),
-            ReportNumberText: null);
+            ReportNumberText: null,
+            NormalRangeMarker: marker,
+            HeaderImagePath: resolvedHeaderImagePath,
+            FooterImagePath: resolvedFooterImagePath);
     }
+
+    private static string RangePrefix(string? marker)
+        => string.IsNullOrWhiteSpace(marker) ? "المدى:" : marker;
 
     private static T Deserialize<T>(ReportPrintEnvelope envelope) where T : class
     {

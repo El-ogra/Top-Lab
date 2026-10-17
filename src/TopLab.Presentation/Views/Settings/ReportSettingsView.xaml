@@ -43,6 +43,28 @@
 
             <CheckBox Content="إظهار توقيع الطبيب" IsChecked="{Binding DoctorSignatureEnabled}" Margin="0,12,0,0" />
 
+            <TextBlock Text="لون الرأس:" VerticalAlignment="Center" Margin="0,8,8,4" Width="180" />
+            <TextBox Text="{Binding HeaderColor, UpdateSourceTrigger=PropertyChanged}" Margin="0,4" MaxLength="9" />
+            <TextBlock Text="لون التذييل:" VerticalAlignment="Center" Margin="0,8,8,4" Width="180" />
+            <TextBox Text="{Binding FooterColor, UpdateSourceTrigger=PropertyChanged}" Margin="0,4" MaxLength="9" />
+
+            <TextBlock Text="صورة الرأس:" VerticalAlignment="Center" Margin="0,8,8,4" Width="180" />
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <Button Content="اختيار صورة" Width="100" Command="{Binding PickHeaderImageCommand}" />
+                <Button Content="إزالة" Width="80" Margin="8,0,0,0" Command="{Binding ClearHeaderImageCommand}" />
+                <TextBlock Text="{Binding HeaderImagePath}" VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="200" />
+            </StackPanel>
+
+            <TextBlock Text="صورة التذييل:" VerticalAlignment="Center" Margin="0,8,8,4" Width="180" />
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <Button Content="اختيار صورة" Width="100" Command="{Binding PickFooterImageCommand}" />
+                <Button Content="إزالة" Width="80" Margin="8,0,0,0" Command="{Binding ClearFooterImageCommand}" />
+                <TextBlock Text="{Binding FooterImagePath}" VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="200" />
+            </StackPanel>
+
+            <TextBlock Text="علامة المدى الطبيعي (اتركه فارغاً للافتراضي):" VerticalAlignment="Center" Margin="0,8,8,4" Width="180" />
+            <TextBox Text="{Binding NormalRangeMarker, UpdateSourceTrigger=PropertyChanged}" Margin="0,4" MaxLength="10" />
+
             <TextBlock Text="تاريخ المريض" FontWeight="Bold" Margin="0,16,0,4" />
             <ComboBox ItemsSource="{Binding HistorySortModeOptions}" SelectedItem="{Binding HistorySortMode}" />
             <CheckBox Content="عرض التاريخ تلقائياً" IsChecked="{Binding HistoryAutoDisplayEnabled}" Margin="0,12,0,0" />

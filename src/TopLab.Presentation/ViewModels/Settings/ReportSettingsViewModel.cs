@@ -8,6 +8,7 @@ using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.Common.Navigation;
 using TopLab.Domain.Common.Enums;
+using Microsoft.Win32;
 
 namespace TopLab.Presentation.ViewModels.Settings;
 
@@ -17,6 +18,7 @@ public sealed class ReportSettingsViewModel : ViewModelBase
     private readonly ISender _mediator;
     private readonly ResultErrorPresenter _presenter;
     private readonly INavigationService _navigation;
+    private readonly IReportImageAssetStore? _imageAssetStore;
 
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
@@ -37,15 +39,22 @@ public sealed class ReportSettingsViewModel : ViewModelBase
     private string _labPhone = string.Empty;
     private string _fontFamily = string.Empty;
     private int _fontSizePt = 12;
+    private string? _headerColor;
+    private string? _footerColor;
+    private string? _headerImagePath;
+    private string? _footerImagePath;
+    private string? _normalRangeMarker;
 
     public ReportSettingsViewModel(
         ISender mediator,
         ResultErrorPresenter presenter,
-        INavigationService navigation)
+        INavigationService navigation,
+        IReportImageAssetStore? imageAssetStore = null)
     {
         _mediator = mediator;
         _presenter = presenter;
         _navigation = navigation;
+        _imageAssetStore = imageAssetStore;
 
         PaperSizeOptions = new List<PaperSize> { PaperSize.A4, PaperSize.A5 };
         HeaderFooterModeOptions = new List<HeaderFooterMode> { HeaderFooterMode.None, HeaderFooterMode.Words, HeaderFooterMode.Images };
@@ -55,6 +64,10 @@ public sealed class ReportSettingsViewModel : ViewModelBase
         LoadCommand = new AsyncRelayCommand(_ => LoadAsync());
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
         BackToDashboardCommand = new RelayCommand(_ => _navigation.NavigateTo<SettingsDashboardViewModel>());
+        PickHeaderImageCommand = new RelayCommand(_ => PickHeaderImage());
+        PickFooterImageCommand = new RelayCommand(_ => PickFooterImage());
+        ClearHeaderImageCommand = new RelayCommand(_ => { HeaderImagePath = null; StatusMessage = "تمت إزالة صورة الرأس."; });
+        ClearFooterImageCommand = new RelayCommand(_ => { FooterImagePath = null; StatusMessage = "تمت إزالة صورة التذييل."; });
     }
 
     public IReadOnlyList<PaperSize> PaperSizeOptions { get; }
@@ -69,6 +82,10 @@ public sealed class ReportSettingsViewModel : ViewModelBase
     public AsyncRelayCommand LoadCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
     public RelayCommand BackToDashboardCommand { get; }
+    public RelayCommand PickHeaderImageCommand { get; }
+    public RelayCommand PickFooterImageCommand { get; }
+    public RelayCommand ClearHeaderImageCommand { get; }
+    public RelayCommand ClearFooterImageCommand { get; }
 
     public decimal PageMarginLeftCm { get => _pageMarginLeftCm; set => SetProperty(ref _pageMarginLeftCm, value); }
     public decimal PageMarginBottomCm { get => _pageMarginBottomCm; set => SetProperty(ref _pageMarginBottomCm, value); }
@@ -84,6 +101,12 @@ public sealed class ReportSettingsViewModel : ViewModelBase
     public string LabPhone { get => _labPhone; set => SetProperty(ref _labPhone, value); }
     public string FontFamily { get => _fontFamily; set => SetProperty(ref _fontFamily, value); }
     public int FontSizePt { get => _fontSizePt; set => SetProperty(ref _fontSizePt, value); }
+
+    public string? HeaderColor { get => _headerColor; set => SetProperty(ref _headerColor, value); }
+    public string? FooterColor { get => _footerColor; set => SetProperty(ref _footerColor, value); }
+    public string? HeaderImagePath { get => _headerImagePath; set => SetProperty(ref _headerImagePath, value); }
+    public string? FooterImagePath { get => _footerImagePath; set => SetProperty(ref _footerImagePath, value); }
+    public string? NormalRangeMarker { get => _normalRangeMarker; set => SetProperty(ref _normalRangeMarker, value); }
 
     public async Task LoadAsync()
     {
@@ -108,6 +131,11 @@ public sealed class ReportSettingsViewModel : ViewModelBase
                 DoctorSignatureEnabled = s.DoctorSignatureEnabled;
                 HistorySortMode = s.HistorySortMode;
                 HistoryAutoDisplayEnabled = s.HistoryAutoDisplayEnabled;
+                HeaderColor = s.HeaderColor;
+                FooterColor = s.FooterColor;
+                HeaderImagePath = s.HeaderImagePath;
+                FooterImagePath = s.FooterImagePath;
+                NormalRangeMarker = s.NormalRangeMarker;
             }
             else if (settings.Error is not null)
             {
@@ -163,7 +191,12 @@ public sealed class ReportSettingsViewModel : ViewModelBase
                 HeaderFooterMode,
                 DoctorSignatureEnabled,
                 HistorySortMode,
-                HistoryAutoDisplayEnabled));
+                HistoryAutoDisplayEnabled,
+                HeaderColor: HeaderColor,
+                FooterColor: FooterColor,
+                HeaderImagePath: HeaderImagePath,
+                FooterImagePath: FooterImagePath,
+                NormalRangeMarker: NormalRangeMarker));
             if (!settingsResult.IsSuccess)
             {
                 ErrorMessage = settingsResult.Error is not null ? _presenter.Present(settingsResult.Error) : ErrorMessage;
@@ -189,5 +222,67 @@ public sealed class ReportSettingsViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    private void PickHeaderImage()
+    {
+        var path = PickImageFile();
+        if (path is null)
+        {
+            return;
+        }
+
+        if (_imageAssetStore is null)
+        {
+            ErrorMessage = "خدمة تخزين الصور غير متوفرة.";
+            return;
+        }
+
+        var storedPath = _imageAssetStore.StoreImage(path, ReportImageTarget.Header);
+        if (storedPath is not null)
+        {
+            HeaderImagePath = storedPath;
+            StatusMessage = "تم اختيار صورة الرأس.";
+        }
+        else
+        {
+            ErrorMessage = "تعذر تخزين الصورة. تأكد من أن الصيغة مدعومة (PNG, JPG, BMP, GIF) والحجم أقل من 5 ميجابايت.";
+        }
+    }
+
+    private void PickFooterImage()
+    {
+        var path = PickImageFile();
+        if (path is null)
+        {
+            return;
+        }
+
+        if (_imageAssetStore is null)
+        {
+            ErrorMessage = "خدمة تخزين الصور غير متوفرة.";
+            return;
+        }
+
+        var storedPath = _imageAssetStore.StoreImage(path, ReportImageTarget.Footer);
+        if (storedPath is not null)
+        {
+            FooterImagePath = storedPath;
+            StatusMessage = "تم اختيار صورة التذييل.";
+        }
+        else
+        {
+            ErrorMessage = "تعذر تخزين الصورة. تأكد من أن الصيغة مدعومة (PNG, JPG, BMP, GIF) والحجم أقل من 5 ميجابايت.";
+        }
+    }
+
+    private static string? PickImageFile()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "اختر صورة",
+            Filter = "ملفات الصور (*.png;*.jpg;*.jpeg;*.bmp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.gif|جميع الملفات (*.*)|*.*"
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 }

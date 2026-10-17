@@ -16,7 +16,12 @@ public class UpdateReportSettingsCommandHandlerTests
         HeaderFooterMode: HeaderFooterMode.Words,
         DoctorSignatureEnabled: true,
         HistorySortMode: HistorySortMode.ByPatientName,
-        HistoryAutoDisplayEnabled: false);
+        HistoryAutoDisplayEnabled: false,
+        HeaderColor: "#FF0000",
+        FooterColor: "#00FF00",
+        HeaderImagePath: "Header.png",
+        FooterImagePath: "Footer.png",
+        NormalRangeMarker: "*");
 
     [Fact]
     public async Task UpdateReportSettings_RoundTrips()
@@ -36,6 +41,11 @@ public class UpdateReportSettingsCommandHandlerTests
         Assert.True(db.ReportSettings[0].DoctorSignatureEnabled);
         Assert.Equal(HistorySortMode.ByPatientName, db.ReportSettings[0].HistorySortMode);
         Assert.False(db.ReportSettings[0].HistoryAutoDisplayEnabled);
+        Assert.Equal("#FF0000", db.ReportSettings[0].HeaderColor);
+        Assert.Equal("#00FF00", db.ReportSettings[0].FooterColor);
+        Assert.Equal("Header.png", db.ReportSettings[0].HeaderImagePath);
+        Assert.Equal("Footer.png", db.ReportSettings[0].FooterImagePath);
+        Assert.Equal("*", db.ReportSettings[0].NormalRangeMarker);
     }
 
     [Fact]

@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddSingleton<TopLab.Presentation.Services.Configuration.ConfigurationFileService>();
         services.AddSingleton<TopLab.Application.Common.Interfaces.IWorkstationConnectionSettingsProvider, TopLab.Presentation.Services.Configuration.WorkstationConnectionSettingsProvider>();
         services.AddSingleton<TopLab.Application.Common.Interfaces.ILabPrintTextStore, TopLab.Presentation.Services.Configuration.JsonLabPrintTextStore>();
+        services.AddSingleton<TopLab.Application.Common.Interfaces.IReportImageAssetStore, TopLab.Infrastructure.Printing.ReportImageAssetStore>();
 
         // ViewModels
         services.AddTransient<ShellViewModel>();

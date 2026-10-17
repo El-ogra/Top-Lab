@@ -29,6 +29,11 @@ public sealed class UpdateReportSettingsCommandHandler : IRequestHandler<UpdateR
         row.SetDoctorSignature(request.DoctorSignatureEnabled);
         row.SetHistoryOptions(request.HistorySortMode, request.HistoryAutoDisplayEnabled);
         row.SetPrintOptions(request.PrintGroupSubTitle, request.SuppressReprintMessage);
+        row.SetHeaderColor(request.HeaderColor);
+        row.SetFooterColor(request.FooterColor);
+        row.SetHeaderImagePath(request.HeaderImagePath);
+        row.SetFooterImagePath(request.FooterImagePath);
+        row.SetNormalRangeMarker(request.NormalRangeMarker);
 
         await _db.SaveChangesAsync(cancellationToken);
 
