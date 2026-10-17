@@ -29,7 +29,14 @@ public sealed class UpdateReceiptSettingsCommandHandler : IRequestHandler<Update
             request.PrintOnce,
             request.TestDetailDisplayMode,
             request.CashierPrinterEnabled,
-            request.HeaderFooterMode);
+            request.HeaderFooterMode,
+            request.HeaderFontFamily,
+            request.HeaderFontSizePt,
+            request.HeaderFontColor,
+            request.FooterFontFamily,
+            request.FooterFontSizePt,
+            request.FooterFontColor,
+            request.LogoImagePath);
 
         await _db.SaveChangesAsync(cancellationToken);
 

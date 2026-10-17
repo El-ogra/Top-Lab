@@ -12,16 +12,19 @@ using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.Common.Navigation;
 using TopLab.Presentation.Services;
 using TopLab.Domain.Common.Enums;
+using Microsoft.Win32;
 
 namespace TopLab.Presentation.ViewModels.Settings;
 
 /// <summary>S-30: receipt-print settings, the receipt printer assignment, and the
-/// receipt lab identification text block and font.</summary>
+/// receipt lab identification text block and font. GAP-007: adds receipt header/footer
+/// font family/size/colour and laboratory logo.</summary>
 public sealed class ReceiptSettingsViewModel : ViewModelBase
 {
     private readonly ISender _mediator;
     private readonly ResultErrorPresenter _presenter;
     private readonly INavigationService _navigation;
+    private readonly IReceiptImageAssetStore? _imageAssetStore;
 
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
@@ -43,15 +46,26 @@ public sealed class ReceiptSettingsViewModel : ViewModelBase
     private string _fontFamily = string.Empty;
     private int _fontSizePt = 12;
 
+    // GAP-007: header/footer font settings
+    private string? _headerFontFamily;
+    private decimal? _headerFontSizePt;
+    private string? _headerFontColor;
+    private string? _footerFontFamily;
+    private decimal? _footerFontSizePt;
+    private string? _footerFontColor;
+    private string? _logoImagePath;
+
     public ReceiptSettingsViewModel(
         ISender mediator,
         IPrinterCatalogService printers,
         ResultErrorPresenter presenter,
-        INavigationService navigation)
+        INavigationService navigation,
+        IReceiptImageAssetStore? imageAssetStore = null)
     {
         _mediator = mediator;
         _presenter = presenter;
         _navigation = navigation;
+        _imageAssetStore = imageAssetStore;
 
         var printerList = printers.GetInstalledPrinters().ToList();
         if (printerList.Count == 0)
@@ -74,6 +88,8 @@ public sealed class ReceiptSettingsViewModel : ViewModelBase
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
         SaveCashierPrinterCommand = new AsyncRelayCommand(_ => SaveCashierPrinterAsync());
         BackToDashboardCommand = new RelayCommand(_ => _navigation.NavigateTo<SettingsDashboardViewModel>());
+        PickLogoCommand = new RelayCommand(_ => PickLogo());
+        ClearLogoCommand = new RelayCommand(_ => { LogoImagePath = null; StatusMessage = "تمت إزالة شعار المعمل."; });
     }
 
     public IReadOnlyList<string> InstalledPrinters { get; }
@@ -89,6 +105,8 @@ public sealed class ReceiptSettingsViewModel : ViewModelBase
     public AsyncRelayCommand SaveCommand { get; }
     public AsyncRelayCommand SaveCashierPrinterCommand { get; }
     public RelayCommand BackToDashboardCommand { get; }
+    public RelayCommand PickLogoCommand { get; }
+    public RelayCommand ClearLogoCommand { get; }
 
     public decimal TopMarginCm { get => _topMarginCm; set => SetProperty(ref _topMarginCm, value); }
     public string Currency { get => _currency; set => SetProperty(ref _currency, value); }
@@ -104,6 +122,15 @@ public sealed class ReceiptSettingsViewModel : ViewModelBase
     public string LabPhone { get => _labPhone; set => SetProperty(ref _labPhone, value); }
     public string FontFamily { get => _fontFamily; set => SetProperty(ref _fontFamily, value); }
     public int FontSizePt { get => _fontSizePt; set => SetProperty(ref _fontSizePt, value); }
+
+    // GAP-007: header/footer font properties
+    public string? HeaderFontFamily { get => _headerFontFamily; set => SetProperty(ref _headerFontFamily, value); }
+    public decimal? HeaderFontSizePt { get => _headerFontSizePt; set => SetProperty(ref _headerFontSizePt, value); }
+    public string? HeaderFontColor { get => _headerFontColor; set => SetProperty(ref _headerFontColor, value); }
+    public string? FooterFontFamily { get => _footerFontFamily; set => SetProperty(ref _footerFontFamily, value); }
+    public decimal? FooterFontSizePt { get => _footerFontSizePt; set => SetProperty(ref _footerFontSizePt, value); }
+    public string? FooterFontColor { get => _footerFontColor; set => SetProperty(ref _footerFontColor, value); }
+    public string? LogoImagePath { get => _logoImagePath; set => SetProperty(ref _logoImagePath, value); }
 
     public async Task LoadAsync()
     {
@@ -127,6 +154,13 @@ public sealed class ReceiptSettingsViewModel : ViewModelBase
                 TestDetailDisplayMode = s.TestDetailDisplayMode;
                 CashierPrinterEnabled = s.CashierPrinterEnabled;
                 HeaderFooterMode = s.HeaderFooterMode;
+                HeaderFontFamily = s.HeaderFontFamily;
+                HeaderFontSizePt = s.HeaderFontSizePt;
+                HeaderFontColor = s.HeaderFontColor;
+                FooterFontFamily = s.FooterFontFamily;
+                FooterFontSizePt = s.FooterFontSizePt;
+                FooterFontColor = s.FooterFontColor;
+                LogoImagePath = s.LogoImagePath;
             }
             else if (settings.Error is not null)
             {
@@ -198,7 +232,14 @@ public sealed class ReceiptSettingsViewModel : ViewModelBase
                 PrintOnce,
                 TestDetailDisplayMode,
                 CashierPrinterEnabled,
-                HeaderFooterMode));
+                HeaderFooterMode,
+                HeaderFontFamily,
+                HeaderFontSizePt,
+                HeaderFontColor,
+                FooterFontFamily,
+                FooterFontSizePt,
+                FooterFontColor,
+                LogoImagePath));
             if (!settingsResult.IsSuccess)
             {
                 ErrorMessage = settingsResult.Error is not null ? _presenter.Present(settingsResult.Error) : ErrorMessage;
@@ -248,5 +289,42 @@ public sealed class ReceiptSettingsViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    // GAP-007: logo picker through the asset-store strategy
+    private void PickLogo()
+    {
+        var path = PickImageFile();
+        if (path is null)
+        {
+            return;
+        }
+
+        if (_imageAssetStore is null)
+        {
+            ErrorMessage = "خدمة تخزين الصور غير متوفرة.";
+            return;
+        }
+
+        var storedPath = _imageAssetStore.StoreLogo(path);
+        if (storedPath is not null)
+        {
+            LogoImagePath = storedPath;
+            StatusMessage = "تم اختيار شعار المعمل.";
+        }
+        else
+        {
+            ErrorMessage = "تعذر تخزين الصورة. تأكد من أن الصيغة مدعومة (PNG, JPG, BMP, GIF) والحجم أقل من 5 ميجابايت.";
+        }
+    }
+
+    private static string? PickImageFile()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "اختر شعار المعمل",
+            Filter = "ملفات الصور (*.png;*.jpg;*.jpeg;*.bmp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.gif|جميع الملفات (*.*)|*.*"
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 }

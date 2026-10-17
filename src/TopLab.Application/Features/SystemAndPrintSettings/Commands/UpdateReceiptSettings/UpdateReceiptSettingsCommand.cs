@@ -12,7 +12,15 @@ public sealed record UpdateReceiptSettingsCommand(
     bool PrintOnce,
     TestDetailDisplayMode TestDetailDisplayMode,
     bool CashierPrinterEnabled,
-    HeaderFooterMode HeaderFooterMode)
+    HeaderFooterMode HeaderFooterMode,
+    // GAP-007: appended with defaults so every existing caller keeps compiling (SD-6).
+    string? HeaderFontFamily = null,
+    decimal? HeaderFontSizePt = null,
+    string? HeaderFontColor = null,
+    string? FooterFontFamily = null,
+    decimal? FooterFontSizePt = null,
+    string? FooterFontColor = null,
+    string? LogoImagePath = null)
     : IRequest<Result>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

@@ -31,7 +31,14 @@ public sealed class GetReceiptSettingsQueryHandler : IRequestHandler<GetReceiptS
             row.PrintOnce,
             row.TestDetailDisplayMode,
             row.CashierPrinterEnabled,
-            row.HeaderFooterMode);
+            row.HeaderFooterMode,
+            row.HeaderFontFamily,
+            row.HeaderFontSizePt,
+            row.HeaderFontColor,
+            row.FooterFontFamily,
+            row.FooterFontSizePt,
+            row.FooterFontColor,
+            row.LogoImagePath);
 
         return Task.FromResult(Result<ReceiptSettingsDto>.Success(dto));
     }

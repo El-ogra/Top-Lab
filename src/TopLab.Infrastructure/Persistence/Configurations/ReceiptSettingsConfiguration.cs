@@ -18,6 +18,13 @@ public sealed class ReceiptSettingsConfiguration : IEntityTypeConfiguration<Rece
         b.Property(e => e.TestDetailDisplayMode).HasConversion<int>().HasColumnType("tinyint").IsRequired();
         b.Property(e => e.CashierPrinterEnabled).IsRequired();
         b.Property(e => e.HeaderFooterMode).HasConversion<int>().HasColumnType("tinyint").IsRequired();
-        b.HasData(new { Id = 1, TopMarginCm = 1.0m, Currency = "L.E.", PickupTimeDefault = (TimeOnly?)null, PrintOnce = false, TestDetailDisplayMode = TestDetailDisplayMode.Show, CashierPrinterEnabled = false, HeaderFooterMode = HeaderFooterMode.None });
+        b.Property(e => e.HeaderFontFamily).HasMaxLength(100).IsRequired(false);
+        b.Property(e => e.HeaderFontSizePt).HasColumnType("decimal(4,1)").HasPrecision(4,1).IsRequired(false);
+        b.Property(e => e.HeaderFontColor).HasMaxLength(9).IsRequired(false);
+        b.Property(e => e.FooterFontFamily).HasMaxLength(100).IsRequired(false);
+        b.Property(e => e.FooterFontSizePt).HasColumnType("decimal(4,1)").HasPrecision(4,1).IsRequired(false);
+        b.Property(e => e.FooterFontColor).HasMaxLength(9).IsRequired(false);
+        b.Property(e => e.LogoImagePath).HasMaxLength(300).IsRequired(false);
+        b.HasData(new { Id = 1, TopMarginCm = 1.0m, Currency = "L.E.", PickupTimeDefault = (TimeOnly?)null, PrintOnce = false, TestDetailDisplayMode = TestDetailDisplayMode.Show, CashierPrinterEnabled = false, HeaderFooterMode = HeaderFooterMode.None, HeaderFontFamily = (string?)null, HeaderFontSizePt = (decimal?)null, HeaderFontColor = (string?)null, FooterFontFamily = (string?)null, FooterFontSizePt = (decimal?)null, FooterFontColor = (string?)null, LogoImagePath = (string?)null });
     }
 }

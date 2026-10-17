@@ -42,7 +42,14 @@ public sealed record ReceiptSettingsDto(
     bool PrintOnce,
     TestDetailDisplayMode TestDetailDisplayMode,
     bool CashierPrinterEnabled,
-    HeaderFooterMode HeaderFooterMode);
+    HeaderFooterMode HeaderFooterMode,
+    string? HeaderFontFamily = null,
+    decimal? HeaderFontSizePt = null,
+    string? HeaderFontColor = null,
+    string? FooterFontFamily = null,
+    decimal? FooterFontSizePt = null,
+    string? FooterFontColor = null,
+    string? LogoImagePath = null);
 
 public sealed record EnvelopePrintItemPositionDto(
     string ItemName,

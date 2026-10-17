@@ -21,6 +21,7 @@ namespace TopLab.Infrastructure.Printing;
 public sealed class ReceiptPdfWriter : IReceiptPdfWriter
 {
     private readonly BarcodeLabelRenderer _renderer;
+    private readonly IReceiptImageAssetStore? _imageAssetStore;
 
     static ReceiptPdfWriter()
     {
@@ -33,9 +34,10 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
         Settings.UseSystemFonts = true;
     }
 
-    public ReceiptPdfWriter(BarcodeLabelRenderer renderer)
+    public ReceiptPdfWriter(BarcodeLabelRenderer renderer, IReceiptImageAssetStore? imageAssetStore = null)
     {
         _renderer = renderer;
+        _imageAssetStore = imageAssetStore;
     }
 
     public Task WritePdfAsync(
@@ -64,6 +66,24 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
 #pragma warning restore CA1416
         var fontSize = labText.FontSizePt > 0 ? labText.FontSizePt : 12;
         var topMarginPt = (float)receiptSettings.TopMarginCm * 28.35f;
+
+        // GAP-007: resolve header/footer fonts, sizes, and colours
+#pragma warning disable CA1416 // Windows-only WPF app
+        var headerFontFamily = ArabicFontResolver.Resolve(receiptSettings.HeaderFontFamily ?? labText.FontFamily);
+        var footerFontFamily = ArabicFontResolver.Resolve(receiptSettings.FooterFontFamily ?? labText.FontFamily);
+#pragma warning restore CA1416
+        var headerFontSize = receiptSettings.HeaderFontSizePt ?? (fontSize + 2);
+        var headerFontColor = ParseColor(receiptSettings.HeaderFontColor);
+
+        var footerFontSize = receiptSettings.FooterFontSizePt ?? (fontSize - 2);
+        var footerFontColor = ParseColor(receiptSettings.FooterFontColor);
+
+        // GAP-007: resolve logo path through the asset store
+        string? logoPath = null;
+        if (!string.IsNullOrWhiteSpace(receiptSettings.LogoImagePath) && _imageAssetStore is not null)
+        {
+            logoPath = _imageAssetStore.ResolveLogoPath(receiptSettings.LogoImagePath);
+        }
 
         if (File.Exists(absolutePath))
         {
@@ -104,9 +124,19 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
                     page.Content()
                         .Column(column =>
                         {
+                            // GAP-007: render the lab logo at the top of the receipt
+                            if (logoPath is not null && File.Exists(logoPath))
+                            {
+                                column.Item().PaddingBottom(6).AlignCenter().Image(logoPath);
+                            }
+
                             foreach (var line in lines.Header)
                             {
-                                column.Item().Text(line).SemiBold().FontSize(fontSize + 2).AlignRight();
+                                column.Item().Text(line).SemiBold()
+                                    .FontSize((float)headerFontSize)
+                                    .AlignRight()
+                                    .FontColor(headerFontColor)
+                                    .FontFamily(headerFontFamily);
                             }
 
                             if (lines.Header.Count > 0)
@@ -167,7 +197,11 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
                                 column.Item().PaddingTop(4).LineHorizontal(1);
                                 foreach (var line in lines.Footer)
                                 {
-                                    column.Item().Text(line).FontSize(fontSize - 2).AlignCenter();
+                                    column.Item().Text(line)
+                                        .FontSize((float)footerFontSize)
+                                        .AlignCenter()
+                                        .FontColor(footerFontColor)
+                                        .FontFamily(footerFontFamily);
                                 }
                             }
                         });
@@ -197,8 +231,8 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
         ArgumentException.ThrowIfNullOrWhiteSpace(barcodePayload);
 
         var header = new List<string>();
-        // HeaderFooterMode.Images has no image-asset pipeline in this slice, so it
-        // falls back to the words header (documented; matches the plan).
+        // HeaderFooterMode.Images now has a logo pipeline (GAP-007); the words
+        // header is still rendered as a fallback when no logo is configured.
         if (receiptSettings.HeaderFooterMode != HeaderFooterMode.None)
         {
             if (!string.IsNullOrWhiteSpace(labText.LabName))
@@ -246,12 +280,28 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
             $"المدفوع: {FormatMoney(receipt.TotalPaid, receipt.Currency)}",
             $"الباقي: {FormatMoney(receipt.Balance, receipt.Currency)}"
         };
-
         string? pickup = receiptSettings.PickupTimeDefault.HasValue
             ? $"موعد الاستلام: {receiptSettings.PickupTimeDefault.Value.ToString("HH:mm", CultureInfo.InvariantCulture)}"
             : null;
 
         return new ReceiptTextLines(header, patient, items, totals, pickup, new List<string>(), barcodePayload);
+    }
+
+    private static string ParseColor(string? colorString)
+    {
+        if (string.IsNullOrWhiteSpace(colorString))
+        {
+            return "#000000";
+        }
+
+        // Accept hex color strings (e.g. "#FF0000" or "FF0000")
+        var hex = colorString.StartsWith("#") ? colorString : "#" + colorString;
+        if (hex.Length == 7 || hex.Length == 9)
+        {
+            return hex;
+        }
+
+        return "#000000";
     }
 
     private static string FormatMoney(decimal amount, string currency)

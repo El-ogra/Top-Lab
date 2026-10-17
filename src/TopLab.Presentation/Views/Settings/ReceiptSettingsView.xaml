@@ -43,6 +43,62 @@
             <TextBlock Text="الرأس والتذييل" FontWeight="Bold" Margin="0,16,0,4" />
             <ComboBox ItemsSource="{Binding HeaderFooterModeOptions}" SelectedItem="{Binding HeaderFooterMode}" />
 
+            <!-- GAP-007: Receipt header font settings -->
+            <TextBlock Text="خط رأس الإيصال" FontWeight="Bold" Margin="0,16,0,4" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="الخط:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,4" ItemsSource="{Binding FontFamilyOptions}"
+                          SelectedItem="{Binding HeaderFontFamily}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="حجم الخط (نقطة):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4" Text="{Binding HeaderFontSizePt, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="اللون (hex):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4" Text="{Binding HeaderFontColor, UpdateSourceTrigger=PropertyChanged}" MaxLength="9" />
+            </Grid>
+
+            <!-- GAP-007: Receipt footer font settings -->
+            <TextBlock Text="خط تذييل الإيصال" FontWeight="Bold" Margin="0,16,0,4" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="الخط:" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,4" ItemsSource="{Binding FontFamilyOptions}"
+                          SelectedItem="{Binding FooterFontFamily}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="حجم الخط (نقطة):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,4" Text="{Binding FooterFontSizePt, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="اللون (hex):" VerticalAlignment="Center" Margin="0,4,8,4" Width="180" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4" Text="{Binding FooterFontColor, UpdateSourceTrigger=PropertyChanged}" MaxLength="9" />
+            </Grid>
+
+            <!-- GAP-007: Laboratory logo -->
+            <TextBlock Text="شعار المعمل" FontWeight="Bold" Margin="0,16,0,4" />
+            <StackPanel Orientation="Horizontal">
+                <Button Content="اختيار شعار" Width="100" Command="{Binding PickLogoCommand}" />
+                <Button Content="إزالة الشعار" Width="100" Margin="8,0,0,0" Command="{Binding ClearLogoCommand}" />
+            </StackPanel>
+            <TextBlock Text="{Binding LogoImagePath}" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,0" />
+
             <TextBlock Text="طابعة الكاشير" FontWeight="Bold" Margin="0,16,0,8" />
             <Grid>
                 <Grid.ColumnDefinitions>

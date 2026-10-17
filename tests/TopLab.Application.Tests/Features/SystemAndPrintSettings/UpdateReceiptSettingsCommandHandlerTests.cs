@@ -58,4 +58,93 @@ public class UpdateReceiptSettingsCommandHandlerTests
         Assert.False(result.IsSuccess);
         Assert.Equal(TopLab.Application.Common.Results.ErrorType.Unexpected, result.Error!.Type);
     }
+
+    // GAP-007 tests
+
+    [Fact]
+    public async Task UpdateReceiptSettings_WithFontAndLogoFields_PersistsThem()
+    {
+        var db = new FakeApplicationDbContext();
+        db.ReceiptSettings.Add(ReceiptSettings.CreateDefault());
+
+        var cmd = DefaultCommand() with
+        {
+            HeaderFontFamily = "Arial",
+            HeaderFontSizePt = 14.0m,
+            HeaderFontColor = "#FF0000",
+            FooterFontFamily = "Tahoma",
+            FooterFontSizePt = 10.0m,
+            FooterFontColor = "#0000FF",
+            LogoImagePath = "Logo.png"
+        };
+        var handler = new UpdateReceiptSettingsCommandHandler(db);
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var row = db.ReceiptSettings[0];
+        Assert.Equal("Arial", row.HeaderFontFamily);
+        Assert.Equal(14.0m, row.HeaderFontSizePt);
+        Assert.Equal("#FF0000", row.HeaderFontColor);
+        Assert.Equal("Tahoma", row.FooterFontFamily);
+        Assert.Equal(10.0m, row.FooterFontSizePt);
+        Assert.Equal("#0000FF", row.FooterFontColor);
+        Assert.Equal("Logo.png", row.LogoImagePath);
+    }
+
+    [Fact]
+    public async Task UpdateReceiptSettings_FontAndLogoFieldsDefaultToNull_WhenNotProvided()
+    {
+        var db = new FakeApplicationDbContext();
+        db.ReceiptSettings.Add(ReceiptSettings.CreateDefault());
+
+        var handler = new UpdateReceiptSettingsCommandHandler(db);
+        var result = await handler.Handle(DefaultCommand(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var row = db.ReceiptSettings[0];
+        Assert.Null(row.HeaderFontFamily);
+        Assert.Null(row.HeaderFontSizePt);
+        Assert.Null(row.HeaderFontColor);
+        Assert.Null(row.FooterFontFamily);
+        Assert.Null(row.FooterFontSizePt);
+        Assert.Null(row.FooterFontColor);
+        Assert.Null(row.LogoImagePath);
+    }
+
+    [Fact]
+    public async Task UpdateReceiptSettings_InvalidFontSize_Throws()
+    {
+        var db = new FakeApplicationDbContext();
+        db.ReceiptSettings.Add(ReceiptSettings.CreateDefault());
+
+        var cmd = DefaultCommand() with { HeaderFontSizePt = 100m };
+        var handler = new UpdateReceiptSettingsCommandHandler(db);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => handler.Handle(cmd, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task UpdateReceiptSettings_ClearFontAndLogoFields_SetsNull()
+    {
+        var db = new FakeApplicationDbContext();
+        var existing = ReceiptSettings.CreateDefault();
+        existing.Update(1m, "L.E.", null, false, TestDetailDisplayMode.Show, false, HeaderFooterMode.Images,
+            headerFontFamily: "Arial", headerFontSizePt: 14m, headerFontColor: "#FF0000",
+            footerFontFamily: "Tahoma", footerFontSizePt: 10m, footerFontColor: "#0000FF",
+            logoImagePath: "Logo.png");
+        db.ReceiptSettings.Add(existing);
+
+        var cmd = DefaultCommand();
+        var handler = new UpdateReceiptSettingsCommandHandler(db);
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var row = db.ReceiptSettings[0];
+        Assert.Null(row.HeaderFontFamily);
+        Assert.Null(row.HeaderFontSizePt);
+        Assert.Null(row.HeaderFontColor);
+        Assert.Null(row.FooterFontFamily);
+        Assert.Null(row.FooterFontSizePt);
+        Assert.Null(row.FooterFontColor);
+        Assert.Null(row.LogoImagePath);
+    }
 }
