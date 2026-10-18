@@ -3,6 +3,7 @@ using TopLab.Application.Common.Authorization;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.ResultsEntry.Common;
+using TopLab.Application.Features.ReportProduction.Common;
 using TopLab.Domain.Patients;
 using TopLab.Domain.Results;
 using TopLab.Domain.Tests;
@@ -63,7 +64,9 @@ public sealed record ProfileReportDto(
     IReadOnlyList<ProfileReportLineDto> Lines,
     // SD-13 / BR-A04-7: OPTIONAL with a default, so the positional 10-argument construction
     // in tests/.../Common/Fakes/FakeSender.cs:105-106 keeps compiling untouched.
-    bool IsTakenOutsideLab = false);
+    bool IsTakenOutsideLab = false,
+    // GAP-017: the owning profile's per-profile result styling. Null keeps Phase 9 behaviour.
+    ProfileResultStyleDto? ProfileStyle = null);
 
 public sealed record ProfileAmendmentDto(
     int Id,

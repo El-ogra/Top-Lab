@@ -53,6 +53,11 @@ public sealed class CreateProfileCommandHandler : IRequestHandler<CreateProfileC
         try
         {
             profile = Profile.Create(ProfileId.Create(0), request.Name?.Trim() ?? string.Empty, test.Id, test.ResultKind, request.FixedPrice);
+            profile.SetResultStyling(
+                request.NormalFont,
+                request.NormalColor,
+                request.AbnormalFont,
+                request.AbnormalBackgroundColor);
         }
         catch (ArgumentException ex)
         {

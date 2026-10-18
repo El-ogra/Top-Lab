@@ -205,8 +205,7 @@ public static class ReportContentBuilder
             if (IsVisible(analyte, reportList))
             {
                 var abnormal = profile.Flag == (int)ResultFlag.Low || profile.Flag == (int)ResultFlag.High;
-                var fontColor = abnormal && reportSettings.EnableAbnormalResultColor ? reportSettings.AbnormalResultFontColor : null;
-                var bgColor = abnormal && reportSettings.EnableAbnormalResultColor ? reportSettings.AbnormalResultBackgroundColor : null;
+                var (fontColor, bgColor) = ProfileResultColors(dto.ProfileStyle, abnormal, reportSettings);
                 body.Add(Layout(analyte, analyte.FreeTextOverride
                     ? analyte.Label
                     : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}", fontColor, bgColor));
@@ -394,8 +393,7 @@ public static class ReportContentBuilder
                 if (IsVisible(profileAnalyteItem, reportList))
                 {
                     var profileAbnormal = profile.Flag == (int)ResultFlag.Low || profile.Flag == (int)ResultFlag.High;
-                    var profileFontColor = profileAbnormal && settings.EnableAbnormalResultColor ? settings.AbnormalResultFontColor : null;
-                    var profileBgColor = profileAbnormal && settings.EnableAbnormalResultColor ? settings.AbnormalResultBackgroundColor : null;
+                    var (profileFontColor, profileBgColor) = ProfileResultColors(line.ProfileStyle, profileAbnormal, settings);
                     body.Add(Layout(profileAnalyteItem, profileAnalyteItem.FreeTextOverride
                         ? profileAnalyteItem.Label
                         : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}", profileFontColor, profileBgColor));
@@ -638,6 +636,40 @@ public static class ReportContentBuilder
             NormalRangeMarker: marker,
             HeaderImagePath: resolvedHeaderImagePath,
             FooterImagePath: resolvedFooterImagePath);
+    }
+
+    /// <summary>
+    /// GAP-017: the colours for one profile result line, resolving profile override against the
+    /// global <see cref="ReportSettings"/> abnormal colours. Documented precedence:
+    /// <list type="bullet">
+    /// <item><b>Abnormal (flagged Low/High).</b> <c>ReportSettings.EnableAbnormalResultColor</c> is a
+    /// master switch: when it is false NO abnormal colouring is applied, profile override included.
+    /// When it is true, the profile's own <c>AbnormalFont</c>/<c>AbnormalBackgroundColor</c> win
+    /// over <c>AbnormalResultFontColor</c>/<c>AbnormalResultBackgroundColor</c> slot by slot, and a
+    /// slot the profile leaves null keeps the global value. A profile with no abnormal styling
+    /// therefore renders exactly as Phase 9 renders it.</item>
+    /// <item><b>Normal (unflagged).</b> Phase 9 never colours normal results and there is no global
+    /// normal colour, so styling comes only from the profile's <c>NormalFont</c>/<c>NormalColor</c>.
+    /// When they are null the line renders uncoloured.</item>
+    /// </list>
+    /// </summary>
+    private static (string? FontColor, string? BackgroundColor) ProfileResultColors(
+        ProfileResultStyleDto? style,
+        bool abnormal,
+        ReportSettings settings)
+    {
+        if (abnormal)
+        {
+            if (!settings.EnableAbnormalResultColor)
+            {
+                return (null, null);
+            }
+
+            return (style?.AbnormalFont ?? settings.AbnormalResultFontColor,
+                    style?.AbnormalBackgroundColor ?? settings.AbnormalResultBackgroundColor);
+        }
+
+        return (style?.NormalFont, style?.NormalColor);
     }
 
     private static Dictionary<string, ReportItemTemplate> BuildTemplateMap(

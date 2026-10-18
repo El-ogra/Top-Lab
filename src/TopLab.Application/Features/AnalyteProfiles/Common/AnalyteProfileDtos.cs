@@ -29,4 +29,9 @@ public sealed record ProfileDefinitionDto(
     string SpecializedTestName,
     decimal FixedPrice,
     bool IsActive,
-    IReadOnlyList<int> AnalyteIds);
+    IReadOnlyList<int> AnalyteIds,
+    // GAP-017: optional per-profile result styling, surfaced to the profile editor.
+    string? NormalFont = null,
+    string? NormalColor = null,
+    string? AbnormalFont = null,
+    string? AbnormalBackgroundColor = null);

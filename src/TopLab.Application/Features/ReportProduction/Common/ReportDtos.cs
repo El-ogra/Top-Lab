@@ -29,6 +29,18 @@ public sealed record ProfileReportLineDto(
     int? Flag,
     FrozenProfileRangeDto? FrozenRange);
 
+/// <summary>
+/// GAP-017: a profile's own result styling, carried next to the result lines so the report
+/// writer can apply it with precedence over the global <c>ReportSettings</c> colours.
+/// A null member means "no per-profile override for that slot"; an all-null style means the
+/// rendered output is byte-for-byte what Phase 9 produced.
+/// </summary>
+public sealed record ProfileResultStyleDto(
+    string? NormalFont = null,
+    string? NormalColor = null,
+    string? AbnormalFont = null,
+    string? AbnormalBackgroundColor = null);
+
 public sealed record CultureReportRowDto(
     int AntibioticId,
     string AntibioticName,
@@ -70,7 +82,10 @@ public sealed record CombinedReportLineDto(
     string? HighComment = null,
     bool IsTakenOutsideLab = false,
     string? TestGroupName = null,
-    IReadOnlyList<string>? TestComments = null);
+    IReadOnlyList<string>? TestComments = null,
+    // GAP-017: set only on specialised-profile lines, so the writer can style that
+    // profile's own result lines. Null on every other line keeps Phase 9 behaviour.
+    ProfileResultStyleDto? ProfileStyle = null);
 
 public sealed record CombinedReportDto(
     int PatientId,

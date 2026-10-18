@@ -38,7 +38,11 @@ public sealed class GetProfileDefinitionsQueryHandler
                 test?.Name ?? string.Empty,
                 p.FixedPrice,
                 p.IsActive,
-                links.TryGetValue(p.Id, out var ids) ? ids : new List<int>());
+                links.TryGetValue(p.Id, out var ids) ? ids : new List<int>(),
+                p.NormalFont,
+                p.NormalColor,
+                p.AbnormalFont,
+                p.AbnormalBackgroundColor);
         }).ToList();
 
         return Task.FromResult(Result<IReadOnlyList<ProfileDefinitionDto>>.Success(dtos));

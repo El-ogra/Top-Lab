@@ -15,6 +15,14 @@ public sealed class ProfileConfiguration : IEntityTypeConfiguration<Profile>
         b.Property(e => e.TestId).HasConversion(v => v.Value, v => TestId.Create(v)).IsRequired();
         b.Property(e => e.FixedPrice).HasColumnType("decimal(18,2)").HasPrecision(18, 2).IsRequired();
         b.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
+
+        // GAP-017: per-profile result styling, all optional. A null value on every one of
+        // them reproduces the pre-Phase-10 rendering exactly (global colours for abnormal
+        // results, no colour for normal results).
+        b.Property(e => e.NormalFont).HasMaxLength(50).IsRequired(false);
+        b.Property(e => e.NormalColor).HasMaxLength(9).IsRequired(false);
+        b.Property(e => e.AbnormalFont).HasMaxLength(50).IsRequired(false);
+        b.Property(e => e.AbnormalBackgroundColor).HasMaxLength(9).IsRequired(false);
         b.HasOne<Test>().WithOne().HasForeignKey<Profile>(e => e.TestId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(e => e.TestId).IsUnique();
         b.HasIndex(e => e.Name);

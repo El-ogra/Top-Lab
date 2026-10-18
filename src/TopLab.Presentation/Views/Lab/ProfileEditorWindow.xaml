@@ -24,6 +24,21 @@
                 <TextBlock Text="السعر الثابت:" Margin="0,4,0,2" />
                 <TextBox Text="{Binding FixedPrice, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
 
+                <TextBlock Text="تنسيق نتائج البروفايل:" FontWeight="Bold" Margin="0,8,0,4" />
+                <TextBlock Text="اترك الحقول فارغة لاستخدام الألوان العامة." Foreground="Gray" Margin="0,0,0,6" />
+
+                <TextBlock Text="لون خط النتيجة الطبيعية:" Margin="0,4,0,2" />
+                <TextBox Text="{Binding NormalFont, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MaxLength="50" />
+
+                <TextBlock Text="لون خلفية النتيجة الطبيعية:" Margin="0,4,0,2" />
+                <TextBox Text="{Binding NormalColor, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MaxLength="9" />
+
+                <TextBlock Text="لون خط النتيجة غير الطبيعية:" Margin="0,4,0,2" />
+                <TextBox Text="{Binding AbnormalFont, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MaxLength="50" />
+
+                <TextBlock Text="لون خلفية النتيجة غير الطبيعية:" Margin="0,4,0,2" />
+                <TextBox Text="{Binding AbnormalBackgroundColor, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MaxLength="9" />
+
                 <TextBlock Text="المكوّنات:" FontWeight="Bold" Margin="0,8,0,4" />
                 <ItemsControl ItemsSource="{Binding Components}">
                     <ItemsControl.ItemTemplate>

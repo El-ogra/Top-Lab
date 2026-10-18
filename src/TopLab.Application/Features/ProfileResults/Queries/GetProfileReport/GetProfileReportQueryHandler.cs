@@ -6,6 +6,10 @@ using TopLab.Domain.Patients;
 using TopLab.Domain.Results;
 using TopLab.Domain.Tests;
 
+// GAP-017: aliased because ReportProduction.Common also declares a ProfileReportLineDto /
+// FrozenProfileRangeDto, and both namespaces are visible from this handler.
+using ProfileResultStyleDto = TopLab.Application.Features.ReportProduction.Common.ProfileResultStyleDto;
+
 namespace TopLab.Application.Features.ProfileResults.Queries.GetProfileReport;
 
 /// <summary>
@@ -92,7 +96,14 @@ public sealed class GetProfileReportQueryHandler
             pt.IsPrinted,
             pt.IsDelivered,
             lines,
-            pt.IsTakenOutsideLab);
+            pt.IsTakenOutsideLab,
+            // GAP-017: the profile's own styling travels with the report so the writer can
+            // apply it with precedence over the global abnormal-result colours.
+            new ProfileResultStyleDto(
+                profile.NormalFont,
+                profile.NormalColor,
+                profile.AbnormalFont,
+                profile.AbnormalBackgroundColor));
 
         return Task.FromResult(Result<ProfileReportDto>.Success(dto));
     }

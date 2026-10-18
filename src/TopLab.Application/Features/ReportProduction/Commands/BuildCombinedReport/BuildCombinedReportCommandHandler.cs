@@ -142,6 +142,14 @@ public sealed class BuildCombinedReportCommandHandler
                 .ToList()
                 .ToDictionary(m => m.PatientTestId.Value);
 
+        // GAP-017: one aggregated read of the per-profile result styling for every test on the
+        // report — a specialised-profile line looks its style up here, never one query per line.
+        var profileStyleByTest = _db.Set<Profile>()
+            .Where(p => lineTestIds.Contains(p.TestId.Value))
+            .ToDictionary(
+                p => p.TestId.Value,
+                p => new ProfileResultStyleDto(p.NormalFont, p.NormalColor, p.AbnormalFont, p.AbnormalBackgroundColor));
+
         IReadOnlyList<CombinedReportLineDto> lines = selection.OrderedIds.Select(id =>
         {
             var pt = byId[id];
@@ -150,10 +158,12 @@ public sealed class BuildCombinedReportCommandHandler
 
             IReadOnlyList<ProfileReportLineDto> profileLines = new List<ProfileReportLineDto>();
             CultureReportSummaryDto? culture = null;
+            ProfileResultStyleDto? profileStyle = null;
 
             if (test is not null && test.ResultKind == ResultKind.SpecializedProfile
                 && profileByTest.TryGetValue(id, out var items))
             {
+                profileStyleByTest.TryGetValue(pt.TestId.Value, out profileStyle);
                 profileLines = items.Select(item =>
                 {
                     profileSnapshots.TryGetValue(item.Id.Value, out var pSnap);
@@ -231,7 +241,8 @@ public sealed class BuildCombinedReportCommandHandler
                 highComment,
                 pt.IsTakenOutsideLab,
                 groupName,
-                testComments);
+                testComments,
+                profileStyle);
         }).ToList();
 
         var dto = new CombinedReportDto(

@@ -50,6 +50,10 @@ public sealed class ProfileEditorViewModel : ViewModelBase
     private int? _specializedTestId;
     private decimal _fixedPrice;
     private string _specializedTestName = string.Empty;
+    private string? _normalFont;
+    private string? _normalColor;
+    private string? _abnormalFont;
+    private string? _abnormalBackgroundColor;
 
     private ObservableCollection<TestSummaryDto> _catalogTests = new();
     private ObservableCollection<AnalyteCheckItem> _components = new();
@@ -79,6 +83,13 @@ public sealed class ProfileEditorViewModel : ViewModelBase
     public decimal FixedPrice { get => _fixedPrice; set => SetProperty(ref _fixedPrice, value); }
     public string SpecializedTestName { get => _specializedTestName; private set => SetProperty(ref _specializedTestName, value); }
 
+    // GAP-017: per-profile result styling. Blank/null clears the override, so the global
+    // colours apply for abnormal results and the line renders uncoloured for normal results.
+    public string? NormalFont { get => _normalFont; set => SetProperty(ref _normalFont, value); }
+    public string? NormalColor { get => _normalColor; set => SetProperty(ref _normalColor, value); }
+    public string? AbnormalFont { get => _abnormalFont; set => SetProperty(ref _abnormalFont, value); }
+    public string? AbnormalBackgroundColor { get => _abnormalBackgroundColor; set => SetProperty(ref _abnormalBackgroundColor, value); }
+
     public ObservableCollection<TestSummaryDto> CatalogTests { get => _catalogTests; private set => SetProperty(ref _catalogTests, value); }
     public ObservableCollection<AnalyteCheckItem> Components { get => _components; private set => SetProperty(ref _components, value); }
     public ObservableCollection<AnalyteDefinitionDto> AllAnalytes { get => _allAnalytes; private set => SetProperty(ref _allAnalytes, value); }
@@ -95,6 +106,10 @@ public sealed class ProfileEditorViewModel : ViewModelBase
     {
         IsManageMode = false;
         _editingProfileId = 0;
+        NormalFont = null;
+        NormalColor = null;
+        AbnormalFont = null;
+        AbnormalBackgroundColor = null;
         await ReloadLookupsAsync(Array.Empty<int>());
     }
 
@@ -106,6 +121,10 @@ public sealed class ProfileEditorViewModel : ViewModelBase
         SpecializedTestId = profile.SpecializedTestId;
         SpecializedTestName = profile.SpecializedTestName;
         FixedPrice = profile.FixedPrice;
+        NormalFont = profile.NormalFont;
+        NormalColor = profile.NormalColor;
+        AbnormalFont = profile.AbnormalFont;
+        AbnormalBackgroundColor = profile.AbnormalBackgroundColor;
         await ReloadLookupsAsync(profile.AnalyteIds);
     }
 
@@ -158,7 +177,8 @@ public sealed class ProfileEditorViewModel : ViewModelBase
         try
         {
             var result = await _mediator.Send(new CreateProfileCommand(
-                Name.Trim(), SpecializedTestId.Value, FixedPrice, CheckedAnalyteIds()));
+                Name.Trim(), SpecializedTestId.Value, FixedPrice, CheckedAnalyteIds(),
+                NormalFont, NormalColor, AbnormalFont, AbnormalBackgroundColor));
             if (!result.IsSuccess)
             {
                 ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;

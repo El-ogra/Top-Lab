@@ -137,7 +137,13 @@ public sealed class ResultPrintCoordinator : IResultPrintCoordinator
                 null,
                 null,
                 null,
-                report.IsTakenOutsideLab)]);
+                report.IsTakenOutsideLab,
+                null,
+                null,
+                // GAP-017: the profile report's own styling survives the re-wrap, so the
+                // combined writer applies the same per-profile precedence it applies for
+                // a profile that arrives through BuildCombinedReportCommand.
+                report.ProfileStyle)]);
 
         return Result<string>.Success(ReportPrintEnvelope.CreateToken(ReportPrintEnvelope.Combined, combined));
     }
