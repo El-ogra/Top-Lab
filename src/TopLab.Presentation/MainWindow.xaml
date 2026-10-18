@@ -153,6 +153,10 @@
                                                                                                                                                             <patientsView:DeliveryHandoverView/>
                                                                                                                                                         </DataTemplate>
 
+                                                                                                                                                        <DataTemplate DataType="{x:Type patientsVm:GroupPatientSlipsViewModel}">
+                                                                                                                                                            <patientsView:GroupPatientSlipsView/>
+                                                                                                                                                        </DataTemplate>
+
                                                                                                                                                         <DataTemplate DataType="{x:Type patientsVm:SentOutSamplesViewModel}">
                                                                                                                                                             <patientsView:SentOutSamplesView/>
                                                                                                                                                         </DataTemplate>

@@ -87,6 +87,13 @@ public static class DependencyInjection
         // Visit-worksheet printing: per-visit bench sheet (S-01 S4).
         services.AddScoped<IWorkSheetPrintingService, WorkSheetPrintingService>();
         services.AddScoped<IWorkSheetPdfWriter, WorkSheetPdfWriter>();
+        // Group-patient report slips (Phase 6, GAP-013 — one archivable slip per
+        // selected patient, routed to the Reports printer). Its own port and its
+        // own writer over GroupPatientSlipBatchDto; it reuses the shared barcode
+        // pipeline and the shared identifier rule but shares no class or DTO with
+        // the lab-order slip (the two documents are distinct).
+        services.AddScoped<IGroupPatientSlipPrintingService, GroupPatientSlipPrintingService>();
+        services.AddScoped<IGroupPatientSlipPdfWriter, GroupPatientSlipPdfWriter>();
 
         // P-01 PP-03 (F8): price-list printing. Deliberately NOT a generic "list writer" —
         // the custom test-group list gets its own port and writer in S6 (C-6, AS-6).

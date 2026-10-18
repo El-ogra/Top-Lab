@@ -35,6 +35,7 @@ public sealed class ResultDeliveryViewModel : ViewModelBase
 
         LoadCommand = new AsyncRelayCommand(async (_, ct) => await LoadAsync(ct));
         OpenHandoverCommand = new RelayCommand(param => OpenHandover(param as UndeliveredPatientRowDto));
+        OpenGroupSlipsCommand = new RelayCommand(_ => OpenGroupSlips());
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientsHubViewModel>());
     }
 
@@ -89,6 +90,7 @@ public sealed class ResultDeliveryViewModel : ViewModelBase
 
     public AsyncRelayCommand LoadCommand { get; }
     public RelayCommand OpenHandoverCommand { get; }
+    public RelayCommand OpenGroupSlipsCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
@@ -128,6 +130,22 @@ public sealed class ResultDeliveryViewModel : ViewModelBase
         if (_navigation.CurrentViewModel is DeliveryHandoverViewModel vm)
         {
             _ = vm.LoadAsync(row.PatientId);
+        }
+    }
+
+    /// <summary>
+    /// Phase 6 (GAP-013): opens the group-patient report slip screen, carrying the
+    /// period the user is currently viewing so the patient list starts consistent
+    /// with the delivery list behind it.
+    /// </summary>
+    private void OpenGroupSlips()
+    {
+        _navigation.NavigateTo<GroupPatientSlipsViewModel>();
+        if (_navigation.CurrentViewModel is GroupPatientSlipsViewModel vm)
+        {
+            vm.From = From;
+            vm.To = To;
+            _ = vm.LoadAsync();
         }
     }
 }
