@@ -80,6 +80,10 @@ public sealed class ProfileEntryViewModel : ViewModelBase
     // W-02 post-implementation fix: records printed state after a successful print.
     private readonly IPrintedStateRecorder _printedState;
 
+    // GAP-011 (Phase 3): resolves the persisted report header/footer images so the
+    // profile-report preview renders the configured logo, like the print path does.
+    private readonly IReportImageAssetStore? _imageAssetStore;
+
     private int _patientTestId;
     private int _testId;
     private string _patientFullName = string.Empty;
@@ -100,7 +104,8 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         IPdfPreviewService pdfPreview,
         IApplicationDbContext db,
         IResultPrintCoordinator printCoordinator,
-        IPrintedStateRecorder printedState)
+        IPrintedStateRecorder printedState,
+        IReportImageAssetStore? imageAssetStore = null)
     {
         _mediator = mediator;
         _presenter = presenter;
@@ -110,6 +115,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         _db = db;
         _printCoordinator = printCoordinator;
         _printedState = printedState;
+        _imageAssetStore = imageAssetStore;
 
         SaveCommand = new AsyncRelayCommand(async (_, ct) => await SaveAsync(ct));
         VerifyCommand = new AsyncRelayCommand(async (_, ct) => await VerifyAsync(ct));
@@ -440,7 +446,10 @@ public sealed class ProfileEntryViewModel : ViewModelBase
             return;
         }
 
-        var content = ReportContentBuilder.FromProfileReport(report, reportSettings, systemSettings);
+        var content = ReportContentBuilder.FromProfileReport(
+            report, reportSettings, systemSettings,
+            resolvedHeaderImagePath: _imageAssetStore?.ResolveImagePath(reportSettings.HeaderImagePath),
+            resolvedFooterImagePath: _imageAssetStore?.ResolveImagePath(reportSettings.FooterImagePath));
         var document = new ReportDocument(content, reportSettings);
         var path = Path.Combine(Path.GetTempPath(), $"TopLab-ProfilePreview-{Guid.NewGuid():N}.pdf");
         document.WriteToFile(path);

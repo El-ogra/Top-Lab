@@ -25,7 +25,14 @@ public static class ReportPageComposer
         {
             if (!string.IsNullOrWhiteSpace(content.HeaderImagePath) && File.Exists(content.HeaderImagePath))
             {
-                column.Item().PaddingBottom(4).Image(content.HeaderImagePath);
+                // GAP-011: bound the logo so an over-tall image cannot exhaust the
+                // page and abort PDF generation; wide logos are unaffected.
+                var (imageWidth, imageMaxHeight) = PageSizeMapper.FitHeaderFooterImage(
+                    settings.PaperSize,
+                    settings.PageMarginLeftCm,
+                    ContentHeightPt(settings) * PageSizeMapper.HeaderFooterImageMaxHeightFraction);
+                column.Item().PaddingBottom(4).MaxWidth(imageWidth).MaxHeight(imageMaxHeight)
+                    .Image(content.HeaderImagePath);
             }
             else
             {
@@ -161,7 +168,13 @@ public static class ReportPageComposer
 
             if (!string.IsNullOrWhiteSpace(content.FooterImagePath) && File.Exists(content.FooterImagePath))
             {
-                column.Item().PaddingTop(4).Image(content.FooterImagePath);
+                // GAP-011: same bound as the header image (see ComposeHeader).
+                var (imageWidth, imageMaxHeight) = PageSizeMapper.FitHeaderFooterImage(
+                    settings.PaperSize,
+                    settings.PageMarginLeftCm,
+                    ContentHeightPt(settings) * PageSizeMapper.HeaderFooterImageMaxHeightFraction);
+                column.Item().PaddingTop(4).MaxWidth(imageWidth).MaxHeight(imageMaxHeight)
+                    .Image(content.FooterImagePath);
             }
             else
             {
@@ -186,6 +199,20 @@ public static class ReportPageComposer
                 text.TotalPages().FontSize(fontSize - 1);
             });
         });
+    }
+
+    /// <summary>
+    /// Printable content height in points: page height minus the top space and
+    /// the bottom margin. Used to bound header/footer images to a fraction of
+    /// the page (GAP-011).
+    /// </summary>
+    private static float ContentHeightPt(ReportSettings settings)
+    {
+        var (_, pageHeight) = PageSizeMapper.ToPoints(settings.PaperSize);
+        return Math.Max(0f,
+            pageHeight
+            - PageSizeMapper.CmToPoints(settings.ReportTopSpaceCm)
+            - PageSizeMapper.CmToPoints(settings.PageMarginBottomCm));
     }
 
     private static string ParseColor(string? colorString)

@@ -31,4 +31,27 @@ public static class PageSizeMapper
     {
         return (float)cm * CmToPt;
     }
+
+    /// <summary>
+    /// Largest fraction of the printable content height that a single header or
+    /// footer image may occupy. Keeps a logo from colliding with pre-printed
+    /// stationery or pushing the report body off the page, on either paper
+    /// choice. Wide logos (the normal case) are unaffected because they are
+    /// width-bound long before they reach this cap.
+    /// </summary>
+    public const float HeaderFooterImageMaxHeightFraction = 1f / 3f;
+
+    /// <summary>
+    /// Aspect-preserving box for a header/footer image: at most the full content
+    /// width and at most <paramref name="maxHeightPt"/> tall. Rendering an image
+    /// unconstrained lets an over-tall logo exhaust the page and aborts PDF
+    /// generation with a QuestPDF layout exception, so callers must bound it.
+    /// </summary>
+    public static (float Width, float MaxHeight) FitHeaderFooterImage(
+        PaperSize paperSize, decimal marginLeftCm, float maxHeightPt)
+    {
+        var (width, _) = ToPoints(paperSize);
+        var contentWidth = width - (2f * CmToPoints(marginLeftCm));
+        return (Math.Max(0f, contentWidth), Math.Max(0f, maxHeightPt));
+    }
 }
