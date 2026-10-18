@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using MediatR;
 using TopLab.Application.Features.SystemAndPrintSettings.Commands.UpdateReportItemTemplates;
 using TopLab.Application.Features.SystemAndPrintSettings.Common;
@@ -17,6 +19,9 @@ public sealed class ReportItemTemplateRow : ViewModelBase
     private bool _showHide = true;
     private string _listMembership = string.Empty;
     private bool _freeTextOverride;
+    private decimal? _lineSpacing;
+    private decimal? _leftOffsetCm;
+    private string? _markerSymbol;
 
     public ReportItemTemplateRow(string itemKey, string caption)
     {
@@ -32,6 +37,15 @@ public sealed class ReportItemTemplateRow : ViewModelBase
     public bool ShowHide { get => _showHide; set => SetProperty(ref _showHide, value); }
     public string ListMembership { get => _listMembership; set => SetProperty(ref _listMembership, value); }
     public bool FreeTextOverride { get => _freeTextOverride; set => SetProperty(ref _freeTextOverride, value); }
+
+    /// <summary>GAP-015: empty = keep the composer's default line spacing.</summary>
+    public decimal? LineSpacing { get => _lineSpacing; set => SetProperty(ref _lineSpacing, value); }
+
+    /// <summary>GAP-015: empty = keep the item at the page's left margin.</summary>
+    public decimal? LeftOffsetCm { get => _leftOffsetCm; set => SetProperty(ref _leftOffsetCm, value); }
+
+    /// <summary>GAP-015: empty = draw no marker.</summary>
+    public string? MarkerSymbol { get => _markerSymbol; set => SetProperty(ref _markerSymbol, value); }
 }
 
 /// <summary>S-32 (GAP-014): edits the labels, reference expressions, visibility,
@@ -128,6 +142,9 @@ public sealed class ReportItemTemplatesViewModel : ViewModelBase
                         row.ShowHide = dto.ShowHide;
                         row.ListMembership = dto.ListMembership ?? string.Empty;
                         row.FreeTextOverride = dto.FreeTextOverride;
+                        row.LineSpacing = dto.LineSpacing;
+                        row.LeftOffsetCm = dto.LeftOffsetCm;
+                        row.MarkerSymbol = dto.MarkerSymbol;
                     }
                 }
 
@@ -149,6 +166,32 @@ public sealed class ReportItemTemplatesViewModel : ViewModelBase
         ErrorMessage = string.Empty;
         StatusMessage = string.Empty;
 
+        // GAP-015: the same documented bounds the Application validator and the
+        // domain entity enforce, so the user gets immediate feedback instead of a
+        // round-trip rejection.
+        foreach (var row in Rows)
+        {
+            if (row.LineSpacing is { } lineSpacing
+                && (lineSpacing < ReportItemTemplate.MinLineSpacing || lineSpacing > ReportItemTemplate.MaxLineSpacing))
+            {
+                ErrorMessage = $"تباعد أسطر «{row.Caption}» يجب أن يكون بين {ReportItemTemplate.MinLineSpacing} و {ReportItemTemplate.MaxLineSpacing}.";
+                return;
+            }
+
+            if (row.LeftOffsetCm is { } leftOffset
+                && (leftOffset < ReportItemTemplate.MinLeftOffsetCm || leftOffset > ReportItemTemplate.MaxLeftOffsetCm))
+            {
+                ErrorMessage = $"إزاحة «{row.Caption}» لليسار يجب أن تكون بين {ReportItemTemplate.MinLeftOffsetCm} و {ReportItemTemplate.MaxLeftOffsetCm} سم.";
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(row.MarkerSymbol) && !IsSingleVisibleMarker(row.MarkerSymbol))
+            {
+                ErrorMessage = $"رمز علامة «{row.Caption}» يجب أن يكون حرفاً واحداً ظاهراً.";
+                return;
+            }
+        }
+
         var items = Rows
             .Select(row => new ReportItemTemplateDto(
                 row.ItemKey,
@@ -156,7 +199,10 @@ public sealed class ReportItemTemplatesViewModel : ViewModelBase
                 string.IsNullOrWhiteSpace(row.ReferenceValueExpression) ? null : row.ReferenceValueExpression,
                 row.ShowHide,
                 string.IsNullOrWhiteSpace(row.ListMembership) ? null : row.ListMembership,
-                row.FreeTextOverride))
+                row.FreeTextOverride,
+                row.LineSpacing,
+                row.LeftOffsetCm,
+                string.IsNullOrWhiteSpace(row.MarkerSymbol) ? null : row.MarkerSymbol))
             .ToList();
 
         IsBusy = true;
@@ -176,5 +222,32 @@ public sealed class ReportItemTemplatesViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>
+    /// GAP-015: one visible text element, so an emoji or a combining sequence is
+    /// accepted even though it spans more than one UTF-16 code unit.
+    /// </summary>
+    private static bool IsSingleVisibleMarker(string marker)
+    {
+        if (marker.Length > ReportItemTemplate.MaxMarkerSymbolLength)
+        {
+            return false;
+        }
+
+        if (new StringInfo(marker).LengthInTextElements != 1)
+        {
+            return false;
+        }
+
+        foreach (var rune in marker.EnumerateRunes())
+        {
+            if (Rune.IsControl(rune))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

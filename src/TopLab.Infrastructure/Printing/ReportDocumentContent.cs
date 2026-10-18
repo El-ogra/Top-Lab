@@ -139,14 +139,55 @@ public sealed record ReportDocumentContent(
     }
 }
 
-/// <summary>One body section: optional heading + free lines and/or a grid.</summary>
+/// <summary>
+/// One body section: optional heading + free lines and/or a grid.
+/// </summary>
+/// <param name="Heading">Plain heading text (golden-content surface).</param>
+/// <param name="LayoutLines">
+/// Body lines with their per-item layout (GAP-015). The layout is consumed by
+/// <c>ReportPageComposer</c>; the text is unchanged by it.
+/// </param>
+/// <param name="Grid">Optional table rendered under the lines.</param>
+/// <param name="HeadingLine">
+/// Layout for the heading itself (GAP-015), for the template-controllable
+/// group sub-title. <c>null</c> = the heading carries no per-item layout.
+/// </param>
 public sealed record ReportSection(
     string? Heading,
-    IReadOnlyList<string> DisplayLines,
-    ReportGrid? Grid)
+    IReadOnlyList<ReportContentLine> LayoutLines,
+    ReportGrid? Grid,
+    ReportContentLine? HeadingLine = null)
 {
+    /// <summary>Text-only projection of <see cref="LayoutLines"/> (unchanged surface).</summary>
+    public IReadOnlyList<string> DisplayLines => LayoutLines.Select(l => l.Text).ToList();
+
     public static ReportSection FromLines(string? heading, IEnumerable<string> lines)
-        => new(heading, lines.ToList(), null);
+        => new(heading, lines.Select(l => ReportContentLine.Default(l)).ToList(), null);
+
+    public static ReportSection FromLayoutLines(
+        string? heading,
+        IEnumerable<ReportContentLine> lines,
+        ReportContentLine? headingLine = null)
+        => new(heading, lines.ToList(), null, headingLine);
+}
+
+/// <summary>
+/// GAP-015: a rendered report line and the per-item layout requested for it.
+/// All three layout members are nullable and <c>null</c> always means "the
+/// composer's existing behaviour" (default line spacing, the page margin as the
+/// left position, and no marker).
+/// </summary>
+public sealed record ReportContentLine(
+    string Text,
+    decimal? LineSpacing = null,
+    decimal? LeftOffsetCm = null,
+    string? MarkerSymbol = null)
+{
+    /// <summary>A line with no per-item layout (renders exactly as before Phase 8).</summary>
+    public static ReportContentLine Default(string text) => new(text);
+
+    /// <summary>True when the line carries at least one per-item layout override.</summary>
+    public bool HasLayout => LineSpacing is not null || LeftOffsetCm is not null || MarkerSymbol is not null;
 }
 
 /// <summary>Column grid rendered as a QuestPDF table (RTL).</summary>

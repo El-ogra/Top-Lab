@@ -11,7 +11,7 @@
                 <TextBlock Text="عناصر التقرير" FontSize="20" VerticalAlignment="Center" />
             </DockPanel>
 
-            <TextBlock Text="يمكن تعديل التسمية والتعبير المرجعي وإظهار العنصر وعضوية القائمة وكونه نصاً حراً."
+            <TextBlock Text="يمكن تعديل التسمية والتعبير المرجعي وإظهار العنصر وعضوية القائمة وكونه نصاً حراً، إضافة إلى تباعد الأسطر والإزاحة عن الهامش ورمز العلامة."
                        Foreground="#666666" TextWrapping="Wrap" Margin="0,8,0,12" />
 
             <Grid>
@@ -22,6 +22,9 @@
                     <ColumnDefinition Width="70" />
                     <ColumnDefinition Width="120" />
                     <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="70" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition />
@@ -34,8 +37,11 @@
                 <TextBlock Grid.Row="0" Grid.Column="3" Text="ظاهر" FontWeight="Bold" Margin="0,4,8,4" />
                 <TextBlock Grid.Row="0" Grid.Column="4" Text="عضوية القائمة" FontWeight="Bold" Margin="0,4,8,4" />
                 <TextBlock Grid.Row="0" Grid.Column="5" Text="نص حر" FontWeight="Bold" Margin="0,4,8,4" />
+                <TextBlock Grid.Row="0" Grid.Column="6" Text="تباعد الأسطر" FontWeight="Bold" Margin="0,4,8,4" />
+                <TextBlock Grid.Row="0" Grid.Column="7" Text="الإزاحة (سم)" FontWeight="Bold" Margin="0,4,8,4" />
+                <TextBlock Grid.Row="0" Grid.Column="8" Text="العلامة" FontWeight="Bold" Margin="0,4,8,4" />
 
-                <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6" ItemsSource="{Binding Rows}">
+                <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="9" ItemsSource="{Binding Rows}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel />
@@ -51,6 +57,9 @@
                                     <ColumnDefinition Width="70" />
                                     <ColumnDefinition Width="120" />
                                     <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="70" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{Binding Caption}" VerticalAlignment="Center" Margin="0,0,8,0" TextWrapping="Wrap" />
                                 <TextBox Grid.Column="1" Margin="0,0,8,0" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" />
@@ -58,6 +67,9 @@
                                 <CheckBox Grid.Column="3" IsChecked="{Binding ShowHide}" VerticalAlignment="Center" Margin="0,0,8,0" />
                                 <TextBox Grid.Column="4" Margin="0,0,8,0" Text="{Binding ListMembership, UpdateSourceTrigger=PropertyChanged}" />
                                 <CheckBox Grid.Column="5" IsChecked="{Binding FreeTextOverride}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBox Grid.Column="6" Margin="0,0,8,0" Text="{Binding LineSpacing, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Column="7" Margin="0,0,8,0" Text="{Binding LeftOffsetCm, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Column="8" Margin="0,0,8,0" MaxLength="10" Text="{Binding MarkerSymbol, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

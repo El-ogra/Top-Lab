@@ -47,7 +47,7 @@ public sealed class ReportDocument : IDocument
             page.ContentFromRightToLeft();
 
             page.Header().Element(c => ReportPageComposer.ComposeHeader(c, _content, _fontSize, _settings));
-            page.Content().Element(c => ReportPageComposer.ComposeBody(c, _content, _fontSize, _fontFamily));
+            page.Content().Element(c => ReportPageComposer.ComposeBody(c, _content, _fontSize, _fontFamily, _settings));
             page.Footer().Element(c => ReportPageComposer.ComposeFooter(c, _content, _fontSize, _settings));
         });
     }

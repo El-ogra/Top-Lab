@@ -84,14 +84,14 @@ public static class ReportContentBuilder
         var sections = new List<ReportSection>();
         foreach (var line in data.Lines)
         {
-            var body = new List<string>();
+            var body = new List<ReportContentLine>();
 
             var testLine = Template(templates, ReportItemKeys.PatientExportTestLine);
             if (IsVisible(testLine, reportList))
             {
-                body.Add(testLine.FreeTextOverride
+                body.Add(Layout(testLine, testLine.FreeTextOverride
                     ? testLine.Label
-                    : $"{line.TestName}: {line.ResultValue ?? "-"}");
+                    : $"{line.TestName}: {line.ResultValue ?? "-"}"));
             }
 
             if (line.FrozenRange is { } range)
@@ -99,7 +99,7 @@ public static class ReportContentBuilder
                 var reference = Template(templates, ReportItemKeys.ReferenceRange);
                 if (IsVisible(reference, reportList))
                 {
-                    body.Add($"{ReferencePrefix(reference, marker)} {range.MinValue} - {range.MaxValue}");
+                    body.Add(Layout(reference, $"{ReferencePrefix(reference, marker)} {range.MinValue} - {range.MaxValue}"));
                 }
 
                 if (line.ResultFlag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(range.LowComment))
@@ -107,7 +107,7 @@ public static class ReportContentBuilder
                     var low = Template(templates, ReportItemKeys.LowComment);
                     if (IsVisible(low, reportList))
                     {
-                        body.Add(FreeTextOrValue(low, range.LowComment!));
+                        body.Add(Layout(low, FreeTextOrValue(low, range.LowComment!)));
                     }
                 }
 
@@ -116,7 +116,7 @@ public static class ReportContentBuilder
                     var high = Template(templates, ReportItemKeys.HighComment);
                     if (IsVisible(high, reportList))
                     {
-                        body.Add(FreeTextOrValue(high, range.HighComment!));
+                        body.Add(Layout(high, FreeTextOrValue(high, range.HighComment!)));
                     }
                 }
             }
@@ -126,11 +126,11 @@ public static class ReportContentBuilder
             {
                 if (profileItems.FreeTextOverride)
                 {
-                    body.Add(profileItems.Label);
+                    body.Add(Layout(profileItems, profileItems.Label));
                 }
                 else
                 {
-                    body.AddRange(line.ProfileItems);
+                    body.AddRange(line.ProfileItems.Select(item => Layout(profileItems, item)));
                 }
             }
 
@@ -139,11 +139,11 @@ public static class ReportContentBuilder
                 var cultureSummary = Template(templates, ReportItemKeys.PatientExportCultureSummary);
                 if (IsVisible(cultureSummary, reportList))
                 {
-                    body.Add(FreeTextOrValue(cultureSummary, line.CultureSummary!));
+                    body.Add(Layout(cultureSummary, FreeTextOrValue(cultureSummary, line.CultureSummary!)));
                 }
             }
 
-            sections.Add(ReportSection.FromLines(line.TestName, body));
+            sections.Add(ReportSection.FromLayoutLines(line.TestName, body));
         }
 
         return new ReportDocumentContent(
@@ -194,16 +194,16 @@ public static class ReportContentBuilder
         var marker = reportSettings.NormalRangeMarker;
         var templates = BuildTemplateMap(itemTemplates);
 
-        var body = new List<string>();
+        var body = new List<ReportContentLine>();
         foreach (var profile in dto.Lines)
         {
             var unit = string.IsNullOrWhiteSpace(profile.Unit) ? string.Empty : $" {profile.Unit}";
             var analyte = Template(templates, ReportItemKeys.ProfileAnalyte);
             if (IsVisible(analyte, reportList))
             {
-                body.Add(analyte.FreeTextOverride
+                body.Add(Layout(analyte, analyte.FreeTextOverride
                     ? analyte.Label
-                    : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}");
+                    : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}"));
             }
 
             if (profile.FrozenRange is { } fr)
@@ -211,7 +211,7 @@ public static class ReportContentBuilder
                 var reference = Template(templates, ReportItemKeys.ProfileReferenceRange);
                 if (IsVisible(reference, reportList))
                 {
-                    body.Add($"{ReferencePrefix(reference, marker)} {fr.MinValue} - {fr.MaxValue}");
+                    body.Add(Layout(reference, $"{ReferencePrefix(reference, marker)} {fr.MinValue} - {fr.MaxValue}"));
                 }
 
                 if (profile.Flag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(fr.LowComment))
@@ -219,7 +219,7 @@ public static class ReportContentBuilder
                     var low = Template(templates, ReportItemKeys.ProfileLowComment);
                     if (IsVisible(low, reportList))
                     {
-                        body.Add(FreeTextOrValue(low, fr.LowComment!));
+                        body.Add(Layout(low, FreeTextOrValue(low, fr.LowComment!)));
                     }
                 }
 
@@ -228,7 +228,7 @@ public static class ReportContentBuilder
                     var high = Template(templates, ReportItemKeys.ProfileHighComment);
                     if (IsVisible(high, reportList))
                     {
-                        body.Add(FreeTextOrValue(high, fr.HighComment!));
+                        body.Add(Layout(high, FreeTextOrValue(high, fr.HighComment!)));
                     }
                 }
             }
@@ -239,7 +239,7 @@ public static class ReportContentBuilder
             var comment = Template(templates, ReportItemKeys.ProfileReportComment);
             if (IsVisible(comment, reportList))
             {
-                body.Add(FreeTextOrValue(comment, dto.Comment!));
+                body.Add(Layout(comment, FreeTextOrValue(comment, dto.Comment!)));
             }
         }
 
@@ -257,7 +257,7 @@ public static class ReportContentBuilder
             ReferralEntityName: null,
             Sex: null,
             AgeText: null,
-            Sections: new[] { ReportSection.FromLines(null, body) },
+            Sections: new[] { ReportSection.FromLayoutLines(null, body) },
             DrawHeader: drawHeader,
             DrawFooter: drawFooter,
             DoctorSignatureEnabled: reportSettings.DoctorSignatureEnabled,
@@ -300,23 +300,27 @@ public static class ReportContentBuilder
                 var groupSubtitle = Template(templates, ReportItemKeys.GroupSubtitle);
                 if (IsVisible(groupSubtitle, reportList))
                 {
-                    sections.Add(ReportSection.FromLines($"{groupSubtitle.Label}: {line.TestGroupName}", new List<string>()));
+                    var subtitleText = $"{groupSubtitle.Label}: {line.TestGroupName}";
+                    sections.Add(ReportSection.FromLayoutLines(
+                        subtitleText,
+                        Array.Empty<ReportContentLine>(),
+                        Layout(groupSubtitle, subtitleText)));
                 }
             }
 
             var testName = nameResolver.ResolveReportName(line);
-            var body = new List<string>();
+            var body = new List<ReportContentLine>();
 
             var testNameItem = Template(templates, ReportItemKeys.TestName);
             if (IsVisible(testNameItem, reportList))
             {
-                body.Add($"{testNameItem.Label}: {testName}");
+                body.Add(Layout(testNameItem, $"{testNameItem.Label}: {testName}"));
             }
 
             var resultValueItem = Template(templates, ReportItemKeys.ResultValue);
             if (IsVisible(resultValueItem, reportList))
             {
-                body.Add($"{resultValueItem.Label}: {line.ResultValue ?? "-"}");
+                body.Add(Layout(resultValueItem, $"{resultValueItem.Label}: {line.ResultValue ?? "-"}"));
             }
 
             // W-02 S8 (WP-13): off-lab note travels only with its own line.
@@ -325,7 +329,7 @@ public static class ReportContentBuilder
                 var offLabNoteItem = Template(templates, ReportItemKeys.OffLabNote);
                 if (IsVisible(offLabNoteItem, reportList))
                 {
-                    body.Add(offLabNoteItem.Label);
+                    body.Add(Layout(offLabNoteItem, offLabNoteItem.Label));
                 }
             }
 
@@ -334,7 +338,7 @@ public static class ReportContentBuilder
                 var referenceItem = Template(templates, ReportItemKeys.ReferenceRange);
                 if (IsVisible(referenceItem, reportList))
                 {
-                    body.Add($"{ReferencePrefix(referenceItem, marker)} {line.FrozenRangeText}");
+                    body.Add(Layout(referenceItem, $"{ReferencePrefix(referenceItem, marker)} {line.FrozenRangeText}"));
                 }
             }
 
@@ -344,7 +348,7 @@ public static class ReportContentBuilder
                 var lowCommentItem = Template(templates, ReportItemKeys.LowComment);
                 if (IsVisible(lowCommentItem, reportList))
                 {
-                    body.Add(FreeTextOrValue(lowCommentItem, line.LowComment!));
+                    body.Add(Layout(lowCommentItem, FreeTextOrValue(lowCommentItem, line.LowComment!)));
                 }
             }
 
@@ -353,7 +357,7 @@ public static class ReportContentBuilder
                 var highCommentItem = Template(templates, ReportItemKeys.HighComment);
                 if (IsVisible(highCommentItem, reportList))
                 {
-                    body.Add(FreeTextOrValue(highCommentItem, line.HighComment!));
+                    body.Add(Layout(highCommentItem, FreeTextOrValue(highCommentItem, line.HighComment!)));
                 }
             }
 
@@ -365,11 +369,11 @@ public static class ReportContentBuilder
                 {
                     if (testCommentItem.FreeTextOverride)
                     {
-                        body.Add(testCommentItem.Label);
+                        body.Add(Layout(testCommentItem, testCommentItem.Label));
                     }
                     else
                     {
-                        body.AddRange(line.TestComments);
+                        body.AddRange(line.TestComments.Select(comment => Layout(testCommentItem, comment)));
                     }
                 }
             }
@@ -380,9 +384,9 @@ public static class ReportContentBuilder
                 var profileAnalyteItem = Template(templates, ReportItemKeys.ProfileAnalyte);
                 if (IsVisible(profileAnalyteItem, reportList))
                 {
-                    body.Add(profileAnalyteItem.FreeTextOverride
+                    body.Add(Layout(profileAnalyteItem, profileAnalyteItem.FreeTextOverride
                         ? profileAnalyteItem.Label
-                        : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}");
+                        : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}"));
                 }
 
                 if (profile.FrozenRange is { } fr)
@@ -390,7 +394,7 @@ public static class ReportContentBuilder
                     var profileReferenceItem = Template(templates, ReportItemKeys.ProfileReferenceRange);
                     if (IsVisible(profileReferenceItem, reportList))
                     {
-                        body.Add($"{ReferencePrefix(profileReferenceItem, marker)} {fr.MinValue} - {fr.MaxValue}");
+                        body.Add(Layout(profileReferenceItem, $"{ReferencePrefix(profileReferenceItem, marker)} {fr.MinValue} - {fr.MaxValue}"));
                     }
 
                     if (profile.Flag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(fr.LowComment))
@@ -398,7 +402,7 @@ public static class ReportContentBuilder
                         var profileLowItem = Template(templates, ReportItemKeys.ProfileLowComment);
                         if (IsVisible(profileLowItem, reportList))
                         {
-                            body.Add(FreeTextOrValue(profileLowItem, fr.LowComment!));
+                            body.Add(Layout(profileLowItem, FreeTextOrValue(profileLowItem, fr.LowComment!)));
                         }
                     }
 
@@ -407,7 +411,7 @@ public static class ReportContentBuilder
                         var profileHighItem = Template(templates, ReportItemKeys.ProfileHighComment);
                         if (IsVisible(profileHighItem, reportList))
                         {
-                            body.Add(FreeTextOrValue(profileHighItem, fr.HighComment!));
+                            body.Add(Layout(profileHighItem, FreeTextOrValue(profileHighItem, fr.HighComment!)));
                         }
                     }
                 }
@@ -442,13 +446,13 @@ public static class ReportContentBuilder
                 var cultureLineItem = Template(templates, ReportItemKeys.CultureLine);
                 if (IsVisible(cultureLineItem, reportList))
                 {
-                    body.AddRange(cultureSection.BuildLines());
+                    body.AddRange(cultureSection.BuildLines().Select(text => Layout(cultureLineItem, text)));
                 }
 
                 var microscopyLineItem = Template(templates, ReportItemKeys.MicroscopyLine);
                 if (IsVisible(microscopyLineItem, reportList))
                 {
-                    body.AddRange(cultureSection.BuildMicroscopyLines());
+                    body.AddRange(cultureSection.BuildMicroscopyLines().Select(text => Layout(microscopyLineItem, text)));
                 }
 
                 var grid = cultureSection.BuildSensitivityGrid();
@@ -456,18 +460,18 @@ public static class ReportContentBuilder
                 if (grid.Count > 0 && IsVisible(gridItem, reportList))
                 {
                     // A culture line owns its sensitivity table as a separate section.
-                    sections.Add(ReportSection.FromLines(null, body));
+                    sections.Add(ReportSection.FromLayoutLines(null, body));
                     sections.Add(new ReportSection(
                         gridItem.Label,
-                        Array.Empty<string>(),
+                        Array.Empty<ReportContentLine>(),
                         new ReportGrid(
                             new[] { "المضاد", "الفئة", "منطقة التثبيط (مم)", "الاسم العلمي" },
                             grid)));
-                    body = new List<string>();
+                    body = new List<ReportContentLine>();
                 }
             }
 
-            sections.Add(ReportSection.FromLines(null, body));
+            sections.Add(ReportSection.FromLayoutLines(null, body));
         }
 
         return new ReportDocumentContent(
@@ -597,7 +601,7 @@ public static class ReportContentBuilder
 
         IReadOnlyList<ReportSection> sections = grid is null
             ? Array.Empty<ReportSection>()
-            : new[] { new ReportSection(null, Array.Empty<string>(), grid) };
+            : new[] { new ReportSection(null, Array.Empty<ReportContentLine>(), grid) };
 
         return new ReportDocumentContent(
             ReportTitle: "تقرير التاريخ",
@@ -679,6 +683,14 @@ public static class ReportContentBuilder
 
     private static string FreeTextOrValue(ReportItemTemplate template, string value)
         => template.FreeTextOverride ? template.Label : value;
+
+    /// <summary>
+    /// GAP-015: pairs the rendered text with the per-item layout of the template
+    /// that produced it. The text itself is never altered here — the marker is
+    /// applied by <see cref="ReportPageComposer"/> at render time.
+    /// </summary>
+    private static ReportContentLine Layout(ReportItemTemplate template, string text)
+        => new(text, template.LineSpacing, template.LeftOffsetCm, template.MarkerSymbol);
 
     private static T Deserialize<T>(ReportPrintEnvelope envelope) where T : class
     {

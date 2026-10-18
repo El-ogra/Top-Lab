@@ -87,4 +87,7 @@ public sealed record ReportItemTemplateDto(
     string? ReferenceValueExpression,
     bool ShowHide,
     string? ListMembership,
-    bool FreeTextOverride);
+    bool FreeTextOverride,
+    decimal? LineSpacing = null,
+    decimal? LeftOffsetCm = null,
+    string? MarkerSymbol = null);

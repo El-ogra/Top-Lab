@@ -43,5 +43,8 @@ public sealed class GetReportItemTemplatesQueryHandler
         template.ReferenceValueExpression,
         template.ShowHide,
         template.ListMembership,
-        template.FreeTextOverride);
+        template.FreeTextOverride,
+        template.LineSpacing,
+        template.LeftOffsetCm,
+        template.MarkerSymbol);
 }

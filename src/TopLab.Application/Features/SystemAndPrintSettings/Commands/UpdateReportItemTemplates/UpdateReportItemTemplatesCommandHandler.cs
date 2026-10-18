@@ -30,7 +30,10 @@ public sealed class UpdateReportItemTemplatesCommandHandler
                     item.ReferenceValueExpression,
                     item.ShowHide,
                     item.ListMembership,
-                    item.FreeTextOverride);
+                    item.FreeTextOverride,
+                    item.LineSpacing,
+                    item.LeftOffsetCm,
+                    item.MarkerSymbol);
             }
             else
             {
@@ -40,7 +43,10 @@ public sealed class UpdateReportItemTemplatesCommandHandler
                     item.ReferenceValueExpression,
                     item.ShowHide,
                     item.ListMembership,
-                    item.FreeTextOverride));
+                    item.FreeTextOverride,
+                    item.LineSpacing,
+                    item.LeftOffsetCm,
+                    item.MarkerSymbol));
             }
         }
 

@@ -15,6 +15,9 @@ public sealed class ReportItemTemplateConfiguration : IEntityTypeConfiguration<R
         b.Property(e => e.ShowHide).IsRequired().HasDefaultValue(true);
         b.Property(e => e.ListMembership).HasMaxLength(ReportItemTemplate.MaxListMembershipLength).IsRequired(false);
         b.Property(e => e.FreeTextOverride).IsRequired().HasDefaultValue(false);
+        b.Property(e => e.LineSpacing).HasColumnType("decimal(4,2)").HasPrecision(4,2).IsRequired(false);
+        b.Property(e => e.LeftOffsetCm).HasColumnType("decimal(5,2)").HasPrecision(5,2).IsRequired(false);
+        b.Property(e => e.MarkerSymbol).HasMaxLength(ReportItemTemplate.MaxMarkerSymbolLength).IsRequired(false);
         b.HasData(ReportItemTemplateCatalog.Defaults.ToArray());
     }
 }

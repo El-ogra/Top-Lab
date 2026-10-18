@@ -12,6 +12,68 @@ namespace TopLab.Infrastructure.Printing;
 /// </summary>
 public static class ReportPageComposer
 {
+    /// <summary>
+    /// GAP-015: the resolved rendering layout of one report item line. Every
+    /// member is nullable/zero when the item carries no per-item layout, so a
+    /// line whose three layout fields are all null renders exactly as it did
+    /// before Phase 8.
+    /// </summary>
+    /// <param name="Text">
+    /// The text to draw: the item content, prefixed with the marker when the
+    /// template defines one.
+    /// </param>
+    /// <param name="LineHeight">
+    /// Line-height multiplier. <c>null</c> = the composer's existing default
+    /// spacing (QuestPDF's own default is untouched).
+    /// </param>
+    /// <param name="PaddingLeftPt">
+    /// Extra left indent in points, added to the page's left margin
+    /// (<see cref="ReportSettings.PageMarginLeftCm"/>). <c>0</c> = the item sits
+    /// exactly at the page margin (today's behaviour).
+    /// </param>
+    /// <param name="LeftPositionCm">
+    /// Absolute left position of the item: <c>PageMarginLeftCm + LeftOffsetCm</c>.
+    /// <c>null</c> when no settings snapshot is supplied (page margin unchanged).
+    /// </param>
+    public sealed record ReportItemLayout(
+        string Text,
+        float? LineHeight,
+        float PaddingLeftPt,
+        decimal? LeftPositionCm);
+
+    /// <summary>
+    /// GAP-015: turns a per-item layout line into the concrete rendering
+    /// decisions. Pure and side-effect free so the null semantics are directly
+    /// testable:
+    /// <list type="bullet">
+    /// <item>LineSpacing = null → <see cref="LineHeight"/> stays null: the
+    /// composer applies no line-height override at all.</item>
+    /// <item>LeftOffsetCm = null → <see cref="PaddingLeftPt"/> is 0, i.e. the
+    /// page margin remains the item's left position (never replaced, only
+    /// added to).</item>
+    /// <item>MarkerSymbol = null → <see cref="Text"/> is the item content
+    /// unchanged, so no marker is drawn.</item>
+    /// </list>
+    /// </summary>
+    public static ReportItemLayout ResolveItemLayout(ReportContentLine line, ReportSettings? settings = null)
+    {
+        ArgumentNullException.ThrowIfNull(line);
+
+        var text = line.MarkerSymbol is null ? line.Text : line.MarkerSymbol + line.Text;
+        var paddingLeftPt = line.LeftOffsetCm is { } offsetCm
+            ? PageSizeMapper.CmToPoints(offsetCm)
+            : 0f;
+        decimal? leftPositionCm = settings is null
+            ? null
+            : settings.PageMarginLeftCm + (line.LeftOffsetCm ?? 0m);
+
+        return new ReportItemLayout(
+            text,
+            line.LineSpacing is { } lineSpacing ? (float)lineSpacing : null,
+            paddingLeftPt,
+            leftPositionCm);
+    }
+
     public static void ComposeHeader(IContainer container, ReportDocumentContent content, float fontSize, ReportSettings settings)
     {
         if (!content.DrawHeader)
@@ -60,7 +122,11 @@ public static class ReportPageComposer
         });
     }
 
-    public static void ComposeBody(IContainer container, ReportDocumentContent content, float fontSize, string fontFamily)
+    /// <summary>
+    /// Body region. <paramref name="settings"/> is optional so existing callers
+    /// keep working; it is only read to resolve the GAP-015 left position.
+    /// </summary>
+    public static void ComposeBody(IContainer container, ReportDocumentContent content, float fontSize, string fontFamily, ReportSettings? settings = null)
     {
         container.Column(column =>
         {
@@ -97,12 +163,17 @@ public static class ReportPageComposer
             {
                 if (!string.IsNullOrWhiteSpace(section.Heading))
                 {
-                    column.Item().PaddingTop(8).Text(section.Heading!).SemiBold().FontSize(fontSize + 1).AlignRight();
+                    ComposeItemLine(
+                        column.Item().PaddingTop(8),
+                        section.HeadingLine ?? ReportContentLine.Default(section.Heading!),
+                        fontSize + 1,
+                        settings,
+                        semiBold: true);
                 }
 
-                foreach (var line in section.DisplayLines)
+                foreach (var line in section.LayoutLines)
                 {
-                    column.Item().Text(line).FontSize(fontSize).AlignRight();
+                    ComposeItemLine(column.Item(), line, fontSize, settings);
                 }
 
                 if (section.Grid is { } grid && grid.Rows.Count > 0)
@@ -199,6 +270,43 @@ public static class ReportPageComposer
                 text.TotalPages().FontSize(fontSize - 1);
             });
         });
+    }
+
+    /// <summary>
+    /// GAP-015: draws one report item line, applying its per-item layout.
+    /// Every override is conditional, so a line with null layout emits exactly
+    /// the same elements (padding, line height, text) as before Phase 8.
+    /// The left offset uses the same <c>PaddingLeft</c> shape as the envelope's
+    /// proven <see cref="EnvelopePrintItemPosition"/> offsets.
+    /// </summary>
+    private static void ComposeItemLine(
+        IContainer container,
+        ReportContentLine line,
+        float fontSize,
+        ReportSettings? settings,
+        bool semiBold = false)
+    {
+        var layout = ResolveItemLayout(line, settings);
+
+        if (layout.PaddingLeftPt > 0f)
+        {
+            container = container.PaddingLeft(layout.PaddingLeftPt);
+        }
+
+        // Same element order as before Phase 8; the two style calls are
+        // conditional so an unconfigured item emits an identical text element.
+        var text = container.Text(layout.Text);
+        if (semiBold)
+        {
+            text.SemiBold();
+        }
+
+        if (layout.LineHeight is { } lineHeight)
+        {
+            text.LineHeight(lineHeight);
+        }
+
+        text.FontSize(fontSize).AlignRight();
     }
 
     /// <summary>
