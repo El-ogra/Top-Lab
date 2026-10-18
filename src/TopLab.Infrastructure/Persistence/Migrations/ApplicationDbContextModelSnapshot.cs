@@ -1441,8 +1441,21 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                         .HasColumnType("int")
                         .HasColumnName("ReportSettingsId");
 
+                    b.Property<string>("AbnormalResultBackgroundColor")
+                        .HasMaxLength(9)
+                        .HasColumnType("nvarchar(9)");
+
+                    b.Property<string>("AbnormalResultFontColor")
+                        .HasMaxLength(9)
+                        .HasColumnType("nvarchar(9)");
+
                     b.Property<bool>("DoctorSignatureEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("EnableAbnormalResultColor")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("FooterColor")
                         .HasMaxLength(9)
@@ -1510,6 +1523,7 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                         {
                             Id = 1,
                             DoctorSignatureEnabled = false,
+                            EnableAbnormalResultColor = false,
                             HeaderFooterMode = (byte)0,
                             HistoryAutoDisplayEnabled = true,
                             HistorySortMode = (byte)0,

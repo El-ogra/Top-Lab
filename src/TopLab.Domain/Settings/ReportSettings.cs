@@ -22,6 +22,12 @@ public sealed class ReportSettings : Entity<int>
 
     public string? FooterColor { get; private set; }
 
+    public bool EnableAbnormalResultColor { get; private set; }
+
+    public string? AbnormalResultFontColor { get; private set; }
+
+    public string? AbnormalResultBackgroundColor { get; private set; }
+
     public HistorySortMode HistorySortMode { get; private set; }
 
     public bool HistoryAutoDisplayEnabled { get; private set; }
@@ -61,6 +67,9 @@ public sealed class ReportSettings : Entity<int>
             DoctorSignatureEnabled = false,
             HeaderColor = null,
             FooterColor = null,
+            EnableAbnormalResultColor = false,
+            AbnormalResultFontColor = null,
+            AbnormalResultBackgroundColor = null,
             HistorySortMode = HistorySortMode.ByLabCode,
             HistoryAutoDisplayEnabled = true,
             PrintGroupSubTitle = false,
@@ -133,6 +142,35 @@ public sealed class ReportSettings : Entity<int>
     public void SetFooterColor(string? color)
     {
         FooterColor = color;
+    }
+
+    public void SetEnableAbnormalResultColor(bool enabled)
+    {
+        EnableAbnormalResultColor = enabled;
+    }
+
+    public void SetAbnormalResultFontColor(string? color)
+    {
+        AbnormalResultFontColor = color;
+    }
+
+    public void SetAbnormalResultBackgroundColor(string? color)
+    {
+        AbnormalResultBackgroundColor = color;
+    }
+
+    public void SetAbnormalResultColor(bool enabled, string? fontColor = null, string? backgroundColor = null)
+    {
+        EnableAbnormalResultColor = enabled;
+        AbnormalResultFontColor = fontColor;
+        AbnormalResultBackgroundColor = backgroundColor;
+    }
+
+    public void SetAbnormalResultColors(bool enabled, string? fontColor = null, string? backgroundColor = null)
+    {
+        EnableAbnormalResultColor = enabled;
+        AbnormalResultFontColor = fontColor;
+        AbnormalResultBackgroundColor = backgroundColor;
     }
 
     public void SetHeaderImagePath(string? path)

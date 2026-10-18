@@ -21,7 +21,10 @@ public sealed record UpdateReportSettingsCommand(
     string? FooterColor = null,
     string? HeaderImagePath = null,
     string? FooterImagePath = null,
-    string? NormalRangeMarker = null)
+    string? NormalRangeMarker = null,
+    bool EnableAbnormalResultColor = false,
+    string? AbnormalResultFontColor = null,
+    string? AbnormalResultBackgroundColor = null)
     : IRequest<Result>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

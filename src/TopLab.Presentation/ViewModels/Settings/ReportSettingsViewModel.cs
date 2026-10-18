@@ -44,6 +44,9 @@ public sealed class ReportSettingsViewModel : ViewModelBase
     private string? _headerImagePath;
     private string? _footerImagePath;
     private string? _normalRangeMarker;
+    private bool _enableAbnormalResultColor;
+    private string? _abnormalResultFontColor;
+    private string? _abnormalResultBackgroundColor;
 
     public ReportSettingsViewModel(
         ISender mediator,
@@ -107,6 +110,9 @@ public sealed class ReportSettingsViewModel : ViewModelBase
     public string? HeaderImagePath { get => _headerImagePath; set => SetProperty(ref _headerImagePath, value); }
     public string? FooterImagePath { get => _footerImagePath; set => SetProperty(ref _footerImagePath, value); }
     public string? NormalRangeMarker { get => _normalRangeMarker; set => SetProperty(ref _normalRangeMarker, value); }
+    public bool EnableAbnormalResultColor { get => _enableAbnormalResultColor; set => SetProperty(ref _enableAbnormalResultColor, value); }
+    public string? AbnormalResultFontColor { get => _abnormalResultFontColor; set => SetProperty(ref _abnormalResultFontColor, value); }
+    public string? AbnormalResultBackgroundColor { get => _abnormalResultBackgroundColor; set => SetProperty(ref _abnormalResultBackgroundColor, value); }
 
     public async Task LoadAsync()
     {
@@ -136,6 +142,9 @@ public sealed class ReportSettingsViewModel : ViewModelBase
                 HeaderImagePath = s.HeaderImagePath;
                 FooterImagePath = s.FooterImagePath;
                 NormalRangeMarker = s.NormalRangeMarker;
+                EnableAbnormalResultColor = s.EnableAbnormalResultColor;
+                AbnormalResultFontColor = s.AbnormalResultFontColor;
+                AbnormalResultBackgroundColor = s.AbnormalResultBackgroundColor;
             }
             else if (settings.Error is not null)
             {
@@ -196,7 +205,10 @@ public sealed class ReportSettingsViewModel : ViewModelBase
                 FooterColor: FooterColor,
                 HeaderImagePath: HeaderImagePath,
                 FooterImagePath: FooterImagePath,
-                NormalRangeMarker: NormalRangeMarker));
+                NormalRangeMarker: NormalRangeMarker,
+                EnableAbnormalResultColor: EnableAbnormalResultColor,
+                AbnormalResultFontColor: AbnormalResultFontColor,
+                AbnormalResultBackgroundColor: AbnormalResultBackgroundColor));
             if (!settingsResult.IsSuccess)
             {
                 ErrorMessage = settingsResult.Error is not null ? _presenter.Present(settingsResult.Error) : ErrorMessage;

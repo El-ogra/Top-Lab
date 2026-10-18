@@ -293,6 +293,11 @@ public static class ReportPageComposer
             container = container.PaddingLeft(layout.PaddingLeftPt);
         }
 
+        if (!string.IsNullOrWhiteSpace(line.BackgroundColor))
+        {
+            container = container.Background(ParseColor(line.BackgroundColor));
+        }
+
         // Same element order as before Phase 8; the two style calls are
         // conditional so an unconfigured item emits an identical text element.
         var text = container.Text(layout.Text);
@@ -304,6 +309,11 @@ public static class ReportPageComposer
         if (layout.LineHeight is { } lineHeight)
         {
             text.LineHeight(lineHeight);
+        }
+
+        if (!string.IsNullOrWhiteSpace(line.FontColor))
+        {
+            text.FontColor(ParseColor(line.FontColor));
         }
 
         text.FontSize(fontSize).AlignRight();

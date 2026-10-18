@@ -89,9 +89,12 @@ public static class ReportContentBuilder
             var testLine = Template(templates, ReportItemKeys.PatientExportTestLine);
             if (IsVisible(testLine, reportList))
             {
+                var abnormal = line.ResultFlag == (int)ResultFlag.Low || line.ResultFlag == (int)ResultFlag.High;
+                var fontColor = abnormal && reportSettings.EnableAbnormalResultColor ? reportSettings.AbnormalResultFontColor : null;
+                var bgColor = abnormal && reportSettings.EnableAbnormalResultColor ? reportSettings.AbnormalResultBackgroundColor : null;
                 body.Add(Layout(testLine, testLine.FreeTextOverride
                     ? testLine.Label
-                    : $"{line.TestName}: {line.ResultValue ?? "-"}"));
+                    : $"{line.TestName}: {line.ResultValue ?? "-"}", fontColor, bgColor));
             }
 
             if (line.FrozenRange is { } range)
@@ -201,9 +204,12 @@ public static class ReportContentBuilder
             var analyte = Template(templates, ReportItemKeys.ProfileAnalyte);
             if (IsVisible(analyte, reportList))
             {
+                var abnormal = profile.Flag == (int)ResultFlag.Low || profile.Flag == (int)ResultFlag.High;
+                var fontColor = abnormal && reportSettings.EnableAbnormalResultColor ? reportSettings.AbnormalResultFontColor : null;
+                var bgColor = abnormal && reportSettings.EnableAbnormalResultColor ? reportSettings.AbnormalResultBackgroundColor : null;
                 body.Add(Layout(analyte, analyte.FreeTextOverride
                     ? analyte.Label
-                    : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}"));
+                    : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}", fontColor, bgColor));
             }
 
             if (profile.FrozenRange is { } fr)
@@ -320,7 +326,10 @@ public static class ReportContentBuilder
             var resultValueItem = Template(templates, ReportItemKeys.ResultValue);
             if (IsVisible(resultValueItem, reportList))
             {
-                body.Add(Layout(resultValueItem, $"{resultValueItem.Label}: {line.ResultValue ?? "-"}"));
+                var abnormal = line.ResultFlag == (int)ResultFlag.Low || line.ResultFlag == (int)ResultFlag.High;
+                var fontColor = abnormal && settings.EnableAbnormalResultColor ? settings.AbnormalResultFontColor : null;
+                var bgColor = abnormal && settings.EnableAbnormalResultColor ? settings.AbnormalResultBackgroundColor : null;
+                body.Add(Layout(resultValueItem, $"{resultValueItem.Label}: {line.ResultValue ?? "-"}", fontColor, bgColor));
             }
 
             // W-02 S8 (WP-13): off-lab note travels only with its own line.
@@ -384,9 +393,12 @@ public static class ReportContentBuilder
                 var profileAnalyteItem = Template(templates, ReportItemKeys.ProfileAnalyte);
                 if (IsVisible(profileAnalyteItem, reportList))
                 {
+                    var profileAbnormal = profile.Flag == (int)ResultFlag.Low || profile.Flag == (int)ResultFlag.High;
+                    var profileFontColor = profileAbnormal && settings.EnableAbnormalResultColor ? settings.AbnormalResultFontColor : null;
+                    var profileBgColor = profileAbnormal && settings.EnableAbnormalResultColor ? settings.AbnormalResultBackgroundColor : null;
                     body.Add(Layout(profileAnalyteItem, profileAnalyteItem.FreeTextOverride
                         ? profileAnalyteItem.Label
-                        : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}"));
+                        : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}", profileFontColor, profileBgColor));
                 }
 
                 if (profile.FrozenRange is { } fr)
@@ -689,8 +701,8 @@ public static class ReportContentBuilder
     /// that produced it. The text itself is never altered here — the marker is
     /// applied by <see cref="ReportPageComposer"/> at render time.
     /// </summary>
-    private static ReportContentLine Layout(ReportItemTemplate template, string text)
-        => new(text, template.LineSpacing, template.LeftOffsetCm, template.MarkerSymbol);
+    private static ReportContentLine Layout(ReportItemTemplate template, string text, string? fontColor = null, string? backgroundColor = null)
+        => new(text, template.LineSpacing, template.LeftOffsetCm, template.MarkerSymbol, fontColor, backgroundColor);
 
     private static T Deserialize<T>(ReportPrintEnvelope envelope) where T : class
     {

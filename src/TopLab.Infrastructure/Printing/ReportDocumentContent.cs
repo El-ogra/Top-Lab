@@ -181,13 +181,18 @@ public sealed record ReportContentLine(
     string Text,
     decimal? LineSpacing = null,
     decimal? LeftOffsetCm = null,
-    string? MarkerSymbol = null)
+    string? MarkerSymbol = null,
+    string? FontColor = null,
+    string? BackgroundColor = null)
 {
     /// <summary>A line with no per-item layout (renders exactly as before Phase 8).</summary>
     public static ReportContentLine Default(string text) => new(text);
 
     /// <summary>True when the line carries at least one per-item layout override.</summary>
     public bool HasLayout => LineSpacing is not null || LeftOffsetCm is not null || MarkerSymbol is not null;
+
+    /// <summary>True when the line carries a colour override.</summary>
+    public bool HasColor => FontColor is not null || BackgroundColor is not null;
 }
 
 /// <summary>Column grid rendered as a QuestPDF table (RTL).</summary>

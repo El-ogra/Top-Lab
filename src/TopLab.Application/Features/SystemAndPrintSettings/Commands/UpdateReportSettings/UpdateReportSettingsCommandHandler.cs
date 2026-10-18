@@ -34,6 +34,9 @@ public sealed class UpdateReportSettingsCommandHandler : IRequestHandler<UpdateR
         row.SetHeaderImagePath(request.HeaderImagePath);
         row.SetFooterImagePath(request.FooterImagePath);
         row.SetNormalRangeMarker(request.NormalRangeMarker);
+        row.SetEnableAbnormalResultColor(request.EnableAbnormalResultColor);
+        row.SetAbnormalResultFontColor(request.AbnormalResultFontColor);
+        row.SetAbnormalResultBackgroundColor(request.AbnormalResultBackgroundColor);
 
         await _db.SaveChangesAsync(cancellationToken);
 

@@ -33,7 +33,10 @@ public sealed record ReportSettingsDto(
     string? FooterColor = null,
     string? HeaderImagePath = null,
     string? FooterImagePath = null,
-    string? NormalRangeMarker = null);
+    string? NormalRangeMarker = null,
+    bool EnableAbnormalResultColor = false,
+    string? AbnormalResultFontColor = null,
+    string? AbnormalResultBackgroundColor = null);
 
 public sealed record ReceiptSettingsDto(
     decimal TopMarginCm,

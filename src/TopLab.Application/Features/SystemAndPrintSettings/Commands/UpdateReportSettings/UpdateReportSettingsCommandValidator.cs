@@ -36,5 +36,13 @@ public sealed class UpdateReportSettingsCommandValidator : AbstractValidator<Upd
         RuleFor(x => x.NormalRangeMarker)
             .MaximumLength(10).WithMessage("علامة المدى الطبيعي لا يمكن أن تتجاوز 10 أحرف.")
             .When(x => !string.IsNullOrWhiteSpace(x.NormalRangeMarker));
+
+        RuleFor(x => x.AbnormalResultFontColor)
+            .MaximumLength(9).WithMessage("لون خط النتيجة غير الطبيعية لا يمكن أن يتجاوز 9 أحرف.")
+            .When(x => !string.IsNullOrWhiteSpace(x.AbnormalResultFontColor));
+
+        RuleFor(x => x.AbnormalResultBackgroundColor)
+            .MaximumLength(9).WithMessage("لون خلفية النتيجة غير الطبيعية لا يمكن أن يتجاوز 9 أحرف.")
+            .When(x => !string.IsNullOrWhiteSpace(x.AbnormalResultBackgroundColor));
     }
 }

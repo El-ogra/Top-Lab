@@ -65,6 +65,12 @@
             <TextBlock Text="علامة المدى الطبيعي (اتركه فارغاً للافتراضي):" VerticalAlignment="Center" Margin="0,8,8,4" Width="180" />
             <TextBox Text="{Binding NormalRangeMarker, UpdateSourceTrigger=PropertyChanged}" Margin="0,4" MaxLength="10" />
 
+            <CheckBox Content="تلوين النتائج غير الطبيعية" IsChecked="{Binding EnableAbnormalResultColor}" Margin="0,12,0,0" />
+            <TextBlock Text="لون خط النتيجة غير الطبيعية:" VerticalAlignment="Center" Margin="0,8,8,4" Width="180" />
+            <TextBox Text="{Binding AbnormalResultFontColor, UpdateSourceTrigger=PropertyChanged}" Margin="0,4" MaxLength="9" />
+            <TextBlock Text="لون خلفية النتيجة غير الطبيعية:" VerticalAlignment="Center" Margin="0,8,8,4" Width="180" />
+            <TextBox Text="{Binding AbnormalResultBackgroundColor, UpdateSourceTrigger=PropertyChanged}" Margin="0,4" MaxLength="9" />
+
             <TextBlock Text="تاريخ المريض" FontWeight="Bold" Margin="0,16,0,4" />
             <ComboBox ItemsSource="{Binding HistorySortModeOptions}" SelectedItem="{Binding HistorySortMode}" />
             <CheckBox Content="عرض التاريخ تلقائياً" IsChecked="{Binding HistoryAutoDisplayEnabled}" Margin="0,12,0,0" />

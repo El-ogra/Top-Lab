@@ -39,7 +39,10 @@ public sealed class GetReportSettingsQueryHandler : IRequestHandler<GetReportSet
             row.FooterColor,
             row.HeaderImagePath,
             row.FooterImagePath,
-            row.NormalRangeMarker);
+            row.NormalRangeMarker,
+            row.EnableAbnormalResultColor,
+            row.AbnormalResultFontColor,
+            row.AbnormalResultBackgroundColor);
 
         return Task.FromResult(Result<ReportSettingsDto>.Success(dto));
     }
