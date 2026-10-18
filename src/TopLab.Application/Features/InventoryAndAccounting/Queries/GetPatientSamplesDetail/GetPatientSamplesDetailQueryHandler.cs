@@ -60,17 +60,51 @@ public sealed class GetPatientSamplesDetailQueryHandler
                 var prices = tests.Select(x => x.PriceAtOrderTime).ToList();
                 var charged = PatientAccountCalculator.TotalCharged(prices, ops);
                 var paid = PatientAccountCalculator.TotalPaid(ops);
-                return new PatientSampleDetailDto(
-                    p.Id.Value,
-                    p.FullName,
-                    tests.Count,
-                    charged,
-                    paid,
-                    PatientAccountCalculator.Balance(prices, ops));
+                var balance = PatientAccountCalculator.Balance(prices, ops);
+                return (p, tests, ops, charged, paid, balance);
             })
-            .Where(r => r.TestsCount > 0 || r.Charged != 0m || r.Paid != 0m)
+            .Where(x => x.charged != 0m || x.paid != 0m || x.tests.Count > 0)
+            .Where(x => ApplyFilters(x.balance, x.ops, request))
+            .Select(x => new PatientSampleDetailDto(
+                x.p.Id.Value,
+                x.p.FullName,
+                x.tests.Count,
+                x.charged,
+                x.paid,
+                x.balance))
             .ToList();
 
         return Task.FromResult(Result<IReadOnlyList<PatientSampleDetailDto>>.Success(rows));
+    }
+
+    private static bool ApplyFilters(
+        decimal balance,
+        IReadOnlyList<PaymentOperation> ops,
+        GetPatientSamplesDetailQuery request)
+    {
+        if (request.UnpaidOnly && balance <= 0m)
+        {
+            return false;
+        }
+
+        if (request.PaidOnly)
+        {
+            var hasPaymentOp = ops.Any(o => !o.IsVoided && !o.IsExtraCharge);
+            if (balance != 0m || !hasPaymentOp)
+            {
+                return false;
+            }
+        }
+
+        if (request.DiscountedOnly)
+        {
+            var hasDiscount = ops.Any(o => !o.IsVoided && (o.DiscountAmount ?? 0m) > 0m);
+            if (!hasDiscount)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

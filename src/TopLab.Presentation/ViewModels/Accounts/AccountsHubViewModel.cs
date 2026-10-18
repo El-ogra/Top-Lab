@@ -48,6 +48,7 @@ public sealed class AccountsHubViewModel : ViewModelBase
 
     // S4: Patient samples
     private ObservableCollection<PatientSampleDetailDto> _patientSamples = new();
+    private ReceivableFilter _receivableFilter = ReceivableFilter.All;
 
     // S4: Company/delegate accounts
     private int? _externalEntityId;
@@ -178,6 +179,21 @@ public sealed class AccountsHubViewModel : ViewModelBase
     public bool HasPatientSamples => PatientSamples.Count > 0;
     public bool ShowPatientSamplesEmpty => PatientSamples.Count == 0 && !IsBusy && string.IsNullOrEmpty(ErrorMessage);
 
+    // Phase 5: Receivable filter
+    public IReadOnlyList<ReceivableFilterOption> ReceivableFilterOptions { get; } = new List<ReceivableFilterOption>
+    {
+        new(ReceivableFilter.All, "الكل"),
+        new(ReceivableFilter.UnpaidOnly, "غير المسدد"),
+        new(ReceivableFilter.DiscountedOnly, "المسدد بخصم"),
+        new(ReceivableFilter.PaidOnly, "المسدد بالكامل")
+    };
+
+    public ReceivableFilter ReceivableFilter
+    {
+        get => _receivableFilter;
+        set => SetProperty(ref _receivableFilter, value);
+    }
+
     // S4: Company/delegate
     public int? ExternalEntityId { get => _externalEntityId; set => SetProperty(ref _externalEntityId, value); }
 
@@ -253,7 +269,12 @@ public sealed class AccountsHubViewModel : ViewModelBase
                 ElementStats = elementResult.Value;
             }
 
-            var samplesResult = await _mediator.Send(new GetPatientSamplesDetailQuery(From, To), cancellationToken);
+            var samplesResult = await _mediator.Send(new GetPatientSamplesDetailQuery(
+                From,
+                To,
+                UnpaidOnly: _receivableFilter == ReceivableFilter.UnpaidOnly,
+                DiscountedOnly: _receivableFilter == ReceivableFilter.DiscountedOnly,
+                PaidOnly: _receivableFilter == ReceivableFilter.PaidOnly), cancellationToken);
             if (samplesResult.IsSuccess && samplesResult.Value is not null)
             {
                 PatientSamples = new ObservableCollection<PatientSampleDetailDto>(samplesResult.Value);

@@ -123,4 +123,122 @@ public class GetPatientSamplesDetailQueryHandlerTests
         Assert.False(outcome.IsValid);
         Assert.Contains(outcome.Errors, e => e.ErrorMessage == "بداية الفترة يجب ألا تتجاوز نهايتها.");
     }
+
+    // Phase 5: Patient receivable balance filters
+
+    [Fact]
+    public async Task UnpaidOnly_ReturnsPatientsWithPositiveBalance()
+    {
+        var db = NewDb();
+        db.Patients.Add(MakePatient(1, "unpaid"));
+        db.Patients.Add(MakePatient(2, "settled"));
+        db.Patients.Add(MakePatient(3, "discounted-unpaid"));
+        db.PatientTests.Add(MakeOrder(1, 1, 100m));
+        db.PatientTests.Add(MakeOrder(2, 2, 80m));
+        db.PatientTests.Add(MakeOrder(3, 3, 120m));
+        db.PaymentOperations.Add(MakeOp(1, 2, 80m)); // fully settled
+        db.PaymentOperations.Add(MakeOp(2, 3, 50m, 20m)); // discounted + unpaid
+
+        var result = await Handler(db).Handle(
+            new GetPatientSamplesDetailQuery(new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 31), UnpaidOnly: true),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var ids = result.Value!.Select(r => r.PatientId).ToList();
+        Assert.Contains(1, ids); // balance = 100
+        Assert.DoesNotContain(2, ids); // balance = 0
+        Assert.Contains(3, ids); // balance = 120 - 70 = 50
+    }
+
+    [Fact]
+    public async Task PaidOnly_ReturnsFullySettledPatients()
+    {
+        var db = NewDb();
+        db.Patients.Add(MakePatient(1, "settled"));
+        db.Patients.Add(MakePatient(2, "unpaid"));
+        db.Patients.Add(MakePatient(3, "zero-balance-no-payment"));
+        db.PatientTests.Add(MakeOrder(1, 1, 80m));
+        db.PatientTests.Add(MakeOrder(2, 2, 100m));
+        // patient 3 has no tests and no ops → balance = 0 but no payment op
+        db.PaymentOperations.Add(MakeOp(1, 1, 80m)); // fully settled
+
+        var result = await Handler(db).Handle(
+            new GetPatientSamplesDetailQuery(new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 31), PaidOnly: true),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var ids = result.Value!.Select(r => r.PatientId).ToList();
+        Assert.Contains(1, ids);
+        Assert.DoesNotContain(2, ids);
+        Assert.DoesNotContain(3, ids); // no payment operation
+    }
+
+    [Fact]
+    public async Task DiscountedOnly_ReturnsPatientsWithDiscountOperations()
+    {
+        var db = NewDb();
+        db.Patients.Add(MakePatient(1, "discounted"));
+        db.Patients.Add(MakePatient(2, "no-discount"));
+        db.PatientTests.Add(MakeOrder(1, 1, 100m));
+        db.PatientTests.Add(MakeOrder(2, 2, 80m));
+        db.PaymentOperations.Add(MakeOp(1, 1, 80m, 15m)); // has discount
+        db.PaymentOperations.Add(MakeOp(2, 2, 80m)); // no discount
+
+        var result = await Handler(db).Handle(
+            new GetPatientSamplesDetailQuery(new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 31), DiscountedOnly: true),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var ids = result.Value!.Select(r => r.PatientId).ToList();
+        Assert.Contains(1, ids);
+        Assert.DoesNotContain(2, ids);
+    }
+
+    [Fact]
+    public async Task NoFilter_PreservesExistingResultSet()
+    {
+        var db = NewDb();
+        db.Patients.Add(MakePatient(1, "p1"));
+        db.Patients.Add(MakePatient(2, "p2"));
+        db.PatientTests.Add(MakeOrder(1, 1, 100m));
+        db.PatientTests.Add(MakeOrder(2, 2, 80m));
+        db.PaymentOperations.Add(MakeOp(1, 1, 50m, 10m));
+        db.PaymentOperations.Add(MakeOp(2, 2, 80m));
+
+        var result = await Handler(db).Handle(
+            new GetPatientSamplesDetailQuery(new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 31)),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value!.Count);
+    }
+
+    [Fact]
+    public async Task MultipleActiveFilters_UseAndLogic()
+    {
+        var db = NewDb();
+        db.Patients.Add(MakePatient(1, "unpaid-discounted")); // unpaid + discounted
+        db.Patients.Add(MakePatient(2, "unpaid-no-discount")); // unpaid only
+        db.Patients.Add(MakePatient(3, "settled-discounted")); // discounted + settled
+        db.PatientTests.Add(MakeOrder(1, 1, 100m));
+        db.PatientTests.Add(MakeOrder(2, 2, 100m));
+        db.PatientTests.Add(MakeOrder(3, 3, 100m));
+        db.PaymentOperations.Add(MakeOp(1, 1, 30m, 10m)); // unpaid + discounted
+        db.PaymentOperations.Add(MakeOp(2, 2, 30m)); // unpaid only
+        db.PaymentOperations.Add(MakeOp(3, 3, 100m, 10m)); // settled + discounted
+
+        // UnpaidOnly + DiscountedOnly → only patient 1
+        var result = await Handler(db).Handle(
+            new GetPatientSamplesDetailQuery(
+                new DateOnly(2026, 3, 1),
+                new DateOnly(2026, 3, 31),
+                UnpaidOnly: true,
+                DiscountedOnly: true),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var ids = result.Value!.Select(r => r.PatientId).ToList();
+        Assert.Single(ids);
+        Assert.Equal(1, ids[0]);
+    }
 }

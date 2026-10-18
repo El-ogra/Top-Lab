@@ -7,7 +7,10 @@ namespace TopLab.Application.Features.InventoryAndAccounting.Queries.GetPatientS
 
 public sealed record GetPatientSamplesDetailQuery(
     DateOnly? From,
-    DateOnly? To)
+    DateOnly? To,
+    bool UnpaidOnly = false,
+    bool DiscountedOnly = false,
+    bool PaidOnly = false)
     : IRequest<Result<IReadOnlyList<PatientSampleDetailDto>>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => InventoryAndAccountingAccessPolicy.CashDisburseDeposit;

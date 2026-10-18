@@ -84,6 +84,16 @@ public sealed record PatientSampleDetailDto(
     decimal Paid,
     decimal Balance);
 
+public enum ReceivableFilter
+{
+    All = 0,
+    UnpaidOnly = 1,
+    DiscountedOnly = 2,
+    PaidOnly = 3
+}
+
+public sealed record ReceivableFilterOption(ReceivableFilter Value, string Label);
+
 public sealed record CashMovementDto(
     int Id,
     MovementType MovementType,
