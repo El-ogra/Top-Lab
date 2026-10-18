@@ -31,6 +31,7 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
         OpenReportSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<ReportSettingsViewModel>());
         OpenReceiptSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<ReceiptSettingsViewModel>());
         OpenEnvelopeSettingsCommand = new RelayCommand(_ => navigation.NavigateTo<EnvelopeSettingsViewModel>());
+        OpenReportItemTemplatesCommand = new RelayCommand(_ => navigation.NavigateTo<ReportItemTemplatesViewModel>());
         OpenDatabaseMaintenanceCommand = new AsyncRelayCommand(_ => OpenDatabaseMaintenanceAsync(navigation));
         RunSystemInitializationCommand = new AsyncRelayCommand(_ => RunSystemInitializationAsync());
         // S-06 Slice 4: temporary routes absorbed into Accounts hub — D3/D10 comments closed.
@@ -52,6 +53,7 @@ public sealed class SettingsDashboardViewModel : ViewModelBase
     public RelayCommand OpenReportSettingsCommand { get; }
     public RelayCommand OpenReceiptSettingsCommand { get; }
     public RelayCommand OpenEnvelopeSettingsCommand { get; }
+    public RelayCommand OpenReportItemTemplatesCommand { get; }
     public AsyncRelayCommand OpenDatabaseMaintenanceCommand { get; }
     public AsyncRelayCommand RunSystemInitializationCommand { get; }
 

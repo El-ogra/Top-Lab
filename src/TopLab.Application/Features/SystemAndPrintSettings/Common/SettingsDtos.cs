@@ -79,3 +79,12 @@ public sealed record DatabaseServerSettingsDto(
     string DatabaseName,
     bool IntegratedSecurity,
     string Login);
+
+/// <summary>GAP-014 (Phase 7): one editable report-item template row.</summary>
+public sealed record ReportItemTemplateDto(
+    string ItemKey,
+    string Label,
+    string? ReferenceValueExpression,
+    bool ShowHide,
+    string? ListMembership,
+    bool FreeTextOverride);

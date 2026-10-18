@@ -446,10 +446,12 @@ public sealed class ProfileEntryViewModel : ViewModelBase
             return;
         }
 
+        var itemTemplates = _db.Set<ReportItemTemplate>().ToList();
         var content = ReportContentBuilder.FromProfileReport(
             report, reportSettings, systemSettings,
             resolvedHeaderImagePath: _imageAssetStore?.ResolveImagePath(reportSettings.HeaderImagePath),
-            resolvedFooterImagePath: _imageAssetStore?.ResolveImagePath(reportSettings.FooterImagePath));
+            resolvedFooterImagePath: _imageAssetStore?.ResolveImagePath(reportSettings.FooterImagePath),
+            itemTemplates: itemTemplates);
         var document = new ReportDocument(content, reportSettings);
         var path = Path.Combine(Path.GetTempPath(), $"TopLab-ProfilePreview-{Guid.NewGuid():N}.pdf");
         document.WriteToFile(path);

@@ -1219,6 +1219,210 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TopLab.Domain.Settings.ReportItemTemplate", b =>
+                {
+                    b.Property<string>("ItemKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("FreeTextOverride")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ListMembership")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ReferenceValueExpression")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("ShowHide")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.HasKey("ItemKey");
+
+                    b.ToTable("ReportItemTemplates");
+
+                    b.HasData(
+                        new
+                        {
+                            ItemKey = "GroupSubtitle",
+                            FreeTextOverride = false,
+                            Label = "المجموعة",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "TestName",
+                            FreeTextOverride = false,
+                            Label = "التحليل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "ResultValue",
+                            FreeTextOverride = false,
+                            Label = "النتيجة",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "OffLabNote",
+                            FreeTextOverride = false,
+                            Label = "العينة أُخذت خارج المعمل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "ReferenceRange",
+                            FreeTextOverride = false,
+                            Label = "المدى",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "LowComment",
+                            FreeTextOverride = false,
+                            Label = "تعليق القيمة المنخفضة",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "HighComment",
+                            FreeTextOverride = false,
+                            Label = "تعليق القيمة المرتفعة",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "TestComment",
+                            FreeTextOverride = false,
+                            Label = "تعليق التحليل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "ProfileAnalyte",
+                            FreeTextOverride = false,
+                            Label = "التحليل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "ProfileReferenceRange",
+                            FreeTextOverride = false,
+                            Label = "المدى",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "ProfileLowComment",
+                            FreeTextOverride = false,
+                            Label = "تعليق منخفض للمحلل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "ProfileHighComment",
+                            FreeTextOverride = false,
+                            Label = "تعليق مرتفع للمحلل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "CultureLine",
+                            FreeTextOverride = false,
+                            Label = "المزرعة",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "MicroscopyLine",
+                            FreeTextOverride = false,
+                            Label = "الفحص المجهري",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "CultureSensitivityGrid",
+                            FreeTextOverride = false,
+                            Label = "جدول الحساسية",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "HistoryDate",
+                            FreeTextOverride = false,
+                            Label = "التاريخ",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "HistoryTest",
+                            FreeTextOverride = false,
+                            Label = "التحليل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "HistoryResult",
+                            FreeTextOverride = false,
+                            Label = "النتيجة",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "HistoryReviewed",
+                            FreeTextOverride = false,
+                            Label = "معتمد",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "HistoryComment",
+                            FreeTextOverride = false,
+                            Label = "التعليق",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "PatientExportTestLine",
+                            FreeTextOverride = false,
+                            Label = "التحليل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "PatientExportProfileItems",
+                            FreeTextOverride = false,
+                            Label = "عناصر التحليل",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "PatientExportCultureSummary",
+                            FreeTextOverride = false,
+                            Label = "ملخص المزرعة",
+                            ShowHide = true
+                        },
+                        new
+                        {
+                            ItemKey = "ProfileReportComment",
+                            FreeTextOverride = false,
+                            Label = "تعليق التقرير",
+                            ShowHide = true
+                        });
+                });
+
             modelBuilder.Entity("TopLab.Domain.Settings.ReportSettings", b =>
                 {
                     b.Property<int>("Id")

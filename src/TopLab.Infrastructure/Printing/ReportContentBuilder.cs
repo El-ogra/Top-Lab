@@ -22,7 +22,9 @@ public static class ReportContentBuilder
         string? softwareBar = null,
         ITestDisplayNameResolver? nameResolver = null,
         string? resolvedHeaderImagePath = null,
-        string? resolvedFooterImagePath = null)
+        string? resolvedFooterImagePath = null,
+        IReadOnlyCollection<ReportItemTemplate>? itemTemplates = null,
+        string? reportList = null)
     {
         ArgumentNullException.ThrowIfNull(envelope);
         ArgumentNullException.ThrowIfNull(reportSettings);
@@ -42,7 +44,7 @@ public static class ReportContentBuilder
                 Deserialize<CombinedReportDto>(envelope),
                 reportSettings, preferLabId, drawHeader, drawFooter, doctorSignature,
                 labName, labAddress, labPhone, softwareBar, nameResolver, marker,
-                resolvedHeaderImagePath, resolvedFooterImagePath),
+                resolvedHeaderImagePath, resolvedFooterImagePath, itemTemplates, reportList),
             ReportPrintEnvelope.Blank => FromBlank(
                 Deserialize<BlankReportDto>(envelope),
                 reportSettings, preferLabId, drawHeader, drawFooter, doctorSignature,
@@ -51,7 +53,7 @@ public static class ReportContentBuilder
                 Deserialize<PatientHistoryDto>(envelope),
                 reportSettings, preferLabId, drawHeader, drawFooter, doctorSignature,
                 labName, labAddress, labPhone, softwareBar, nameResolver, marker,
-                resolvedHeaderImagePath, resolvedFooterImagePath),
+                resolvedHeaderImagePath, resolvedFooterImagePath, itemTemplates, reportList),
             _ => throw new InvalidOperationException($"Unknown report kind '{envelope.ReportKind}'.")
         };
     }
@@ -65,7 +67,9 @@ public static class ReportContentBuilder
         string? labPhone = null,
         string? softwareBar = null,
         string? resolvedHeaderImagePath = null,
-        string? resolvedFooterImagePath = null)
+        string? resolvedFooterImagePath = null,
+        IReadOnlyCollection<ReportItemTemplate>? itemTemplates = null,
+        string? reportList = null)
     {
         ArgumentNullException.ThrowIfNull(data);
         ArgumentNullException.ThrowIfNull(reportSettings);
@@ -75,33 +79,68 @@ public static class ReportContentBuilder
         var drawHeader = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
         var drawFooter = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
         var marker = reportSettings.NormalRangeMarker;
+        var templates = BuildTemplateMap(itemTemplates);
 
         var sections = new List<ReportSection>();
         foreach (var line in data.Lines)
         {
-            var body = new List<string>
+            var body = new List<string>();
+
+            var testLine = Template(templates, ReportItemKeys.PatientExportTestLine);
+            if (IsVisible(testLine, reportList))
             {
-                $"{line.TestName}: {line.ResultValue ?? "-"}"
-            };
+                body.Add(testLine.FreeTextOverride
+                    ? testLine.Label
+                    : $"{line.TestName}: {line.ResultValue ?? "-"}");
+            }
 
             if (line.FrozenRange is { } range)
             {
-                body.Add($"{RangePrefix(marker)} {range.MinValue} - {range.MaxValue}");
+                var reference = Template(templates, ReportItemKeys.ReferenceRange);
+                if (IsVisible(reference, reportList))
+                {
+                    body.Add($"{ReferencePrefix(reference, marker)} {range.MinValue} - {range.MaxValue}");
+                }
+
                 if (line.ResultFlag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(range.LowComment))
                 {
-                    body.Add(range.LowComment!);
+                    var low = Template(templates, ReportItemKeys.LowComment);
+                    if (IsVisible(low, reportList))
+                    {
+                        body.Add(FreeTextOrValue(low, range.LowComment!));
+                    }
                 }
 
                 if (line.ResultFlag == (int)ResultFlag.High && !string.IsNullOrWhiteSpace(range.HighComment))
                 {
-                    body.Add(range.HighComment!);
+                    var high = Template(templates, ReportItemKeys.HighComment);
+                    if (IsVisible(high, reportList))
+                    {
+                        body.Add(FreeTextOrValue(high, range.HighComment!));
+                    }
                 }
             }
 
-            body.AddRange(line.ProfileItems);
+            var profileItems = Template(templates, ReportItemKeys.PatientExportProfileItems);
+            if (IsVisible(profileItems, reportList) && line.ProfileItems.Count > 0)
+            {
+                if (profileItems.FreeTextOverride)
+                {
+                    body.Add(profileItems.Label);
+                }
+                else
+                {
+                    body.AddRange(line.ProfileItems);
+                }
+            }
+
             if (!string.IsNullOrWhiteSpace(line.CultureSummary))
             {
-                body.Add(line.CultureSummary!);
+                var cultureSummary = Template(templates, ReportItemKeys.PatientExportCultureSummary);
+                if (IsVisible(cultureSummary, reportList))
+                {
+                    body.Add(FreeTextOrValue(cultureSummary, line.CultureSummary!));
+                }
             }
 
             sections.Add(ReportSection.FromLines(line.TestName, body));
@@ -141,7 +180,9 @@ public static class ReportContentBuilder
         string? labPhone = null,
         string? softwareBar = null,
         string? resolvedHeaderImagePath = null,
-        string? resolvedFooterImagePath = null)
+        string? resolvedFooterImagePath = null,
+        IReadOnlyCollection<ReportItemTemplate>? itemTemplates = null,
+        string? reportList = null)
     {
         ArgumentNullException.ThrowIfNull(dto);
         ArgumentNullException.ThrowIfNull(reportSettings);
@@ -151,30 +192,55 @@ public static class ReportContentBuilder
         var drawHeader = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
         var drawFooter = reportSettings.HeaderFooterMode != HeaderFooterMode.None;
         var marker = reportSettings.NormalRangeMarker;
+        var templates = BuildTemplateMap(itemTemplates);
 
         var body = new List<string>();
         foreach (var profile in dto.Lines)
         {
             var unit = string.IsNullOrWhiteSpace(profile.Unit) ? string.Empty : $" {profile.Unit}";
-            body.Add($"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}");
+            var analyte = Template(templates, ReportItemKeys.ProfileAnalyte);
+            if (IsVisible(analyte, reportList))
+            {
+                body.Add(analyte.FreeTextOverride
+                    ? analyte.Label
+                    : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}");
+            }
+
             if (profile.FrozenRange is { } fr)
             {
-                body.Add($"{RangePrefix(marker)} {fr.MinValue} - {fr.MaxValue}");
+                var reference = Template(templates, ReportItemKeys.ProfileReferenceRange);
+                if (IsVisible(reference, reportList))
+                {
+                    body.Add($"{ReferencePrefix(reference, marker)} {fr.MinValue} - {fr.MaxValue}");
+                }
+
                 if (profile.Flag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(fr.LowComment))
                 {
-                    body.Add(fr.LowComment!);
+                    var low = Template(templates, ReportItemKeys.ProfileLowComment);
+                    if (IsVisible(low, reportList))
+                    {
+                        body.Add(FreeTextOrValue(low, fr.LowComment!));
+                    }
                 }
 
                 if (profile.Flag == (int)ResultFlag.High && !string.IsNullOrWhiteSpace(fr.HighComment))
                 {
-                    body.Add(fr.HighComment!);
+                    var high = Template(templates, ReportItemKeys.ProfileHighComment);
+                    if (IsVisible(high, reportList))
+                    {
+                        body.Add(FreeTextOrValue(high, fr.HighComment!));
+                    }
                 }
             }
         }
 
         if (!string.IsNullOrWhiteSpace(dto.Comment))
         {
-            body.Add(dto.Comment!);
+            var comment = Template(templates, ReportItemKeys.ProfileReportComment);
+            if (IsVisible(comment, reportList))
+            {
+                body.Add(FreeTextOrValue(comment, dto.Comment!));
+            }
         }
 
         return new ReportDocumentContent(
@@ -216,8 +282,11 @@ public static class ReportContentBuilder
         ITestDisplayNameResolver nameResolver,
         string? marker,
         string? resolvedHeaderImagePath,
-        string? resolvedFooterImagePath)
+        string? resolvedFooterImagePath,
+        IReadOnlyCollection<ReportItemTemplate>? itemTemplates,
+        string? reportList)
     {
+        var templates = BuildTemplateMap(itemTemplates);
         var sections = new List<ReportSection>();
         string? lastGroupName = null;
         foreach (var line in dto.Lines)
@@ -228,59 +297,118 @@ public static class ReportContentBuilder
                 && line.TestGroupName != lastGroupName)
             {
                 lastGroupName = line.TestGroupName;
-                sections.Add(ReportSection.FromLines($"المجموعة: {line.TestGroupName}", new List<string>()));
+                var groupSubtitle = Template(templates, ReportItemKeys.GroupSubtitle);
+                if (IsVisible(groupSubtitle, reportList))
+                {
+                    sections.Add(ReportSection.FromLines($"{groupSubtitle.Label}: {line.TestGroupName}", new List<string>()));
+                }
             }
 
             var testName = nameResolver.ResolveReportName(line);
-            var body = new List<string>
+            var body = new List<string>();
+
+            var testNameItem = Template(templates, ReportItemKeys.TestName);
+            if (IsVisible(testNameItem, reportList))
             {
-                $"التحليل: {testName}",
-                $"النتيجة: {line.ResultValue ?? "-"}"
-            };
+                body.Add($"{testNameItem.Label}: {testName}");
+            }
+
+            var resultValueItem = Template(templates, ReportItemKeys.ResultValue);
+            if (IsVisible(resultValueItem, reportList))
+            {
+                body.Add($"{resultValueItem.Label}: {line.ResultValue ?? "-"}");
+            }
 
             // W-02 S8 (WP-13): off-lab note travels only with its own line.
             if (line.IsTakenOutsideLab)
             {
-                body.Add("العينة أُخذت خارج المعمل");
+                var offLabNoteItem = Template(templates, ReportItemKeys.OffLabNote);
+                if (IsVisible(offLabNoteItem, reportList))
+                {
+                    body.Add(offLabNoteItem.Label);
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(line.FrozenRangeText))
             {
-                body.Add($"{RangePrefix(marker)} {line.FrozenRangeText}");
+                var referenceItem = Template(templates, ReportItemKeys.ReferenceRange);
+                if (IsVisible(referenceItem, reportList))
+                {
+                    body.Add($"{ReferencePrefix(referenceItem, marker)} {line.FrozenRangeText}");
+                }
             }
 
             // WP-07: only the matching out-of-range comment is printed.
             if (line.ResultFlag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(line.LowComment))
             {
-                body.Add(line.LowComment!);
+                var lowCommentItem = Template(templates, ReportItemKeys.LowComment);
+                if (IsVisible(lowCommentItem, reportList))
+                {
+                    body.Add(FreeTextOrValue(lowCommentItem, line.LowComment!));
+                }
             }
 
             if (line.ResultFlag == (int)ResultFlag.High && !string.IsNullOrWhiteSpace(line.HighComment))
             {
-                body.Add(line.HighComment!);
+                var highCommentItem = Template(templates, ReportItemKeys.HighComment);
+                if (IsVisible(highCommentItem, reportList))
+                {
+                    body.Add(FreeTextOrValue(highCommentItem, line.HighComment!));
+                }
             }
 
             // W-02 S8 (WP-13): test comments print after the result.
             if (line.TestComments is { Count: > 0 })
             {
-                body.AddRange(line.TestComments);
+                var testCommentItem = Template(templates, ReportItemKeys.TestComment);
+                if (IsVisible(testCommentItem, reportList))
+                {
+                    if (testCommentItem.FreeTextOverride)
+                    {
+                        body.Add(testCommentItem.Label);
+                    }
+                    else
+                    {
+                        body.AddRange(line.TestComments);
+                    }
+                }
             }
 
             foreach (var profile in line.ProfileLines)
             {
                 var unit = string.IsNullOrWhiteSpace(profile.Unit) ? string.Empty : $" {profile.Unit}";
-                body.Add($"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}");
+                var profileAnalyteItem = Template(templates, ReportItemKeys.ProfileAnalyte);
+                if (IsVisible(profileAnalyteItem, reportList))
+                {
+                    body.Add(profileAnalyteItem.FreeTextOverride
+                        ? profileAnalyteItem.Label
+                        : $"{profile.AnalyteName}: {profile.ResultValue ?? "-"}{unit}");
+                }
+
                 if (profile.FrozenRange is { } fr)
                 {
-                    body.Add($"{RangePrefix(marker)} {fr.MinValue} - {fr.MaxValue}");
+                    var profileReferenceItem = Template(templates, ReportItemKeys.ProfileReferenceRange);
+                    if (IsVisible(profileReferenceItem, reportList))
+                    {
+                        body.Add($"{ReferencePrefix(profileReferenceItem, marker)} {fr.MinValue} - {fr.MaxValue}");
+                    }
+
                     if (profile.Flag == (int)ResultFlag.Low && !string.IsNullOrWhiteSpace(fr.LowComment))
                     {
-                        body.Add(fr.LowComment!);
+                        var profileLowItem = Template(templates, ReportItemKeys.ProfileLowComment);
+                        if (IsVisible(profileLowItem, reportList))
+                        {
+                            body.Add(FreeTextOrValue(profileLowItem, fr.LowComment!));
+                        }
                     }
 
                     if (profile.Flag == (int)ResultFlag.High && !string.IsNullOrWhiteSpace(fr.HighComment))
                     {
-                        body.Add(fr.HighComment!);
+                        var profileHighItem = Template(templates, ReportItemKeys.ProfileHighComment);
+                        if (IsVisible(profileHighItem, reportList))
+                        {
+                            body.Add(FreeTextOrValue(profileHighItem, fr.HighComment!));
+                        }
                     }
                 }
             }
@@ -310,15 +438,27 @@ public static class ReportContentBuilder
                             r.InhibitionZoneMm,
                             r.ScientificName))
                         .ToList());
-                body.AddRange(cultureSection.BuildLines());
-                body.AddRange(cultureSection.BuildMicroscopyLines());
+
+                var cultureLineItem = Template(templates, ReportItemKeys.CultureLine);
+                if (IsVisible(cultureLineItem, reportList))
+                {
+                    body.AddRange(cultureSection.BuildLines());
+                }
+
+                var microscopyLineItem = Template(templates, ReportItemKeys.MicroscopyLine);
+                if (IsVisible(microscopyLineItem, reportList))
+                {
+                    body.AddRange(cultureSection.BuildMicroscopyLines());
+                }
+
                 var grid = cultureSection.BuildSensitivityGrid();
-                if (grid.Count > 0)
+                var gridItem = Template(templates, ReportItemKeys.CultureSensitivityGrid);
+                if (grid.Count > 0 && IsVisible(gridItem, reportList))
                 {
                     // A culture line owns its sensitivity table as a separate section.
                     sections.Add(ReportSection.FromLines(null, body));
                     sections.Add(new ReportSection(
-                        "جدول الحساسية",
+                        gridItem.Label,
                         Array.Empty<string>(),
                         new ReportGrid(
                             new[] { "المضاد", "الفئة", "منطقة التثبيط (مم)", "الاسم العلمي" },
@@ -408,32 +548,56 @@ public static class ReportContentBuilder
         ITestDisplayNameResolver nameResolver,
         string? marker,
         string? resolvedHeaderImagePath,
-        string? resolvedFooterImagePath)
+        string? resolvedFooterImagePath,
+        IReadOnlyCollection<ReportItemTemplate>? itemTemplates,
+        string? reportList)
     {
-        var rows = dto.Entries.Select(e =>
+        var templates = BuildTemplateMap(itemTemplates);
+
+        var columns = new (string Key, string Label)[]
         {
-            var name = nameResolver.ResolveHistoryName(new CombinedReportLineDto(
-                e.PatientTestId, e.TestId, e.TestName, e.TestCode, e.ResultKind,
-                e.ResultValue, e.ResultFlag, null, Array.Empty<ProfileReportLineDto>(), null,
-                e.LowComment, e.HighComment));
+            (ReportItemKeys.HistoryDate, Template(templates, ReportItemKeys.HistoryDate).Label),
+            (ReportItemKeys.HistoryTest, Template(templates, ReportItemKeys.HistoryTest).Label),
+            (ReportItemKeys.HistoryResult, Template(templates, ReportItemKeys.HistoryResult).Label),
+            (ReportItemKeys.HistoryReviewed, Template(templates, ReportItemKeys.HistoryReviewed).Label),
+            (ReportItemKeys.HistoryComment, Template(templates, ReportItemKeys.HistoryComment).Label)
+        };
+        var visibleColumns = columns
+            .Where(c => IsVisible(Template(templates, c.Key), reportList))
+            .ToList();
 
-            var comment = e.ResultFlag == (int)ResultFlag.Low
-                ? e.LowComment
-                : e.ResultFlag == (int)ResultFlag.High ? e.HighComment : null;
-
-            return (IReadOnlyList<string>)new[]
+        ReportGrid? grid = null;
+        if (visibleColumns.Count > 0)
+        {
+            var rows = dto.Entries.Select(e =>
             {
-                e.EnteredAtUtc?.ToString("yyyy/MM/dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
-                name,
-                e.ResultValue ?? "-",
-                e.IsReviewed ? "نعم" : "لا",
-                comment ?? string.Empty
-            };
-        }).ToList();
+                var name = nameResolver.ResolveHistoryName(new CombinedReportLineDto(
+                    e.PatientTestId, e.TestId, e.TestName, e.TestCode, e.ResultKind,
+                    e.ResultValue, e.ResultFlag, null, Array.Empty<ProfileReportLineDto>(), null,
+                    e.LowComment, e.HighComment));
 
-        var grid = new ReportGrid(
-            new[] { "التاريخ", "التحليل", "النتيجة", "معتمد", "التعليق" },
-            rows);
+                var comment = e.ResultFlag == (int)ResultFlag.Low
+                    ? e.LowComment
+                    : e.ResultFlag == (int)ResultFlag.High ? e.HighComment : null;
+
+                var values = new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    [ReportItemKeys.HistoryDate] = e.EnteredAtUtc?.ToString("yyyy/MM/dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+                    [ReportItemKeys.HistoryTest] = name,
+                    [ReportItemKeys.HistoryResult] = e.ResultValue ?? "-",
+                    [ReportItemKeys.HistoryReviewed] = e.IsReviewed ? "نعم" : "لا",
+                    [ReportItemKeys.HistoryComment] = comment ?? string.Empty
+                };
+
+                return (IReadOnlyList<string>)visibleColumns.Select(c => values[c.Key]).ToList();
+            }).ToList();
+
+            grid = new ReportGrid(visibleColumns.Select(c => c.Label).ToList(), rows);
+        }
+
+        IReadOnlyList<ReportSection> sections = grid is null
+            ? Array.Empty<ReportSection>()
+            : new[] { new ReportSection(null, Array.Empty<string>(), grid) };
 
         return new ReportDocumentContent(
             ReportTitle: "تقرير التاريخ",
@@ -449,7 +613,7 @@ public static class ReportContentBuilder
             ReferralEntityName: null,
             Sex: null,
             AgeText: null,
-            Sections: new[] { new ReportSection(null, Array.Empty<string>(), grid) },
+            Sections: sections,
             DrawHeader: drawHeader,
             DrawFooter: drawFooter,
             DoctorSignatureEnabled: doctorSignature,
@@ -460,8 +624,61 @@ public static class ReportContentBuilder
             FooterImagePath: resolvedFooterImagePath);
     }
 
-    private static string RangePrefix(string? marker)
-        => string.IsNullOrWhiteSpace(marker) ? "المدى:" : marker;
+    private static Dictionary<string, ReportItemTemplate> BuildTemplateMap(
+        IReadOnlyCollection<ReportItemTemplate>? itemTemplates)
+    {
+        var map = new Dictionary<string, ReportItemTemplate>(StringComparer.Ordinal);
+        if (itemTemplates is not null)
+        {
+            foreach (var template in itemTemplates)
+            {
+                map[template.ItemKey] = template;
+            }
+        }
+
+        return map;
+    }
+
+    private static ReportItemTemplate Template(
+        IReadOnlyDictionary<string, ReportItemTemplate> templates,
+        string key)
+    {
+        if (templates.TryGetValue(key, out var template))
+        {
+            return template;
+        }
+
+        return ReportItemTemplateCatalog.GetDefault(key);
+    }
+
+    private static bool IsVisible(ReportItemTemplate template, string? reportList)
+    {
+        if (!template.ShowHide)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(template.ListMembership)
+            && !string.IsNullOrWhiteSpace(reportList))
+        {
+            return string.Equals(template.ListMembership, reportList, StringComparison.Ordinal);
+        }
+
+        return true;
+    }
+
+    private static string ReferencePrefix(ReportItemTemplate template, string? marker)
+    {
+        if (!string.IsNullOrWhiteSpace(template.ReferenceValueExpression))
+        {
+            return template.ReferenceValueExpression;
+        }
+
+        return string.IsNullOrWhiteSpace(marker) ? "المدى:" : marker;
+    }
+
+    private static string FreeTextOrValue(ReportItemTemplate template, string value)
+        => template.FreeTextOverride ? template.Label : value;
 
     private static T Deserialize<T>(ReportPrintEnvelope envelope) where T : class
     {

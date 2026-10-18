@@ -653,4 +653,42 @@ Assert.Empty(et.GetForeignKeys());
             i.Properties.Any(p => p.Name == nameof(ProfileResultAmendment.ProfileResultItemId)));
         Assert.NotNull(idx);
     }
+
+    [Fact]
+    public void ReportItemTemplate_HasNaturalKeyAndSeededRows()
+    {
+        var et = GetEntityType<TopLab.Domain.Settings.ReportItemTemplate>();
+
+        Assert.Equal(
+            new[] { nameof(TopLab.Domain.Settings.ReportItemTemplate.ItemKey) },
+            et.FindPrimaryKey()!.Properties.Select(p => p.Name).ToArray());
+        Assert.Empty(et.GetForeignKeys());
+
+        var label = et.FindProperty(nameof(TopLab.Domain.Settings.ReportItemTemplate.Label));
+        Assert.NotNull(label);
+        Assert.False(label!.IsNullable);
+        Assert.Equal(200, label.GetMaxLength());
+
+        var refExpr = et.FindProperty(nameof(TopLab.Domain.Settings.ReportItemTemplate.ReferenceValueExpression));
+        Assert.NotNull(refExpr);
+        Assert.True(refExpr!.IsNullable);
+        Assert.Equal(500, refExpr.GetMaxLength());
+
+        var list = et.FindProperty(nameof(TopLab.Domain.Settings.ReportItemTemplate.ListMembership));
+        Assert.NotNull(list);
+        Assert.True(list!.IsNullable);
+        Assert.Equal(100, list.GetMaxLength());
+
+        var show = et.FindProperty(nameof(TopLab.Domain.Settings.ReportItemTemplate.ShowHide));
+        Assert.NotNull(show);
+        Assert.Equal(true, show!.GetDefaultValue());
+
+        var free = et.FindProperty(nameof(TopLab.Domain.Settings.ReportItemTemplate.FreeTextOverride));
+        Assert.NotNull(free);
+        Assert.Equal(false, free!.GetDefaultValue());
+
+        using var ctx = new ApplicationDbContext(InMemoryContextFactory.Create());
+        ctx.Database.EnsureCreated();
+        Assert.Equal(24, ctx.Set<TopLab.Domain.Settings.ReportItemTemplate>().Count());
+    }
 }

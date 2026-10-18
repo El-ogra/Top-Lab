@@ -1,6 +1,7 @@
 using QuestPDF;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
+using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Domain.Settings;
 using TopLab.Infrastructure.Printing;
@@ -31,6 +32,13 @@ public sealed class PatientReportPdfExporter : IPatientReportPdfExporter
         Settings.UseSystemFonts = true;
     }
 
+    private readonly IApplicationDbContext? _dbContext;
+
+    public PatientReportPdfExporter(IApplicationDbContext? dbContext = null)
+    {
+        _dbContext = dbContext;
+    }
+
     public Task ExportAsync(string absolutePath, PatientReportPdfData data, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(absolutePath);
@@ -38,8 +46,13 @@ public sealed class PatientReportPdfExporter : IPatientReportPdfExporter
 
         var reportSettings = ReportSettings.CreateDefault();
         var systemSettings = SystemSettings.CreateDefault();
+
+        var itemTemplates = _dbContext is null
+            ? null
+            : _dbContext.Set<ReportItemTemplate>().ToList();
+
         var content = ReportContentBuilder.FromPatientExport(
-            data, reportSettings, systemSettings);
+            data, reportSettings, systemSettings, itemTemplates: itemTemplates);
 
         var directory = Path.GetDirectoryName(absolutePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))

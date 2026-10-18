@@ -45,6 +45,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
     public List<ReceiptSettings> ReceiptSettings { get; } = new();
     public List<EnvelopeSettings> EnvelopeSettings { get; } = new();
     public List<EnvelopePrintItemPosition> EnvelopePrintItemPositions { get; } = new();
+    public List<ReportItemTemplate> ReportItemTemplates { get; } = new();
     public List<PrinterAssignment> PrinterAssignments { get; } = new();
     public List<Antibiotic> Antibiotics { get; } = new();
     public List<CultureAntibioticAttachment> CultureAntibioticAttachments { get; } = new();
@@ -219,6 +220,11 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
             return (IQueryable<TEntity>)(object)EnvelopePrintItemPositions.AsQueryable();
         }
 
+        if (typeof(TEntity) == typeof(ReportItemTemplate))
+        {
+            return (IQueryable<TEntity>)(object)ReportItemTemplates.AsQueryable();
+        }
+
         if (typeof(TEntity) == typeof(PrinterAssignment))
         {
             return (IQueryable<TEntity>)(object)PrinterAssignments.AsQueryable();
@@ -325,6 +331,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is ReceiptSettings rec) ReceiptSettings.Add(rec);
         else if (entity is EnvelopeSettings env) EnvelopeSettings.Add(env);
         else if (entity is EnvelopePrintItemPosition epos) EnvelopePrintItemPositions.Add(epos);
+        else if (entity is ReportItemTemplate rit) ReportItemTemplates.Add(rit);
         else if (entity is PrinterAssignment pa) PrinterAssignments.Add(pa);
         else if (entity is Antibiotic ab) Antibiotics.Add(ab);
         else if (entity is CultureAntibioticAttachment caa) CultureAntibioticAttachments.Add(caa);
@@ -380,6 +387,7 @@ public sealed class FakeApplicationDbContext : IApplicationDbContext
         else if (entity is ReceiptSettings rec) ReceiptSettings.Remove(rec);
         else if (entity is EnvelopeSettings env) EnvelopeSettings.Remove(env);
         else if (entity is EnvelopePrintItemPosition epos) EnvelopePrintItemPositions.Remove(epos);
+        else if (entity is ReportItemTemplate rit) ReportItemTemplates.Remove(rit);
         else if (entity is PrinterAssignment pa) PrinterAssignments.Remove(pa);
         else if (entity is Antibiotic ab) Antibiotics.Remove(ab);
         else if (entity is CultureAntibioticAttachment caa) CultureAntibioticAttachments.Remove(caa);

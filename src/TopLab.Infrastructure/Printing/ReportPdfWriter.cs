@@ -28,15 +28,18 @@ public sealed class ReportPdfWriter : IReportPdfWriter
     private readonly ITestDisplayNameResolver _nameResolver;
     private readonly ILabPrintTextStore? _labTextStore;
     private readonly IReportImageAssetStore? _imageAssetStore;
+    private readonly IApplicationDbContext? _dbContext;
 
     public ReportPdfWriter(
         ITestDisplayNameResolver? nameResolver = null,
         ILabPrintTextStore? labTextStore = null,
-        IReportImageAssetStore? imageAssetStore = null)
+        IReportImageAssetStore? imageAssetStore = null,
+        IApplicationDbContext? dbContext = null)
     {
         _nameResolver = nameResolver ?? new TestDisplayNameResolver();
         _labTextStore = labTextStore;
         _imageAssetStore = imageAssetStore;
+        _dbContext = dbContext;
     }
 
     public async Task WritePdfAsync(
@@ -72,13 +75,18 @@ public sealed class ReportPdfWriter : IReportPdfWriter
             resolvedFooterImagePath = _imageAssetStore.ResolveImagePath(reportSettings.FooterImagePath);
         }
 
+        var itemTemplates = _dbContext is null
+            ? null
+            : _dbContext.Set<ReportItemTemplate>().ToList();
+
         var content = ReportContentBuilder.FromEnvelope(
             envelope, reportSettings, systemSettings,
             labName, labAddress, labPhone,
             softwareBar: "Computer Software / real lab system",
             nameResolver: _nameResolver,
             resolvedHeaderImagePath: resolvedHeaderImagePath,
-            resolvedFooterImagePath: resolvedFooterImagePath);
+            resolvedFooterImagePath: resolvedFooterImagePath,
+            itemTemplates: itemTemplates);
 
         var document = new ReportDocument(content, reportSettings, fontFamily);
 

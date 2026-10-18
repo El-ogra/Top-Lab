@@ -243,7 +243,9 @@ public sealed class CombinedReportViewModel : ViewModelBase
         var envelope = new ReportPrintEnvelope(
             ReportPrintEnvelope.Combined,
             JsonSerializer.Serialize(report));
-        var content = ReportContentBuilder.FromEnvelope(envelope, reportSettings, systemSettings);
+        var itemTemplates = _db.Set<ReportItemTemplate>().ToList();
+        var content = ReportContentBuilder.FromEnvelope(
+            envelope, reportSettings, systemSettings, itemTemplates: itemTemplates);
         var document = new ReportDocument(content, reportSettings);
         var path = Path.Combine(Path.GetTempPath(), $"TopLab-CombinedPreview-{Guid.NewGuid():N}.pdf");
         document.WriteToFile(path);

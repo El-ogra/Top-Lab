@@ -58,5 +58,6 @@ public partial class ApplicationDbContext
     public Microsoft.EntityFrameworkCore.DbSet<ReceiptSettings> ReceiptSettings => Set<ReceiptSettings>();
     public Microsoft.EntityFrameworkCore.DbSet<EnvelopeSettings> EnvelopeSettings => Set<EnvelopeSettings>();
     public Microsoft.EntityFrameworkCore.DbSet<EnvelopePrintItemPosition> EnvelopePrintItemPositions => Set<EnvelopePrintItemPosition>();
+    public Microsoft.EntityFrameworkCore.DbSet<ReportItemTemplate> ReportItemTemplates => Set<ReportItemTemplate>();
     public Microsoft.EntityFrameworkCore.DbSet<PrinterAssignment> PrinterAssignments => Set<PrinterAssignment>();
 }
