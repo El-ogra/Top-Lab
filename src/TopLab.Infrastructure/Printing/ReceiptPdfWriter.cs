@@ -60,12 +60,26 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
             throw new DirectoryNotFoundException($"Directory not found: {directory}");
         }
 
-        var lines = BuildTextLines(receipt, receiptSettings, labText, barcodePayload);
 #pragma warning disable CA1416 // Windows-only WPF app
         var fontFamily = ArabicFontResolver.Resolve(labText.FontFamily);
 #pragma warning restore CA1416
         var fontSize = labText.FontSizePt > 0 ? labText.FontSizePt : 12;
-        var topMarginPt = (float)receiptSettings.TopMarginCm * 28.35f;
+
+        // GAP-010: TopMarginCm is the pre-printed-paper clearance knob, and the
+        // settings screen allows up to 30 cm. On A5 that is more than the page is
+        // tall: past the limit the printable box is smaller than the receipt body
+        // and QuestPDF throws a layout exception, so no receipt could be produced
+        // at all. Clamp to the limit rather than fail the print; the body below is
+        // laid out against the same clamped value, so the logo bound and the page
+        // geometry always agree.
+        var requestedTopMarginCm = receiptSettings.TopMarginCm;
+        var appliedTopMarginCm = requestedTopMarginCm > ReceiptGeometry.MaxTopMarginCm
+            ? ReceiptGeometry.MaxTopMarginCm
+            : requestedTopMarginCm;
+        var topMarginPt = (float)appliedTopMarginCm * 28.35f;
+
+        // Floor the page applies to MarginTop, in the same units.
+        const float MinTopMarginPt = 14f;
 
         // GAP-007: resolve header/footer fonts, sizes, and colours
 #pragma warning disable CA1416 // Windows-only WPF app
@@ -78,12 +92,27 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
         var footerFontSize = receiptSettings.FooterFontSizePt ?? (fontSize - 2);
         var footerFontColor = ParseColor(receiptSettings.FooterFontColor);
 
-        // GAP-007: resolve logo path through the asset store
-        string? logoPath = null;
-        if (!string.IsNullOrWhiteSpace(receiptSettings.LogoImagePath) && _imageAssetStore is not null)
-        {
-            logoPath = _imageAssetStore.ResolveLogoPath(receiptSettings.LogoImagePath);
-        }
+        // GAP-010: the persisted lab logo, resolved and validated to a file that
+        // can be drawn. Null means "no logo" — either nothing was configured or
+        // the configured file is missing, unsupported or unreadable — in which
+        // case the words header below is the documented fallback.
+        var logoPath = ResolveDrawableLogoPath(_imageAssetStore, receiptSettings);
+
+        // GAP-010: the logo replaces the words header for this print, so the
+        // pure content map is asked to omit it rather than the renderer
+        // guessing. Nothing changes when no logo is drawable.
+        var renderWordsHeader = logoPath is null;
+        var lines = BuildTextLines(receipt, receiptSettings, labText, barcodePayload, renderWordsHeader);
+
+        // GAP-010: the logo is bounded to the receipt's printable box so an
+        // over-tall image can neither exhaust the page nor collide with
+        // pre-printed stationery. Both bounds come from the page geometry the
+        // document below actually applies (28 pt left/right/bottom, and the
+        // same MarginTop floor), so the logo can never push the body off the
+        // paper and always stays inside the printed area.
+        var receiptBodyWidthPt = ReceiptGeometry.ContentWidthPt(28f, 28f);
+        var receiptLogoMaxHeightPt = ReceiptGeometry.LogoMaxHeightPt(
+            Math.Max(topMarginPt, MinTopMarginPt), 28f);
 
         if (File.Exists(absolutePath))
         {
@@ -124,10 +153,26 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
                     page.Content()
                         .Column(column =>
                         {
-                            // GAP-007: render the lab logo at the top of the receipt
-                            if (logoPath is not null && File.Exists(logoPath))
+                            // GAP-007 / GAP-010: the persisted lab logo, at the top of the receipt.
+                            //
+                            // The two paper choices are the two halves of this one block,
+                            // and both come from the same persisted LogoImagePath column:
+                            //   * plain paper       -> HeaderFooterMode.Words or Images, with a
+                            //                       configured logo. The logo is drawn here and
+                            //                       the words header is omitted for this print.
+                            //   * pre-printed paper -> the logo is already on the stock, so
+                            //                       the user sets HeaderFooterMode.None and uses
+                            //                       TopMarginCm to clear the letterhead. Nothing is
+                            //                       drawn, which is what stops the logo appearing
+                            //                       twice.
+                            // A logo that is configured but missing, of an unsupported type
+                            // or unreadable falls back to the words header.
+                            if (logoPath is not null && receiptSettings.HeaderFooterMode != HeaderFooterMode.None)
                             {
-                                column.Item().PaddingBottom(6).AlignCenter().Image(logoPath);
+                                var path = logoPath;
+                                column.Item().PaddingBottom(6).MaxWidth(receiptBodyWidthPt)
+                                    .MaxHeight(receiptLogoMaxHeightPt).AlignCenter()
+                                    .Image(path).FitArea();
                             }
 
                             foreach (var line in lines.Header)
@@ -219,11 +264,17 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
     /// the identifier-rule payload (Phase 1 REF-127) drawn as a scannable image
     /// plus the readable line after the patient block.
     /// </summary>
+    /// <param name="renderWordsHeader">
+    /// GAP-010: false when a logo is being drawn for this print, in which case
+    /// the words header is omitted instead of printed beneath the logo.
+    /// Defaults to true, so every existing caller is unaffected.
+    /// </param>
     public static ReceiptTextLines BuildTextLines(
         ReceiptDto receipt,
         ReceiptSettings receiptSettings,
         LabPrintTextDto labText,
-        string barcodePayload)
+        string barcodePayload,
+        bool renderWordsHeader = true)
     {
         ArgumentNullException.ThrowIfNull(receipt);
         ArgumentNullException.ThrowIfNull(receiptSettings);
@@ -231,9 +282,10 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
         ArgumentException.ThrowIfNullOrWhiteSpace(barcodePayload);
 
         var header = new List<string>();
-        // HeaderFooterMode.Images now has a logo pipeline (GAP-007); the words
-        // header is still rendered as a fallback when no logo is configured.
-        if (receiptSettings.HeaderFooterMode != HeaderFooterMode.None)
+        // HeaderFooterMode.Images and .Words both carry a logo pipeline (GAP-007).
+        // The words header is the fallback: it is suppressed only while a
+        // drawable logo replaces it for this print (GAP-010).
+        if (renderWordsHeader && receiptSettings.HeaderFooterMode != HeaderFooterMode.None)
         {
             if (!string.IsNullOrWhiteSpace(labText.LabName))
             {
@@ -284,6 +336,9 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
             ? $"موعد الاستلام: {receiptSettings.PickupTimeDefault.Value.ToString("HH:mm", CultureInfo.InvariantCulture)}"
             : null;
 
+        // GAP-010: no footer text exists yet (there is no footer content in the
+        // receipt content map); the slot is kept so the header/footer mode is
+        // honoured uniformly by the renderer.
         return new ReceiptTextLines(header, patient, items, totals, pickup, new List<string>(), barcodePayload);
     }
 
@@ -308,6 +363,105 @@ public sealed class ReceiptPdfWriter : IReceiptPdfWriter
     {
         return $"{amount.ToString("0.00", CultureInfo.InvariantCulture)} {currency}";
     }
+
+    /// <summary>
+    /// GAP-010: the persisted lab logo, resolved and validated to a file that can
+    /// actually be drawn — or null when no logo may be rendered.
+    /// <para>
+    /// The resolution order is: a configured relative path, resolved through the
+    /// asset store; then the file must exist, be of a type QuestPDF can decode
+    /// (PNG, JPEG, WEBP), and pass a format check on its header. A file that is
+    /// present but unreadable, unsupported or malformed yields null rather than
+    /// aborting the receipt, so the caller falls back to the words header and the
+    /// receipt still prints.
+    /// </para>
+    /// </summary>
+    internal static string? ResolveDrawableLogoPath(
+        IReceiptImageAssetStore? assetStore,
+        ReceiptSettings receiptSettings)
+    {
+        if (assetStore is null || string.IsNullOrWhiteSpace(receiptSettings.LogoImagePath))
+        {
+            return null;
+        }
+
+        var path = assetStore.ResolveLogoPath(receiptSettings.LogoImagePath);
+        if (path is null || !File.Exists(path))
+        {
+            return null;
+        }
+
+        var extension = Path.GetExtension(path).ToLowerInvariant();
+        if (!SupportedLogoExtensions.Contains(extension))
+        {
+            return null;
+        }
+
+        if (!HasReadableHeader(path))
+        {
+            // Corrupt or truncated image: never let a logo break a receipt.
+            return null;
+        }
+
+        return path;
+    }
+
+    /// <summary>QuestPDF's documented image support set (PNG, JPEG, WEBP).</summary>
+    private static readonly string[] SupportedLogoExtensions = { ".png", ".jpg", ".jpeg", ".webp" };
+
+    /// <summary>
+    /// Reads the first bytes and confirms the file still carries the magic number
+    /// of its extension. A file that passes the type check but fails here (a
+    /// renamed text file, a truncated download) is treated as unusable.
+    /// </summary>
+    private static bool HasReadableHeader(string path)
+    {
+        try
+        {
+            Span<byte> header = stackalloc byte[12];
+            using var stream = File.OpenRead(path);
+            var read = 0;
+            while (read < header.Length)
+            {
+                var chunk = stream.Read(header[read..]);
+                if (chunk <= 0)
+                {
+                    break;
+                }
+
+                read += chunk;
+            }
+
+            if (read < 12)
+            {
+                return false;
+            }
+
+            if (header[..8].SequenceEqual(PngSignature))
+            {
+                return true;
+            }
+
+            if (header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF)
+            {
+                return true;
+            }
+
+            // RIFF....WEBP
+            return header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46
+                && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    private static readonly byte[] PngSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
     public sealed record ReceiptItemLine(string Description, string Price);
 
