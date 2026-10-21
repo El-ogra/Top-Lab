@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Behaviors;
 using TopLab.Application.Features.ResultsEntry.Common;
+using TopLab.Application.Features.SystemAndPrintSettings.Common;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Commands.CreateTest;
 
 namespace TopLab.Application;
@@ -37,6 +38,10 @@ public static class DependencyInjection
                 // The single place where printed state is recorded, called only after the printer
                 // succeeds. Scoped because it depends on the scoped IApplicationDbContext.
                 services.AddScoped<IPrintedStateRecorder, PrintedStateRecorder>();
+
+        // STAGE-01: the shared print-result password verifier. The print entry points
+        // that call it belong to STAGE-06, STAGE-08 and STAGE-10.
+        services.AddScoped<PrintResultPasswordVerifier>();
 
         return services;
     }

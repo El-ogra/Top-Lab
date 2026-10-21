@@ -26,8 +26,14 @@ public sealed class GetMedicalConditionTypesQueryHandler
             query = query.Where(mct => mct.Category == request.Category.Value);
         }
 
+        // STAGE-01: the catalogue is ordered by the baseline's question order
+        // (medication toggles, pregnancy toggle, condition toggles); rows added
+        // through the maintenance screen follow the seeded ones. The catalogue
+        // is a small master table, so it is ordered in memory.
         var items = query
-            .OrderBy(mct => mct.Category)
+            .ToList()
+            .OrderBy(mct => MedicalConditionCatalogue.BaselineRank(mct.Id.Value))
+            .ThenBy(mct => mct.Category)
             .ThenBy(mct => mct.Name)
             .Select(mct => new MedicalConditionTypeDto(mct.Id.Value, mct.Name, mct.Category))
             .ToList();

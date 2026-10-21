@@ -75,7 +75,8 @@ public sealed class GetUndeliveredResultsQueryHandler
                 patient.LabId == null ? null : patient.LabId.Value,
                 patient.RegistrationDateUtc,
                 (int)status,
-                undeliveredCounts[patient.Id.Value]);
+                undeliveredCounts[patient.Id.Value],
+                patient.Notes);
         }).ToList();
 
         return Task.FromResult(Result<IReadOnlyList<UndeliveredPatientRowDto>>.Success(rows));

@@ -96,9 +96,11 @@ public static class DependencyInjection
         services.AddTransient<TestCommentsViewModel>();
         services.AddTransient<CustomGroupsViewModel>();
         services.AddTransient<SampleCollectionViewModel>();
+        services.AddTransient<MedicalConditionTypesViewModel>();
         services.AddTransient<ExternalEntitiesViewModel>();
         services.AddTransient<ExternalEntityEditorViewModel>();
         services.AddTransient<ExternalEntityPickerViewModel>();
+        services.AddTransient<ExternalEntityDetailsViewModel>();
         services.AddTransient<SettingsDashboardViewModel>();
         services.AddTransient<SystemSettingsViewModel>();
         services.AddTransient<ReportSettingsViewModel>();

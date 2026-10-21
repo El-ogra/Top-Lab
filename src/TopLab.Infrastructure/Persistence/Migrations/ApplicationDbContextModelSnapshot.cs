@@ -350,6 +350,72 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                             Id = 1,
                             Category = (byte)2,
                             Name = "حمل"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Category = (byte)0,
+                            Name = "هل يؤخذ علاج للسكر"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Category = (byte)0,
+                            Name = "هل يؤخذ علاج لسيولة الدم"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Category = (byte)0,
+                            Name = "هل يؤخذ علاج للغدد"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Category = (byte)0,
+                            Name = "هل يؤخذ علاج للفيروسات"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Category = (byte)0,
+                            Name = "هل يؤخذ مضاد حيوي"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Category = (byte)0,
+                            Name = "هل يؤخذ علاج للكبد"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Category = (byte)1,
+                            Name = "مريض بفقر الدم"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Category = (byte)1,
+                            Name = "مريض بالتهاب المفاصل"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Category = (byte)1,
+                            Name = "مريض بالضغط الدم"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Category = (byte)1,
+                            Name = "مريض بالفشل كلوي"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Category = (byte)1,
+                            Name = "مريض بالذئبة الحمراء"
                         });
                 });
 
@@ -374,6 +440,10 @@ namespace TopLab.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("AgeValue")
                         .HasColumnType("int");
+
+                    b.Property<string>("CardNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
@@ -425,6 +495,11 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                     b.Property<bool>("RecentContrastImaging")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("RecentUltrasoundImaging")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<int?>("ReferralEntityId")
                         .HasColumnType("int");
 
@@ -442,6 +517,8 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CardNumber");
 
                     b.HasIndex("FullName");
 
@@ -1578,6 +1655,15 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                     b.Property<bool>("PrintLabIdInsteadOfPatientId")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("PrintResultPasswordEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("PrintResultPasswordHash")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<byte>("ResultScreenAccountDisplayMode")
                         .HasColumnType("tinyint");
 
@@ -1602,6 +1688,7 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                             PrintDateTimeOnTubeBarcode = false,
                             PrintFileExternalBarcode = false,
                             PrintLabIdInsteadOfPatientId = false,
+                            PrintResultPasswordEnabled = false,
                             ResultScreenAccountDisplayMode = (byte)0,
                             SaveTreatingDoctorOnlyFromEntityWindow = false
                         });

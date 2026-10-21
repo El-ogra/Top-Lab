@@ -1,0 +1,67 @@
+<Window x:Class="TopLab.Presentation.Views.External.ExternalEntityDetailsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="معلومات إضافية" Height="420" Width="520"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Left">
+            <Button Content="إغلاق" Width="90" IsCancel="True" IsDefault="True" Click="CloseButton_Click" />
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Name}" FontSize="18" FontWeight="Bold" Margin="0,0,0,4" />
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Type}" Foreground="#666666" Margin="0,0,0,8" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="الكود:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Code}" Margin="2" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="المدينة:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding City}" Margin="2" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="العنوان:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Address}" Margin="2" TextWrapping="Wrap" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="الهاتف:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Phone}" Margin="2" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="الفاكس:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Fax}" Margin="2" />
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="المسؤول:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ResponsiblePersonName}" Margin="2" />
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="هاتف المسؤول:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding ResponsiblePersonPhone}" Margin="2" />
+
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="البريد الإلكتروني:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Email}" Margin="2" />
+
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="قائمة الأسعار:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding PriceListName}" Margin="2" />
+
+                <TextBlock Grid.Row="9" Grid.Column="0" Text="نسبة العمولة %:" Margin="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding DiscountOrCommissionPercent}" Margin="2" />
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

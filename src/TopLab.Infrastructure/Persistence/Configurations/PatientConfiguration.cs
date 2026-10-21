@@ -35,6 +35,11 @@ public sealed class PatientConfiguration : IEntityTypeConfiguration<Patient>
         b.Property(e => e.IsFastingIndicated).IsRequired();
         b.Property(e => e.FastingHours).IsRequired(false);
         b.Property(e => e.RecentContrastImaging).IsRequired();
+        // STAGE-01: the ultrasound half of the imaging question.
+        b.Property(e => e.RecentUltrasoundImaging).IsRequired().HasDefaultValue(false);
+        // STAGE-01: the patient's card / file number (baseline 1.2.2.2.6).
+        b.Property(e => e.CardNumber).HasMaxLength(Patient.MaxCardNumberLength).IsRequired(false);
+        b.HasIndex(e => e.CardNumber);
         b.Property(e => e.Notes).HasMaxLength(1000).IsRequired(false);
         b.Property(e => e.IsDeleted).HasColumnType("bit").IsRequired();
         b.HasIndex(e => e.IsDeleted);

@@ -33,6 +33,7 @@ using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Common;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Queries.GetCustomGroups;
 using TopLab.Application.Features.PatientRegistration.Queries.GetRegistrationCatalog;
 using TopLab.Application.Features.PatientRegistration.Queries.SearchPatients;
+using TopLab.Application.Features.SystemAndPrintSettings.Commands.UpdatePrintResultPassword;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Common;
 using TopLab.Application.Features.WorkSheets.Commands.PrintWorkSheet;
 using TopLab.Application.Features.WorkSheets.Queries.GetVisitWorkSheet;
@@ -78,9 +79,26 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private string? _treatingDoctorName;
     private string? _referralEntityIdText;
     private string? _referralEntityName;
+    /// <summary>The date-time formats the registration header accepts (STAGE-01).</summary>
+    private static readonly string[] DateTimeFormats =
+    {
+        "yyyy-MM-dd HH:mm",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy/MM/dd HH:mm",
+        "yyyy/MM/dd HH:mm:ss",
+        "yyyy-MM-dd",
+        "yyyy/MM/dd"
+    };
+
     private bool _isFastingIndicated;
     private string? _fastingHoursText;
     private bool _recentContrastImaging;
+    private bool _recentUltrasoundImaging;
+    private string? _cardNumber;
+    private string _registrationDateText = string.Empty;
+    private string _pickupDateText = string.Empty;
+    private bool _printResultPasswordEnabled;
+    private string? _printResultPasswordText;
     private string? _notes;
     private string _paymentAmountText = string.Empty;
     private string? _paymentDiscountText;
@@ -103,6 +121,9 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private bool _profileIsCsf;
     private bool _profileIsTakenOutsideLab;
     private CustomGroupSummaryDto? _selectedCustomGroup;
+
+    /// <summary>STAGE-01: the pregnancy question row (baseline 1.2.2.3.9).</summary>
+    private ConditionItem? _pregnancyItem;
 
     public PatientEditorViewModel(
         ISender mediator,
@@ -144,6 +165,9 @@ public sealed class PatientEditorViewModel : ViewModelBase
         });
         PickTreatingDoctorCommand = new AsyncRelayCommand(_ => PickTreatingDoctorAsync());
         PickReferralEntityCommand = new AsyncRelayCommand(_ => PickReferralEntityAsync());
+        ShowTreatingDoctorDetailsCommand = new AsyncRelayCommand(_ => ShowEntityDetailsAsync(TreatingDoctorIdText, "الطبيب المعالج"));
+        ShowReferralEntityDetailsCommand = new AsyncRelayCommand(_ => ShowEntityDetailsAsync(ReferralEntityIdText, "جهة الإحالة"));
+        SavePrintResultPasswordCommand = new AsyncRelayCommand(async (param, ct) => await SavePrintResultPasswordAsync(ct));
         SearchPatientsCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: true, cancellationToken: ct));
         NextSearchPageCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: false, cancellationToken: ct, nextPage: true));
         PrevSearchPageCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: false, cancellationToken: ct));
@@ -155,7 +179,11 @@ public sealed class PatientEditorViewModel : ViewModelBase
         ClearAllVisitTestsCommand = new AsyncRelayCommand(async (_, ct) => await ClearAllVisitTestsAsync(ct));
 
         // S-03 Slice 0: empty-state visibility follows the S-01/S-02 Show*Empty idiom.
-        SelectedTests.CollectionChanged += (_, _) => RefreshEmptyStates();
+        SelectedTests.CollectionChanged += (_, _) =>
+        {
+            RefreshEmptyStates();
+            RefreshSampleTypeSummary();
+        };
         CatalogTests.CollectionChanged += (_, _) => RefreshEmptyStates();
         SearchResults.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowSearchEmpty));
         // VisitHistory is populated AFTER LoadVisitTestsAsync (:567 then :569), so the
@@ -207,6 +235,12 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
         public string Name { get; init; } = string.Empty;
 
+        /// <summary>STAGE-01: the category decides the question's group and the pregnancy rule.</summary>
+        public MedicalConditionCategory Category { get; init; }
+
+        /// <summary>STAGE-01: seeded rows belong to the migration's snapshot and are read-only.</summary>
+        public bool IsSeeded { get; init; }
+
         public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
     }
 
@@ -217,6 +251,18 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public ObservableCollection<string> Titles { get; } = new();
 
     public ObservableCollection<ConditionItem> Conditions { get; } = new();
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.3.3–1.2.2.3.9): the medication toggles and the
+    /// pregnancy toggle — the questions that precede the imaging question.
+    /// </summary>
+    public ObservableCollection<ConditionItem> MedicationConditions { get; } = new();
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.3.11–1.2.2.3.15): the condition toggles — the
+    /// questions that follow the imaging question.
+    /// </summary>
+    public ObservableCollection<ConditionItem> ConditionToggles { get; } = new();
 
     public ObservableCollection<SelectedTestItem> SelectedTests { get; } = new();
 
@@ -273,7 +319,19 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     public string? Title { get => _title; set => SetProperty(ref _title, value); }
 
-    public bool IsMale { get => _isMale; set => SetProperty(ref _isMale, value); }
+    public bool IsMale
+    {
+        get => _isMale;
+        set
+        {
+            if (SetProperty(ref _isMale, value))
+            {
+                // STAGE-01 (baseline 1.2.2.3.9): the pregnancy question is offered
+                // to female patients only; a male patient never carries the answer.
+                ApplyPregnancyVisibility();
+            }
+        }
+    }
 
     public int AgeValue { get => _ageValue; set => SetProperty(ref _ageValue, value); }
 
@@ -299,6 +357,15 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     public AsyncRelayCommand PickTreatingDoctorCommand { get; }
     public AsyncRelayCommand PickReferralEntityCommand { get; }
+
+    /// <summary>STAGE-01 (baseline 1.2.2.2.11.1): the treating doctor's additional information.</summary>
+    public AsyncRelayCommand ShowTreatingDoctorDetailsCommand { get; }
+
+    /// <summary>STAGE-01 (baseline 1.2.2.2.10.1): the referring entity's additional information.</summary>
+    public AsyncRelayCommand ShowReferralEntityDetailsCommand { get; }
+
+    /// <summary>STAGE-01 (baseline 1.2.2.4.2 / 1.2.2.4.2.1): stores the print-result password.</summary>
+    public AsyncRelayCommand SavePrintResultPasswordCommand { get; }
 
     /// <summary>S-02 Slice 6: fills the doctor fields from the entity picker.</summary>
     public void SetTreatingDoctor(int id, string name)
@@ -345,11 +412,128 @@ public sealed class PatientEditorViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.2.10.1 / 1.2.2.2.11.1): opens the selected
+    /// entity's additional information in a read-only window.
+    /// </summary>
+    private async Task ShowEntityDetailsAsync(string? entityIdText, string entityLabel)
+    {
+        ErrorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(entityIdText)
+            || !int.TryParse(entityIdText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var entityId)
+            || entityId <= 0)
+        {
+            ErrorMessage = $"اختر {entityLabel} أولًا لعرض معلوماته.";
+            return;
+        }
+
+        var vm = _services.GetRequiredService<ViewModels.External.ExternalEntityDetailsViewModel>();
+        await vm.LoadAsync(entityId);
+        var window = new Views.External.ExternalEntityDetailsWindow(vm)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+        window.ShowDialog();
+    }
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.4.2 / 1.2.2.4.2.1): stores the print-result
+    /// password. The command hashes it; the plain value is dropped afterwards.
+    /// </summary>
+    private async Task SavePrintResultPasswordAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        var result = await _mediator.Send(
+            new UpdatePrintResultPasswordCommand(PrintResultPasswordEnabled, PrintResultPasswordText),
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            ErrorMessage = result.Error is not null ? _presenter.Present(result.Error) : ErrorMessage;
+            return;
+        }
+
+        PrintResultPasswordText = null;
+        StatusMessage = "تم حفظ كلمة مرور الطباعة.";
+    }
+
     public bool IsFastingIndicated { get => _isFastingIndicated; set => SetProperty(ref _isFastingIndicated, value); }
 
     public string? FastingHoursText { get => _fastingHoursText; set => SetProperty(ref _fastingHoursText, value); }
 
     public bool RecentContrastImaging { get => _recentContrastImaging; set => SetProperty(ref _recentContrastImaging, value); }
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.3.10): the ultrasound half of the single imaging
+    /// question. The question is answered when either imaging flag is set.
+    /// </summary>
+    public bool RecentUltrasoundImaging { get => _recentUltrasoundImaging; set => SetProperty(ref _recentUltrasoundImaging, value); }
+
+    /// <summary>STAGE-01 (baseline 1.2.2.2.6): the patient's card / file number.</summary>
+    public string? CardNumber { get => _cardNumber; set => SetProperty(ref _cardNumber, value); }
+
+    /// <summary>STAGE-01 (baseline 1.2.2.1.1): the entry date, with its time.</summary>
+    public string RegistrationDateText { get => _registrationDateText; set => SetProperty(ref _registrationDateText, value); }
+
+    /// <summary>STAGE-01 (baseline 1.2.2.1.2): the receipt date, with its time.</summary>
+    public string PickupDateText { get => _pickupDateText; set => SetProperty(ref _pickupDateText, value); }
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.2.8): a read-only summary of the sample types
+    /// set on the visit's registered tests. The per-test control is the only
+    /// editable source (VERIFY #3).
+    /// </summary>
+    public string SampleTypeSummary
+    {
+        get
+        {
+            var names = new List<string>(5);
+
+            if (SelectedTests.Any(t => t.IsUrine))
+            {
+                names.Add("بول");
+            }
+
+            if (SelectedTests.Any(t => t.IsStool))
+            {
+                names.Add("براز");
+            }
+
+            if (SelectedTests.Any(t => t.IsBlood))
+            {
+                names.Add("دم");
+            }
+
+            if (SelectedTests.Any(t => t.IsSemen))
+            {
+                names.Add("سائل منوي");
+            }
+
+            if (SelectedTests.Any(t => t.IsCsf))
+            {
+                names.Add("سائل نخاعي");
+            }
+
+            return names.Count == 0 ? "—" : string.Join("، ", names);
+        }
+    }
+
+    /// <summary>STAGE-01 (baseline 1.2.2.4.2.1): the print-result password requirement.</summary>
+    public bool PrintResultPasswordEnabled
+    {
+        get => _printResultPasswordEnabled;
+        set => SetProperty(ref _printResultPasswordEnabled, value);
+    }
+
+    /// <summary>The plain password — it is hashed by the command and never stored.</summary>
+    public string? PrintResultPasswordText
+    {
+        get => _printResultPasswordText;
+        set => SetProperty(ref _printResultPasswordText, value);
+    }
 
     public string? Notes { get => _notes; set => SetProperty(ref _notes, value); }
 
@@ -508,10 +692,41 @@ public sealed class PatientEditorViewModel : ViewModelBase
             }
 
             Conditions.Clear();
+            MedicationConditions.Clear();
+            ConditionToggles.Clear();
+            _pregnancyItem = null;
+
             foreach (var condition in catalog.Value.MedicalConditionTypes)
             {
-                Conditions.Add(new ConditionItem { MedicalConditionTypeId = condition.MedicalConditionTypeId, Name = condition.Name });
+                var item = new ConditionItem
+                {
+                    MedicalConditionTypeId = condition.MedicalConditionTypeId,
+                    Name = condition.Name,
+                    Category = condition.Category,
+                    IsSeeded = MedicalConditionCatalogue.IsSeeded(condition.MedicalConditionTypeId)
+                };
+
+                Conditions.Add(item);
+
+                if (condition.Category == MedicalConditionCategory.Condition)
+                {
+                    ConditionToggles.Add(item);
+                }
+                else
+                {
+                    MedicationConditions.Add(item);
+                }
+
+                if (condition.Category == MedicalConditionCategory.Pregnancy)
+                {
+                    _pregnancyItem = item;
+                }
             }
+
+            // The pregnancy question is shown to female patients only.
+            ApplyPregnancyVisibility();
+
+            PrintResultPasswordEnabled = catalog.Value.PrintResultPasswordEnabled;
 
             AccountType = catalog.Value.DefaultAccountType;
 
@@ -605,6 +820,10 @@ public sealed class PatientEditorViewModel : ViewModelBase
             IsFastingIndicated = d.IsFastingIndicated;
             FastingHoursText = d.FastingHours?.ToString(CultureInfo.InvariantCulture);
             RecentContrastImaging = d.RecentContrastImaging;
+            RecentUltrasoundImaging = d.RecentUltrasoundImaging;
+            CardNumber = d.CardNumber;
+            RegistrationDateText = FormatDateTime(d.RegistrationDateUtc);
+            PickupDateText = d.PickupDateUtc.HasValue ? FormatDateTime(d.PickupDateUtc.Value) : string.Empty;
             Notes = d.Notes;
 
             var selectedConditions = d.MedicalConditions.Select(m => m.MedicalConditionTypeId).ToHashSet();
@@ -612,6 +831,10 @@ public sealed class PatientEditorViewModel : ViewModelBase
             {
                 condition.IsSelected = selectedConditions.Contains(condition.MedicalConditionTypeId);
             }
+
+            // A male patient never carries the pregnancy answer, whatever the stored
+            // rows say (STAGE-01, baseline 1.2.2.3.9).
+            ApplyPregnancyVisibility();
 
             await LoadVisitTestsAsync(cancellationToken);
             await RefreshBillingAsync(cancellationToken);
@@ -623,6 +846,39 @@ public sealed class PatientEditorViewModel : ViewModelBase
             IsBusy = false;
         }
     }
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.3.9): the pregnancy question is offered to
+    /// female patients only. A male patient never carries the answer, so a
+    /// selection that is present when the sex turns male is cleared.
+    /// </summary>
+    private void ApplyPregnancyVisibility()
+    {
+        if (_pregnancyItem is null)
+        {
+            return;
+        }
+
+        if (IsMale)
+        {
+            if (_pregnancyItem.IsSelected)
+            {
+                _pregnancyItem.IsSelected = false;
+            }
+
+            if (MedicationConditions.Contains(_pregnancyItem))
+            {
+                MedicationConditions.Remove(_pregnancyItem);
+            }
+        }
+        else if (!MedicationConditions.Contains(_pregnancyItem))
+        {
+            MedicationConditions.Add(_pregnancyItem);
+        }
+    }
+
+    /// <summary>STAGE-01: the identity-block sample-type summary follows the visit's tests.</summary>
+    private void RefreshSampleTypeSummary() => OnPropertyChanged(nameof(SampleTypeSummary));
 
     /// <summary>
     /// S-03 Slice 2: read-only sibling-visit history. Display uses DTO fields only;
@@ -676,7 +932,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
             foreach (var line in section.Lines)
             {
                 samples.TryGetValue(line.PatientTestId, out var flags);
-                SelectedTests.Add(new SelectedTestItem
+                AddSelectedTest(new SelectedTestItem
                 {
                     PatientTestId = line.PatientTestId,
                     TestId = 0,
@@ -692,6 +948,16 @@ public sealed class PatientEditorViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Adds a test row and keeps the identity-block sample-type summary in step
+    /// with the row's sample flags.
+    /// </summary>
+    private void AddSelectedTest(SelectedTestItem item)
+    {
+        item.PropertyChanged += (_, _) => RefreshSampleTypeSummary();
+        SelectedTests.Add(item);
+    }
+
     private void AddTestToSelection(int testId)
     {
         if (SelectedTests.Any(t => t.IsNew && t.TestId == testId))
@@ -705,7 +971,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
             return;
         }
 
-        SelectedTests.Add(new SelectedTestItem
+        AddSelectedTest(new SelectedTestItem
         {
             PatientTestId = 0,
             TestId = catalog.Id,
@@ -744,6 +1010,11 @@ public sealed class PatientEditorViewModel : ViewModelBase
         IsFastingIndicated = false;
         FastingHoursText = null;
         RecentContrastImaging = false;
+        RecentUltrasoundImaging = false;
+        CardNumber = null;
+        RegistrationDateText = FormatDateTime(DateTime.UtcNow);
+        PickupDateText = string.Empty;
+        PrintResultPasswordText = null;
         Notes = null;
         PaymentAmountText = string.Empty;
         PaymentDiscountText = null;
@@ -796,7 +1067,10 @@ public sealed class PatientEditorViewModel : ViewModelBase
         int? ReferralEntityId,
         int? FastingHours,
         IReadOnlyList<PatientNumberInput> PhoneNumbers,
-        IReadOnlyList<int> MedicalConditionIds);
+        IReadOnlyList<int> MedicalConditionIds,
+        DateTime RegistrationDateUtc,
+        DateTime? PickupDateUtc,
+        string? CardNumber);
 
     private bool TryParseForm(out ParsedForm form)
     {
@@ -843,14 +1117,70 @@ public sealed class PatientEditorViewModel : ViewModelBase
             ? Array.Empty<PatientNumberInput>()
             : new[] { new PatientNumberInput(PhoneNumber.Trim(), 0) };
 
+        if (!TryParseDateTime(RegistrationDateText, out var registrationDate))
+        {
+            ErrorMessage = "تاريخ الدخول غير صالح. استخدم الصيغة yyyy-MM-dd HH:mm.";
+            form = null!;
+            return false;
+        }
+
+        DateTime? pickupDate = null;
+        if (!string.IsNullOrWhiteSpace(PickupDateText))
+        {
+            if (!TryParseDateTime(PickupDateText, out var parsedPickup))
+            {
+                ErrorMessage = "تاريخ الاستلام غير صالح. استخدم الصيغة yyyy-MM-dd HH:mm.";
+                form = null!;
+                return false;
+            }
+
+            pickupDate = parsedPickup;
+        }
+
+        string? cardNumber = null;
+        if (!string.IsNullOrWhiteSpace(CardNumber))
+        {
+            cardNumber = CardNumber.Trim();
+
+            if (cardNumber.Length > Patient.MaxCardNumberLength)
+            {
+                ErrorMessage = "رقم البطاقة يجب ألا يتجاوز 30 حرفًا.";
+                form = null!;
+                return false;
+            }
+        }
+
         form = new ParsedForm(
             treatingDoctorId,
             referralEntityId,
             fastingHours,
             phones,
-            Conditions.Where(c => c.IsSelected).Select(c => c.MedicalConditionTypeId).ToList());
+            Conditions.Where(c => c.IsSelected).Select(c => c.MedicalConditionTypeId).ToList(),
+            registrationDate,
+            pickupDate,
+            cardNumber);
         return true;
     }
+
+    private static bool TryParseDateTime(string? text, out DateTime value)
+    {
+        value = default;
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        return DateTime.TryParseExact(
+            text.Trim(),
+            DateTimeFormats,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out value);
+    }
+
+    private static string FormatDateTime(DateTime value) =>
+        value.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
 
     private async Task SaveNewAsync(ParsedForm form, CancellationToken cancellationToken)
     {
@@ -864,7 +1194,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
             IsMale ? Sex.Male : Sex.Female,
             AgeValue,
             AgeUnit,
-            DateTime.UtcNow,
+            form.RegistrationDateUtc,
             AccountType,
             IsVip,
             string.IsNullOrWhiteSpace(LabId) ? null : LabId.Trim(),
@@ -873,14 +1203,18 @@ public sealed class PatientEditorViewModel : ViewModelBase
             string.IsNullOrWhiteSpace(Address) ? null : Address.Trim(),
             form.TreatingDoctorId,
             form.ReferralEntityId,
-            null,
+            // STAGE-01 (baseline 1.2.2.1.2): the receipt date defaults to the
+            // registration moment when the user has not set one.
+            form.PickupDateUtc ?? form.RegistrationDateUtc,
             IsFastingIndicated,
             form.FastingHours,
             RecentContrastImaging,
             string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim(),
             form.PhoneNumbers,
             form.MedicalConditionIds,
-            tests), cancellationToken);
+            tests,
+            form.CardNumber,
+            RecentUltrasoundImaging), cancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -913,7 +1247,11 @@ public sealed class PatientEditorViewModel : ViewModelBase
             IsFastingIndicated,
             form.FastingHours,
             RecentContrastImaging,
-            form.PhoneNumbers), cancellationToken);
+            form.PhoneNumbers,
+            form.CardNumber,
+            RecentUltrasoundImaging,
+            form.PickupDateUtc,
+            form.RegistrationDateUtc), cancellationToken);
 
         if (!update.IsSuccess)
         {

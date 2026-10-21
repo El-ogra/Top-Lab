@@ -104,7 +104,8 @@ public sealed class GetResultEntryQueryHandler : IRequestHandler<GetResultEntryQ
             patient.AgeUnit.ToString(),
             patient.Sex.ToString(),
             ranges,
-            frozen);
+            frozen,
+            patient.Notes);
 
         return Task.FromResult(Result<ResultEntryDto>.Success(dto));
     }

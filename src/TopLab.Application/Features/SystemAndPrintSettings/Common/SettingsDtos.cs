@@ -15,7 +15,10 @@ public sealed record SystemSettingsDto(
     ResultScreenAccountDisplayMode ResultScreenAccountDisplayMode,
     bool DailyBackupEnabled,
     string? DailyBackupPath,
-    int BranchNumber = 1);
+    int BranchNumber = 1,
+    // STAGE-01 (baseline 1.2.2.4.2.1): the enable flag only — the hash itself
+    // never leaves the Domain layer.
+    bool PrintResultPasswordEnabled = false);
 
 public sealed record ReportSettingsDto(
     decimal PageMarginLeftCm,

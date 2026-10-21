@@ -30,7 +30,10 @@ public sealed record CreatePatientCommand(
     string? Notes,
     IReadOnlyList<PatientNumberInput> PhoneNumbers,
     IReadOnlyList<int> MedicalConditionIds,
-    IReadOnlyList<AddTestInput> Tests)
+    IReadOnlyList<AddTestInput> Tests,
+    // STAGE-01: appended so that the existing positional call sites keep working.
+    string? CardNumber = null,
+    bool RecentUltrasoundImaging = false)
     : IRequest<Result<int>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => PatientRegistrationAccessPolicy.AddEditPatient;

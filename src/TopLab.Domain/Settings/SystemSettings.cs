@@ -33,6 +33,18 @@ public sealed class SystemSettings : Entity<int>
     /// <summary>WP-15 / SD-2: default branch number (min 1).</summary>
     public int BranchNumber { get; private set; } = 1;
 
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.4.2.1): when enabled, printing a result
+    /// requires the print-result password.
+    /// </summary>
+    public bool PrintResultPasswordEnabled { get; private set; }
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.4.2): the hashed print-result password. The
+    /// plain value is never stored; see <see cref="PrintResultPasswordHasher"/>.
+    /// </summary>
+    public string? PrintResultPasswordHash { get; private set; }
+
     private SystemSettings()
     {
     }
@@ -57,8 +69,27 @@ public sealed class SystemSettings : Entity<int>
             PrintAccountInsteadOfDateOnReport = false,
             DailyBackupEnabled = false,
             DailyBackupPath = null,
-            BranchNumber = 1
+            BranchNumber = 1,
+            PrintResultPasswordEnabled = false,
+            PrintResultPasswordHash = null
         };
+    }
+
+    /// <summary>
+    /// STAGE-01: stores the print-result password requirement. The caller
+    /// supplies the already-hashed value (never the plain password).
+    /// </summary>
+    public void SetPrintResultPassword(bool enabled, string? passwordHash)
+    {
+        if (passwordHash is not null && passwordHash.Length > PrintResultPasswordHasher.MaxHashLength)
+        {
+            throw new ArgumentException(
+                $"PrintResultPasswordHash must be at most {PrintResultPasswordHasher.MaxHashLength} characters.",
+                nameof(passwordHash));
+        }
+
+        PrintResultPasswordEnabled = enabled;
+        PrintResultPasswordHash = passwordHash;
     }
 
     public void SetBranchNumber(int value)

@@ -22,7 +22,12 @@ public sealed record UpdatePatientCommand(
     bool IsFastingIndicated,
     int? FastingHours,
     bool RecentContrastImaging,
-    IReadOnlyList<PatientNumberInput> PhoneNumbers)
+    IReadOnlyList<PatientNumberInput> PhoneNumbers,
+    // STAGE-01: appended so that the existing positional call sites keep working.
+    string? CardNumber = null,
+    bool RecentUltrasoundImaging = false,
+    DateTime? PickupDateUtc = null,
+    DateTime? RegistrationDateUtc = null)
     : IRequest<Result<bool>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => PatientRegistrationAccessPolicy.AddEditPatient;

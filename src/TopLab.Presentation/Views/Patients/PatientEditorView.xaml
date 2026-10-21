@@ -135,6 +135,26 @@
                     </WrapPanel>
                     <Separator Margin="0,8" />
                     <TextBlock Text="بيانات المريض" FontSize="16" Margin="0,0,0,8" />
+                    <!-- STAGE-01 (baseline 1.2.2.1.1 / 1.2.2.1.2): the visit dates of the patient header block. -->
+                    <TextBlock Text="تواريخ الزيارة" FontWeight="Bold" Margin="0,0,0,4" />
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="تاريخ الدخول:" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RegistrationDateText, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="2" ToolTip="تاريخ ووقت دخول المريض (yyyy-MM-dd HH:mm)" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="تاريخ الاستلام:" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PickupDateText, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="2" ToolTip="تاريخ ووقت استلام النتيجة (yyyy-MM-dd HH:mm)" />
+                    </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -143,6 +163,8 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -184,6 +206,17 @@
                         <TextBlock Grid.Row="7" Grid.Column="0" Text="نوع الحساب:" Margin="2" VerticalAlignment="Center" />
                         <ComboBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" ItemsSource="{Binding AccountTypes}"
                                   SelectedItem="{Binding AccountType}" Margin="2" />
+
+                        <!-- STAGE-01 (baseline 1.2.2.2.6): the patient's card / file number. -->
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="رقم بطاقة / الملف:" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CardNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="2" MaxLength="30" />
+
+                        <!-- STAGE-01 (baseline 1.2.2.2.8): read-only summary of the visit's sample types. -->
+                        <TextBlock Grid.Row="9" Grid.Column="0" Text="نوع العينة:" Margin="2" VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding SampleTypeSummary}"
+                                   Margin="2" VerticalAlignment="Center" Foreground="#666666"
+                                   ToolTip="ملخص أنواع العينات المختارة في التحاليل المسجلة للزيارة." />
                     </Grid>
 
                     <TextBlock Text="الطبيب المعالج / جهة الإحالة" FontWeight="Bold" Margin="0,8,0,4" />
@@ -192,6 +225,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
@@ -202,20 +236,40 @@
                         <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding TreatingDoctorIdText, UpdateSourceTrigger=PropertyChanged}" Margin="2" />
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding TreatingDoctorName}" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
                         <Button Grid.Row="0" Grid.Column="3" Content="اختيار طبيب" Margin="2" Padding="8,2" Command="{Binding PickTreatingDoctorCommand}" />
+                        <Button Grid.Row="0" Grid.Column="4" Content="معلومات اضافية" Margin="2" Padding="8,2" Command="{Binding ShowTreatingDoctorDetailsCommand}" />
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="إحالة (رقم):" Margin="2" VerticalAlignment="Center" />
                         <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ReferralEntityIdText, UpdateSourceTrigger=PropertyChanged}" Margin="2" />
                         <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding ReferralEntityName}" Margin="2" VerticalAlignment="Center" Foreground="#666666" />
                         <Button Grid.Row="1" Grid.Column="3" Content="اختيار جهة" Margin="2" Padding="8,2" Command="{Binding PickReferralEntityCommand}" />
+                        <Button Grid.Row="1" Grid.Column="4" Content="معلومات اضافية" Margin="2" Padding="8,2" Command="{Binding ShowReferralEntityDetailsCommand}" />
                     </Grid>
 
+                    <!-- STAGE-01 (baseline 1.2.2.3): the medical-history block — the fasting pair,
+                         the twelve catalogue toggles and the single imaging question. -->
                     <TextBlock Text="الصيام / الحالة الصحية" FontWeight="Bold" Margin="0,8,0,4" />
                     <WrapPanel>
                         <CheckBox Content="صائم" IsChecked="{Binding IsFastingIndicated}" Margin="2" VerticalAlignment="Center" />
                         <TextBlock Text="ساعات:" Margin="6,2,2,2" VerticalAlignment="Center" />
                         <TextBox Text="{Binding FastingHoursText, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="2" />
-                        <CheckBox Content="صبغة حديثة" IsChecked="{Binding RecentContrastImaging}" Margin="6,2" VerticalAlignment="Center" />
                     </WrapPanel>
-                    <ItemsControl ItemsSource="{Binding Conditions}" Margin="0,4">
+                    <ItemsControl ItemsSource="{Binding MedicationConditions}" Margin="0,4">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- The baseline's single imaging question (1.2.2.3.10) with its two answers. -->
+                    <StackPanel Margin="0,4">
+                        <TextBlock Text="هل تم عمل اشاعة بالصبغة او الموجات الصوتية خلال يومين" FontWeight="Bold" />
+                        <WrapPanel>
+                            <CheckBox Content="صبغة" IsChecked="{Binding RecentContrastImaging}" Margin="2" VerticalAlignment="Center" />
+                            <CheckBox Content="موجات صوتية" IsChecked="{Binding RecentUltrasoundImaging}" Margin="2" VerticalAlignment="Center" />
+                        </WrapPanel>
+                    </StackPanel>
+
+                    <ItemsControl ItemsSource="{Binding ConditionToggles}" Margin="0,4">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="2" />
@@ -226,6 +280,17 @@
                     <TextBlock Text="ملاحظات:" Margin="0,4,0,0" />
                     <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Margin="0,2" Height="44"
                              TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" />
+
+                    <!-- STAGE-01 (baseline 1.2.2.4.2 / 1.2.2.4.2.1): the print-result password. -->
+                    <TextBlock Text="كلمة مرور الطباعة" FontWeight="Bold" Margin="0,8,0,0" />
+                    <WrapPanel>
+                        <CheckBox Content="تفعيل كلمة مرور الطباعة" IsChecked="{Binding PrintResultPasswordEnabled}"
+                                  Margin="2" VerticalAlignment="Center" />
+                        <TextBlock Text="كلمة المرور:" Margin="8,2,2,2" VerticalAlignment="Center" />
+                        <PasswordBox x:Name="PrintResultPasswordBox" Width="160" Margin="2"
+                                     PasswordChanged="PrintResultPasswordBox_PasswordChanged" />
+                        <Button Content="حفظ" Margin="4" Padding="10,2" Command="{Binding SavePrintResultPasswordCommand}" />
+                    </WrapPanel>
 
                     <!-- S-03 Slice 2: read-only visit-history section (edit mode only, DTO fields only). -->
                     <StackPanel Margin="0,8,0,0">

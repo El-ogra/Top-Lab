@@ -44,6 +44,18 @@ public sealed class Patient : AuditableEntity<PatientId>
 
     public bool RecentContrastImaging { get; private set; }
 
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.3.10): the ultrasound half of the imaging
+    /// question. The baseline question covers a contrast study <b>or</b> an
+    /// ultrasound performed within the last two days, so the pair
+    /// (<see cref="RecentContrastImaging"/>, <see cref="RecentUltrasoundImaging"/>)
+    /// answers it.
+    /// </summary>
+    public bool RecentUltrasoundImaging { get; private set; }
+
+    /// <summary>STAGE-01 (baseline 1.2.2.2.6): the patient's card / file number. Optional.</summary>
+    public string? CardNumber { get; private set; }
+
     public string? Notes { get; private set; }
 
     public bool IsDeleted { get; private set; }
@@ -85,7 +97,9 @@ public sealed class Patient : AuditableEntity<PatientId>
         bool isFastingIndicated,
         int? fastingHours,
         bool recentContrastImaging,
-        string? notes)
+        string? notes,
+        string? cardNumber = null,
+        bool recentUltrasoundImaging = false)
         : base(id)
     {
         FullName = fullName;
@@ -105,8 +119,13 @@ public sealed class Patient : AuditableEntity<PatientId>
         IsFastingIndicated = isFastingIndicated;
         FastingHours = fastingHours;
         RecentContrastImaging = recentContrastImaging;
+        RecentUltrasoundImaging = recentUltrasoundImaging;
+        CardNumber = cardNumber;
         Notes = notes;
     }
+
+    /// <summary>Maximum length of <see cref="CardNumber"/> (matches the persisted column).</summary>
+    public const int MaxCardNumberLength = 30;
 
     public static Patient Create(
         PatientId id,
@@ -127,7 +146,9 @@ public sealed class Patient : AuditableEntity<PatientId>
         bool isFastingIndicated = false,
         int? fastingHours = null,
         bool recentContrastImaging = false,
-        string? notes = null)
+        string? notes = null,
+        string? cardNumber = null,
+        bool recentUltrasoundImaging = false)
     {
         if (string.IsNullOrWhiteSpace(fullName))
         {
@@ -144,9 +165,11 @@ public sealed class Patient : AuditableEntity<PatientId>
             throw new ArgumentException("FastingHours requires IsFastingIndicated.", nameof(fastingHours));
         }
 
+        var normalizedCardNumber = NormalizeCardNumber(cardNumber);
+
         return new Patient(id, fullName.Trim(), sex, ageValue, ageUnit, registrationDateUtc, accountType, isVip,
             labId, title, nationalId, address, treatingDoctorId, referralEntityId, pickupDateUtc,
-            isFastingIndicated, fastingHours, recentContrastImaging, notes);
+            isFastingIndicated, fastingHours, recentContrastImaging, notes, normalizedCardNumber, recentUltrasoundImaging);
     }
 
     public void Update(
@@ -162,7 +185,11 @@ public sealed class Patient : AuditableEntity<PatientId>
         string? notes,
         bool isFastingIndicated,
         int? fastingHours,
-        bool recentContrastImaging)
+        bool recentContrastImaging,
+        string? cardNumber = null,
+        bool recentUltrasoundImaging = false,
+        DateTime? pickupDateUtc = null,
+        DateTime? registrationDateUtc = null)
     {
         EnsureNotDeleted();
 
@@ -194,6 +221,44 @@ public sealed class Patient : AuditableEntity<PatientId>
         IsFastingIndicated = isFastingIndicated;
         FastingHours = fastingHours;
         RecentContrastImaging = recentContrastImaging;
+        RecentUltrasoundImaging = recentUltrasoundImaging;
+        CardNumber = NormalizeCardNumber(cardNumber);
+
+        if (pickupDateUtc.HasValue)
+        {
+            PickupDateUtc = pickupDateUtc;
+        }
+
+        if (registrationDateUtc.HasValue)
+        {
+            RegistrationDateUtc = registrationDateUtc.Value;
+        }
+    }
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.3.10): the single imaging question is answered
+    /// when a contrast study <b>or</b> an ultrasound was performed within the
+    /// last two days.
+    /// </summary>
+    public bool HasRecentImaging => RecentContrastImaging || RecentUltrasoundImaging;
+
+    private static string? NormalizeCardNumber(string? cardNumber)
+    {
+        if (string.IsNullOrWhiteSpace(cardNumber))
+        {
+            return null;
+        }
+
+        var trimmed = cardNumber.Trim();
+
+        if (trimmed.Length > MaxCardNumberLength)
+        {
+            throw new ArgumentException(
+                $"CardNumber must be at most {MaxCardNumberLength} characters.",
+                nameof(cardNumber));
+        }
+
+        return trimmed;
     }
 
     public void AssignLabId(LabId labId)

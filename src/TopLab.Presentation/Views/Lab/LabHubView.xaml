@@ -38,6 +38,9 @@
             <TabItem Header="سحب العينات">
                 <ContentControl Content="{Binding SampleCollection}" Margin="8" />
             </TabItem>
+            <TabItem Header="الحالات الطبية">
+                <ContentControl Content="{Binding MedicalConditionTypes}" Margin="8" />
+            </TabItem>
         </TabControl>
     </DockPanel>
 </UserControl>

@@ -16,7 +16,10 @@ public sealed record UndeliveredPatientRowDto(
     string? LabId,
     DateTime RegistrationDateUtc,
     int VisitStatus,
-    int UndeliveredCount);
+    int UndeliveredCount,
+    // STAGE-01 (baseline 1.2.2.4.1): the patient's own notes reach the
+    // result-delivery window. Appending keeps the existing call sites working.
+    string? PatientNotes = null);
 
 /// <summary>
 /// One row per ordered test of the patient. <c>Status</c> is the catalog

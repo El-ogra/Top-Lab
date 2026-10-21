@@ -30,4 +30,19 @@ public sealed class MedicalConditionType : Entity<MedicalConditionTypeId>
 
         return new MedicalConditionType(id, name.Trim(), category);
     }
+
+    /// <summary>
+    /// STAGE-01 (baseline 1.2.2.3): renames a catalogue row from the
+    /// maintenance screen. The category is immutable — it drives the pregnancy
+    /// signal and the block's grouping.
+    /// </summary>
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        Name = name.Trim();
+    }
 }

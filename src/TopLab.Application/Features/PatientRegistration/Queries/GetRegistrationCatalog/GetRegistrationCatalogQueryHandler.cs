@@ -70,7 +70,8 @@ public sealed class GetRegistrationCatalogQueryHandler
             settings.DefaultAccountType,
             settings.DisableAutoTitleInsertion,
             malePlaceholder,
-            femalePlaceholder);
+            femalePlaceholder,
+            settings.PrintResultPasswordEnabled);
 
         return Result<RegistrationCatalogDto>.Success(dto);
     }

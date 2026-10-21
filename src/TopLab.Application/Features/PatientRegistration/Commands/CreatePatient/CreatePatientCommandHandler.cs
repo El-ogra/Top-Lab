@@ -105,7 +105,9 @@ public sealed class CreatePatientCommandHandler : IRequestHandler<CreatePatientC
                 request.IsFastingIndicated,
                 request.FastingHours,
                 request.RecentContrastImaging,
-                request.Notes);
+                request.Notes,
+                request.CardNumber,
+                request.RecentUltrasoundImaging);
         }
         catch (ArgumentException ex)
         {
@@ -221,6 +223,7 @@ internal static class DomainFailureTranslator
             "fullName" => "اسم المريض مطلوب.",
             "ageValue" => "العمر يجب أن يكون صفرًا أو أكثر.",
             "fastingHours" => "ساعات الصيام تتطلب تحديد الصيام.",
+            "cardNumber" => "رقم البطاقة يجب ألا يتجاوز 30 حرفًا.",
             _ => "بيانات المريض غير صالحة."
         };
     }

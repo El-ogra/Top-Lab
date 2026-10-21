@@ -19,7 +19,8 @@ public sealed class LabHubViewModel : ViewModelBase
         PriceListsViewModel priceLists,
         TestCommentsViewModel testComments,
         CustomGroupsViewModel customGroups,
-        SampleCollectionViewModel sampleCollection)
+        SampleCollectionViewModel sampleCollection,
+        MedicalConditionTypesViewModel medicalConditionTypes)
     {
         Catalog = catalog;
         Groups = groups;
@@ -32,6 +33,7 @@ public sealed class LabHubViewModel : ViewModelBase
         TestComments = testComments;
         CustomGroups = customGroups;
         SampleCollection = sampleCollection;
+        MedicalConditionTypes = medicalConditionTypes;
     }
 
     public TestCatalogViewModel Catalog { get; }
@@ -55,6 +57,9 @@ public sealed class LabHubViewModel : ViewModelBase
     public CustomGroupsViewModel CustomGroups { get; }
     public SampleCollectionViewModel SampleCollection { get; }
 
+    /// <summary>STAGE-01: the medical-history catalogue's maintenance tab.</summary>
+    public MedicalConditionTypesViewModel MedicalConditionTypes { get; }
+
     public async Task LoadAsync()
     {
         await Catalog.LoadAsync();
@@ -68,5 +73,6 @@ public sealed class LabHubViewModel : ViewModelBase
         await TestComments.LoadAsync();
         await CustomGroups.LoadAsync();
         await SampleCollection.LoadAsync();
+        await MedicalConditionTypes.LoadAsync();
     }
 }

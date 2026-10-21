@@ -45,7 +45,12 @@ public sealed record PatientDetailDto(
     string? ReferralEntityName,
     IReadOnlyList<PatientPhoneNumberDto> PhoneNumbers,
     IReadOnlyList<PatientMedicalConditionDto> MedicalConditions,
-    bool IsDeleted);
+    bool IsDeleted,
+    // STAGE-01: the card number (baseline 1.2.2.2.6) and the ultrasound half of
+    // the imaging question (baseline 1.2.2.3.10). Appended to keep the existing
+    // positional call sites working.
+    string? CardNumber = null,
+    bool RecentUltrasoundImaging = false);
 
 public sealed record PatientTitleDto(int PatientTitleId, string TitleText, bool IsDefault);
 
@@ -83,4 +88,6 @@ public sealed record RegistrationCatalogDto(
     AccountType DefaultAccountType,
     bool DisableAutoTitleInsertion,
     string ReferralPlaceholderMale,
-    string ReferralPlaceholderFemale);
+    string ReferralPlaceholderFemale,
+    // STAGE-01 (baseline 1.2.2.4.2.1): the print-result password enable flag.
+    bool PrintResultPasswordEnabled = false);

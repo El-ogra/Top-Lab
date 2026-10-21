@@ -80,7 +80,9 @@ public sealed class GetPatientByIdQueryHandler
             referral?.Name,
             phones.Select(ph => new PatientPhoneNumberDto(ph.Id.Value, ph.PhoneNumber, ph.SortOrder)).ToList(),
             conditions.Select(mct => new PatientMedicalConditionDto(mct.Id.Value, mct.Name)).ToList(),
-            patient.IsDeleted);
+            patient.IsDeleted,
+            patient.CardNumber,
+            patient.RecentUltrasoundImaging);
 
         return Task.FromResult(Result<PatientDetailDto>.Success(dto));
     }

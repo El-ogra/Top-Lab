@@ -44,7 +44,11 @@ public sealed class UpdatePatientCommandHandler : IRequestHandler<UpdatePatientC
                 request.Notes,
                 request.IsFastingIndicated,
                 request.FastingHours,
-                request.RecentContrastImaging);
+                request.RecentContrastImaging,
+                request.CardNumber,
+                request.RecentUltrasoundImaging,
+                request.PickupDateUtc,
+                request.RegistrationDateUtc);
         }
         catch (ArgumentException ex)
         {

@@ -24,6 +24,9 @@ public sealed class SystemSettingsConfiguration : IEntityTypeConfiguration<Syste
         b.Property(e => e.DailyBackupEnabled).IsRequired();
         b.Property(e => e.DailyBackupPath).HasMaxLength(300).IsRequired(false);
         b.Property(e => e.BranchNumber).HasDefaultValue(1);
-        b.HasData(new { Id = 1, DefaultAccountType = AccountType.Individual, PrintLabIdInsteadOfPatientId = false, AutoReviewAndComplete = false, ResultScreenAccountDisplayMode = ResultScreenAccountDisplayMode.Hidden, SaveTreatingDoctorOnlyFromEntityWindow = false, EnablePatientNameSearchAssist = false, DisableAutoTitleInsertion = false, PrintFileExternalBarcode = false, PrintDateTimeOnTubeBarcode = false, PrintAccountInsteadOfDateOnReport = false, DailyBackupEnabled = false, DailyBackupPath = (string?)null, BranchNumber = 1 });
+        // STAGE-01: the print-result password requirement (baseline 1.2.2.4.2 / 1.2.2.4.2.1).
+        b.Property(e => e.PrintResultPasswordEnabled).IsRequired().HasDefaultValue(false);
+        b.Property(e => e.PrintResultPasswordHash).HasMaxLength(PrintResultPasswordHasher.MaxHashLength).IsRequired(false);
+        b.HasData(new { Id = 1, DefaultAccountType = AccountType.Individual, PrintLabIdInsteadOfPatientId = false, AutoReviewAndComplete = false, ResultScreenAccountDisplayMode = ResultScreenAccountDisplayMode.Hidden, SaveTreatingDoctorOnlyFromEntityWindow = false, EnablePatientNameSearchAssist = false, DisableAutoTitleInsertion = false, PrintFileExternalBarcode = false, PrintDateTimeOnTubeBarcode = false, PrintAccountInsteadOfDateOnReport = false, DailyBackupEnabled = false, DailyBackupPath = (string?)null, BranchNumber = 1, PrintResultPasswordEnabled = false, PrintResultPasswordHash = (string?)null });
     }
 }

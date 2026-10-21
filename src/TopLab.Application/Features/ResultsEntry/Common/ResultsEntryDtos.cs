@@ -37,7 +37,10 @@ public sealed record ResultEntryDto(
     string PatientAgeUnit,
     string PatientSex,
     IReadOnlyList<ReferenceRangeDto> ReferenceRanges,
-    FrozenRangeDto? FrozenRange);
+    FrozenRangeDto? FrozenRange,
+    // STAGE-01 (baseline 1.2.2.4.1): the patient's own notes reach the
+    // result-entry window. Appending keeps the existing call sites working.
+    string? PatientNotes = null);
 
 public sealed record FrozenRangeDto(
     int TestId,
