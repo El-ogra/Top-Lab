@@ -40,7 +40,8 @@ public sealed record ProfileEntryGridDto(
     string PatientFullName,
     string ProfileName,
     IReadOnlyList<ProfileEntryItemDto> Items,
-    int TestId = 0);
+    int TestId = 0,
+    string? PatientNotes = null);
 
 public sealed record ProfileReportLineDto(
     int ProfileResultItemId,

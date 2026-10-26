@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Presentation.Common.Navigation;
+using TopLab.Presentation.Common.Clipboard;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.Services;
@@ -28,6 +29,7 @@ public static class DependencyInjection
         // Services
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IClipboardService, WpfClipboardService>();
         services.AddSingleton<ResultErrorPresenter>();
         services.AddSingleton<IPrinterCatalogService, PrinterCatalogService>();
         services.AddSingleton<TopLab.Presentation.Services.Configuration.ConfigurationFileService>();

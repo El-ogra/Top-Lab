@@ -49,6 +49,23 @@ public sealed class FakeCurrentUserService : ICurrentUserService
     }
 }
 
+/// <summary>
+/// Records what a ViewModel asked the clipboard to hold, so a copy action can be asserted
+/// without touching the real OS clipboard (which is unavailable in a unit test).
+/// </summary>
+public sealed class FakeClipboardService : TopLab.Presentation.Common.Clipboard.IClipboardService
+{
+    public List<string> CopiedTexts { get; } = new();
+
+    public string? LastText => CopiedTexts.Count == 0 ? null : CopiedTexts[^1];
+
+    public Task SetTextAsync(string text, CancellationToken cancellationToken = default)
+    {
+        CopiedTexts.Add(text);
+        return Task.CompletedTask;
+    }
+}
+
 public sealed class FakeDialogService : IDialogService
 {
     public List<string> Errors { get; } = new();

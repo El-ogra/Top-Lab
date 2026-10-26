@@ -14,7 +14,8 @@ public class PatientAccountCalculatorTests
         decimal? discountAmount = null,
         bool isExtraCharge = false,
         OperationType operationType = OperationType.Payment,
-        bool voided = false)
+        bool voided = false,
+        decimal? refundAmount = null)
     {
         var op = PaymentOperation.Create(
             PaymentOperationId.Create(_nextId++),
@@ -24,7 +25,8 @@ public class PatientAccountCalculatorTests
             DateTime.UtcNow,
             discountAmount,
             isExtraCharge,
-            operationType);
+            operationType,
+            refundAmount);
         if (voided)
             op.Void();
         return op;
@@ -185,5 +187,67 @@ public class PatientAccountCalculatorTests
         };
 
         Assert.Equal(350m, PatientAccountCalculator.Balance(prices, Array.Empty<PaymentOperation>()));
+    }
+
+    [Fact]
+    public void Refund_ReducesTotalPaid()
+    {
+        var prices = new List<decimal> { 100m };
+        var ops = new List<PaymentOperation>
+        {
+            Op(80m),
+            Op(0m, operationType: OperationType.Refund, refundAmount: 20m),
+        };
+
+        Assert.Equal(100m, PatientAccountCalculator.TotalCharged(prices, ops));
+        Assert.Equal(60m, PatientAccountCalculator.TotalPaid(ops));
+        Assert.Equal(40m, PatientAccountCalculator.Balance(prices, ops));
+    }
+
+    [Fact]
+    public void VoidedRefund_IsIgnored()
+    {
+        var prices = new List<decimal> { 100m };
+        var ops = new List<PaymentOperation>
+        {
+            Op(80m),
+            Op(0m, operationType: OperationType.Refund, refundAmount: 20m, voided: true),
+        };
+
+        Assert.Equal(100m, PatientAccountCalculator.TotalCharged(prices, ops));
+        Assert.Equal(80m, PatientAccountCalculator.TotalPaid(ops));
+        Assert.Equal(20m, PatientAccountCalculator.Balance(prices, ops));
+    }
+
+    [Fact]
+    public void Mixed_PaymentsDiscountsExtraChargesRefunds()
+    {
+        var prices = new List<decimal> { 100m, 50m };
+        var ops = new List<PaymentOperation>
+        {
+            Op(20m, isExtraCharge: true),
+            Op(80m, discountAmount: 10m),
+            Op(0m, operationType: OperationType.Refund, refundAmount: 5m),
+            Op(999m, voided: true),
+        };
+
+        Assert.Equal(170m, PatientAccountCalculator.TotalCharged(prices, ops));
+        Assert.Equal(85m, PatientAccountCalculator.TotalPaid(ops));
+        Assert.Equal(85m, PatientAccountCalculator.Balance(prices, ops));
+    }
+
+    [Fact]
+    public void NoRefunds_UnchangedBehaviour()
+    {
+        var prices = new List<decimal> { 100m, 50m };
+        var ops = new List<PaymentOperation>
+        {
+            Op(20m, isExtraCharge: true),
+            Op(80m, discountAmount: 10m),
+        };
+
+        Assert.Equal(170m, PatientAccountCalculator.TotalCharged(prices, ops));
+        Assert.Equal(90m, PatientAccountCalculator.TotalPaid(ops));
+        Assert.Equal(80m, PatientAccountCalculator.Balance(prices, ops));
     }
 }

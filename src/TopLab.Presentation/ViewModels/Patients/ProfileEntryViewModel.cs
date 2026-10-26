@@ -94,6 +94,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
+    private string _patientNotes = string.Empty;
     private ProfileEntryRow? _selectedRow;
 
     public ProfileEntryViewModel(
@@ -191,6 +192,12 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public string PatientNotes
+    {
+        get => _patientNotes;
+        private set => SetProperty(ref _patientNotes, value);
+    }
+
     public AsyncRelayCommand SaveCommand { get; }
     public AsyncRelayCommand VerifyCommand { get; }
     public AsyncRelayCommand UnverifyCommand { get; }
@@ -216,6 +223,7 @@ public sealed class ProfileEntryViewModel : ViewModelBase
                 PatientFullName = result.Value.PatientFullName;
                 ProfileName = result.Value.ProfileName;
                 Comment = string.Empty;
+                PatientNotes = result.Value.PatientNotes ?? string.Empty;
                 _testId = result.Value.TestId;
 
                 var rows = new ObservableCollection<ProfileEntryRow>();

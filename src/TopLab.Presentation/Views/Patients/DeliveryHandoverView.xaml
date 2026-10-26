@@ -7,8 +7,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -25,8 +25,17 @@
             </StackPanel>
         </Border>
 
+        <!-- Patient notes (GAP-04) -->
+        <Border Grid.Row="1" Background="#FFF8E1" Padding="8" Margin="0,0,0,8"
+                Visibility="{Binding PatientNotes, Converter={StaticResource NullToVis}}">
+            <StackPanel>
+                <TextBlock Text="ملاحظات المريض:" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding PatientNotes}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
         <!-- Settlement controls -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="مبلغ التسوية:" VerticalAlignment="Center" Margin="0,0,6,0"/>
             <TextBox Text="{Binding SettleAmountText, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="0,0,8,0"/>
             <CheckBox Content="تسوية كاملة (خلاص)" IsChecked="{Binding SettleInFull}" VerticalAlignment="Center" Margin="0,0,12,0"/>
@@ -36,7 +45,7 @@
         </StackPanel>
 
         <!-- Loading -->
-        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+        <ProgressBar Grid.Row="3" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
             <ProgressBar.Style>
                 <Style TargetType="ProgressBar">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -50,7 +59,7 @@
         </ProgressBar>
 
         <!-- Empty state -->
-        <TextBlock Grid.Row="3" Text="لا توجد تحاليل لهذا المريض." Foreground="#666666"
+        <TextBlock Grid.Row="4" Text="لا توجد تحاليل لهذا المريض." Foreground="#666666"
                    HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock.Style>
                 <Style TargetType="TextBlock">
@@ -65,7 +74,7 @@
         </TextBlock>
 
         <!-- Delivery Grid -->
-        <DataGrid Grid.Row="3"
+        <DataGrid Grid.Row="4"
                   ItemsSource="{Binding GridRows}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
@@ -101,7 +110,7 @@
         </DataGrid>
 
         <!-- Messages -->
-        <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
-        <TextBlock Grid.Row="5" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="6" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0"/>
     </Grid>
 </UserControl>

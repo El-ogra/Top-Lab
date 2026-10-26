@@ -4,5 +4,6 @@ public enum OperationType
 {
     Payment = 0,
     Correction = 1,
-    FullSettlement = 2
+    FullSettlement = 2,
+    Refund = 3
 }

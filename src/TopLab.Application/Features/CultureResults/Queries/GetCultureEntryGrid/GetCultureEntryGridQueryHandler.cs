@@ -38,6 +38,7 @@ public sealed class GetCultureEntryGridQueryHandler : IRequestHandler<GetCulture
             .OrderBy(x => x.Id.Value).Select(x => { saved.TryGetValue(x.Id.Value, out var item); return new CultureSensitivityRowDto(item?.Id.Value, x.Id.Value, x.Name, item is null ? null : (int?)item.SensitivityCategory, x.IsPregnancyFlagged, x.IsChildrenFlagged, item?.InhibitionZoneMm); }).ToList();
         var header = _db.Set<CultureResult>().FirstOrDefault(x => x.PatientTestId.Value == pt.Id.Value);
         var micro = _db.Set<CultureMicroscopy>().FirstOrDefault(x => x.PatientTestId.Value == pt.Id.Value);
-        return Task.FromResult(Result<CultureEntryGridDto>.Success(new CultureEntryGridDto(pt.Id.Value, patient.Id.Value, test.Name, test.TestCode, header?.Sample, header?.OrganismA, header?.OrganismB, header?.OrganismC, header?.CultureCondition, header?.ColonyCount, rows, pt.IsReviewed, pt.IsPrinted, micro is null ? null : new CultureMicroscopyDto(micro.PusCells, micro.RedBloodCells, micro.EpithelialCells, micro.Crystals, micro.Fungi, micro.OthersOne, micro.OthersTwo, micro.OthersThree, micro.IsDirect))));
+        var dto = new CultureEntryGridDto(pt.Id.Value, patient.Id.Value, test.Name, test.TestCode, header?.Sample, header?.OrganismA, header?.OrganismB, header?.OrganismC, header?.CultureCondition, header?.ColonyCount, rows, pt.IsReviewed, pt.IsPrinted, micro is null ? null : new CultureMicroscopyDto(micro.PusCells, micro.RedBloodCells, micro.EpithelialCells, micro.Crystals, micro.Fungi, micro.OthersOne, micro.OthersTwo, micro.OthersThree, micro.IsDirect), patient.Notes);
+        return Task.FromResult(Result<CultureEntryGridDto>.Success(dto));
     }
 }

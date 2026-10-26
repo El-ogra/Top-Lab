@@ -37,6 +37,7 @@ public sealed class GetDeliveryAccountQueryHandler
             account.TotalPaid,
             account.Balance,
             account.Balance > 0 ? account.Balance : 0m,
-            account.Balance < 0 ? -account.Balance : 0m)));
+            account.Balance < 0 ? -account.Balance : 0m,
+            patient.Notes)));
     }
 }

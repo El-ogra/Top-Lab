@@ -5,11 +5,15 @@ using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.AnalyteProfiles.Common;
 using TopLab.Application.Features.AnalyteProfiles.Queries.GetProfileDefinitions;
+using TopLab.Application.Features.PatientBilling.Commands.ClearPatientAccount;
 using TopLab.Application.Features.PatientBilling.Commands.PrintInvoice;
 using TopLab.Application.Features.PatientBilling.Commands.PrintReceipt;
+using TopLab.Application.Features.PatientBilling.Commands.RecordExtraCharge;
 using TopLab.Application.Features.PatientBilling.Commands.RecordPayment;
+using TopLab.Application.Features.PatientBilling.Commands.RecordRefund;
 using TopLab.Application.Features.PatientBilling.Commands.SettleAccountInFull;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
+using TopLab.Application.Features.PatientEnvelope.Commands.PrintEnvelope;
 using TopLab.Application.Features.PatientEnvelope.Commands.PrintLabOrder;
 using TopLab.Application.Features.PatientRegistration.Commands.AddCustomGroupToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.ApplyConditionDeltas;
@@ -31,12 +35,14 @@ using TopLab.Application.Features.PatientRegistration.Queries.GetPatientById;
 using TopLab.Application.Features.PatientRegistration.Queries.GetPatientVisitHistory;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Common;
 using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Queries.GetCustomGroups;
+using TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Queries.GetCustomGroupTestIds;
 using TopLab.Application.Features.PatientRegistration.Queries.GetRegistrationCatalog;
 using TopLab.Application.Features.PatientRegistration.Queries.SearchPatients;
 using TopLab.Application.Features.SystemAndPrintSettings.Commands.UpdatePrintResultPassword;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Common;
 using TopLab.Application.Features.WorkSheets.Commands.PrintWorkSheet;
 using TopLab.Application.Features.WorkSheets.Queries.GetVisitWorkSheet;
+using TopLab.Domain.Billing;
 using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Patients;
 using TopLab.Presentation.Common;
@@ -102,6 +108,12 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private string? _notes;
     private string _paymentAmountText = string.Empty;
     private string? _paymentDiscountText;
+    private string? _paymentPercentageText;
+    private string _refundAmountText = string.Empty;
+    private readonly AccountEntrySession _accountEntry = new();
+    private string _catalogFilterText = string.Empty;
+    private CatalogFilterMode _catalogFilterMode = CatalogFilterMode.Tg;
+    private HashSet<int> _customGroupTestIds = new();
     private decimal _totalCharged;
     private decimal _totalDiscount;
     private decimal _totalPaid;
@@ -144,11 +156,15 @@ public sealed class PatientEditorViewModel : ViewModelBase
         UndoCommand = new AsyncRelayCommand(async (_, ct) => await UndoAsync());
         RecordPaymentCommand = new AsyncRelayCommand(async (_, ct) => await RecordPaymentAsync(ct));
         SettleCommand = new AsyncRelayCommand(async (_, ct) => await SettleAsync(ct));
+        AccountEntryEnterCommand = new AsyncRelayCommand(async (_, ct) => await AccountEntryEnterAsync(ct));
+        RefundCommand = new AsyncRelayCommand(async (_, ct) => await RefundAsync(ct));
+        ClearAccountCommand = new AsyncRelayCommand(async (_, ct) => await ClearAccountAsync(ct));
         PrintBarcodeCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "barcode"));
         PrintWorkSheetCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "worksheet"));
         PrintReceiptCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "receipt"));
         PrintInvoiceCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "invoice"));
         PrintLabOrderCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct, "laborder"));
+        PrintEnvelopeCommand = new AsyncRelayCommand(async (_, ct) => await PrintEnvelopeAsync(ct));
         AddTestToSelectionCommand = new RelayCommand(param =>
         {
             if (param is int testId)
@@ -172,8 +188,15 @@ public sealed class PatientEditorViewModel : ViewModelBase
         NextSearchPageCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: false, cancellationToken: ct, nextPage: true));
         PrevSearchPageCommand = new AsyncRelayCommand(async (_, ct) => await SearchPatientsAsync(resetPage: false, cancellationToken: ct));
         ClearSearchCommand = new RelayCommand(ClearSearch);
+        ClearCatalogFilterCommand = new RelayCommand(_ => CatalogFilterText = string.Empty);
+        SetTmModeCommand = new RelayCommand(_ => CatalogFilterMode = CatalogFilterMode.Tm);
+        SetTgModeCommand = new RelayCommand(_ => CatalogFilterMode = CatalogFilterMode.Tg);
+        SetCgModeCommand = new RelayCommand(_ => CatalogFilterMode = CatalogFilterMode.Cg);
         OpenSearchResultCommand = new AsyncRelayCommand(async (param, ct) => await OpenSearchResultAsync(param as PatientSummaryDto, ct));
         OpenAccountCommand = new AsyncRelayCommand(async (_, ct) => await OpenAccountAsync(ct));
+        PatientWindowCommand = new AsyncRelayCommand((_, ct) => PatientWindowAsync(ct));
+        LabResultsCommand = new AsyncRelayCommand(async (_, ct) => await LabResultsAsync(ct));
+        FollowUpCommand = new AsyncRelayCommand(async (_, ct) => await FollowUpAsync(ct));
         AddProfileCommand = new AsyncRelayCommand(async (_, ct) => await AddProfileAsync(ct));
         AddCustomGroupCommand = new AsyncRelayCommand(async (_, ct) => await AddCustomGroupAsync(ct));
         ClearAllVisitTestsCommand = new AsyncRelayCommand(async (_, ct) => await ClearAllVisitTestsAsync(ct));
@@ -244,7 +267,114 @@ public sealed class PatientEditorViewModel : ViewModelBase
         public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
     }
 
+    /// <summary>
+    /// The full catalogue as loaded (1.2.2.5.1.1 — the master test list). The filtered view
+    /// below is what the ListView binds to; this collection is never narrowed so clearing the
+    /// filter restores every test without a round trip.
+    /// </summary>
     public ObservableCollection<TestSummaryDto> CatalogTests { get; } = new();
+
+    /// <summary>
+    /// 1.2.2.5.1.1 «start» — the test filter field of the master test list. A non-empty value
+    /// narrows <see cref="FilteredCatalogTests"/> by test name OR test code, case-insensitively.
+    /// </summary>
+    public string CatalogFilterText
+    {
+        get => _catalogFilterText;
+        set
+        {
+            if (SetProperty(ref _catalogFilterText, value))
+            {
+                ApplyCatalogFilter();
+            }
+        }
+    }
+
+    /// <summary>The catalogue rows the screen shows: all tests, or those matching the filter.</summary>
+    public ObservableCollection<TestSummaryDto> FilteredCatalogTests { get; } = new();
+
+    /// <summary>True when a filter is active and it matched nothing (distinct from an empty catalogue).</summary>
+    public bool ShowCatalogFilterNoMatch
+        => _catalogFilterMode == CatalogFilterMode.Tg
+           && !string.IsNullOrWhiteSpace(_catalogFilterText)
+           && FilteredCatalogTests.Count == 0;
+
+    /// <summary>
+    /// D-02: the active catalogue mode. Exactly one mode is active at any time, and an undefined
+    /// value is REJECTED with the property left unchanged (GAP-11 acceptance criterion:
+    /// "mode options are mutually exclusive; invalid mode is rejected").
+    /// </summary>
+    public CatalogFilterMode CatalogFilterMode
+    {
+        get => _catalogFilterMode;
+        set
+        {
+            if (!Enum.IsDefined(typeof(CatalogFilterMode), value))
+            {
+                // Rejected: state unchanged. The setter re-raises so a bound control snaps back.
+                OnPropertyChanged(nameof(CatalogFilterMode));
+                OnPropertyChanged(nameof(IsTmMode));
+                OnPropertyChanged(nameof(IsTgMode));
+                OnPropertyChanged(nameof(IsCgMode));
+                return;
+            }
+
+            if (_catalogFilterMode == value)
+            {
+                return;
+            }
+
+            var leavingTg = _catalogFilterMode == CatalogFilterMode.Tg;
+            _catalogFilterMode = value;
+
+            // Design detail (D-02): the search box is active in TG only, so leaving TG clears the
+            // text — no hidden state survives the switch.
+            if (leavingTg)
+            {
+                _catalogFilterText = string.Empty;
+                OnPropertyChanged(nameof(CatalogFilterText));
+            }
+
+            OnPropertyChanged(nameof(CatalogFilterMode));
+            OnPropertyChanged(nameof(IsTmMode));
+            OnPropertyChanged(nameof(IsTgMode));
+            OnPropertyChanged(nameof(IsCgMode));
+            OnPropertyChanged(nameof(IsCatalogSearchEnabled));
+
+            ApplyCatalogFilter();
+        }
+    }
+
+    /// <summary>TM «كل التحاليل».</summary>
+    public bool IsTmMode
+    {
+        get => _catalogFilterMode == CatalogFilterMode.Tm;
+        set { if (value) CatalogFilterMode = CatalogFilterMode.Tm; }
+    }
+
+    /// <summary>TG «بحث بالاسم أو الكود».</summary>
+    public bool IsTgMode
+    {
+        get => _catalogFilterMode == CatalogFilterMode.Tg;
+        set { if (value) CatalogFilterMode = CatalogFilterMode.Tg; }
+    }
+
+    /// <summary>CG «مجموعاتي المخصصة».</summary>
+    public bool IsCgMode
+    {
+        get => _catalogFilterMode == CatalogFilterMode.Cg;
+        set { if (value) CatalogFilterMode = CatalogFilterMode.Cg; }
+    }
+
+    /// <summary>D-02: the search box is enabled in TG only; its text is ignored in TM and CG.</summary>
+    public bool IsCatalogSearchEnabled => _catalogFilterMode == CatalogFilterMode.Tg;
+
+    /// <summary>TM / TG / CG commands (bound to the three buttons; no code-behind).</summary>
+    public RelayCommand SetTmModeCommand { get; private set; } = null!;
+
+    public RelayCommand SetTgModeCommand { get; private set; } = null!;
+
+    public RelayCommand SetCgModeCommand { get; private set; } = null!;
 
     public ObservableCollection<TestGroupDto> TestGroups { get; } = new();
 
@@ -537,9 +667,47 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     public string? Notes { get => _notes; set => SetProperty(ref _notes, value); }
 
-    public string PaymentAmountText { get => _paymentAmountText; set => SetProperty(ref _paymentAmountText, value); }
+    public string PaymentAmountText
+    {
+        get => _paymentAmountText;
+        set
+        {
+            if (SetProperty(ref _paymentAmountText, value))
+            {
+                _accountEntry.AmountText = value;
+            }
+        }
+    }
 
-    public string? PaymentDiscountText { get => _paymentDiscountText; set => SetProperty(ref _paymentDiscountText, value); }
+    public string? PaymentDiscountText
+    {
+        get => _paymentDiscountText;
+        set
+        {
+            if (SetProperty(ref _paymentDiscountText, value))
+            {
+                // 1.3.1.2 / 1.3.1.3: the value and the percentage are never applied together.
+                _accountEntry.DiscountText = value;
+                PaymentPercentageText = null;
+            }
+        }
+    }
+
+    /// <summary>1.3.1.3 «%»: converted to an amount against the patient's TOTAL account amount.</summary>
+    public string? PaymentPercentageText
+    {
+        get => _paymentPercentageText;
+        set
+        {
+            if (SetProperty(ref _paymentPercentageText, value))
+            {
+                _accountEntry.PercentageText = value;
+            }
+        }
+    }
+
+    /// <summary>1.3.2.5 «استرداد» amount entry.</summary>
+    public string RefundAmountText { get => _refundAmountText; set => SetProperty(ref _refundAmountText, value); }
 
     public decimal TotalCharged { get => _totalCharged; private set => SetProperty(ref _totalCharged, value); }
 
@@ -554,14 +722,66 @@ public sealed class PatientEditorViewModel : ViewModelBase
     /// <summary>S-03 Slice 0: empty-state flags (S-01/S-02 Show*Empty idiom).</summary>
     public bool ShowSelectedTestsEmpty => SelectedTests.Count == 0;
 
-    /// <summary>S-03 Slice 0: empty-state flags (S-01/S-02 Show*Empty idiom).</summary>
+    /// <summary>
+    /// S-03 Slice 0: empty-state flags (S-01/S-02 Show*Empty idiom).
+    /// D-02: this means "the catalogue itself is empty" — it is deliberately based on the FULL
+    /// set, so a mode that hides rows (CG with no groups, TG with no match) does not claim the
+    /// catalogue is empty. Each mode has its own message for that.
+    /// </summary>
     public bool ShowCatalogEmpty => CatalogTests.Count == 0;
 
     private void RefreshEmptyStates()
     {
         OnPropertyChanged(nameof(ShowSelectedTestsEmpty));
         OnPropertyChanged(nameof(ShowCatalogEmpty));
+        OnPropertyChanged(nameof(ShowCatalogFilterNoMatch));
     }
+
+    /// <summary>
+    /// 1.2.2.5.1.1: rebuilds <see cref="FilteredCatalogTests"/> from
+    /// <see cref="CatalogTests"/> using the current filter text. Matching is on the test name
+    /// OR the test code, case-insensitively, so both "CBC" and "صورة دم" find the same test.
+    /// An empty or whitespace filter shows the whole catalogue.
+    /// </summary>
+    private void ApplyCatalogFilter()
+    {
+        // D-02: the search text only takes effect in TG. In TM and CG it is ignored, so the
+        // modes stay mutually exclusive even if a stale text survived somewhere.
+        var needle = _catalogFilterMode == CatalogFilterMode.Tg
+            ? (_catalogFilterText ?? string.Empty).Trim()
+            : string.Empty;
+
+        FilteredCatalogTests.Clear();
+        foreach (var test in CatalogTests)
+        {
+            var visible = _catalogFilterMode switch
+            {
+                // TM: every test the catalogue already shows — the same base set as before.
+                CatalogFilterMode.Tm => true,
+                // TG: the search box; an empty box means all tests.
+                CatalogFilterMode.Tg => needle.Length == 0 || MatchesCatalogFilter(test, needle),
+                // CG: only tests belonging to at least one custom group.
+                CatalogFilterMode.Cg => _customGroupTestIds.Contains(test.Id),
+                _ => true
+            };
+
+            if (visible)
+            {
+                FilteredCatalogTests.Add(test);
+            }
+        }
+
+        OnPropertyChanged(nameof(ShowCatalogEmpty));
+        OnPropertyChanged(nameof(ShowCatalogFilterNoMatch));
+    }
+
+    /// <summary>Name OR code, case-insensitive, substring match.</summary>
+    private static bool MatchesCatalogFilter(TestSummaryDto test, string needle)
+        => test.Name.Contains(needle, StringComparison.OrdinalIgnoreCase)
+           || test.TestCode.Contains(needle, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Clears the filter (the «مسح» button next to the filter field).</summary>
+    public RelayCommand ClearCatalogFilterCommand { get; }
 
     public string ErrorMessage { get => _errorMessage; private set => SetProperty(ref _errorMessage, value); }
 
@@ -626,6 +846,15 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     public AsyncRelayCommand SettleCommand { get; }
 
+    /// <summary>1.3.1.4.2: the account panel's <c>Enter</c> key (first press computes, second saves).</summary>
+    public AsyncRelayCommand AccountEntryEnterCommand { get; }
+
+    /// <summary>1.3.2.5 «استرداد».</summary>
+    public AsyncRelayCommand RefundCommand { get; }
+
+    /// <summary>1.3.2.7 «تصفير الحساب».</summary>
+    public AsyncRelayCommand ClearAccountCommand { get; }
+
     public AsyncRelayCommand PrintBarcodeCommand { get; }
 
     public AsyncRelayCommand PrintWorkSheetCommand { get; }
@@ -636,6 +865,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     /// <summary>Phase 1 REF-068: laboratory-order slip print action.</summary>
     public AsyncRelayCommand PrintLabOrderCommand { get; }
+    public AsyncRelayCommand PrintEnvelopeCommand { get; }
 
     public RelayCommand AddTestToSelectionCommand { get; }
 
@@ -653,6 +883,16 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
     /// <summary>S-03 Slice 4: totals-row entry into the patient account screen.</summary>
     public AsyncRelayCommand OpenAccountCommand { get; }
+    public AsyncRelayCommand PatientWindowCommand { get; }
+    public AsyncRelayCommand LabResultsCommand { get; }
+
+    /// <summary>
+    /// 1.2.2.6.10 «Follow-up»: opens the case follow-up screen — reference section 1.12
+    /// "Case Follow-up and Audit Trail", screen 1.12.1 "Case History Screen", which this
+    /// codebase implements as <see cref="TopLab.Presentation.ViewModels.Audit.AuditViewModel"/>
+    /// (its P tab is the per-patient case history).
+    /// </summary>
+    public AsyncRelayCommand FollowUpCommand { get; }
 
     public AsyncRelayCommand AddProfileCommand { get; }
 
@@ -678,6 +918,8 @@ public sealed class PatientEditorViewModel : ViewModelBase
             {
                 CatalogTests.Add(test);
             }
+
+            ApplyCatalogFilter();
 
             TestGroups.Clear();
             foreach (var group in catalog.Value.TestGroups)
@@ -767,6 +1009,15 @@ public sealed class PatientEditorViewModel : ViewModelBase
             {
                 Profiles.Add(profile);
             }
+        }
+
+        // D-02 mode CG: the registration catalogue does not carry custom-group membership, so the
+        // union of member test ids is read once here. Read-only, no schema change; a failure is
+        // non-fatal (CG simply shows nothing) exactly like the other picker sources.
+        var memberIds = await _mediator.Send(new GetCustomGroupTestIdsQuery(), cancellationToken);
+        if (memberIds.IsSuccess && memberIds.Value is not null)
+        {
+            _customGroupTestIds = new HashSet<int>(memberIds.Value);
         }
 
         var groups = await _mediator.Send(new GetCustomGroupsQuery(), cancellationToken);
@@ -1488,6 +1739,59 @@ public sealed class PatientEditorViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// GAP-10 / R1 Round 3 A1: the patient list opens in add mode as well as edit mode,
+    /// so the unsaved-patient guard is deliberately absent here (it stays on
+    /// <see cref="LabResultsAsync"/>). No unsaved-data confirmation exists elsewhere in the
+    /// editor's navigation actions, so none is invented.
+    /// </summary>
+    private Task PatientWindowAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        _navigation.NavigateTo<PatientSearchViewModel>();
+        return Task.CompletedTask;
+    }
+
+    private async Task LabResultsAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل عرض النتائج.";
+            return;
+        }
+
+        _navigation.NavigateTo<PatientResultSheetViewModel>();
+        if (_navigation.CurrentViewModel is PatientResultSheetViewModel sheet)
+        {
+            await sheet.LoadAsync(_patientId.Value, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// 1.2.2.6.10: the case follow-up screen for the loaded patient. Same guard and the same
+    /// navigate-then-load idiom as the account and lab-results actions, so an unsaved patient
+    /// gets the editor's standard "save first" message rather than a half-loaded history.
+    /// </summary>
+    private async Task FollowUpAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل عرض المتابعة.";
+            return;
+        }
+
+        _navigation.NavigateTo<TopLab.Presentation.ViewModels.Audit.AuditViewModel>();
+        if (_navigation.CurrentViewModel is TopLab.Presentation.ViewModels.Audit.AuditViewModel audit)
+        {
+            await audit.LoadWithPatientIdAsync(_patientId.Value, cancellationToken);
+        }
+    }
+
     /// <summary>S-03 Slice 3: wires the orphaned AddProfileToVisitCommand (edit mode only).</summary>
     private async Task AddProfileAsync(CancellationToken cancellationToken)
     {
@@ -1617,6 +1921,13 @@ public sealed class PatientEditorViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// R1 Round 3 B1/B2: the record-payment button. Parsing and the percentage conversion run
+    /// through the shared <see cref="AccountEntryParser"/> / <see cref="AccountEntryCalculator"/>
+    /// so this screen and the patient-account screen behave identically. A leading <c>+</c>
+    /// routes to the existing extra-charge mechanism (1.3.1.4.1 / OD-11); the existing separate
+    /// extra-charge action is kept.
+    /// </summary>
     private async Task RecordPaymentAsync(CancellationToken cancellationToken)
     {
         ErrorMessage = string.Empty;
@@ -1627,38 +1938,184 @@ public sealed class PatientEditorViewModel : ViewModelBase
             return;
         }
 
-        if (!decimal.TryParse(PaymentAmountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) || amount <= 0)
+        var amount = AccountEntryParser.ParsePaidAmount(PaymentAmountText);
+        if (!amount.IsValid)
         {
-            ErrorMessage = "قيمة المدفوع غير صالحة.";
+            ErrorMessage = amount.ErrorMessage!;
             return;
         }
 
-        decimal? discount = null;
-        if (!string.IsNullOrWhiteSpace(PaymentDiscountText))
+        var discount = AccountEntryParser.ParseDiscount(PaymentDiscountText);
+        if (!discount.IsValid)
         {
-            if (!decimal.TryParse(PaymentDiscountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) || d < 0)
-            {
-                ErrorMessage = "قيمة الخصم غير صالحة.";
-                return;
-            }
+            ErrorMessage = discount.ErrorMessage!;
+            return;
+        }
 
-            discount = d;
+        var percentage = AccountEntryParser.ParsePercentage(PaymentPercentageText);
+        if (!percentage.IsValid)
+        {
+            ErrorMessage = percentage.ErrorMessage!;
+            return;
+        }
+
+        if (amount.Kind == AccountEntryKind.Surcharge && discount.Value > 0m)
+        {
+            ErrorMessage = AccountEntryParser.SurchargeWithDiscountMessage;
+            return;
         }
 
         IsBusy = true;
         try
         {
-            var result = await _mediator.Send(new RecordPaymentCommand(_patientId.Value, amount, discount), cancellationToken);
+            var result = amount.Kind == AccountEntryKind.Surcharge
+                ? await _mediator.Send(new RecordExtraChargeCommand(_patientId.Value, amount.Value), cancellationToken)
+                : await _mediator.Send(
+                    new RecordPaymentCommand(_patientId.Value, amount.Value, discount.Value > 0m ? discount.Value : null),
+                    cancellationToken);
             if (!result.IsSuccess)
             {
                 ErrorMessage = _presenter.Present(result.Error!);
                 return;
             }
 
+            _accountEntry.MarkPersisted();
             PaymentAmountText = string.Empty;
             PaymentDiscountText = null;
+            PaymentPercentageText = null;
             await RefreshBillingAsync(cancellationToken);
-            StatusMessage = "تم تسجيل المدفوع.";
+            StatusMessage = amount.Kind == AccountEntryKind.Surcharge ? "تم تسجيل المبلغ الإضافي." : "تم تسجيل المدفوع.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// 1.3.1.4.2: one <c>Enter</c> press in the amount / discount / percentage fields.
+    /// The first press only displays the resulting figures and never reaches the mediator;
+    /// the second press with unchanged inputs routes to the same record-payment path the
+    /// button uses, then resets.
+    /// </summary>
+    private async Task AccountEntryEnterAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل تسجيل مدفوعات.";
+            return;
+        }
+
+        // 1.3.1.3: a percentage is converted against the patient's TOTAL account amount.
+        if (!string.IsNullOrWhiteSpace(PaymentPercentageText))
+        {
+            var conversionError = _accountEntry.ApplyPercentage(TotalCharged);
+            if (conversionError is not null)
+            {
+                ErrorMessage = conversionError;
+                return;
+            }
+
+            // Round 4 fix: push the converted amount into the field through the backing
+            // field, not through the PaymentDiscountText setter. That setter exists to clear
+            // the percentage on a USER edit, and routing the conversion through it would
+            // clear the percentage (and, by the session's rule, the amount it just produced).
+            _paymentDiscountText = _accountEntry.DiscountText;
+            _paymentPercentageText = null;
+            OnPropertyChanged(nameof(PaymentDiscountText));
+            OnPropertyChanged(nameof(PaymentPercentageText));
+        }
+
+        var step = _accountEntry.PressEnter(TotalCharged, TotalPaid);
+        if (!step.IsValid)
+        {
+            ErrorMessage = step.ErrorMessage!;
+            return;
+        }
+
+        if (!step.ShouldPersist)
+        {
+            // First press: figures only, nothing recorded.
+            StatusMessage = step.StatusMessage!;
+            return;
+        }
+
+        await RecordPaymentAsync(cancellationToken);
+    }
+
+    /// <summary>1.3.2.5 «استرداد»: records a refund of the entered amount (never overwrites).</summary>
+    private async Task RefundAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل تسجيل استرداد.";
+            return;
+        }
+
+        var parsed = AccountEntryParser.ParseRefundAmount(RefundAmountText);
+        if (!parsed.IsValid)
+        {
+            ErrorMessage = parsed.ErrorMessage!;
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new RecordRefundCommand(_patientId.Value, parsed.Value), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            RefundAmountText = string.Empty;
+            await RefreshBillingAsync(cancellationToken);
+            StatusMessage = "تم تسجيل الاسترداد.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>1.3.2.7 «تصفير الحساب»: voids every operation after a confirmation.</summary>
+    private async Task ClearAccountAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل تصفير الحساب.";
+            return;
+        }
+
+        var confirm = await _dialogs.ShowConfirmationAsync(
+            "تصفير الحساب",
+            "سيتم إلغاء جميع عمليات حساب المريض (تبقى ظاهرة بعلامة ملغاة). هل تريد المتابعة؟");
+        if (!confirm)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new ClearPatientAccountCommand(_patientId.Value), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            await RefreshBillingAsync(cancellationToken);
+            StatusMessage = result.Value > 0
+                ? $"تم تصفير الحساب ({result.Value} عملية)."
+                : "لا توجد عمليات لتصفيرها.";
         }
         finally
         {
@@ -1688,6 +2145,36 @@ public sealed class PatientEditorViewModel : ViewModelBase
 
             await RefreshBillingAsync(cancellationToken);
             StatusMessage = "تمت تسوية الحساب بالكامل.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>GAP-10: bind the existing envelope-print feature on the patient editor action band.</summary>
+    private async Task PrintEnvelopeAsync(CancellationToken cancellationToken)
+    {
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل الطباعة.";
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new PrintEnvelopeCommand(_patientId.Value), cancellationToken);
+            if (result.IsSuccess)
+            {
+                StatusMessage = "تمت طباعة المغلّف.";
+            }
+            else if (result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
         }
         finally
         {

@@ -1,3 +1,4 @@
+using TopLab.Domain.Common.Enums;
 using TopLab.Domain.Billing;
 
 namespace TopLab.Domain.Billing;
@@ -27,9 +28,43 @@ public static class PatientAccountCalculator
 
     public static decimal TotalPaid(IReadOnlyList<PaymentOperation> operations)
     {
-        return operations
-            .Where(o => !o.IsVoided && !o.IsExtraCharge)
+        var payments = operations
+            .Where(o => !o.IsVoided && !o.IsExtraCharge && o.OperationType != OperationType.Refund)
             .Sum(o => o.Amount + (o.DiscountAmount ?? 0m));
+        var refunds = operations
+            .Where(o => !o.IsVoided && o.OperationType == OperationType.Refund)
+            .Sum(o => o.RefundAmount ?? 0m);
+        return payments - refunds;
+    }
+
+    /// <summary>
+    /// The cash the patient actually handed over, and therefore the only money that can be
+    /// refunded (owner decision, R1 Round 5 Part B).
+    /// <para>
+    /// This is deliberately NOT <see cref="TotalPaid"/>: <c>TotalPaid</c> adds
+    /// <c>DiscountAmount</c> because a discount is money the patient no longer owes, which is
+    /// correct for the balance but wrong for a refund — a discount was never cash. Here the
+    /// discount is excluded, and so are extra charges (money the patient owes, not money they
+    /// paid) and refunds themselves.
+    /// </para>
+    /// <para>
+    /// Correction operations are treated exactly as <see cref="TotalPaid"/> treats them: a
+    /// correction is a non-voided, non-extra-charge, non-refund row, so its <c>Amount</c> counts
+    /// as paid cash and is therefore refundable. FullSettlement rows likewise count as ordinary
+    /// payments. Voided rows of any type contribute nothing. The result is floored at zero.
+    /// </para>
+    /// </summary>
+    public static decimal CashRefundable(IReadOnlyList<PaymentOperation> operations)
+    {
+        var cashPaid = operations
+            .Where(o => !o.IsVoided && !o.IsExtraCharge && o.OperationType != OperationType.Refund)
+            .Sum(o => o.Amount);
+        var refunds = operations
+            .Where(o => !o.IsVoided && o.OperationType == OperationType.Refund)
+            .Sum(o => o.RefundAmount ?? 0m);
+
+        var net = cashPaid - refunds;
+        return net > 0m ? net : 0m;
     }
 
     public static decimal Balance(

@@ -3,15 +3,19 @@ using System.Globalization;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Results;
+using TopLab.Application.Features.PatientBilling.Commands.ClearPatientAccount;
 using TopLab.Application.Features.PatientBilling.Commands.PrintInvoice;
 using TopLab.Application.Features.PatientBilling.Commands.PrintReceipt;
+using TopLab.Application.Features.PatientBilling.Commands.RecordExtraCharge;
 using TopLab.Application.Features.PatientBilling.Commands.RecordPayment;
+using TopLab.Application.Features.PatientBilling.Commands.RecordRefund;
 using TopLab.Application.Features.PatientBilling.Commands.SettleAccountInFull;
 using TopLab.Application.Features.PatientBilling.Commands.VoidPaymentOperation;
 using TopLab.Application.Features.PatientBilling.Common;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientInvoice;
 using TopLab.Application.Features.PatientBilling.Queries.ListPatientPayments;
+using TopLab.Domain.Billing;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
@@ -50,6 +54,9 @@ public sealed class PatientAccountViewModel : ViewModelBase
     private bool _showInvoicePreview;
     private string _paymentAmountText = string.Empty;
     private string? _paymentDiscountText;
+    private string? _paymentPercentageText;
+    private string _refundAmountText = string.Empty;
+    private readonly AccountEntrySession _accountEntry = new();
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
@@ -72,6 +79,9 @@ public sealed class PatientAccountViewModel : ViewModelBase
         PrevOperationsPageCommand = new AsyncRelayCommand(async (_, ct) => await LoadOperationsPageAsync(nextPage: false, ct));
         RecordPaymentCommand = new AsyncRelayCommand(async (_, ct) => await RecordPaymentAsync(ct));
         SettleCommand = new AsyncRelayCommand(async (_, ct) => await SettleAsync(ct));
+        AccountEntryEnterCommand = new AsyncRelayCommand(async (_, ct) => await AccountEntryEnterAsync(ct));
+        RefundCommand = new AsyncRelayCommand(async (_, ct) => await RefundAsync(ct));
+        ClearAccountCommand = new AsyncRelayCommand(async (_, ct) => await ClearAccountAsync(ct));
         PrintReceiptCommand = new AsyncRelayCommand(async (_, ct) => await PrintReceiptAsync(ct));
         OpenCorrectionCommand = new AsyncRelayCommand(async (_, ct) => await OpenCorrectionAsync(ct));
         OpenExtraChargeCommand = new AsyncRelayCommand(async (_, ct) => await OpenExtraChargeAsync(ct));
@@ -121,9 +131,46 @@ public sealed class PatientAccountViewModel : ViewModelBase
     /// <summary>S-03 Slice 6: null-number case displays «لم تُصدَر بعد».</summary>
     public string InvoiceNumberDisplay => InvoicePreview?.InvoiceNumber?.ToString(CultureInfo.InvariantCulture) ?? "لم تُصدَر بعد";
 
-    public string PaymentAmountText { get => _paymentAmountText; set => SetProperty(ref _paymentAmountText, value); }
+    public string PaymentAmountText
+    {
+        get => _paymentAmountText;
+        set
+        {
+            if (SetProperty(ref _paymentAmountText, value))
+            {
+                _accountEntry.AmountText = value;
+            }
+        }
+    }
 
-    public string? PaymentDiscountText { get => _paymentDiscountText; set => SetProperty(ref _paymentDiscountText, value); }
+    public string? PaymentDiscountText
+    {
+        get => _paymentDiscountText;
+        set
+        {
+            if (SetProperty(ref _paymentDiscountText, value))
+            {
+                _accountEntry.DiscountText = value;
+                PaymentPercentageText = null;
+            }
+        }
+    }
+
+    /// <summary>1.3.1.3 «%»: converted to an amount against the patient's TOTAL account amount.</summary>
+    public string? PaymentPercentageText
+    {
+        get => _paymentPercentageText;
+        set
+        {
+            if (SetProperty(ref _paymentPercentageText, value))
+            {
+                _accountEntry.PercentageText = value;
+            }
+        }
+    }
+
+    /// <summary>1.3.2.5 «استرداد» amount entry.</summary>
+    public string RefundAmountText { get => _refundAmountText; set => SetProperty(ref _refundAmountText, value); }
 
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
 
@@ -140,6 +187,15 @@ public sealed class PatientAccountViewModel : ViewModelBase
     public AsyncRelayCommand RecordPaymentCommand { get; }
 
     public AsyncRelayCommand SettleCommand { get; }
+
+    /// <summary>1.3.1.4.2: <c>Enter</c> in the amount / discount / percentage fields.</summary>
+    public AsyncRelayCommand AccountEntryEnterCommand { get; }
+
+    /// <summary>1.3.2.5 «استرداد».</summary>
+    public AsyncRelayCommand RefundCommand { get; }
+
+    /// <summary>1.3.2.7 «تصفير الحساب».</summary>
+    public AsyncRelayCommand ClearAccountCommand { get; }
 
     public AsyncRelayCommand PrintReceiptCommand { get; }
 
@@ -245,44 +301,177 @@ public sealed class PatientAccountViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowOperationsEmpty));
     }
 
-    /// <summary>Reuses the editor's record-payment flow (same texts).</summary>
+    /// <summary>
+    /// Reuses the editor's record-payment flow through the shared
+    /// <see cref="AccountEntryParser"/> (same texts, same surcharge convention, same
+    /// percentage conversion), so the two payment-entry screens cannot diverge.
+    /// </summary>
     private async Task RecordPaymentAsync(CancellationToken cancellationToken)
     {
         ErrorMessage = string.Empty;
         StatusMessage = string.Empty;
 
-        if (!decimal.TryParse(PaymentAmountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) || amount <= 0)
+        var amount = AccountEntryParser.ParsePaidAmount(PaymentAmountText);
+        if (!amount.IsValid)
         {
-            ErrorMessage = "قيمة المدفوع غير صالحة.";
+            ErrorMessage = amount.ErrorMessage!;
             return;
         }
 
-        decimal? discount = null;
-        if (!string.IsNullOrWhiteSpace(PaymentDiscountText))
+        var discount = AccountEntryParser.ParseDiscount(PaymentDiscountText);
+        if (!discount.IsValid)
         {
-            if (!decimal.TryParse(PaymentDiscountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) || d < 0)
-            {
-                ErrorMessage = "قيمة الخصم غير صالحة.";
-                return;
-            }
+            ErrorMessage = discount.ErrorMessage!;
+            return;
+        }
 
-            discount = d;
+        var percentage = AccountEntryParser.ParsePercentage(PaymentPercentageText);
+        if (!percentage.IsValid)
+        {
+            ErrorMessage = percentage.ErrorMessage!;
+            return;
+        }
+
+        if (amount.Kind == AccountEntryKind.Surcharge && discount.Value > 0m)
+        {
+            ErrorMessage = AccountEntryParser.SurchargeWithDiscountMessage;
+            return;
         }
 
         IsBusy = true;
         try
         {
-            var result = await _mediator.Send(new RecordPaymentCommand(_patientId, amount, discount), cancellationToken);
+            var result = amount.Kind == AccountEntryKind.Surcharge
+                ? await _mediator.Send(new RecordExtraChargeCommand(_patientId, amount.Value), cancellationToken)
+                : await _mediator.Send(
+                    new RecordPaymentCommand(_patientId, amount.Value, discount.Value > 0m ? discount.Value : null),
+                    cancellationToken);
             if (!result.IsSuccess)
             {
                 ErrorMessage = _presenter.Present(result.Error!);
                 return;
             }
 
+            _accountEntry.MarkPersisted();
             PaymentAmountText = string.Empty;
             PaymentDiscountText = null;
+            PaymentPercentageText = null;
             await RefreshAsync(cancellationToken);
-            StatusMessage = "تم تسجيل المدفوع.";
+            StatusMessage = amount.Kind == AccountEntryKind.Surcharge ? "تم تسجيل المبلغ الإضافي." : "تم تسجيل المدفوع.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// 1.3.1.4.2: one <c>Enter</c> press. The first press shows the resulting figures and
+    /// never reaches the mediator; the second press with unchanged inputs records through the
+    /// same command the record-payment button uses, then resets.
+    /// </summary>
+    private async Task AccountEntryEnterAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        // 1.3.1.3: a percentage is converted against the patient's TOTAL account amount.
+        if (!string.IsNullOrWhiteSpace(PaymentPercentageText))
+        {
+            var conversionError = _accountEntry.ApplyPercentage(TotalCharged);
+            if (conversionError is not null)
+            {
+                ErrorMessage = conversionError;
+                return;
+            }
+
+            // Round 4 fix: push the converted amount into the field through the backing
+            // field, not through the PaymentDiscountText setter. That setter exists to clear
+            // the percentage on a USER edit, and routing the conversion through it would
+            // clear the percentage (and, by the session's rule, the amount it just produced).
+            _paymentDiscountText = _accountEntry.DiscountText;
+            _paymentPercentageText = null;
+            OnPropertyChanged(nameof(PaymentDiscountText));
+            OnPropertyChanged(nameof(PaymentPercentageText));
+        }
+
+        var step = _accountEntry.PressEnter(TotalCharged, TotalPaid);
+        if (!step.IsValid)
+        {
+            ErrorMessage = step.ErrorMessage!;
+            return;
+        }
+
+        if (!step.ShouldPersist)
+        {
+            StatusMessage = step.StatusMessage!;
+            return;
+        }
+
+        await RecordPaymentAsync(cancellationToken);
+    }
+
+    /// <summary>1.3.2.5 «استرداد»: records a refund of the entered amount.</summary>
+    private async Task RefundAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        var parsed = AccountEntryParser.ParseRefundAmount(RefundAmountText);
+        if (!parsed.IsValid)
+        {
+            ErrorMessage = parsed.ErrorMessage!;
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new RecordRefundCommand(_patientId, parsed.Value), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            RefundAmountText = string.Empty;
+            await RefreshAsync(cancellationToken);
+            StatusMessage = "تم تسجيل الاسترداد.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>1.3.2.7 «تصفير الحساب»: voids every operation after a confirmation.</summary>
+    private async Task ClearAccountAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        var confirm = await _dialogs.ShowConfirmationAsync(
+            "تصفير الحساب",
+            "سيتم إلغاء جميع عمليات حساب المريض (تبقى ظاهرة بعلامة ملغاة). هل تريد المتابعة؟");
+        if (!confirm)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new ClearPatientAccountCommand(_patientId), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            await RefreshAsync(cancellationToken);
+            StatusMessage = result.Value > 0
+                ? $"تم تصفير الحساب ({result.Value} عملية)."
+                : "لا توجد عمليات لتصفيرها.";
         }
         finally
         {

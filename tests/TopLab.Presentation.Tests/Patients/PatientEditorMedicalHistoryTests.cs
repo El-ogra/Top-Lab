@@ -96,6 +96,12 @@ public class PatientEditorMedicalHistoryTests
                     Array.Empty<CustomGroupSummaryDto>()));
             }
 
+            if (request is TopLab.Application.Features.PriceListsCommentsAndCustomGroups.Queries.GetCustomGroupTestIds.GetCustomGroupTestIdsQuery)
+            {
+                return Task.FromResult((TResponse)(object)Result<IReadOnlyList<int>>.Success(
+                    Array.Empty<int>()));
+            }
+
             if (request is GetNextLabIdQuery)
             {
                 return Task.FromResult((TResponse)(object)Result<string>.Success("1"));

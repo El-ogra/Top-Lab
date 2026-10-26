@@ -67,11 +67,29 @@
                 <!-- Payment + print actions -->
                 <WrapPanel>
                     <TextBlock Text="دفعة:" Margin="2" VerticalAlignment="Center" />
-                    <TextBox Text="{Binding PaymentAmountText, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="2" />
+                    <TextBox Text="{Binding PaymentAmountText, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="2">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding AccountEntryEnterCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
                     <TextBlock Text="خصم:" Margin="8,2,2,2" VerticalAlignment="Center" />
-                    <TextBox Text="{Binding PaymentDiscountText, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="2" />
+                    <TextBox Text="{Binding PaymentDiscountText, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="2">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding AccountEntryEnterCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <TextBlock Text="%" Margin="8,2,2,2" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding PaymentPercentageText, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="2">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding AccountEntryEnterCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
                     <Button Content="تسجيل مدفوع" Margin="8,2,2,2" Padding="10,2" Command="{Binding RecordPaymentCommand}" />
                     <Button Content="تسوية كاملة" Margin="2" Padding="10,2" Command="{Binding SettleCommand}" />
+                    <TextBlock Text="استرداد:" Margin="8,2,2,2" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding RefundAmountText, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="2" />
+                    <Button Content="استرداد" Margin="2" Padding="10,2" Command="{Binding RefundCommand}" />
+                    <Button Content="تصفير الحساب" Margin="2" Padding="10,2" Command="{Binding ClearAccountCommand}" />
                     <Button Content="الإيصال" Margin="8,2,2,2" Padding="10,2" Command="{Binding PrintReceiptCommand}" />
                 </WrapPanel>
 

@@ -46,12 +46,21 @@
         
         <!-- Error Message -->
         <TextBlock Grid.Row="4" Text="{Binding ErrorMessage}" Foreground="Red" FontWeight="SemiBold" />
-        
+
+        <!-- Status Message (1.22.12.x feedback: printed / previewed / reviewed) -->
+        <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Foreground="#1E3A5F" FontWeight="SemiBold" />
+
         <!-- Action Buttons -->
         <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="مسح" Command="{Binding ClearCommand}" Margin="0,0,8,0"/>
             <Button Content="تعليق" Command="{Binding OpenCommentPickerCommand}" Margin="0,0,8,0"/>
-            <Button Content="حفظ" Command="{Binding SaveCommand}" IsDefault="True"/>
+            <Button Content="حفظ" Command="{Binding SaveCommand}" IsDefault="True" Margin="0,0,8,0"/>
+            <!-- 1.22.12.2 «طباعة» / 1.22.12.3 «معاينة الطباعة» / 1.22.12.4 «مراجعة»:
+                 the same shared Application handlers the profile and culture screens use. -->
+            <Separator Margin="0,0,8,0"/>
+            <Button Content="طباعة" Command="{Binding PrintCommand}" Margin="0,0,8,0"/>
+            <Button Content="معاينة" Command="{Binding PreviewCommand}" Margin="0,0,8,0"/>
+            <Button Content="مراجعة" Command="{Binding ReviewCommand}"/>
         </StackPanel>
     </Grid>
 </UserControl>

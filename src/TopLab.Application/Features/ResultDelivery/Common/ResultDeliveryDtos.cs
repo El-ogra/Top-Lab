@@ -50,4 +50,6 @@ public sealed record DeliveryAccountDto(
     decimal TotalPaid,
     decimal Balance,
     decimal RemainingToLab,
-    decimal RemainingToPatient);
+    decimal RemainingToPatient,
+    // STAGE R1 / GAP-04: the patient's own notes reach the delivery handover.
+    string? PatientNotes = null);

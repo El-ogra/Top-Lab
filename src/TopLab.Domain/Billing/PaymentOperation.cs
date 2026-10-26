@@ -12,6 +12,9 @@ public sealed class PaymentOperation : AuditableEntity<PaymentOperationId>
 
     public decimal? DiscountAmount { get; private set; }
 
+    /// <summary>Amount returned to the patient (refund). Null/0 for non-refund operations.</summary>
+    public decimal? RefundAmount { get; private set; }
+
     public bool IsExtraCharge { get; private set; }
 
     public OperationType OperationType { get; private set; }
@@ -40,7 +43,8 @@ public sealed class PaymentOperation : AuditableEntity<PaymentOperationId>
         bool isExtraCharge,
         OperationType operationType,
         int receivedByUserId,
-        DateTime operationAtUtc)
+        DateTime operationAtUtc,
+        decimal? refundAmount = null)
         : base(id)
     {
         PatientId = patientId;
@@ -50,6 +54,7 @@ public sealed class PaymentOperation : AuditableEntity<PaymentOperationId>
         OperationType = operationType;
         ReceivedByUserId = receivedByUserId;
         OperationAtUtc = operationAtUtc;
+        RefundAmount = refundAmount;
     }
 
     public static PaymentOperation Create(
@@ -60,7 +65,8 @@ public sealed class PaymentOperation : AuditableEntity<PaymentOperationId>
         DateTime operationAtUtc,
         decimal? discountAmount = null,
         bool isExtraCharge = false,
-        OperationType operationType = OperationType.Payment)
+        OperationType operationType = OperationType.Payment,
+        decimal? refundAmount = null)
     {
         if (amount < 0)
             throw new ArgumentException("Amount must be >= 0.", nameof(amount));
@@ -72,7 +78,19 @@ public sealed class PaymentOperation : AuditableEntity<PaymentOperationId>
             throw new ArgumentException("An extra charge cannot carry a discount.", nameof(discountAmount));
         if (operationType == OperationType.FullSettlement && amount <= 0)
             throw new ArgumentException("Settlement amount must be > 0.", nameof(amount));
-        return new PaymentOperation(id, patientId, amount, discountAmount, isExtraCharge, operationType, receivedByUserId, operationAtUtc);
+        if (operationType == OperationType.Refund)
+        {
+            if (refundAmount is null || refundAmount <= 0)
+                throw new ArgumentException("A refund operation requires RefundAmount > 0.", nameof(refundAmount));
+            if (amount != 0)
+                throw new ArgumentException("A refund operation must have Amount = 0.", nameof(amount));
+        }
+        else
+        {
+            if (refundAmount is not null)
+                throw new ArgumentException("Non-refund operations must not carry a RefundAmount.", nameof(refundAmount));
+        }
+        return new PaymentOperation(id, patientId, amount, discountAmount, isExtraCharge, operationType, receivedByUserId, operationAtUtc, refundAmount);
     }
 
     public void Void()

@@ -14,6 +14,7 @@ public sealed class PaymentOperationConfiguration : IEntityTypeConfiguration<Pay
         b.Property(e => e.PatientId).HasConversion(v => v.Value, v => PatientId.Create(v)).IsRequired();
         b.Property(e => e.Amount).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired();
         b.Property(e => e.DiscountAmount).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired(false);
+        b.Property(e => e.RefundAmount).HasColumnType("decimal(18,2)").HasPrecision(18,2).IsRequired(false);
         b.Property(e => e.IsExtraCharge).IsRequired();
         b.Property(e => e.OperationType).HasConversion<int>().HasColumnType("tinyint").IsRequired();
         b.Property(e => e.ReceivedByUserId).IsRequired();

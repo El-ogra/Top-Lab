@@ -9,7 +9,18 @@
             <DatePicker SelectedDate="{Binding From, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,8,0"/>
             <TextBlock Text="إلى:" VerticalAlignment="Center" Margin="0,0,6,0"/>
             <DatePicker SelectedDate="{Binding To, UpdateSourceTrigger=PropertyChanged}" Width="140" Margin="0,0,8,0"/>
-            <Button Content="عرض" Width="70" Margin="0,0,12,0" Command="{Binding LoadCommand}"/>
+            <Button Content="عرض" Width="70" Margin="0,0,6,0" Command="{Binding LoadCommand}"/>
+            <!-- 1.4.1.4.2 «Refresh»: reloads the delivery list for the current period. -->
+            <Button Content="تحديث" Width="70" Margin="0,0,12,0" Command="{Binding RefreshCommand}"/>
+            <!-- 1.4.1.4.5 «Copy»: copies the selected entry's summary. -->
+            <Button Content="نسخ" Width="60" Margin="0,0,8,0" Command="{Binding CopyCommand}" CommandParameter="{Binding SelectedItem}"/>
+            <!-- 1.4.1.4.7 «بيانات المريض»: opens the patient's data from the delivery screen. -->
+            <Button Content="بيانات المريض" Width="100" Margin="0,0,12,0" Command="{Binding PatientDataCommand}" CommandParameter="{Binding SelectedItem}"/>
+            <!-- 1.4.1.4.11 «طباعة ظرف»: the result envelope for the selected patient. -->
+            <Button Content="طباعة ظرف" Width="90" Margin="0,0,12,0" Command="{Binding PrintEnvelopeCommand}" CommandParameter="{Binding SelectedItem}"/>
+            <Button Content="حساب المريض" Width="90" Margin="0,0,8,0" Command="{Binding PatientAccountCommand}" CommandParameter="{Binding SelectedItem}"/>
+            <Button Content="تقرير مجمع" Width="90" Margin="0,0,8,0" Command="{Binding CombinedReportCommand}" CommandParameter="{Binding SelectedItem}"/>
+            <Button Content="تقرير فارغ" Width="90" Margin="0,0,8,0" Command="{Binding EmptyReportCommand}" CommandParameter="{Binding SelectedItem}"/>
             <Button Content="قصاصة تقرير جماعية" Width="150" Margin="0,0,12,0" Command="{Binding OpenGroupSlipsCommand}"/>
             <Button Content="رجوع" Width="70" Command="{Binding BackCommand}"/>
         </StackPanel>
@@ -58,6 +69,7 @@
                 <DataGridTextColumn Header="التاريخ" Binding="{Binding RegistrationDateUtc, StringFormat={}{0:yyyy-MM-dd}}" Width="100"/>
                 <DataGridTextColumn Header="الحالة" Binding="{Binding VisitStatus}" Width="60"/>
                 <DataGridTextColumn Header="غير المسلَّم" Binding="{Binding UndeliveredCount}" Width="80"/>
+                <DataGridTextColumn Header="ملاحظات" Binding="{Binding PatientNotes}" Width="120"/>
                 <DataGridTemplateColumn Header="تسليم" Width="70">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

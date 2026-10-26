@@ -7,6 +7,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -22,8 +23,12 @@
             </StackPanel>
         </Border>
 
+        <!-- Patient notes (GAP-05) -->
+        <TextBlock Grid.Row="1" Text="{Binding PatientNotes}" TextWrapping="Wrap" Foreground="#555" Margin="0,0,0,8"
+                   Visibility="{Binding PatientNotes, Converter={StaticResource NullToVis}}"/>
+
         <!-- Culture header fields -->
-        <Grid Grid.Row="1" Margin="0,0,0,8">
+        <Grid Grid.Row="2" Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
@@ -60,7 +65,7 @@
         </Grid>
 
         <!-- Loading -->
-        <ProgressBar Grid.Row="2" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
+        <ProgressBar Grid.Row="3" Height="6" IsIndeterminate="True" Margin="0,0,0,8">
             <ProgressBar.Style>
                 <Style TargetType="ProgressBar">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -74,7 +79,7 @@
         </ProgressBar>
 
         <!-- Empty state -->
-        <TextBlock Grid.Row="3" Text="لا مضادات حيوية مرفقة بهذه المزرعة" Foreground="#666666"
+        <TextBlock Grid.Row="4" Text="لا مضادات حيوية مرفقة بهذه المزرعة" Foreground="#666666"
                    HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock.Style>
                 <Style TargetType="TextBlock">
@@ -89,7 +94,7 @@
         </TextBlock>
 
         <!-- Sensitivity Grid -->
-        <DataGrid Grid.Row="3"
+        <DataGrid Grid.Row="4"
                   ItemsSource="{Binding SensitivityRows}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
@@ -123,7 +128,7 @@
         </DataGrid>
 
         <!-- Microscopy -->
-        <GroupBox Grid.Row="4" Header="الفحص المجهري" Margin="0,8,0,0">
+        <GroupBox Grid.Row="5" Header="الفحص المجهري" Margin="0,8,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -176,7 +181,7 @@
         </GroupBox>
 
         <!-- Report preview -->
-        <Border Grid.Row="5" Background="#FAFAFA" Padding="8" Margin="0,8,0,0" BorderBrush="#DDD" BorderThickness="1">
+        <Border Grid.Row="6" Background="#FAFAFA" Padding="8" Margin="0,8,0,0" BorderBrush="#DDD" BorderThickness="1">
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -200,11 +205,11 @@
         </Border>
 
         <!-- Messages -->
-        <TextBlock Grid.Row="6" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
-        <TextBlock Grid.Row="6" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,20,0,0"/>
+        <TextBlock Grid.Row="7" Text="{Binding StatusMessage}" Foreground="Green" Margin="0,4,0,0"/>
+        <TextBlock Grid.Row="7" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,20,0,0"/>
 
         <!-- Action Buttons -->
-        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
             <Button Content="حفظ" Margin="0,0,6,0" Padding="12,6" Command="{Binding SaveCommand}"/>
             <Button Content="اعتماد" Margin="0,0,6,0" Padding="12,6" Command="{Binding VerifyCommand}"/>
             <Button Content="إلغاء اعتماد" Margin="0,0,6,0" Padding="12,6" Command="{Binding UnverifyCommand}"/>
@@ -212,7 +217,7 @@
             <Button Content="تقرير" Margin="0,0,6,0" Padding="12,6" Command="{Binding ShowReportCommand}"/>
             <Button Content="تعليق" Margin="0,0,6,0" Padding="12,6" Command="{Binding OpenCommentPickerCommand}"/>
         </StackPanel>
-        <TextBlock Grid.Row="7" Text="{Binding PickedCommentPreview}" Foreground="Gray" TextWrapping="Wrap" Margin="0,34,0,0"
+        <TextBlock Grid.Row="8" Text="{Binding PickedCommentPreview}" Foreground="Gray" TextWrapping="Wrap" Margin="0,34,0,0"
                    Visibility="{Binding HasPickedComment, Converter={StaticResource BoolToVis}}"/>
     </Grid>
 </UserControl>

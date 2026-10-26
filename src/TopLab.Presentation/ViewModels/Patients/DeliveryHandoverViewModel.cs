@@ -58,6 +58,7 @@ public sealed class DeliveryHandoverViewModel : ViewModelBase
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
+    private string _patientNotes = string.Empty;
 
     public DeliveryHandoverViewModel(
         ISender mediator,
@@ -138,6 +139,12 @@ public sealed class DeliveryHandoverViewModel : ViewModelBase
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public string PatientNotes
+    {
+        get => _patientNotes;
+        private set => SetProperty(ref _patientNotes, value);
+    }
+
     public AsyncRelayCommand DeliverCommand { get; }
     public RelayCommand BackCommand { get; }
 
@@ -156,6 +163,7 @@ public sealed class DeliveryHandoverViewModel : ViewModelBase
             if (accountResult.IsSuccess && accountResult.Value is not null)
             {
                 Account = accountResult.Value;
+                PatientNotes = accountResult.Value.PatientNotes ?? string.Empty;
             }
             else if (accountResult.Error is not null)
             {

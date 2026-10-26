@@ -200,6 +200,10 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                     b.Property<int>("ReceivedByUserId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("RefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PatientId");

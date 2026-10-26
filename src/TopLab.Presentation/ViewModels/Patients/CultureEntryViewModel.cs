@@ -97,6 +97,7 @@ public sealed class CultureEntryViewModel : ViewModelBase
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
+    private string _patientNotes = string.Empty;
     private string? _pickedCommentPreview;
 
     public CultureEntryViewModel(
@@ -204,6 +205,12 @@ public sealed class CultureEntryViewModel : ViewModelBase
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public string PatientNotes
+    {
+        get => _patientNotes;
+        private set => SetProperty(ref _patientNotes, value);
+    }
+
     public AsyncRelayCommand SaveCommand { get; }
     public AsyncRelayCommand VerifyCommand { get; }
     public AsyncRelayCommand UnverifyCommand { get; }
@@ -259,6 +266,7 @@ public sealed class CultureEntryViewModel : ViewModelBase
                 IsDirectMicroscopy = grid.Microscopy?.IsDirect ?? false;
                 ParentIsReviewed = grid.ParentIsReviewed;
                 ParentIsPrinted = grid.ParentIsPrinted;
+                PatientNotes = grid.PatientNotes ?? string.Empty;
                 OnPropertyChanged(nameof(IsLocked));
 
                 var rows = new ObservableCollection<CultureSensitivityRow>();

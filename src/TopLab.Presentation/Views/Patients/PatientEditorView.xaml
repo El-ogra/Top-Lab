@@ -30,11 +30,29 @@
                 <TextBlock Text="{Binding Balance}" Margin="0,4,8,4" VerticalAlignment="Center" FontWeight="Bold" />
                 <Button Content="عرض الحساب" Margin="8,4,4,4" Padding="10,2" Command="{Binding OpenAccountCommand}" />
                 <TextBlock Text="دفعة:" Margin="8,4,4,4" VerticalAlignment="Center" />
-                <TextBox Text="{Binding PaymentAmountText, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0,4" />
+                <TextBox Text="{Binding PaymentAmountText, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0,4">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding AccountEntryEnterCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
                 <TextBlock Text="خصم:" Margin="8,4,4,4" VerticalAlignment="Center" />
-                <TextBox Text="{Binding PaymentDiscountText, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="0,4" />
+                <TextBox Text="{Binding PaymentDiscountText, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="0,4">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding AccountEntryEnterCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
+                <TextBlock Text="%" Margin="8,4,4,4" VerticalAlignment="Center" />
+                <TextBox Text="{Binding PaymentPercentageText, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="0,4">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding AccountEntryEnterCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
                 <Button Content="تسجيل مدفوع" Margin="8,4,4,4" Padding="10,2" Command="{Binding RecordPaymentCommand}" />
                 <Button Content="تسوية كاملة" Margin="4" Padding="10,2" Command="{Binding SettleCommand}" />
+                <TextBlock Text="استرداد:" Margin="8,4,4,4" VerticalAlignment="Center" />
+                <TextBox Text="{Binding RefundAmountText, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0,4" />
+                <Button Content="استرداد" Margin="4" Padding="10,2" Command="{Binding RefundCommand}" />
+                <Button Content="تصفير الحساب" Margin="4" Padding="10,2" Command="{Binding ClearAccountCommand}" />
             </WrapPanel>
             <WrapPanel>
                 <Button Content="جديد" Margin="4" Padding="14,2" Command="{Binding NewPatientCommand}" />
@@ -47,6 +65,10 @@
                 <Button Content="الإيصال" Margin="4" Padding="14,2" Command="{Binding PrintReceiptCommand}" />
                 <Button Content="الفاتورة" Margin="4" Padding="14,2" Command="{Binding PrintInvoiceCommand}" />
                 <Button Content="طلب تحاليل" Margin="4" Padding="14,2" Command="{Binding PrintLabOrderCommand}" />
+<Button Content="مغلف" Margin="4" Padding="14,2" Command="{Binding PrintEnvelopeCommand}" IsEnabled="{Binding IsEditMode}" />
+  <Button Content="نافذة المرضى" Margin="4" Padding="14,2" Command="{Binding PatientWindowCommand}" />
+  <Button Content="نتائج التحاليل" Margin="4" Padding="14,2" Command="{Binding LabResultsCommand}" IsEnabled="{Binding IsEditMode}" />
+  <Button Content="متابعة" Margin="4" Padding="14,2" Command="{Binding FollowUpCommand}" IsEnabled="{Binding IsEditMode}" />
             </WrapPanel>
             <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="4,2" />
             <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="4,0" />
@@ -508,6 +530,40 @@
                     </ListView.ItemTemplate>
                 </ListView>
                 <TextBlock DockPanel.Dock="Top" Text="كتالوج التحاليل:" FontWeight="Bold" Margin="0,4" />
+                <!-- 1.2.2.5.1.1 «start»: the master test list's filter field. Narrows by name OR code. -->
+                <!-- 1.2.2.5.1.2 «TM / TG / CG»: three mutually exclusive view-filter modes (D-02).
+                     Radio buttons, so exactly one is active at any time; no code-behind. -->
+                <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                    <RadioButton Content="TM" GroupName="CatalogMode" Margin="2,0,10,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding IsTmMode, Mode=TwoWay}"
+                                 ToolTip="كل التحاليل" />
+                    <RadioButton Content="TG" GroupName="CatalogMode" Margin="0,0,10,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding IsTgMode, Mode=TwoWay}"
+                                 ToolTip="بحث بالاسم أو الكود" />
+                    <RadioButton Content="CG" GroupName="CatalogMode" Margin="0,0,10,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding IsCgMode, Mode=TwoWay}"
+                                 ToolTip="مجموعاتي المخصصة" />
+                </WrapPanel>
+                <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                    <TextBlock Text="بحث:" Margin="2" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding CatalogFilterText, UpdateSourceTrigger=PropertyChanged}"
+                             Width="180" Margin="2"
+                             IsEnabled="{Binding IsCatalogSearchEnabled}" />
+                    <Button Content="مسح" Margin="2" Padding="8,0" Command="{Binding ClearCatalogFilterCommand}" />
+                    <TextBlock Text="لا توجد تحاليل مطابقة للبحث." Foreground="#666666" Margin="6,2,2,2"
+                               VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowCatalogFilterNoMatch}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </WrapPanel>
                 <TextBlock DockPanel.Dock="Top" Text="لا توجد تحاليل في الكتالوج." Foreground="#666666" Margin="0,0,0,4">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
@@ -520,7 +576,7 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
-                <ListView ItemsSource="{Binding CatalogTests}" Margin="0,0,0,4">
+                <ListView ItemsSource="{Binding FilteredCatalogTests}" Margin="0,0,0,4">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
