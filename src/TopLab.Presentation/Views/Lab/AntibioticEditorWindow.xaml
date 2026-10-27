@@ -8,6 +8,7 @@
     <DockPanel Margin="20">
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
             <Button Content="حفظ" Width="90" Margin="0,0,8,0" Click="SaveButton_Click" IsDefault="True" />
+            <Button Content="تراجع" Width="90" Margin="0,0,8,0" Command="{Binding UndoCommand}" />
             <Button Content="إلغاء" Width="80" Click="CancelButton_Click" IsCancel="True" />
         </StackPanel>
         <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,8,0,0" />

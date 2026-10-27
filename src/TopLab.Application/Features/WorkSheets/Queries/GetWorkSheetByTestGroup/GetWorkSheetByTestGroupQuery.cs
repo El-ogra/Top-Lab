@@ -9,7 +9,8 @@ public sealed record GetWorkSheetByTestGroupQuery(
     int? TestGroupId = null,
     IReadOnlyList<int>? TestIds = null,
     DateOnly? From = null,
-    DateOnly? To = null)
+    DateOnly? To = null,
+    bool? UnfinishedOnly = null)
     : IRequest<Result<WorkSheetDto>>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => WorkSheetsAccessPolicy.PrintWorksheet;

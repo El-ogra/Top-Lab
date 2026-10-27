@@ -22,7 +22,7 @@ public sealed class SearchPatientsGlobalQueryHandler
         SearchPatientsGlobalQuery request, CancellationToken cancellationToken)
     {
         var term = request.Text?.Trim();
-        var nameAssist = _db.Set<SystemSettings>().SingleOrDefault()?.EnablePatientNameSearchAssist ?? false;
+        var nameAssist = _db.Set<SystemSettings>().SingleOrDefault()?.EnablePatientNameSearchAssist ?? true;
 
         IQueryable<Patient> query = _db.Set<Patient>()
             .Where(p => !p.IsDeleted);
@@ -39,9 +39,23 @@ public sealed class SearchPatientsGlobalQueryHandler
 
             query = query.Where(p =>
                 (nameAssist && p.FullName.ToLowerInvariant().Contains(lowerTerm))
+                || p.FullName.ToLowerInvariant() == lowerTerm
                 || (p.LabId != null && p.LabId.Value.Trim() == term)
                 || (p.NationalId != null && p.NationalId.Trim() == term)
                 || phonePatientIds.Contains(p.Id));
+        }
+
+        // GAP-06: exact card number search (inert when null/whitespace).
+        if (!string.IsNullOrWhiteSpace(request.CardNumber))
+        {
+            var cardNumber = request.CardNumber.Trim();
+            query = query.Where(p => p.CardNumber != null && p.CardNumber.Trim() == cardNumber);
+        }
+
+        // GAP-07: not-delivered filter — patients with at least one undelivered PatientTest.
+        if (request.NotDelivered == true)
+        {
+            query = query.Where(p => _db.Set<PatientTest>().Any(pt => pt.PatientId.Value == p.Id.Value && !pt.IsDelivered));
         }
 
         // ------------------------------------------------------------------

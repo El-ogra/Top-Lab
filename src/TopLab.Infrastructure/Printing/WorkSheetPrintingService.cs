@@ -35,6 +35,54 @@ public sealed class WorkSheetPrintingService : IWorkSheetPrintingService
         _dispatcher = dispatcher;
     }
 
+    public async Task<Result> PrintGroupWorkSheetAsync(string workSheetToken, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            WorkSheetDto? sheet = null;
+            try
+            {
+                var envelope = JsonSerializer.Deserialize<WorkSheetGroupPrintEnvelope>(workSheetToken);
+                sheet = envelope is null ? null : JsonSerializer.Deserialize<WorkSheetDto>(envelope.WorkSheetJson);
+            }
+            catch (JsonException)
+            {
+                sheet = null;
+            }
+
+            if (sheet is null)
+            {
+                return Result.Failure(Error.Unexpected("بيانات ورقة العمل غير صالحة."));
+            }
+
+            var assignment = _db.Set<PrinterAssignment>().FirstOrDefault(a => a.OutputType == PrinterOutputType.Reports);
+            if (assignment is null)
+            {
+                return Result.Failure(Error.Unexpected("لم يتم تعيين طابعة لتقارير المختبر."));
+            }
+
+            var labText = await _labTextStore.GetAsync(LabPrintTextScope.Report, cancellationToken);
+            if (!labText.IsSuccess)
+            {
+                return Result.Failure(labText.Error!);
+            }
+
+            var pdfPath = Path.Combine(Path.GetTempPath(), $"TopLabWorkSheetGroup-{Guid.NewGuid():N}.pdf");
+            await _writer.WriteGroupPdfAsync(pdfPath, sheet, labText.Value!, cancellationToken);
+            await _dispatcher.DispatchAsync(pdfPath, assignment.PrinterName, cancellationToken);
+
+            return Result.Success();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            return Result.Failure(Error.Unexpected("تعذر طباعة ورقة العمل."));
+        }
+    }
+
     public async Task<Result> PrintWorkSheetAsync(string workSheetToken, CancellationToken cancellationToken = default)
     {
         try

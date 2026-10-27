@@ -6,6 +6,7 @@ using TopLab.Application.Features.CultureResults.Commands.VerifyCultureResult;
 using TopLab.Application.Features.CultureResults.Common;
 using TopLab.Application.Features.CultureResults.Queries.GetCultureEntryGrid;
 using TopLab.Application.Features.CultureResults.Queries.GetCultureReport;
+using TopLab.Application.Features.ResultsEntry.Commands.ReviewResult;
 using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
@@ -119,6 +120,8 @@ public sealed class CultureEntryViewModel : ViewModelBase
         PrintCommand = new AsyncRelayCommand(async (_, ct) => await PrintAsync(ct));
         ShowReportCommand = new AsyncRelayCommand(async (_, ct) => await ShowReportAsync(ct));
         OpenCommentPickerCommand = new AsyncRelayCommand(async (_, ct) => await OpenCommentPickerAsync(ct));
+        PreviewCommand = new AsyncRelayCommand(async (_, ct) => await PreviewAsync(ct));
+        ReviewCommand = new AsyncRelayCommand(async (_, ct) => await ReviewAsync(ct));
     }
 
     public int PatientTestId => _patientTestId;
@@ -216,6 +219,8 @@ public sealed class CultureEntryViewModel : ViewModelBase
     public AsyncRelayCommand UnverifyCommand { get; }
     public AsyncRelayCommand PrintCommand { get; }
     public AsyncRelayCommand ShowReportCommand { get; }
+    public AsyncRelayCommand PreviewCommand { get; }
+    public AsyncRelayCommand ReviewCommand { get; }
     public AsyncRelayCommand OpenCommentPickerCommand { get; }
 
     /// <summary>W-02 S8 (WP-13): picked standard comment, preview only — never saved.</summary>
@@ -500,6 +505,63 @@ public sealed class CultureEntryViewModel : ViewModelBase
             {
                 ErrorMessage = "تعذّرت الطباعة: " + outcome.ErrorMessage;
             }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task PreviewAsync(CancellationToken cancellationToken)
+    {
+        if (_patientTestId == 0)
+        {
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new GetCultureReportQuery(_patientTestId), cancellationToken);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                Report = result.Value;
+                StatusMessage = "تم فتح المعاينة.";
+            }
+            else if (result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ReviewAsync(CancellationToken cancellationToken)
+    {
+        if (_patientTestId == 0)
+        {
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new ReviewResultCommand(_patientTestId), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            StatusMessage = "تم اعتماد النتيجة.";
+            await LoadAsync(_patientTestId, cancellationToken);
         }
         finally
         {

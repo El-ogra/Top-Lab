@@ -17,6 +17,9 @@ public sealed class PatientsHubViewModel : ViewModelBase
     private bool _deliverResultsEnabled;
     private bool _blankReportEnabled;
     private bool _historyReportsEnabled;
+    private bool _periodListEnabled;
+    private DateTime? _periodFrom;
+    private DateTime? _periodTo;
 
     public PatientsHubViewModel(INavigationService navigation)
     {
@@ -85,6 +88,21 @@ public sealed class PatientsHubViewModel : ViewModelBase
                 _ = vm.LoadAsync(0);
             }
         });
+
+        // GAP-15 (1.2.1.4): period-list action — display the patients registered in a
+        // chosen period. Reuses the existing search screen and its F5 registration-date
+        // filter; no new query, no schema change.
+        PeriodListEnabled = true;
+        OpenPeriodListCommand = new RelayCommand(_ =>
+        {
+            _navigation.NavigateTo<PatientSearchViewModel>();
+            if (_navigation.CurrentViewModel is PatientSearchViewModel vm)
+            {
+                vm.FromDate = PeriodFrom;
+                vm.ToDate = PeriodTo;
+                _ = vm.LoadAsync();
+            }
+        });
     }
 
     public string HelpText => "من هنا تدير كل ما يخص المرضى: تسجيل بيانات مريض جديد أو تعديل بيانات مسجل، ثم إدخال النتائج والبحث عن المرضى وتسليم النتائج.";
@@ -136,4 +154,26 @@ public sealed class PatientsHubViewModel : ViewModelBase
     public RelayCommand OpenBlankReportCommand { get; }
 
     public RelayCommand OpenHistoryReportsCommand { get; }
+
+    /// <summary>GAP-15: inclusive first day of the period list.</summary>
+    public DateTime? PeriodFrom
+    {
+        get => _periodFrom;
+        set => SetProperty(ref _periodFrom, value);
+    }
+
+    /// <summary>GAP-15: inclusive last day of the period list.</summary>
+    public DateTime? PeriodTo
+    {
+        get => _periodTo;
+        set => SetProperty(ref _periodTo, value);
+    }
+
+    public bool PeriodListEnabled
+    {
+        get => _periodListEnabled;
+        set => SetProperty(ref _periodListEnabled, value);
+    }
+
+    public RelayCommand OpenPeriodListCommand { get; }
 }

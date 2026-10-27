@@ -26,12 +26,22 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
     private string _errorMessage = string.Empty;
     private bool _isBusy;
 
+    // GAP-23: snapshot of the last-loaded/saved values, so Undo can revert
+    // every editable field without persisting anything.
+    private string _loadedName = string.Empty;
+    private bool _loadedIsPregnancyFlagged;
+    private bool _loadedIsChildrenFlagged;
+    private string? _loadedSymbol;
+    private string? _loadedScientificName;
+    private string? _loadedCommercialName;
+
     public AntibioticEditorViewModel(ISender mediator, ResultErrorPresenter presenter)
     {
         _mediator = mediator;
         _presenter = presenter;
 
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
+        UndoCommand = new AsyncRelayCommand(async (_, ct) => await UndoAsync(ct));
     }
 
     public string Name { get => _name; set => SetProperty(ref _name, value); }
@@ -44,6 +54,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
 
     public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand UndoCommand { get; }
 
     public void InitializeNew()
     {
@@ -55,6 +66,7 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
         Symbol = null;
         ScientificName = null;
         CommercialName = null;
+        CaptureSnapshot();
     }
 
     public void InitializeEdit(AntibioticDto dto)
@@ -67,6 +79,31 @@ public sealed class AntibioticEditorViewModel : ViewModelBase
         Symbol = dto.Symbol;
         ScientificName = dto.ScientificName;
         CommercialName = dto.CommercialName;
+        CaptureSnapshot();
+    }
+
+    private void CaptureSnapshot()
+    {
+        _loadedName = Name;
+        _loadedIsPregnancyFlagged = IsPregnancyFlagged;
+        _loadedIsChildrenFlagged = IsChildrenFlagged;
+        _loadedSymbol = Symbol;
+        _loadedScientificName = ScientificName;
+        _loadedCommercialName = CommercialName;
+    }
+
+    private async Task UndoAsync(CancellationToken cancellationToken = default)
+    {
+        // GAP-23: revert every editable field to its last-loaded/saved value.
+        // No save/update command is dispatched — Undo never persists.
+        ErrorMessage = string.Empty;
+        Name = _loadedName;
+        IsPregnancyFlagged = _loadedIsPregnancyFlagged;
+        IsChildrenFlagged = _loadedIsChildrenFlagged;
+        Symbol = _loadedSymbol;
+        ScientificName = _loadedScientificName;
+        CommercialName = _loadedCommercialName;
+        await Task.CompletedTask;
     }
 
     public async Task<bool> SaveAsync()

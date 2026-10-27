@@ -38,4 +38,8 @@ public sealed record SearchPatientsGlobalQuery(
     AgeValueBand? Age = null,
     // F5 — one function, a From/To pair
     DateOnly? From = null,
-    DateOnly? To = null) : IRequest<Result<IReadOnlyList<PatientSearchHitDto>>>;
+    DateOnly? To = null,
+    // GAP-06: exact card number search (appended at tail, default null = inert)
+    string? CardNumber = null,
+    // GAP-07: not-delivered filter (appended at tail, default null = inert)
+    bool? NotDelivered = null) : IRequest<Result<IReadOnlyList<PatientSearchHitDto>>>;

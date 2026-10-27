@@ -95,7 +95,9 @@ public class SearchPatientsGlobalQueryHandlerTests
         var result = await handler.Handle(new SearchPatientsGlobalQuery("Ahmed"), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Empty(result.Value!);
+        // GAP-08: name search is now enabled by default (code-level ?? true).
+        // Exact-name match still returns the patient even without SystemSettings.
+        Assert.Single(result.Value!);
     }
 
     [Fact]

@@ -102,7 +102,7 @@ public sealed class GetWorkSheetByTestGroupQueryHandler
             .Select(def => new WorkSheetSectionDto(
                 def.SectionId,
                 def.SectionName,
-                WorkSheetLines.Select(_db, def.TestIds, from, to)))
+                WorkSheetLines.Select(_db, def.TestIds, from, to, request.UnfinishedOnly)))
             .ToList();
 
         return Task.FromResult(Result<WorkSheetDto>.Success(new WorkSheetDto(

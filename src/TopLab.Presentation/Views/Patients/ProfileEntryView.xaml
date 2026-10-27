@@ -139,6 +139,8 @@
             <Button Content="اعتماد" Margin="0,0,6,0" Padding="12,6" Command="{Binding VerifyCommand}"/>
             <Button Content="إلغاء اعتماد" Margin="0,0,6,0" Padding="12,6" Command="{Binding UnverifyCommand}"/>
             <Button Content="طباعة" Margin="0,0,6,0" Padding="12,6" Command="{Binding PrintCommand}"/>
+            <Button Content="معاينة" Margin="0,0,6,0" Padding="12,6" Command="{Binding PreviewCommand}"/>
+            <Button Content="مراجعة" Margin="0,0,6,0" Padding="12,6" Command="{Binding ReviewCommand}"/>
             <Button Content="تقرير" Margin="0,0,6,0" Padding="12,6" Command="{Binding ShowReportCommand}"/>
             <Button Content="تعديل بعد الطباعة" Margin="0,0,6,0" Padding="12,6" Command="{Binding AmendCommand}"/>
             <Button Content="سجل التعديلات" Margin="0,0,6,0" Padding="12,6" Command="{Binding ShowAmendmentsLogCommand}"/>

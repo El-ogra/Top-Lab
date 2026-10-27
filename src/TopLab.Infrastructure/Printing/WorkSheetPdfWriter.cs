@@ -127,6 +127,105 @@ public sealed class WorkSheetPdfWriter : IWorkSheetPdfWriter
         return Task.CompletedTask;
     }
 
+    public Task WriteGroupPdfAsync(
+        string absolutePath,
+        WorkSheetDto sheet,
+        LabPrintTextDto labText,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(absolutePath);
+        ArgumentNullException.ThrowIfNull(sheet);
+        ArgumentNullException.ThrowIfNull(labText);
+
+        var directory = Path.GetDirectoryName(absolutePath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            throw new DirectoryNotFoundException($"Directory not found: {directory}");
+        }
+
+        if (File.Exists(absolutePath))
+        {
+            throw new IOException($"File already exists: {absolutePath}");
+        }
+
+#pragma warning disable CA1416 // Windows-only WPF app
+        var fontFamily = ArabicFontResolver.Resolve(labText.FontFamily);
+#pragma warning restore CA1416
+        var fontSize = labText.FontSizePt > 0 ? labText.FontSizePt : 12;
+
+        Document
+            .Create(document =>
+            {
+                document.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(28);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(style => style
+                        .FontFamily(fontFamily)
+                        .FontSize(fontSize)
+                        .DirectionFromRightToLeft());
+
+                    page.ContentFromRightToLeft();
+                    page.Content()
+                        .Column(column =>
+                        {
+                            if (!string.IsNullOrWhiteSpace(labText.LabName))
+                            {
+                                column.Item().Text(labText.LabName).SemiBold().FontSize(fontSize + 2).AlignRight();
+                            }
+
+                            column.Item().PaddingVertical(4).Text("ورقة عمل مجموعة التحاليل").SemiBold().FontSize(fontSize + 6).AlignCenter();
+
+                            var period = sheet.From == sheet.To
+                                ? $"الفترة: {sheet.From.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}"
+                                : $"الفترة: {sheet.From.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)} إلى {sheet.To.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
+                            column.Item().Text(period).AlignRight();
+
+                            column.Item().PaddingTop(4).LineHorizontal(1);
+
+                            foreach (var section in sheet.Sections)
+                            {
+                                column.Item().PaddingTop(6).Text(section.SectionName).SemiBold().FontSize(fontSize + 1).AlignRight();
+                                column.Item().Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.RelativeColumn(4);
+                                        columns.RelativeColumn(3);
+                                        columns.RelativeColumn(2);
+                                        columns.RelativeColumn(1);
+                                    });
+
+                                    table.Header(header =>
+                                    {
+                                        header.Cell().Text("المريض").SemiBold().AlignRight();
+                                        header.Cell().Text("التحليل").SemiBold().AlignRight();
+                                        header.Cell().Text("الباركود").SemiBold().AlignRight();
+                                        header.Cell().Text("سحب").SemiBold().AlignCenter();
+                                    });
+
+                                    foreach (var row in section.Lines)
+                                    {
+                                        table.Cell().Text(row.PatientFullName).AlignRight();
+                                        table.Cell().Text(row.TestName).AlignRight();
+                                        table.Cell().Text(string.IsNullOrWhiteSpace(row.Barcode) ? "—" : row.Barcode).AlignRight();
+                                        table.Cell().Text(row.IsSampleDrawn ? "[X]" : "[ ]").AlignCenter();
+                                    }
+                                });
+                            }
+
+                            column.Item().PaddingTop(6)
+                                .Text($"إجمالي التحاليل: {sheet.TotalTests.ToString(CultureInfo.InvariantCulture)}")
+                                .SemiBold().AlignRight();
+                        });
+                });
+            })
+            .GeneratePdf(absolutePath);
+
+        return Task.CompletedTask;
+    }
+
     /// <summary>
     /// Pure content mapping (no PDF dependency): every line the document renders,
     /// in order. Unit-testable proof that per-line sample flags and textual

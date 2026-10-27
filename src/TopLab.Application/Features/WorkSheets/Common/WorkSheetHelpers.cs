@@ -91,7 +91,8 @@ internal static class WorkSheetLines
         IApplicationDbContext db,
         HashSet<int> testIds,
         DateOnly from,
-        DateOnly to)
+        DateOnly to,
+        bool? unfinishedOnly = null)
     {
         var patients = db.Set<Patient>()
             .Where(p => !p.IsDeleted
@@ -111,6 +112,7 @@ internal static class WorkSheetLines
             .ToList()
             .OrderBy(pt => patients[pt.PatientId.Value].RegistrationDateUtc)
             .ThenBy(pt => pt.Id.Value)
+            .Where(pt => unfinishedOnly != true || pt.EnteredAtUtc == null)
             .Select(pt =>
             {
                 var patient = patients[pt.PatientId.Value];

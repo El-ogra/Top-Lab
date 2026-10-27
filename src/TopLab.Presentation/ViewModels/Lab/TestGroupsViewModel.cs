@@ -59,6 +59,7 @@ public sealed class TestGroupsViewModel : ViewModelBase
 
         LoadGroupsCommand = new AsyncRelayCommand(_ => LoadAsync());
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
+        UndoCommand = new AsyncRelayCommand(async (_, ct) => await UndoAsync(ct));
         NewCommand = new RelayCommand(_ => ClearEditor());
         ToggleActiveCommand = new AsyncRelayCommand((p, _) => ToggleActiveAsync(p as TestGroupRow));
     }
@@ -84,6 +85,7 @@ public sealed class TestGroupsViewModel : ViewModelBase
 
     public AsyncRelayCommand LoadGroupsCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand UndoCommand { get; }
     public RelayCommand NewCommand { get; }
     public AsyncRelayCommand ToggleActiveCommand { get; }
 
@@ -132,6 +134,16 @@ public sealed class TestGroupsViewModel : ViewModelBase
     {
         SelectedRow = null;
         GroupName = string.Empty;
+    }
+
+    private async Task UndoAsync(CancellationToken cancellationToken = default)
+    {
+        // GAP-23: revert the name editor and the row list to their last-loaded
+        // state. No create/update command is dispatched.
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        ClearEditor();
+        await LoadAsync();
     }
 
     public async Task SaveAsync()

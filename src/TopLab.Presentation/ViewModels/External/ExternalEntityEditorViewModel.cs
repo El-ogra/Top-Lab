@@ -52,6 +52,7 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
         };
 
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
+        UndoCommand = new AsyncRelayCommand(async (_, ct) => await UndoAsync(ct));
     }
 
     public IReadOnlyList<EntityTypeOption> TypeOptions { get; }
@@ -128,6 +129,7 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
 
     public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand UndoCommand { get; }
 
     public void InitializeNew(EntityType? presetType)
     {
@@ -208,6 +210,18 @@ public sealed class ExternalEntityEditorViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task UndoAsync(CancellationToken cancellationToken = default)
+    {
+        if (IsEditMode && _editingId > 0)
+        {
+            await LoadDetailAsync();
+        }
+        else
+        {
+            InitializeNew(null);
         }
     }
 

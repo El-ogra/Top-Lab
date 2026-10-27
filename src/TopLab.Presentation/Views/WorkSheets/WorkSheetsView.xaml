@@ -71,7 +71,8 @@
                         <TextBlock Text="مجموعة التحاليل:" Margin="2" VerticalAlignment="Center" />
                         <ComboBox ItemsSource="{Binding TestGroups}" SelectedItem="{Binding SelectedTestGroup}"
                                   DisplayMemberPath="Name" Width="200" Margin="2" />
-                        <Button Content="طباعة" Margin="8,2,2,2" Padding="10,2" IsEnabled="False" />
+                        <CheckBox Content="غير مُكتملة فقط" IsChecked="{Binding UnfinishedOnly}" Margin="8,2,2,2" VerticalAlignment="Center" />
+                        <Button Content="طباعة" Margin="8,2,2,2" Padding="10,2" Command="{Binding PrintTestGroupSheetCommand}" />
                     </WrapPanel>
                 </StackPanel>
 

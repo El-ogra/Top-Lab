@@ -20,5 +20,20 @@
             <Button Content="تقارير التاريخ" Height="64" Margin="4" Padding="16,8"
                     Command="{Binding OpenHistoryReportsCommand}" IsEnabled="{Binding HistoryReportsEnabled}" />
         </UniformGrid>
+
+        <!-- GAP-15 (1.2.1.4): period-list action — patients registered in a chosen period. -->
+        <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="12" Margin="4,16,4,0">
+            <StackPanel>
+                <TextBlock Text="قائمة مرضى فترة" FontWeight="Bold" Margin="0,0,0,8" />
+                <WrapPanel>
+                    <TextBlock Text="من تاريخ:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <DatePicker SelectedDate="{Binding PeriodFrom}" Width="130" Margin="0,0,12,0" />
+                    <TextBlock Text="إلى تاريخ:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <DatePicker SelectedDate="{Binding PeriodTo}" Width="130" Margin="0,0,12,0" />
+                    <Button Content="عرض قائمة الفترة" Padding="14,4"
+                            Command="{Binding OpenPeriodListCommand}" IsEnabled="{Binding PeriodListEnabled}" />
+                </WrapPanel>
+            </StackPanel>
+        </Border>
     </StackPanel>
 </UserControl>

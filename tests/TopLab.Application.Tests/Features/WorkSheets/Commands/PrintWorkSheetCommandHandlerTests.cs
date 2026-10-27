@@ -23,6 +23,12 @@ public class PrintWorkSheetCommandHandlerTests
             LastToken = workSheetToken;
             return Task.FromResult(NextResult ?? Result.Success());
         }
+
+        public Task<Result> PrintGroupWorkSheetAsync(string workSheetToken, CancellationToken cancellationToken = default)
+        {
+            LastToken = workSheetToken;
+            return Task.FromResult(NextResult ?? Result.Success());
+        }
     }
 
     private static VisitWorkSheetDto Sheet()

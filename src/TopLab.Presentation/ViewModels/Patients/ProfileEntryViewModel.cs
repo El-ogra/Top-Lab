@@ -12,6 +12,7 @@ using TopLab.Application.Features.ProfileResults.Queries.GetProfileEntryGrid;
 using TopLab.Application.Features.ProfileResults.Queries.GetProfileReport;
 using TopLab.Application.Features.ProfileResults.Queries.GetProfileResultAmendments;
 using TopLab.Application.Features.ReportProduction.Common;
+using TopLab.Application.Features.ResultsEntry.Commands.ReviewResult;
 using TopLab.Application.Features.ResultsEntry.Common;
 using TopLab.Domain.Settings;
 using TopLab.Infrastructure.Printing;
@@ -126,6 +127,8 @@ public sealed class ProfileEntryViewModel : ViewModelBase
         AmendCommand = new AsyncRelayCommand(async (_, ct) => await AmendAsync(ct));
         ShowAmendmentsLogCommand = new AsyncRelayCommand(async (_, ct) => await ShowAmendmentsLogAsync(ct));
         OpenCommentPickerCommand = new AsyncRelayCommand(async (_, ct) => await OpenCommentPickerAsync(ct));
+        PreviewCommand = new AsyncRelayCommand(async (_, ct) => await PreviewAsync(ct));
+        ReviewCommand = new AsyncRelayCommand(async (_, ct) => await ReviewAsync(ct));
     }
 
     public int PatientTestId => _patientTestId;
@@ -203,6 +206,8 @@ public sealed class ProfileEntryViewModel : ViewModelBase
     public AsyncRelayCommand UnverifyCommand { get; }
     public AsyncRelayCommand PrintCommand { get; }
     public AsyncRelayCommand ShowReportCommand { get; }
+    public AsyncRelayCommand PreviewCommand { get; }
+    public AsyncRelayCommand ReviewCommand { get; }
     public AsyncRelayCommand AmendCommand { get; }
     public AsyncRelayCommand ShowAmendmentsLogCommand { get; }
     public AsyncRelayCommand OpenCommentPickerCommand { get; }
@@ -405,6 +410,64 @@ public sealed class ProfileEntryViewModel : ViewModelBase
             {
                 ErrorMessage = "تعذّرت الطباعة: " + outcome.ErrorMessage;
             }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task PreviewAsync(CancellationToken cancellationToken)
+    {
+        if (_patientTestId == 0)
+        {
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new GetProfileReportQuery(_patientTestId), cancellationToken);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                Report = result.Value;
+                await PreviewProfilePdfAsync(result.Value, cancellationToken);
+                StatusMessage = "تم فتح المعاينة.";
+            }
+            else if (result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ReviewAsync(CancellationToken cancellationToken)
+    {
+        if (_patientTestId == 0)
+        {
+            return;
+        }
+
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new ReviewResultCommand(_patientTestId), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            StatusMessage = "تم اعتماد النتيجة.";
+            await LoadAsync(_patientTestId, cancellationToken);
         }
         finally
         {

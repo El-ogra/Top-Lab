@@ -17,4 +17,14 @@ public interface IWorkSheetPdfWriter
         VisitWorkSheetDto sheet,
         LabPrintTextDto labText,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// GAP-17: renders a test-group worksheet (<see cref="WorkSheetDto"/>) to a PDF
+    /// file at the caller-supplied absolute path. Same never-overwrite contract.
+    /// </summary>
+    Task WriteGroupPdfAsync(
+        string absolutePath,
+        WorkSheetDto sheet,
+        LabPrintTextDto labText,
+        CancellationToken cancellationToken = default);
 }

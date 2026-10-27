@@ -28,6 +28,8 @@ public sealed class PatientSearchViewModel : ViewModelBase
 
     private string _searchText = string.Empty;
     private string _labIdText = string.Empty;
+    private string _cardNumberText = string.Empty;
+    private bool _notDelivered;
     private int _page = 1;
     private int _pageSize = 50;
     private ObservableCollection<PatientSearchHitDto> _items = new();
@@ -36,6 +38,7 @@ public sealed class PatientSearchViewModel : ViewModelBase
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
     private PatientSearchHitDto? _selectedItem;
+    private ObservableCollection<PatientSearchHitDto> _selectionBasket = new();
 
     // --- P-01 F1–F5 filter state. Six separate properties (SD-6). ---
     private ExternalEntityFilterItem? _selectedTreatingDoctor;
@@ -57,12 +60,18 @@ public sealed class PatientSearchViewModel : ViewModelBase
         _mediator = mediator;
         _presenter = presenter;
         _navigation = navigation;
+        _selectionBasket = new ObservableCollection<PatientSearchHitDto>();
 
         SearchCommand = new AsyncRelayCommand(async (_, ct) => await SearchAsync(ct));
         FetchByLabIdCommand = new AsyncRelayCommand(async (_, ct) => await FetchByLabIdAsync(ct));
         NextPageCommand = new AsyncRelayCommand(async (_, ct) => { Page++; await SearchAsync(ct); });
         PreviousPageCommand = new AsyncRelayCommand(async (_, ct) => { if (Page > 1) { Page--; await SearchAsync(ct); } });
         OpenPatientCommand = new RelayCommand(param => OpenPatient(param as PatientSearchHitDto));
+        // GAP-09: action bar completion — open account, open patient data, open lab results, add to selection basket.
+        OpenAccountCommand = new AsyncRelayCommand(async (_, ct) => await OpenAccountAsync(ct), _ => SelectedItem is not null);
+        OpenPatientDataCommand = new AsyncRelayCommand(async (_, ct) => await OpenPatientDataAsync(ct), _ => SelectedItem is not null);
+        OpenLabResultsCommand = new AsyncRelayCommand(async (_, ct) => await OpenLabResultsAsync(ct), _ => SelectedItem is not null);
+        AddToSelectionCommand = new RelayCommand(_ => AddToSelection(), _ => SelectedItem is not null);
         // P-02 A-12: enabled only when a patient is selected — no half-wired state.
         ReprintBarcodeCommand = new AsyncRelayCommand(
             async (_, ct) => await ReprintBarcodeAsync(ct),
@@ -108,6 +117,18 @@ public sealed class PatientSearchViewModel : ViewModelBase
         set => SetProperty(ref _searchText, value);
     }
 
+    public string CardNumberText
+    {
+        get => _cardNumberText;
+        set => SetProperty(ref _cardNumberText, value);
+    }
+
+    public bool NotDelivered
+    {
+        get => _notDelivered;
+        set => SetProperty(ref _notDelivered, value);
+    }
+
     public string LabIdText
     {
         get => _labIdText;
@@ -135,6 +156,10 @@ public sealed class PatientSearchViewModel : ViewModelBase
             {
                 // P-02 A-12: the reprint is only meaningful for a selected patient.
                 ReprintBarcodeCommand.RaiseCanExecuteChanged();
+                OpenAccountCommand.RaiseCanExecuteChanged();
+                OpenPatientDataCommand.RaiseCanExecuteChanged();
+                OpenLabResultsCommand.RaiseCanExecuteChanged();
+                AddToSelectionCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -197,6 +222,10 @@ public sealed class PatientSearchViewModel : ViewModelBase
     public AsyncRelayCommand NextPageCommand { get; }
     public AsyncRelayCommand PreviousPageCommand { get; }
     public RelayCommand OpenPatientCommand { get; }
+    public AsyncRelayCommand OpenAccountCommand { get; }
+    public AsyncRelayCommand OpenPatientDataCommand { get; }
+    public AsyncRelayCommand OpenLabResultsCommand { get; }
+    public RelayCommand AddToSelectionCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public RelayCommand BranchFilterNoticeCommand { get; }
@@ -547,6 +576,7 @@ public static int? ParseAgeBound(string? text)
         try
         {
             var text = string.IsNullOrWhiteSpace(SearchText) ? null : SearchText.Trim();
+            var cardNumber = string.IsNullOrWhiteSpace(CardNumberText) ? null : CardNumberText.Trim();
 
             // P-02 D-4: the age band is string-backed and parsed here. Empty or unparseable
             // text means "no bound" (null), so clearing the box widens the result set
@@ -577,7 +607,9 @@ public static int? ParseAgeBound(string? text)
                     SelectedSex,
                     age,
                     from,
-                    to),
+                    to,
+                    cardNumber,
+                    NotDelivered ? true : (bool?)null),
                 cancellationToken);
 
             // P-02 D-3: a superseded reload must never write to the view. The generation
@@ -669,6 +701,8 @@ public static int? ParseAgeBound(string? text)
         StatusMessage = "تم إرسال الباركود للطباعة.";
     }
 
+    public ObservableCollection<PatientSearchHitDto> SelectionBasket => _selectionBasket;
+
     private void OpenPatient(PatientSearchHitDto? hit)
     {
         if (hit is null || hit.PatientId <= 0)
@@ -680,6 +714,65 @@ public static int? ParseAgeBound(string? text)
         if (_navigation.CurrentViewModel is PatientVisitHistoryViewModel vm)
         {
             _ = vm.LoadAsync(hit.PatientId);
+        }
+    }
+
+    private async Task OpenAccountAsync(CancellationToken cancellationToken)
+    {
+        var hit = SelectedItem;
+        if (hit is null || hit.PatientId <= 0)
+        {
+            return;
+        }
+
+        _navigation.NavigateTo<PatientAccountViewModel>();
+        if (_navigation.CurrentViewModel is PatientAccountViewModel vm)
+        {
+            await vm.LoadAsync(hit.PatientId, cancellationToken);
+        }
+    }
+
+    private async Task OpenPatientDataAsync(CancellationToken cancellationToken)
+    {
+        var hit = SelectedItem;
+        if (hit is null || hit.PatientId <= 0)
+        {
+            return;
+        }
+
+        _navigation.NavigateTo<PatientEditorViewModel>();
+        if (_navigation.CurrentViewModel is PatientEditorViewModel vm)
+        {
+            await vm.LoadPatientAsync(hit.PatientId, cancellationToken);
+        }
+    }
+
+    private async Task OpenLabResultsAsync(CancellationToken cancellationToken)
+    {
+        var hit = SelectedItem;
+        if (hit is null || hit.PatientId <= 0)
+        {
+            return;
+        }
+
+        _navigation.NavigateTo<PatientVisitHistoryViewModel>();
+        if (_navigation.CurrentViewModel is PatientVisitHistoryViewModel vm)
+        {
+            await vm.LoadAsync(hit.PatientId, cancellationToken);
+        }
+    }
+
+    private void AddToSelection()
+    {
+        var hit = SelectedItem;
+        if (hit is null || hit.PatientId <= 0)
+        {
+            return;
+        }
+
+        if (!_selectionBasket.Any(h => h.PatientId == hit.PatientId))
+        {
+            _selectionBasket.Add(hit);
         }
     }
 }

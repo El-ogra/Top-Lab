@@ -7,6 +7,7 @@ using TopLab.Application.Features.ReportProduction.Common;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Common;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Queries.GetTestGroups;
 using TopLab.Application.Features.TestCatalogAndReferenceRanges.Queries.GetWorkGroupLogs;
+using TopLab.Application.Features.WorkSheets.Commands.PrintTestGroupWorkSheet;
 using TopLab.Application.Features.WorkSheets.Commands.PrintWorkSheet;
 using TopLab.Application.Features.WorkSheets.Common;
 using TopLab.Application.Features.WorkSheets.Queries.GetVisitWorkSheet;
@@ -38,6 +39,7 @@ public sealed class WorkSheetsViewModel : ViewModelBase
     private bool _isVisitMode = true;
     private bool _isTestGroupMode;
     private bool _isWorkGroupLogMode;
+    private bool _unfinishedOnly;
     private string _visitPatientIdText = string.Empty;
     private TestGroupDto? _selectedTestGroup;
     private WorkGroupLogDto? _selectedWorkGroupLog;
@@ -66,8 +68,12 @@ public sealed class WorkSheetsViewModel : ViewModelBase
         PrintVisitSheetCommand = new AsyncRelayCommand(async (_, ct) => await PrintVisitSheetAsync(ct));
         PreviewVisitSheetCommand = new AsyncRelayCommand(async (_, ct) => await PreviewVisitSheetAsync(ct));
 
+        // GAP-17: test-group print path enabled.
+        PrintTestGroupSheetCommand = new AsyncRelayCommand(async (_, ct) => await PrintTestGroupSheetAsync(ct));
+
         Sections.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowSheetEmpty));
         SummaryRows.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowSummaryEmpty));
+
         CountRows.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowCountEmpty));
 
         var today = DateTime.UtcNow.Date;
@@ -127,6 +133,12 @@ public sealed class WorkSheetsViewModel : ViewModelBase
     /// <summary>Visit mode accepts an integer PatientId only (no LabId — owner-pending).</summary>
     public string VisitPatientIdText { get => _visitPatientIdText; set => SetProperty(ref _visitPatientIdText, value); }
 
+    public bool UnfinishedOnly
+    {
+        get => _unfinishedOnly;
+        set => SetProperty(ref _unfinishedOnly, value);
+    }
+
     public TestGroupDto? SelectedTestGroup { get => _selectedTestGroup; set => SetProperty(ref _selectedTestGroup, value); }
 
     public WorkGroupLogDto? SelectedWorkGroupLog { get => _selectedWorkGroupLog; set => SetProperty(ref _selectedWorkGroupLog, value); }
@@ -141,10 +153,10 @@ public sealed class WorkSheetsViewModel : ViewModelBase
 
     public bool SheetLoaded { get => _sheetLoaded; private set => SetProperty(ref _sheetLoaded, value); }
 
-    public int TotalCount { get => _totalCount; private set => SetProperty(ref _totalCount, value); }
-
     /// <summary>S-03 Slice 7: empty-state flags (S-01/S-02 Show*Empty idiom).</summary>
     public bool ShowSheetEmpty => SheetLoaded && Sections.Count == 0;
+
+    public int TotalCount { get => _totalCount; private set => SetProperty(ref _totalCount, value); }
 
     public bool ShowSummaryEmpty => SheetLoaded && SummaryRows.Count == 0;
 
@@ -157,10 +169,9 @@ public sealed class WorkSheetsViewModel : ViewModelBase
     public string StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
 
     public AsyncRelayCommand RunCommand { get; }
-
     public AsyncRelayCommand PrintVisitSheetCommand { get; }
-
     public AsyncRelayCommand PreviewVisitSheetCommand { get; }
+    public AsyncRelayCommand PrintTestGroupSheetCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -398,6 +409,47 @@ public sealed class WorkSheetsViewModel : ViewModelBase
             IsBusy = false;
         }
     }
+
+    /// <summary>
+    /// GAP-17: prints the test-group worksheet through the dedicated command.
+    /// The unfinished-only toggle is forwarded verbatim; the predicate lives in
+    /// the query (PatientTest.EnteredAtUtc == null).
+    /// </summary>
+    private async Task PrintTestGroupSheetAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        if (SelectedTestGroup is null)
+        {
+            ErrorMessage = "اختر مجموعة تحاليل أولًا.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(
+                new PrintTestGroupWorkSheetCommand(
+                    SelectedTestGroup.Id,
+                    ToDateOnly(FromDate),
+                    ToDateOnly(ToDate),
+                    UnfinishedOnly ? true : null),
+                cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            StatusMessage = "تم إرسال ورقة العمل إلى الطابعة.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
 
     private static DateOnly? ToDateOnly(DateTime? value)
     {

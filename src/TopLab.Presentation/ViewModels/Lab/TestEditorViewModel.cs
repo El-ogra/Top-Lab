@@ -132,6 +132,7 @@ public sealed class TestEditorViewModel : ViewModelBase
         };
 
         SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
+        UndoCommand = new AsyncRelayCommand(async (_, ct) => await UndoAsync(ct));
         NewRangeCommand = new RelayCommand(_ => ClearRangeEditor());
         SaveRangeCommand = new AsyncRelayCommand(_ => SaveRangeAsync());
         DeleteRangeCommand = new AsyncRelayCommand(_ => DeleteRangeAsync());
@@ -200,6 +201,7 @@ public sealed class TestEditorViewModel : ViewModelBase
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
 
     public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand UndoCommand { get; }
     public RelayCommand NewRangeCommand { get; }
     public AsyncRelayCommand SaveRangeCommand { get; }
     public AsyncRelayCommand DeleteRangeCommand { get; }
@@ -271,6 +273,35 @@ public sealed class TestEditorViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task UndoAsync(CancellationToken cancellationToken = default)
+    {
+        // GAP-23: revert every editable field to its last-loaded/saved value by
+        // re-reading the persisted detail. No save/update command is dispatched.
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (IsEditMode && EditingTestId > 0)
+        {
+            await LoadDetailAsync();
+        }
+        else
+        {
+            TestCode = string.Empty;
+            Name = string.Empty;
+            ReportName = string.Empty;
+            ReceiptName = string.Empty;
+            TestGroupId = null;
+            Barcode = null;
+            CompletionDurationMinutes = 60;
+            IsSentOut = false;
+            SentOutCostPrice = null;
+            PatientPrice = 0m;
+            LabToLabPrice = null;
+            ResultKind = ResultKind.Simple;
+            IsCultureType = false;
+            MappedAnalyteText = "غير مرتبط";
         }
     }
 

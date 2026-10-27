@@ -92,6 +92,7 @@ public sealed class UserManagementViewModel : ViewModelBase
         CreateCommand = new AsyncRelayCommand(_ => CreateAsync());
         UpdateCommand = new AsyncRelayCommand(_ => UpdateAsync());
         SavePermissionsCommand = new AsyncRelayCommand(_ => SavePermissionsAsync());
+        UndoCommand = new AsyncRelayCommand(async (_, ct) => await UndoAsync(ct));
         DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync());
         ToggleActiveCommand = new AsyncRelayCommand(_ => ToggleActiveAsync());
 
@@ -246,6 +247,7 @@ public sealed class UserManagementViewModel : ViewModelBase
     public AsyncRelayCommand CreateCommand { get; }
     public AsyncRelayCommand UpdateCommand { get; }
     public AsyncRelayCommand SavePermissionsCommand { get; }
+    public AsyncRelayCommand UndoCommand { get; }
     public AsyncRelayCommand DeleteCommand { get; }
     public AsyncRelayCommand ToggleActiveCommand { get; }
 
@@ -421,6 +423,18 @@ public sealed class UserManagementViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task UndoAsync(CancellationToken cancellationToken = default)
+    {
+        // GAP-23: revert the user fields AND the permission matrix to their
+        // last-loaded values by re-reading the persisted detail. No
+        // UpdateUserCommand / SaveUserPermissionsCommand is dispatched.
+        ErrorMessage = string.Empty;
+        if (_selectedDetail is not null)
+        {
+            await LoadDetailAsync(_selectedDetail.Id);
         }
     }
 
