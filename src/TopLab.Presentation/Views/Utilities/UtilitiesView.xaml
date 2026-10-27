@@ -14,12 +14,12 @@
 
         <!-- Tab selector -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-            <RadioButton Content="الآلة الحاسبة" IsChecked="{Binding IsCalculatorTab}" GroupName="UtilTab" Margin="0,0,6,0"/>
-            <RadioButton Content="محوّل الوحدات" IsChecked="{Binding IsConverterTab}" GroupName="UtilTab" Margin="0,0,6,0"/>
-            <RadioButton Content="ساعة الإيقاف" IsChecked="{Binding IsStopwatchTab}" GroupName="UtilTab" Margin="0,0,6,0"/>
-            <RadioButton Content="دفتر الهواتف" IsChecked="{Binding IsPhoneBookTab}" GroupName="UtilTab" Margin="0,0,6,0"/>
-            <RadioButton Content="قائمة المشتريات" IsChecked="{Binding IsPurchasesTab}" GroupName="UtilTab" Margin="0,0,6,0"/>
-            <RadioButton Content="مكتبة التحاليل" IsChecked="{Binding IsTestLibraryTab}" GroupName="UtilTab"/>
+            <RadioButton Content="الآلة الحاسبة" IsChecked="{Binding IsCalculatorTab, Mode=OneWay}" GroupName="UtilTab" Margin="0,0,6,0"/>
+            <RadioButton Content="محوّل الوحدات" IsChecked="{Binding IsConverterTab, Mode=OneWay}" GroupName="UtilTab" Margin="0,0,6,0"/>
+            <RadioButton Content="ساعة الإيقاف" IsChecked="{Binding IsStopwatchTab, Mode=OneWay}" GroupName="UtilTab" Margin="0,0,6,0"/>
+            <RadioButton Content="دفتر الهواتف" IsChecked="{Binding IsPhoneBookTab, Mode=OneWay}" GroupName="UtilTab" Margin="0,0,6,0"/>
+            <RadioButton Content="قائمة المشتريات" IsChecked="{Binding IsPurchasesTab, Mode=OneWay}" GroupName="UtilTab" Margin="0,0,6,0"/>
+            <RadioButton Content="مكتبة التحاليل" IsChecked="{Binding IsTestLibraryTab, Mode=OneWay}" GroupName="UtilTab"/>
         </StackPanel>
 
         <!-- Actions -->

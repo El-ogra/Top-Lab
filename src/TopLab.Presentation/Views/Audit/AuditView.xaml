@@ -13,9 +13,9 @@
 
         <!-- Tab selector -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-            <RadioButton Content="تدقيق مريض" IsChecked="{Binding IsPatientTab}" GroupName="AuditTab" Margin="0,0,8,0"/>
-            <RadioButton Content="تدقيق تحليل" IsChecked="{Binding IsTestTab}" GroupName="AuditTab" Margin="0,0,8,0"/>
-            <RadioButton Content="سجل النشاط" IsChecked="{Binding IsActivityTab}" GroupName="AuditTab"/>
+            <RadioButton Content="تدقيق مريض" IsChecked="{Binding IsPatientTab, Mode=OneWay}" GroupName="AuditTab" Margin="0,0,8,0"/>
+            <RadioButton Content="تدقيق تحليل" IsChecked="{Binding IsTestTab, Mode=OneWay}" GroupName="AuditTab" Margin="0,0,8,0"/>
+            <RadioButton Content="سجل النشاط" IsChecked="{Binding IsActivityTab, Mode=OneWay}" GroupName="AuditTab"/>
         </StackPanel>
 
         <!-- Input + actions -->

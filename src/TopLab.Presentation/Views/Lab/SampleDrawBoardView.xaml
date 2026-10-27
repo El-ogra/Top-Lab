@@ -54,6 +54,15 @@
         <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}"
                    Foreground="Red" TextWrapping="Wrap" Margin="0,4,0,0" />
 
+        <!-- 8.2.1.10 Date Picker Block (Step Calendar) -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,8,0,8">
+            <Button Content="◄" Width="40" Command="{Binding PreviousMonthCommand}" Margin="0,0,8,0" />
+            <TextBlock Text="{Binding MonthLabel}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Bold" />
+            <Button Content="►" Width="40" Command="{Binding NextMonthCommand}" Margin="0,0,8,0" />
+            <Calendar SelectedDate="{Binding SelectedDate, Mode=TwoWay}" Margin="0,0,8,0" />
+            <TextBlock Text="{Binding SelectedDate, StringFormat='اليوم: {0:dd/MM/yyyy}'}" VerticalAlignment="Center" Margin="8,0,0,0" />
+        </StackPanel>
+
         <!-- Two-grid layout: not-drawn (left) + drawn (right) -->
         <Grid>
             <Grid.ColumnDefinitions>

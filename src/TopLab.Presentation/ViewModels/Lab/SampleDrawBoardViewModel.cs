@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using MediatR;
 using TopLab.Application.Features.SampleCollection.Commands.MarkAllSamplesDrawnForPatient;
 using TopLab.Application.Features.SampleCollection.Commands.MarkSampleDrawn;
@@ -35,6 +36,7 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
+    private DateTime? _selectedDate = DateTime.UtcNow.Date;
 
     public SampleDrawBoardViewModel(
         ISender mediator,
@@ -52,6 +54,8 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
         PrintAllCommand = new AsyncRelayCommand(async _ => await PrintAsync(SampleStickerScope.All));
         PrintBloodCommand = new AsyncRelayCommand(async _ => await PrintAsync(SampleStickerScope.Blood));
         PrintBodyFluidsCommand = new AsyncRelayCommand(async _ => await PrintAsync(SampleStickerScope.BodyFluids));
+        PreviousMonthCommand = new RelayCommand(_ => ShiftMonth(-1));
+        NextMonthCommand = new RelayCommand(_ => ShiftMonth(1));
     }
 
     public int PatientId
@@ -129,6 +133,30 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public DateTime? SelectedDate
+    {
+        get => _selectedDate;
+        set
+        {
+            if (SetProperty(ref _selectedDate, value))
+            {
+                OnPropertyChanged(nameof(MonthLabel));
+                _ = LoadAsync();
+            }
+        }
+    }
+
+    public string MonthLabel => (SelectedDate ?? DateTime.UtcNow).ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+
+    private void ShiftMonth(int delta)
+    {
+        var current = SelectedDate ?? DateTime.UtcNow;
+        var target = current.AddMonths(delta);
+        var daysInMonth = DateTime.DaysInMonth(target.Year, target.Month);
+        var day = Math.Min(current.Day, daysInMonth);
+        SelectedDate = new DateTime(target.Year, target.Month, day);
+    }
+
     public AsyncRelayCommand MarkAllCommand { get; }
     public AsyncRelayCommand ReloadCommand { get; }
     public RelayCommand RemoveCommand { get; }
@@ -136,6 +164,8 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
     public AsyncRelayCommand PrintAllCommand { get; }
     public AsyncRelayCommand PrintBloodCommand { get; }
     public AsyncRelayCommand PrintBodyFluidsCommand { get; }
+    public RelayCommand PreviousMonthCommand { get; }
+    public RelayCommand NextMonthCommand { get; }
 
     public async Task InitializeAsync(int patientId)
     {

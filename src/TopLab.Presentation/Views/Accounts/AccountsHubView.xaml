@@ -15,10 +15,10 @@
 
         <!-- Tab selector -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-            <RadioButton Content="جرد درج النقدية" IsChecked="{Binding IsCashDrawerTab}" GroupName="AccountsTab" Margin="0,0,8,0"/>
-            <RadioButton Content="جرد العناصر" IsChecked="{Binding IsElementInventoryTab}" GroupName="AccountsTab" Margin="0,0,8,0"/>
-            <RadioButton Content="عينات المرضى" IsChecked="{Binding IsPatientSamplesTab}" GroupName="AccountsTab" Margin="0,0,8,0"/>
-            <RadioButton Content="حسابات الشركات" IsChecked="{Binding IsCompanyDelegateTab}" GroupName="AccountsTab"/>
+            <RadioButton Content="جرد درج النقدية" IsChecked="{Binding IsCashDrawerTab, Mode=OneWay}" GroupName="AccountsTab" Margin="0,0,8,0"/>
+            <RadioButton Content="جرد العناصر" IsChecked="{Binding IsElementInventoryTab, Mode=OneWay}" GroupName="AccountsTab" Margin="0,0,8,0"/>
+            <RadioButton Content="عينات المرضى" IsChecked="{Binding IsPatientSamplesTab, Mode=OneWay}" GroupName="AccountsTab" Margin="0,0,8,0"/>
+            <RadioButton Content="حسابات الشركات" IsChecked="{Binding IsCompanyDelegateTab, Mode=OneWay}" GroupName="AccountsTab"/>
         </StackPanel>
 
         <!-- Period + actions -->

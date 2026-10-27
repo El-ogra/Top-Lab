@@ -15,11 +15,11 @@
         <!-- Section selector -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="القسم:" VerticalAlignment="Center" Margin="0,0,6,0"/>
-            <RadioButton Content="المرضى" IsChecked="{Binding IsPatientsSection}" GroupName="StatSection" Margin="0,0,8,0"/>
-            <RadioButton Content="التحاليل" IsChecked="{Binding IsTestsSection}" GroupName="StatSection" Margin="0,0,8,0"/>
-            <RadioButton Content="المرسلة" IsChecked="{Binding IsSentOutSection}" GroupName="StatSection" Margin="0,0,8,0"/>
-            <RadioButton Content="الإنتاجية" IsChecked="{Binding IsProductivitySection}" GroupName="StatSection" Margin="0,0,8,0"/>
-            <RadioButton Content="نطاق النتائج" IsChecked="{Binding IsMonitorSection}" GroupName="StatSection"/>
+            <RadioButton Content="المرضى" IsChecked="{Binding IsPatientsSection, Mode=OneWay}" GroupName="StatSection" Margin="0,0,8,0"/>
+            <RadioButton Content="التحاليل" IsChecked="{Binding IsTestsSection, Mode=OneWay}" GroupName="StatSection" Margin="0,0,8,0"/>
+            <RadioButton Content="المرسلة" IsChecked="{Binding IsSentOutSection, Mode=OneWay}" GroupName="StatSection" Margin="0,0,8,0"/>
+            <RadioButton Content="الإنتاجية" IsChecked="{Binding IsProductivitySection, Mode=OneWay}" GroupName="StatSection" Margin="0,0,8,0"/>
+            <RadioButton Content="نطاق النتائج" IsChecked="{Binding IsMonitorSection, Mode=OneWay}" GroupName="StatSection"/>
         </StackPanel>
 
         <!-- Period + filters -->

@@ -29,9 +29,9 @@
 
         <!-- Mode selector -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-            <RadioButton Content="مريض واحد" IsChecked="{Binding IsSingleMode}" GroupName="HistoryMode" Margin="0,0,12,0"/>
-            <RadioButton Content="متعدد المرضى" IsChecked="{Binding IsMultiMode}" GroupName="HistoryMode" Margin="0,0,12,0"/>
-            <RadioButton Content="منفصل" IsChecked="{Binding IsSeparateMode}" GroupName="HistoryMode"/>
+            <RadioButton Content="مريض واحد" IsChecked="{Binding IsSingleMode, Mode=OneWay}" GroupName="HistoryMode" Margin="0,0,12,0"/>
+            <RadioButton Content="متعدد المرضى" IsChecked="{Binding IsMultiMode, Mode=OneWay}" GroupName="HistoryMode" Margin="0,0,12,0"/>
+            <RadioButton Content="منفصل" IsChecked="{Binding IsSeparateMode, Mode=OneWay}" GroupName="HistoryMode"/>
         </StackPanel>
 
         <!-- Filters -->
