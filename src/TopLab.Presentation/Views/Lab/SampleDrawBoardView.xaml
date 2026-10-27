@@ -39,6 +39,11 @@
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,8,0,8">
             <Button Content="سحب الكل" Width="110" Command="{Binding MarkAllCommand}" />
             <Button Content="إعادة التحميل" Width="110" Margin="8,0,0,0" Command="{Binding ReloadCommand}" />
+            <Button Content="حذف" Width="90" Margin="8,0,0,0" Command="{Binding RemoveCommand}" />
+            <Button Content="حفظ عينات المريض" Width="130" Margin="8,0,0,0" Command="{Binding SaveCommand}" />
+            <Button Content="طباعة كل الملصقات" Width="130" Margin="8,0,0,0" Command="{Binding PrintAllCommand}" />
+            <Button Content="طباعة (سيرم/بلازما/دم)" Width="150" Margin="8,0,0,0" Command="{Binding PrintBloodCommand}" />
+            <Button Content="طباعة (سائل منوي/بول/براز)" Width="170" Margin="8,0,0,0" Command="{Binding PrintBodyFluidsCommand}" />
         </StackPanel>
 
         <!-- Status strip -->
@@ -119,7 +124,7 @@
                     </TextBlock.Style>
                 </TextBlock>
                 <DataGrid ItemsSource="{Binding DrawnRows}" AutoGenerateColumns="False"
-                          IsReadOnly="True" Margin="0,0,0,8">
+                          IsReadOnly="True" Margin="0,0,0,8" SelectedItem="{Binding SelectedDrawn}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="تحليل" Binding="{Binding Dto.TestName}" Width="*" />
                         <DataGridTextColumn Header="الرمز" Binding="{Binding Dto.TestId, StringFormat={}{0}}" Width="70" />

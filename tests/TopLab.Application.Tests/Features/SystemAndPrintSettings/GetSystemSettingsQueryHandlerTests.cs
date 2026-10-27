@@ -29,6 +29,22 @@ public class GetSystemSettingsQueryHandlerTests
         Assert.Equal(TopLab.Domain.Common.Enums.ResultScreenAccountDisplayMode.Hidden, result.Value.ResultScreenAccountDisplayMode);
         Assert.False(result.Value.DailyBackupEnabled);
         Assert.Null(result.Value.DailyBackupPath);
+        Assert.Null(result.Value.DefaultSentOutLabEntityId);
+    }
+
+    [Fact]
+    public async Task GetSystemSettings_DefaultSentOutLabEntityId_RoundTrips()
+    {
+        var db = new FakeApplicationDbContext();
+        var existing = SystemSettings.CreateDefault();
+        existing.SetDefaultSentOutLab(12);
+        db.SystemSettings.Add(existing);
+
+        var handler = new GetSystemSettingsQueryHandler(db);
+        var result = await handler.Handle(new GetSystemSettingsQuery(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(12, result.Value!.DefaultSentOutLabEntityId);
     }
 
     [Fact]

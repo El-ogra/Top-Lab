@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using MediatR;
 using TopLab.Application.Features.ExternalEntities.Queries.SearchExternalEntities;
 using TopLab.Application.Features.SentOutSamples.Commands.SendSampleOut;
+using TopLab.Application.Features.SentOutSamples.Commands.SetSentOutDefaultLab;
+using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetSystemSettings;
 using TopLab.Domain.Common.Enums;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
@@ -33,7 +35,15 @@ public sealed class SendSampleOutDialogViewModel : ViewModelBase
         _mediator = mediator;
         _presenter = presenter;
         _dialogs = dialogs;
+
+        IgnoreCommand = new RelayCommand(_ => { WasIgnored = true; });
+        AlwaysToCommand = new AsyncRelayCommand(async (_, ct) => await AlwaysToAsync(ct));
     }
+
+    public bool WasIgnored { get; set; }
+
+    public RelayCommand IgnoreCommand { get; }
+    public AsyncRelayCommand AlwaysToCommand { get; }
 
     public string TestName { get => _testName; private set => SetProperty(ref _testName, value); }
 
@@ -94,11 +104,57 @@ public sealed class SendSampleOutDialogViewModel : ViewModelBase
             {
                 ErrorMessage = _presenter.Present(result.Error);
             }
+
+            // Prefill default destination (always-to) if still present.
+            try
+            {
+                var settingsResult = await _mediator.Send(new GetSystemSettingsQuery(), cancellationToken);
+                if (settingsResult.IsSuccess && settingsResult.Value is not null && settingsResult.Value.DefaultSentOutLabEntityId.HasValue)
+                {
+                    var defaultId = settingsResult.Value.DefaultSentOutLabEntityId.Value;
+                    if (LabItems.Any(l => l.Id == defaultId))
+                    {
+                        SelectedLabId = defaultId;
+                    }
+                }
+            }
+            catch
+            {
+                // ignore stale default
+            }
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    public async Task AlwaysToAsync(CancellationToken cancellationToken = default)
+    {
+        ErrorMessage = string.Empty;
+
+        if (SelectedLabId is null or <= 0)
+        {
+            ErrorMessage = "اختر الجهة الخارجية أولاً.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new SetSentOutDefaultLabCommand(SelectedLabId), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                if (result.Error is not null) ErrorMessage = _presenter.Present(result.Error);
+                return;
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+
+        await SendAsync();
     }
 
     public async Task<bool> SendAsync()

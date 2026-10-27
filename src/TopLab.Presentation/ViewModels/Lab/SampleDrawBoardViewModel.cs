@@ -4,6 +4,8 @@ using TopLab.Application.Features.SampleCollection.Commands.MarkAllSamplesDrawnF
 using TopLab.Application.Features.SampleCollection.Commands.MarkSampleDrawn;
 using TopLab.Application.Features.SampleCollection.Common;
 using TopLab.Application.Features.SampleCollection.Queries.GetPatientTestsForDraw;
+using TopLab.Application.Features.SampleCollection.Commands.PrintSampleStickers;
+using TopLab.Application.Features.SampleCollection.Commands.SavePatientSamples;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
@@ -28,6 +30,8 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
     private string? _labId;
     private ObservableCollection<DrawRowViewModel> _notDrawn = new();
     private ObservableCollection<DrawRowViewModel> _drawn = new();
+    private DrawRowViewModel? _selectedDrawn;
+    private bool _hasUnsavedChanges;
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
@@ -43,6 +47,11 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
 
         MarkAllCommand = new AsyncRelayCommand(async _ => await MarkAllAsync());
         ReloadCommand = new AsyncRelayCommand(async _ => await LoadAsync());
+        RemoveCommand = new RelayCommand(_ => RemoveSelected());
+        SaveCommand = new AsyncRelayCommand(async _ => await SaveAsync());
+        PrintAllCommand = new AsyncRelayCommand(async _ => await PrintAsync(SampleStickerScope.All));
+        PrintBloodCommand = new AsyncRelayCommand(async _ => await PrintAsync(SampleStickerScope.Blood));
+        PrintBodyFluidsCommand = new AsyncRelayCommand(async _ => await PrintAsync(SampleStickerScope.BodyFluids));
     }
 
     public int PatientId
@@ -90,6 +99,18 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
     public bool AnyNotDrawn => NotDrawnRows.Count > 0;
     public bool AnyDrawn => DrawnRows.Count > 0;
 
+    public bool HasUnsavedChanges
+    {
+        get => _hasUnsavedChanges;
+        private set => SetProperty(ref _hasUnsavedChanges, value);
+    }
+
+    public DrawRowViewModel? SelectedDrawn
+    {
+        get => _selectedDrawn;
+        set => SetProperty(ref _selectedDrawn, value);
+    }
+
     public bool IsBusy
     {
         get => _isBusy;
@@ -110,6 +131,11 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
 
     public AsyncRelayCommand MarkAllCommand { get; }
     public AsyncRelayCommand ReloadCommand { get; }
+    public RelayCommand RemoveCommand { get; }
+    public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand PrintAllCommand { get; }
+    public AsyncRelayCommand PrintBloodCommand { get; }
+    public AsyncRelayCommand PrintBodyFluidsCommand { get; }
 
     public async Task InitializeAsync(int patientId)
     {
@@ -212,13 +238,81 @@ public sealed class SampleDrawBoardViewModel : ViewModelBase
             IsBusy = false;
         }
     }
-}
+    public void HandleUnchecked(DrawRowViewModel row)
+    {
+        if (row.Dto.IsTakenOutsideLab) return;
+        DrawnRows.Remove(row);
+        if (!NotDrawnRows.Contains(row)) NotDrawnRows.Add(row);
+        row.IsChecked = false;
+        HasUnsavedChanges = true;
+    }
 
-/// <summary>
-/// Wrapper for a single PatientTestDrawDto row on the draw board. The CheckBox
-/// IsChecked → on set calls back to the parent's MarkSampleAsync. Outside-lab
-/// rows disable the CheckBox proactively.
-/// </summary>
+    private void RemoveSelected()
+    {
+        if (SelectedDrawn is null) return;
+        HandleUnchecked(SelectedDrawn);
+        SelectedDrawn = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var drawnIds = DrawnRows.Select(r => r.Dto.PatientTestId).ToList();
+            if (!HasUnsavedChanges)
+            {
+                StatusMessage = "لا توجد تغييرات لحفظها.";
+                return;
+            }
+
+            var result = await _mediator.Send(new SavePatientSamplesCommand(PatientId, drawnIds));
+            if (result.IsSuccess)
+            {
+                if (result.Value == 0)
+                {
+                    StatusMessage = "لا توجد تغييرات لحفظها.";
+                }
+                else
+                {
+                    StatusMessage = "تم حفظ عينات المريض.";
+                    HasUnsavedChanges = false;
+                    await LoadAsync();
+                }
+            }
+            else if (result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task PrintAsync(SampleStickerScope scope)
+    {
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var result = await _mediator.Send(new PrintSampleStickersCommand(PatientId, scope));
+            if (result.IsSuccess)
+            {
+                StatusMessage = $"تمت طباعة {result.Value} ملصق.";
+            }
+            else if (result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 public sealed class DrawRowViewModel : ViewModelBase
 {
     private readonly SampleDrawBoardViewModel _parent;
@@ -237,10 +331,18 @@ public sealed class DrawRowViewModel : ViewModelBase
         get => _isChecked;
         set
         {
-            if (SetProperty(ref _isChecked, value) && value)
+            if (SetProperty(ref _isChecked, value))
             {
-                _ = _parent.MarkSampleAsync(Dto);
+                if (value)
+                {
+                    _ = _parent.MarkSampleAsync(Dto);
+                }
+                else
+                {
+                    _parent.HandleUnchecked(this);
+                }
             }
         }
     }
+}
 }

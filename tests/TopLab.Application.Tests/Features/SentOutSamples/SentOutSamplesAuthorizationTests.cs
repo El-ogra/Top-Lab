@@ -3,6 +3,7 @@ using TopLab.Application.Common.Behaviors;
 using TopLab.Application.Common.Results;
 using TopLab.Application.Features.SentOutSamples.Commands.RecordSentOutPayment;
 using TopLab.Application.Features.SentOutSamples.Commands.SendSampleOut;
+using TopLab.Application.Features.SentOutSamples.Commands.SetSentOutDefaultLab;
 using TopLab.Application.Features.SentOutSamples.Commands.SettleSentOutInFull;
 using TopLab.Application.Tests.Common.Fakes;
 using Xunit;
@@ -18,6 +19,7 @@ public class SentOutSamplesAuthorizationTests
             { } t when t == typeof(SendSampleOutCommand) => new SendSampleOutCommand(1, 1, null, null),
             { } t when t == typeof(RecordSentOutPaymentCommand) => new RecordSentOutPaymentCommand(1, 10m),
             { } t when t == typeof(SettleSentOutInFullCommand) => new SettleSentOutInFullCommand(1),
+            { } t when t == typeof(SetSentOutDefaultLabCommand) => new SetSentOutDefaultLabCommand(1),
             _ => throw new InvalidOperationException($"Unhandled command type {commandType.Name} in test.")
         };
     }
@@ -26,6 +28,7 @@ public class SentOutSamplesAuthorizationTests
     [InlineData(typeof(SendSampleOutCommand))]
     [InlineData(typeof(RecordSentOutPaymentCommand))]
     [InlineData(typeof(SettleSentOutInFullCommand))]
+    [InlineData(typeof(SetSentOutDefaultLabCommand))]
     public void EveryWriteCommand_Requires_CashDisburseDeposit(System.Type commandType)
     {
         var authorized = (IAuthorizedRequest)CreateInstance(commandType);

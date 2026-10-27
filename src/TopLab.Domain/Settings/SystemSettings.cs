@@ -30,6 +30,9 @@ public sealed class SystemSettings : Entity<int>
 
     public string? DailyBackupPath { get; private set; }
 
+    /// <summary>GAP-20 (6.3.1.6.5): default sent-out destination lab (nullable, no FK).</summary>
+    public int? DefaultSentOutLabEntityId { get; private set; }
+
     /// <summary>WP-15 / SD-2: default branch number (min 1).</summary>
     public int BranchNumber { get; private set; } = 1;
 
@@ -71,7 +74,8 @@ public sealed class SystemSettings : Entity<int>
             DailyBackupPath = null,
             BranchNumber = 1,
             PrintResultPasswordEnabled = false,
-            PrintResultPasswordHash = null
+            PrintResultPasswordHash = null,
+            DefaultSentOutLabEntityId = null
         };
     }
 
@@ -158,5 +162,15 @@ public sealed class SystemSettings : Entity<int>
         }
 
         DailyBackupEnabled = enabled;
+    }
+
+    public void SetDefaultSentOutLab(int? externalLabEntityId)
+    {
+        if (externalLabEntityId.HasValue && externalLabEntityId.Value <= 0)
+        {
+            throw new ArgumentException("DefaultSentOutLabEntityId must be positive when set.", nameof(externalLabEntityId));
+        }
+
+        DefaultSentOutLabEntityId = externalLabEntityId;
     }
 }

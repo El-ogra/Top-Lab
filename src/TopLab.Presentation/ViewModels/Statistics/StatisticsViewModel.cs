@@ -36,6 +36,7 @@ public sealed class StatisticsViewModel : ViewModelBase
     private readonly INavigationService _navigation;
     private readonly IDialogService _dialogs;
     private readonly IBandedResultMonitorPdfWriter _monitorPdfWriter;
+    private readonly IStatisticsReportPdfWriter _statisticsReportPdfWriter;
     private readonly ILabPrintTextStore _labPrintTextStore;
 
     // Shared period
@@ -89,6 +90,7 @@ public sealed class StatisticsViewModel : ViewModelBase
         INavigationService navigation,
         IDialogService dialogs,
         IBandedResultMonitorPdfWriter monitorPdfWriter,
+        IStatisticsReportPdfWriter statisticsReportPdfWriter,
         ILabPrintTextStore labPrintTextStore)
     {
         _mediator = mediator;
@@ -96,6 +98,7 @@ public sealed class StatisticsViewModel : ViewModelBase
         _navigation = navigation;
         _dialogs = dialogs;
         _monitorPdfWriter = monitorPdfWriter;
+        _statisticsReportPdfWriter = statisticsReportPdfWriter;
         _labPrintTextStore = labPrintTextStore;
 
         LoadPatientsCommand = new AsyncRelayCommand(async (_, ct) => await LoadPatientsAsync(ct));
@@ -104,6 +107,7 @@ public sealed class StatisticsViewModel : ViewModelBase
         LoadProductivityCommand = new AsyncRelayCommand(async (_, ct) => await LoadProductivityAsync(ct));
         LoadBandCommand = new AsyncRelayCommand(async (_, ct) => await LoadBandAsync(ct));
         PrintBandCommand = new AsyncRelayCommand(async (_, ct) => await PrintBandAsync(ct));
+        SaveCensusReportCommand = new AsyncRelayCommand(async (_, ct) => await SaveCensusReportAsync(ct), _ => _patientStats is not null);
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<Shell.HomeViewModel>());
     }
 
@@ -194,11 +198,14 @@ public sealed class StatisticsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(ShowPatientsEmpty));
                 OnPropertyChanged(nameof(MoneyRowText));
                 OnPropertyChanged(nameof(HasMoneyRow));
+                OnPropertyChanged(nameof(CanSaveCensusReport));
+                SaveCensusReportCommand.RaiseCanExecuteChanged();
             }
         }
     }
 
     public bool HasPatientStats => _patientStats is not null && _patientStats.TotalCount > 0;
+    public bool CanSaveCensusReport => _patientStats is not null;
     public bool ShowPatientsEmpty => _patientStats is not null && _patientStats.TotalCount == 0 && !IsBusy;
 
     /// <summary>
@@ -314,6 +321,7 @@ public sealed class StatisticsViewModel : ViewModelBase
     public AsyncRelayCommand LoadProductivityCommand { get; }
     public AsyncRelayCommand LoadBandCommand { get; }
     public AsyncRelayCommand PrintBandCommand { get; }
+    public AsyncRelayCommand SaveCensusReportCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
@@ -601,6 +609,59 @@ public sealed class StatisticsViewModel : ViewModelBase
 
             await _monitorPdfWriter.WritePdfAsync(path, BandStats, labTextResult.Value);
             StatusMessage = "تم إنشاء ملف نطاق النتائج.";
+        }
+        catch (IOException)
+        {
+            ErrorMessage = "الملف موجود مسبقًا؛ لم يتم الكتابة فوقه.";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            ErrorMessage = "لا توجد صلاحية للكتابة في المسار المحدد.";
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            ErrorMessage = _presenter.Present(Error.Unexpected(ex.Message));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task SaveCensusReportAsync(CancellationToken cancellationToken)
+    {
+        if (_patientStats is null)
+        {
+            ErrorMessage = "اعرض تقرير الإحصاء أولًا قبل الحفظ.";
+            return;
+        }
+
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            var path = await _dialogs.PickPdfSavePathAsync("تقرير-الإحصاء.pdf");
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            var labTextResult = await _labPrintTextStore.GetAsync(LabPrintTextScope.Report);
+            if (!labTextResult.IsSuccess || labTextResult.Value is null)
+            {
+                ErrorMessage = labTextResult.Error is not null
+                    ? _presenter.Present(labTextResult.Error)
+                    : "تعذّر تحميل بيانات المعمل للطباعة.";
+                return;
+            }
+
+            var sections = new StatisticsReportSections(
+                BySex, ByReferralEntity, ByAccountType, GroupByMonth, GroupByDayOfMonth, IncludeMoneyRow);
+            var model = StatisticsReportModelBuilder.Build(_patientStats, sections);
+
+            await _statisticsReportPdfWriter.WritePdfAsync(path, model, labTextResult.Value, cancellationToken);
+            StatusMessage = "تم حفظ تقرير الإحصاء.";
         }
         catch (IOException)
         {

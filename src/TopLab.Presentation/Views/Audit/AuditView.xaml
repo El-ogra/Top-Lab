@@ -14,7 +14,8 @@
         <!-- Tab selector -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
             <RadioButton Content="تدقيق مريض" IsChecked="{Binding IsPatientTab}" GroupName="AuditTab" Margin="0,0,8,0"/>
-            <RadioButton Content="تدقيق تحليل" IsChecked="{Binding IsTestTab}" GroupName="AuditTab"/>
+            <RadioButton Content="تدقيق تحليل" IsChecked="{Binding IsTestTab}" GroupName="AuditTab" Margin="0,0,8,0"/>
+            <RadioButton Content="سجل النشاط" IsChecked="{Binding IsActivityTab}" GroupName="AuditTab"/>
         </StackPanel>
 
         <!-- Input + actions -->
@@ -114,6 +115,59 @@
                             <TextBlock Text="{Binding TestAudit.DeliveredAtUtc, StringFormat='وقت التسليم: {0:yyyy-MM-dd HH:mm}'}"/>
                         </StackPanel>
                     </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Activity tab -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsActivityTab}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Style>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="من:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <DatePicker SelectedDate="{Binding ActivityFrom}" Margin="0,0,8,0"/>
+                        <TextBlock Text="إلى:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <DatePicker SelectedDate="{Binding ActivityTo}" Margin="0,0,8,0"/>
+                        <Button Content="عرض المحدد" Width="90" Margin="0,0,8,0" Command="{Binding ShowSelectedUsersCommand}"/>
+                        <Button Content="عرض الكل" Width="80" Command="{Binding ShowAllUsersCommand}"/>
+                    </StackPanel>
+                    <ListBox ItemsSource="{Binding AuditUsers}" MaxHeight="120" Margin="0,0,0,8">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <DataGrid ItemsSource="{Binding ActivityRows}" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="المستخدم" Binding="{Binding UserName}" Width="*"/>
+                            <DataGridTextColumn Header="النشاط" Binding="{Binding ActivityLabel}" Width="*"/>
+                            <DataGridTextColumn Header="الوقت" Binding="{Binding OccurredAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="140"/>
+                            <DataGridTextColumn Header="المريض" Binding="{Binding PatientId}" Width="80"/>
+                            <DataGridTextColumn Header="التحليل" Binding="{Binding PatientTestId}" Width="80"/>
+                            <DataGridTextColumn Header="تفاصيل" Binding="{Binding Detail}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock Text="لا توجد سجلات." Foreground="#666666" Margin="0,8,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowActivityEmpty}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

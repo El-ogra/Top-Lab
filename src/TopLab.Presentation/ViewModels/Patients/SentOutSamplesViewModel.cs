@@ -45,6 +45,7 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
         LoadCommand = new AsyncRelayCommand(async (_, ct) => await LoadAsync(ct));
         OpenLabAccountCommand = new RelayCommand(param => OpenLabAccount(param as SentOutSampleDto));
         OpenSendSampleOutCommand = new AsyncRelayCommand(_ => OpenSendSampleOutAsync());
+        IgnoreCommand = new RelayCommand(p => IgnoreSelected(p as SentOutSampleDto));
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientVisitHistoryViewModel>());
     }
 
@@ -109,6 +110,7 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
     public AsyncRelayCommand LoadCommand { get; }
     public RelayCommand OpenLabAccountCommand { get; }
     public AsyncRelayCommand OpenSendSampleOutCommand { get; }
+    public RelayCommand IgnoreCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
@@ -155,6 +157,14 @@ public sealed class SentOutSamplesViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    private void IgnoreSelected(SentOutSampleDto? sample)
+    {
+        var target = sample ?? SelectedItem;
+        if (target is null) return;
+        Items.Remove(target);
+        if (SelectedItem == target) SelectedItem = null;
     }
 
     private void OpenLabAccount(SentOutSampleDto? sample)

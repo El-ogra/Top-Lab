@@ -1641,6 +1641,9 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                     b.Property<byte>("DefaultAccountType")
                         .HasColumnType("tinyint");
 
+                    b.Property<int?>("DefaultSentOutLabEntityId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("DisableAutoTitleInsertion")
                         .HasColumnType("bit");
 

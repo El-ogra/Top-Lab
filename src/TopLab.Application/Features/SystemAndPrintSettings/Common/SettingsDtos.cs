@@ -18,7 +18,8 @@ public sealed record SystemSettingsDto(
     int BranchNumber = 1,
     // STAGE-01 (baseline 1.2.2.4.2.1): the enable flag only — the hash itself
     // never leaves the Domain layer.
-    bool PrintResultPasswordEnabled = false);
+    bool PrintResultPasswordEnabled = false,
+    int? DefaultSentOutLabEntityId = null);
 
 public sealed record ReportSettingsDto(
     decimal PageMarginLeftCm,

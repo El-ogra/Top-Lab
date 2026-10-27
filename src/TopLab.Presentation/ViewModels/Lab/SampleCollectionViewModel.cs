@@ -42,12 +42,38 @@ public sealed class SampleCollectionViewModel : ViewModelBase
 
         RefreshCommand = new AsyncRelayCommand(_ => LoadAsync());
         OpenPatientCommand = new AsyncRelayCommand(async p => await OpenPatientAsync(p));
+        PreviousMonthCommand = new RelayCommand(_ => ShiftMonth(-1));
+        NextMonthCommand = new RelayCommand(_ => ShiftMonth(1));
+    }
+
+    public RelayCommand PreviousMonthCommand { get; }
+    public RelayCommand NextMonthCommand { get; }
+
+    public string MonthLabel => (DayDateTime ?? DateTime.UtcNow).ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+
+    private void ShiftMonth(int delta)
+    {
+        var current = DayDateTime ?? DateTime.UtcNow;
+        var target = current.AddMonths(delta);
+        // clamp day
+        var daysInMonth = DateTime.DaysInMonth(target.Year, target.Month);
+        var day = Math.Min(current.Day, daysInMonth);
+        DayDateTime = new DateTime(target.Year, target.Month, day);
+        OnPropertyChanged(nameof(MonthLabel));
+        _ = LoadAsync();
     }
 
     public DateTime? DayDateTime
     {
         get => _dayDateTime;
-        set => SetProperty(ref _dayDateTime, value);
+        set
+        {
+            if (SetProperty(ref _dayDateTime, value))
+            {
+                OnPropertyChanged(nameof(MonthLabel));
+                _ = LoadAsync();
+            }
+        }
     }
 
     public int Page

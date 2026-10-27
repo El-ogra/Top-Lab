@@ -212,6 +212,17 @@ public sealed class PatientTest : AuditableEntity<PatientTestId>
         SampleDrawnAtUtc = drawnAtUtc;
     }
 
+    public void ClearSampleDrawn()
+    {
+        if (IsTakenOutsideLab)
+        {
+            throw new InvalidOperationException("Cannot clear a sample drawn outside the lab.");
+        }
+
+        IsSampleDrawn = false;
+        SampleDrawnAtUtc = null;
+    }
+
     public void UpdateSampleFlags(
         bool isUrine,
         bool isStool,

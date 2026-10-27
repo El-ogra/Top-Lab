@@ -111,6 +111,7 @@ public static class DependencyInjection
         // BandedResultMonitorDto; no shared class or DTO with the two list writers above,
         // and no ReportKind / PrinterOutputType value (BR-F05-13).
         services.AddScoped<IBandedResultMonitorPdfWriter, BandedResultMonitorPdfWriter>();
+        services.AddScoped<IStatisticsReportPdfWriter, StatisticsReportPdfWriter>();
         services.AddScoped<IReportPdfWriter, ReportPdfWriter>();
         services.AddScoped<IPdfPrinterDispatcher, ShellPdfPrinterDispatcher>();
         // WP-01: Arabic report document + on-screen preview (never prints).

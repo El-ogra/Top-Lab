@@ -45,6 +45,8 @@
 
             <TextBlock Text="نوع الحساب الافتراضي" FontWeight="Bold" Margin="0,16,0,4" />
             <ComboBox ItemsSource="{Binding AccountTypeOptions}" SelectedItem="{Binding DefaultAccountType}" />
+            <TextBlock Text="الجهة الافتراضية للإرسال:" Margin="0,8,0,2"/>
+            <ComboBox ItemsSource="{Binding SentOutLabOptions}" SelectedValue="{Binding DefaultSentOutLabEntityId}" DisplayMemberPath="Name" SelectedValuePath="Id" Margin="0,0,0,8"/>
 
             <TextBlock Text="الإعدادات العامة" FontWeight="Bold" Margin="0,16,0,8" />
             <CheckBox Content="حفظ الطبيب المعالج من شاشة البيانات فقط" IsChecked="{Binding SaveTreatingDoctorOnlyFromEntityWindow}" />

@@ -38,7 +38,8 @@ public sealed class GetSystemSettingsQueryHandler : IRequestHandler<GetSystemSet
             row.DailyBackupEnabled,
             row.DailyBackupPath,
             row.BranchNumber,
-            row.PrintResultPasswordEnabled);
+            row.PrintResultPasswordEnabled,
+            row.DefaultSentOutLabEntityId);
 
         return Task.FromResult(Result<SystemSettingsDto>.Success(dto));
     }

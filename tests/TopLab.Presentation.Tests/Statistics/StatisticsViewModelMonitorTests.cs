@@ -36,6 +36,12 @@ namespace TopLab.Presentation.Tests.Statistics;
 /// </summary>
 public class StatisticsViewModelMonitorTests
 {
+    private sealed class NoOpStatisticsReportPdfWriter : IStatisticsReportPdfWriter
+    {
+        public Task WritePdfAsync(string absolutePath, StatisticsReportModel report, LabPrintTextDto labText, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
     private sealed class RecordingMonitorPdfWriter : IBandedResultMonitorPdfWriter
     {
         private readonly TaskCompletionSource _written = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -224,6 +230,7 @@ public class StatisticsViewModelMonitorTests
             new NoOpNavigation(),
             new FixedDialogService(savePath),
             writer,
+            new NoOpStatisticsReportPdfWriter(),
             new FakeLabPrintText());
     }
 

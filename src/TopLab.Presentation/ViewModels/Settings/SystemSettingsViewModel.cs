@@ -10,7 +10,10 @@ using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetLabPrintText
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetPrinterAssignments;
 using TopLab.Application.Features.SystemAndPrintSettings.Queries.GetSystemSettings;
 using TopLab.Application.Common.Interfaces;
+using System.Collections.ObjectModel;
 using TopLab.Presentation.Common;
+using TopLab.Presentation.ViewModels.Patients;
+using TopLab.Application.Features.ExternalEntities.Queries.SearchExternalEntities;
 using TopLab.Presentation.Common.Dialogs;
 using TopLab.Presentation.Common.ErrorPresentation;
 using TopLab.Presentation.Common.Navigation;
@@ -146,6 +149,16 @@ public sealed class SystemSettingsViewModel : ViewModelBase
         set => SetProperty(ref _branchNumber, value);
     }
 
+    private int? _defaultSentOutLabEntityId;
+    public int? DefaultSentOutLabEntityId
+    {
+        get => _defaultSentOutLabEntityId;
+        set => SetProperty(ref _defaultSentOutLabEntityId, value);
+    }
+
+    public ObservableCollection<LabFilterItem> SentOutLabOptions { get; } = new();
+
+
     public string ReportPrinter { get => _reportPrinter; set => SetProperty(ref _reportPrinter, value); }
     public string BarcodePrinter { get => _barcodePrinter; set => SetProperty(ref _barcodePrinter, value); }
     public string EnvelopePrinter { get => _envelopePrinter; set => SetProperty(ref _envelopePrinter, value); }
@@ -204,6 +217,18 @@ public sealed class SystemSettingsViewModel : ViewModelBase
                 DailyBackupEnabled = s.DailyBackupEnabled;
                 DailyBackupPath = s.DailyBackupPath ?? string.Empty;
                 BranchNumber = s.BranchNumber;
+                DefaultSentOutLabEntityId = s.DefaultSentOutLabEntityId;
+            }
+
+            // Partner labs for default sent-out destination
+            if (SentOutLabOptions.Count == 0)
+            {
+                var labs = await _mediator.Send(new SearchExternalEntitiesQuery(EntityType.PartnerLab, null, 1, 100));
+                if (labs.IsSuccess && labs.Value is not null)
+                {
+                    SentOutLabOptions.Add(new LabFilterItem(null, "بدون"));
+                    foreach (var l in labs.Value) SentOutLabOptions.Add(new LabFilterItem(l.Id, l.Name));
+                }
             }
             else if (systems.Error is not null)
             {
@@ -333,7 +358,8 @@ public sealed class SystemSettingsViewModel : ViewModelBase
                 ResultScreenAccountDisplayMode,
                 DailyBackupEnabled,
                 DailyBackupPath,
-                BranchNumber));
+                BranchNumber,
+                DefaultSentOutLabEntityId));
 
             if (!result.IsSuccess)
             {

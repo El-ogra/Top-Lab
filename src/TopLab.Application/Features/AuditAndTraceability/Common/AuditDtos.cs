@@ -49,3 +49,17 @@ public sealed record PatientTestAuditDto(
     int? DeliveredByUserId,
     string? DeliveredByUserName,
     DateTime? DeliveredAtUtc);
+
+/// <summary>
+/// GAP-19 (4.5.1.2.2/4.5.1.2.3): one row of audit activity across all
+/// audit-bearing sources, filtered by period and (optionally) by user.
+/// </summary>
+public sealed record AuditActivityRowDto(
+    int UserId,
+    string UserName,
+    string ActivityCode,
+    string ActivityLabel,
+    DateTime OccurredAtUtc,
+    int? PatientId,
+    int? PatientTestId,
+    string? Detail);

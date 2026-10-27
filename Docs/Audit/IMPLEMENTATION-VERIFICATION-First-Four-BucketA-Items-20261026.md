@@ -1352,3 +1352,21 @@ was not changed here.
   push performed.
 
 Verdict: **CONSOLIDATED REMEDIATION COMPLETE WITH RECORDED LIMITATIONS — READY FOR OWNER REVIEW.**
+\
+## Group 1 — GAP-18 — Statistics report save (5.6.2.3)
+
+Status before: MISSING -> after: IMPLEMENTED. The on-screen census view is the preview; Save persists the patient census report only.
+
+Files: src/TopLab.Application/Features/Statistics/Common/StatisticsReportModel.cs; src/TopLab.Application/Common/Interfaces/IStatisticsReportPdfWriter.cs; src/TopLab.Infrastructure/Printing/StatisticsReportPdfWriter.cs; DI registration; StatisticsViewModel.SaveCensusReportCommand; StatisticsView.xaml button.
+
+## Group 1 — GAP-19 — Audit user filter (4.5.1.2.2, 4.5.1.2.3)
+
+4.5.1.2.4 is out of scope, blocked by OD-4 and OD-2; no deletion path added. No login-record entity exists; filter operates over PaymentOperation (ReceivedByUserId/OperationAtUtc), CashMovement (PerformedByUserId/OccurredAtUtc), PatientTest lifecycle fields.
+
+## GAP-24 — Verified implemented, no code change
+
+CustomGroups implements 3.6.1 (SetCustomGroupItemPriceCommandHandler, RemoveCustomGroupItemCommandHandler, CustomGroupsViewModel, CustomGroupsView.xaml). Introduced by commit 6b6da28, ancestor of b3c4661. Misclassified against TestGroups.
+
+## Observations
+
+GAP-23 3.6.1.4.8 Undo added to TestGroupsViewModel, not matching 3.6.1 screen; CustomGroups has no Undo. Open mapping question.

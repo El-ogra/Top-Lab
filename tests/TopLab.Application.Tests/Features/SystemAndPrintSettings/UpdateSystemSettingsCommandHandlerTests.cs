@@ -20,7 +20,37 @@ public class UpdateSystemSettingsCommandHandlerTests
         PrintAccountInsteadOfDateOnReport: false,
         ResultScreenAccountDisplayMode: ResultScreenAccountDisplayMode.Summary,
         DailyBackupEnabled: false,
-        DailyBackupPath: null);
+        DailyBackupPath: null,
+        DefaultSentOutLabEntityId: 9);
+
+    [Fact]
+    public async Task UpdateSystemSettings_RoundTrips_DefaultSentOutLabEntityId()
+    {
+        var db = new FakeApplicationDbContext();
+        db.SystemSettings.Add(SystemSettings.CreateDefault());
+
+        var handler = new UpdateSystemSettingsCommandHandler(db);
+        var result = await handler.Handle(DefaultCommand(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(9, db.SystemSettings[0].DefaultSentOutLabEntityId);
+    }
+
+    [Fact]
+    public async Task UpdateSystemSettings_DefaultSentOutLabEntityId_NullClears()
+    {
+        var db = new FakeApplicationDbContext();
+        var existing = SystemSettings.CreateDefault();
+        existing.SetDefaultSentOutLab(9);
+        db.SystemSettings.Add(existing);
+
+        var cmd = DefaultCommand() with { DefaultSentOutLabEntityId = null };
+        var handler = new UpdateSystemSettingsCommandHandler(db);
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(db.SystemSettings[0].DefaultSentOutLabEntityId);
+    }
 
     [Fact]
     public async Task UpdateSystemSettings_RoundTrips()

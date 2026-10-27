@@ -18,7 +18,8 @@ public sealed record UpdateSystemSettingsCommand(
     ResultScreenAccountDisplayMode ResultScreenAccountDisplayMode,
     bool DailyBackupEnabled,
     string? DailyBackupPath,
-    int BranchNumber = 1)
+    int BranchNumber = 1,
+    int? DefaultSentOutLabEntityId = null)
     : IRequest<Result>, IAuthorizedRequest
 {
     public string RequiredPermissionCode => "EDIT_SYSTEM_SETTINGS";

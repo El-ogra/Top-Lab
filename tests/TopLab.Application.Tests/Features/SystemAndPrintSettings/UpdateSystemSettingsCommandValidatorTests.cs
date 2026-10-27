@@ -20,7 +20,8 @@ public class UpdateSystemSettingsCommandValidatorTests
         PrintAccountInsteadOfDateOnReport: false,
         ResultScreenAccountDisplayMode: ResultScreenAccountDisplayMode.Hidden,
         DailyBackupEnabled: false,
-        DailyBackupPath: null);
+        DailyBackupPath: null,
+        DefaultSentOutLabEntityId: null);
 
     [Fact]
     public void Valid_Passes()
@@ -42,5 +43,20 @@ public class UpdateSystemSettingsCommandValidatorTests
         var result = _validator.Validate(Valid() with { DailyBackupEnabled = true, DailyBackupPath = null });
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateSystemSettingsCommand.DailyBackupPath));
+    }
+
+    [Fact]
+    public void DefaultSentOutLabEntityId_NonPositive_Fails()
+    {
+        var result = _validator.Validate(Valid() with { DefaultSentOutLabEntityId = 0 });
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateSystemSettingsCommand.DefaultSentOutLabEntityId));
+    }
+
+    [Fact]
+    public void DefaultSentOutLabEntityId_Null_Passes()
+    {
+        var result = _validator.Validate(Valid() with { DefaultSentOutLabEntityId = null });
+        Assert.True(result.IsValid);
     }
 }

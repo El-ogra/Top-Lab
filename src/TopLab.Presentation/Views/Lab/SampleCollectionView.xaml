@@ -14,6 +14,13 @@
             <Button Content="تحديث" Width="80" Margin="0,0,8,0" Command="{Binding RefreshCommand}" />
         </StackPanel>
 
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="◄" Width="40" Command="{Binding PreviousMonthCommand}" Margin="0,0,8,0" />
+            <TextBlock Text="{Binding MonthLabel}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Bold" />
+            <Button Content="►" Width="40" Command="{Binding NextMonthCommand}" Margin="0,0,8,0" />
+            <Calendar SelectedDate="{Binding DayDateTime}" Margin="0,0,8,0" />
+        </StackPanel>
+
         <!-- Empty state: operational-success empty text -->
         <TextBlock DockPanel.Dock="Top" Text="لا عينات معلقة" Foreground="#666666" Margin="0,8,0,0">
             <TextBlock.Style>

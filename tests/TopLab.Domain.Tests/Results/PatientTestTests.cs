@@ -68,6 +68,37 @@ public class PatientTestTests
     }
 
     [Fact]
+    public void ClearSampleDrawn_ClearsFlagAndTime()
+    {
+        var pt = PatientTest.Create(PatientTestId.Create(1), PatientId.Create(1), TestId.Create(1), 100m);
+        pt.MarkSampleDrawn(DateTime.UtcNow);
+        pt.ClearSampleDrawn();
+        Assert.False(pt.IsSampleDrawn);
+        Assert.Null(pt.SampleDrawnAtUtc);
+    }
+
+    [Fact]
+    public void ClearSampleDrawn_OnNotDrawn_IsNoOp()
+    {
+        var pt = PatientTest.Create(PatientTestId.Create(1), PatientId.Create(1), TestId.Create(1), 100m);
+        pt.ClearSampleDrawn();
+        Assert.False(pt.IsSampleDrawn);
+        Assert.Null(pt.SampleDrawnAtUtc);
+    }
+
+    [Fact]
+    public void ClearSampleDrawn_OutsideLab_Throws()
+    {
+        var pt = PatientTest.Create(PatientTestId.Create(1), PatientId.Create(1), TestId.Create(1), 100m);
+        pt.UpdateSampleFlags(isUrine: false, isStool: false, isBlood: false, isSemen: false, isCsf: false, isTakenOutsideLab: true);
+        pt.MarkSampleDrawn(DateTime.UtcNow);
+        var ex = Assert.Throws<InvalidOperationException>(() => pt.ClearSampleDrawn());
+        Assert.Equal("Cannot clear a sample drawn outside the lab.", ex.Message);
+        Assert.True(pt.IsSampleDrawn);
+        Assert.NotNull(pt.SampleDrawnAtUtc);
+    }
+
+    [Fact]
     public void EnterResult_AfterReview_Throws()
     {
         var pt = PatientTest.Create(PatientTestId.Create(1), PatientId.Create(1), TestId.Create(1), 100m);

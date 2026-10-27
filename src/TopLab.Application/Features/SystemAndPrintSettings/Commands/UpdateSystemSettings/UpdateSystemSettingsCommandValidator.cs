@@ -14,6 +14,9 @@ public sealed class UpdateSystemSettingsCommandValidator : AbstractValidator<Upd
             .Must((cmd, path) => !cmd.DailyBackupEnabled || !string.IsNullOrWhiteSpace(path))
             .WithMessage("مسار النسخ الاحتياطي مطلوب عند تفعيل النسخ الاحتياطي اليومي.")
             .MaximumLength(300).WithMessage("مسار النسخ الاحتياطي يجب ألا يتجاوز 300 حرف.");
+
+        RuleFor(x => x.DefaultSentOutLabEntityId)
+            .Must(v => v is null || v > 0).WithMessage("الجهة الافتراضية غير صالحة.");
     }
 
     private static bool IsAllowedDefaultAccountType(AccountType value)
