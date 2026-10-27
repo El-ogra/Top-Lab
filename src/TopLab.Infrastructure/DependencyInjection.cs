@@ -103,6 +103,10 @@ public static class DependencyInjection
         // no shared class and no shared DTO with the price-list path above (C-6).
         services.AddScoped<ICustomGroupPdfWriter, CustomGroupPdfWriter>();
 
+        // GAP-25 (3.9.1.6.5): antibiotic-catalogue printing. Its own port and its own
+        // writer over the existing antibiotic DTO; no schema or permission change.
+        services.AddScoped<IAntibioticListPdfWriter, AntibioticListPdfWriter>();
+
         // R-F05: banded result monitor printing. Its own port and its own writer over
         // BandedResultMonitorDto; no shared class or DTO with the two list writers above,
         // and no ReportKind / PrinterOutputType value (BR-F05-13).

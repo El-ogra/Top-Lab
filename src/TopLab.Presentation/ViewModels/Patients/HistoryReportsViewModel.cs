@@ -27,6 +27,7 @@ public sealed class HistoryReportsViewModel : ViewModelBase
     private PatientHistoryDto? _singleHistory;
     private MultiPatientHistoryDto? _multiHistory;
     private ObservableCollection<HistoryEntryDto> _entries = new();
+    private HistoryEntryDto? _selectedEntry;
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private string? _testIdText;
@@ -51,6 +52,7 @@ public sealed class HistoryReportsViewModel : ViewModelBase
         LoadSeparateCommand = new AsyncRelayCommand(async (_, ct) => await LoadSeparateAsync(ct));
         PrintHistoryCommand = new AsyncRelayCommand(async (_, ct) => await PrintHistoryAsync(ct));
         BackCommand = new RelayCommand(_ => _navigation.NavigateTo<PatientVisitHistoryViewModel>());
+        ClearSelectionCommand = new RelayCommand(_ => ClearSelection(), _ => _selectedEntry is not null);
     }
 
     public int PatientId => _patientId;
@@ -92,6 +94,23 @@ public sealed class HistoryReportsViewModel : ViewModelBase
     /// <summary>W-02 S12 (WP-10, C-17): the multi-patient list is public so the
     /// view (and tests) can populate it — previously it was always empty.</summary>
     public ObservableCollection<int> MultiPatientIds { get; } = new();
+
+    /// <summary>
+    /// GAP-27 (1.15.4.5): the history-report row the user has selected. Bound to
+    /// the grid's <c>SelectedItem</c>, so clearing it here also clears the WPF
+    /// selection. Null means "no selection".
+    /// </summary>
+    public HistoryEntryDto? SelectedEntry
+    {
+        get => _selectedEntry;
+        set
+        {
+            if (SetProperty(ref _selectedEntry, value))
+            {
+                ClearSelectionCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
 
     public DateTime? FromDate
     {
@@ -159,6 +178,18 @@ public sealed class HistoryReportsViewModel : ViewModelBase
     public AsyncRelayCommand LoadSeparateCommand { get; }
     public AsyncRelayCommand PrintHistoryCommand { get; }
     public RelayCommand BackCommand { get; }
+    public RelayCommand ClearSelectionCommand { get; }
+
+    /// <summary>
+    /// GAP-27 (1.15.4.5, Arabic label "حذف الكل"): removes the current
+    /// history-report selection only. The loaded entries, the filters, the
+    /// selected mode and the patient context are preserved; nothing is persisted
+    /// and no request is dispatched. Safe to call when nothing is selected.
+    /// </summary>
+    public void ClearSelection()
+    {
+        SelectedEntry = null;
+    }
 
     public async Task LoadAsync(int patientId, CancellationToken cancellationToken = default)
     {

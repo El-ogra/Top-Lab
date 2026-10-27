@@ -51,6 +51,7 @@
             <Button Content="عرض (متعدد)" Margin="0,0,6,0" Padding="10,5" Command="{Binding LoadMultiCommand}"/>
             <Button Content="عرض (منفصل)" Margin="0,0,6,0" Padding="10,5" Command="{Binding LoadSeparateCommand}"/>
             <Button Content="طباعة" Margin="0,0,6,0" Padding="10,5" Command="{Binding PrintHistoryCommand}"/>
+            <Button Content="حذف الكل" Margin="0,0,6,0" Padding="10,5" Command="{Binding ClearSelectionCommand}"/>
             <Button Content="رجوع" Margin="0,0,6,0" Padding="10,5" Command="{Binding BackCommand}"/>
         </StackPanel>
 
@@ -86,6 +87,8 @@
         <!-- Entries Grid -->
         <DataGrid Grid.Row="5"
                   ItemsSource="{Binding Entries}"
+                  SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
+                  SelectionMode="Extended"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
                   RowHeaderWidth="0">

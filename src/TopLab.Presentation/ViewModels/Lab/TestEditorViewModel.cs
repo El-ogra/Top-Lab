@@ -391,6 +391,15 @@ public sealed class TestEditorViewModel : ViewModelBase
             return;
         }
 
+        // GAP-28: confirm before persisting a reference range (create or update),
+        // using the same dialog pattern as DeleteRangeAsync. On cancel nothing is
+        // dispatched, the editor is not cleared, and the ranges are not reloaded.
+        bool confirm = await _dialogs.ShowConfirmationAsync("تأكيد حفظ المدى المرجعي", "سيتم حفظ المدى المرجعي المحدد — متابعة؟");
+        if (!confirm)
+        {
+            return;
+        }
+
         IsBusy = true;
         ErrorMessage = string.Empty;
         try

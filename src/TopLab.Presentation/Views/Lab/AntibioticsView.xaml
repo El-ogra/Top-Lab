@@ -6,7 +6,8 @@
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBox Width="220" Margin="0,0,8,0" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" />
             <Button Content="بحث" Width="80" Margin="0,0,8,0" Command="{Binding SearchCommand}" />
-            <Button Content="مضاد جديد" Width="100" Command="{Binding OpenCreateCommand}" />
+            <Button Content="مضاد جديد" Width="100" Margin="0,0,8,0" Command="{Binding OpenCreateCommand}" />
+            <Button Content="طباعة" Width="80" Command="{Binding PrintListCommand}" />
         </StackPanel>
 
         <TextBlock DockPanel.Dock="Top" Text="لا مضادات في القاموس" Foreground="#666666" Margin="0,8,0,0">

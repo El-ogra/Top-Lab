@@ -79,6 +79,20 @@ public class InfrastructureRegistrationTests
     }
 
     [Fact]
+    public void AddInfrastructure_RegistersAntibioticListPdfWriter()
+    {
+        // GAP-25 (3.9.1.6.5): the catalogue print path resolves its own port to the
+        // Infrastructure writer, with the same Scoped lifetime as the other list writers.
+        var services = BuildServices();
+
+        var registration = Assert.Single(
+            services, d => d.ServiceType == typeof(IAntibioticListPdfWriter));
+
+        Assert.Equal(typeof(AntibioticListPdfWriter), registration.ImplementationType);
+        Assert.Equal(ServiceLifetime.Scoped, registration.Lifetime);
+    }
+
+    [Fact]
     public void SecureEntityIdCodeGenerator_ProducesDistinctWellFormedCodes()
     {
         var generator = new SecureEntityIdCodeGenerator();

@@ -594,3 +594,761 @@ Tests verify Undo reverts without persisting:
 | Application code modified | NO |
 
 **ALL GAPS CLOSED — READY FOR OWNER COMMIT**
+
+---
+
+# Third Batch — Item 1: GAP-28 Reference-Range Confirm Step Implementation
+
+**Implementation date:** 2026-10-27
+**Repository:** `C:\Users\LAP LINK\source\repos\Top-Lab`
+**Branch:** `main`
+**HEAD commit at time of implementation:** `2d72f13158f92588cf9b5ff27d3f91f311a5d5c8`
+**GAP:** GAP-28 — Stage R5 — reference `3.3.1.3.11`
+**Acceptance criterion:** Reference-range confirm step: apply then confirm before persisting.
+**Scope:** Presentation layer only (ViewModel + Presentation tests). No staging, commit, or push was performed.
+
+## Owner decision applied
+
+The owner-decided interaction model was applied exactly: a **confirmation dialog** using
+`IDialogService.ShowConfirmationAsync`, following the pre-existing `DeleteRangeAsync` pattern
+(`TestEditorViewModel.cs`). No inline Apply/Confirm toggle and no new interaction model were introduced.
+
+## What was changed
+
+### Production code (1 file)
+
+- `src/TopLab.Presentation/ViewModels/Lab/TestEditorViewModel.cs`
+  - `SaveRangeAsync()` (line 386).
+  - Added the GAP-28 comment block at lines 394-396.
+  - Confirm dialog call at line 397:
+    `_dialogs.ShowConfirmationAsync("تأكيد حفظ المدى المرجعي", "سيتم حفظ المدى المرجعي المحدد — متابعة؟")`.
+  - Cancel gate at lines 398-401: returns before `IsBusy`, before any command dispatch, before
+    `ClearRangeEditor()` and before `LoadRangesAsync()`.
+  - Create path unchanged in behaviour: `CreateReferenceRangeCommand` dispatched at line 409, inside
+    the same `if (SelectedRange is null)` branch.
+  - Update path unchanged in behaviour: `UpdateReferenceRangeCommand` dispatched at line 420.
+  - On success: `ClearRangeEditor()` (line 430) then `LoadRangesAsync()` (line 431), as before.
+  - The dialog is shown to both create and update paths because it precedes the branch.
+  - Reference implementation used as the pattern: `DeleteRangeAsync()` (line 439) with its own
+    `ShowConfirmationAsync` call at line 447.
+
+Diff size: 9 added lines, 0 removed lines, 0 modified lines in this file.
+
+### Documentation (this file)
+
+- `Docs/Audit/IMPLEMENTATION-VERIFICATION-First-Four-BucketA-Items-20261026.md` — this section appended.
+  No new documentation files were created and no existing file was renamed.
+
+### Explicitly NOT modified
+
+`CreateReferenceRangeCommand` / handler, `UpdateReferenceRangeCommand` / handler,
+`DeleteReferenceRangeCommand` / handler, and all Application, Domain, and Infrastructure code.
+No XAML change was required: the existing Save button (`TestEditorWindow.xaml:88`) binds to
+`SaveRangeCommand`, which now shows the dialog.
+
+## Tests added
+
+File: `tests/TopLab.Presentation.Tests/Lab/Gap28ReferenceRangeConfirmTests.cs` (new file, 7 tests)
+
+- `SaveRange_CreatePath_Confirm_ShowsDialogThenDispatchesCreateCommand` (line 125) — create path:
+  dialog shown first, then exactly one `CreateReferenceRangeCommand`, no `UpdateReferenceRangeCommand`.
+- `SaveRange_UpdatePath_Confirm_ShowsDialogThenDispatchesUpdateCommand` (line 153) — update path:
+  dialog shown first, then exactly one `UpdateReferenceRangeCommand`, no `CreateReferenceRangeCommand`.
+- `SaveRange_CreatePath_Cancel_DispatchesNoCommand_AndRetainsEditor` (line 176) — cancel: no request
+  dispatched, no clear, all editor values retained.
+- `SaveRange_UpdatePath_Cancel_DispatchesNoCommand_AndRetainsSelection` (line 213) — cancel on update:
+  no command, `SelectedRange` and edited values retained.
+- `SaveRange_Cancel_DoesNotReloadRanges` (line 237) — cancel: no `GetReferenceRangesQuery`, i.e.
+  `LoadRangesAsync` not called.
+- `SaveRange_Confirm_UsesSameConfirmationDialogPatternAsDeleteRange` (line 254) — dialog pattern
+  consistency: same Arabic confirm style, message ending in `متابعة؟`, and no dispatch before the dialog;
+  compared side by side with `DeleteRangeAsync`.
+- `SaveRange_EditingTestIdZero_DoesNotShowDialog` (line 279) — guard: the pre-existing
+  "save the test first" early return still precedes the dialog.
+
+Test doubles are local to the file: `RecordingDialogService` (line 31) records confirmation calls and
+shares an ordered event list with `RecordingSender` (line 63), a decorator over the existing
+`FakeSender`, so ordering (dialog before dispatch) is asserted deterministically. No existing test
+helper (`tests/TopLab.Presentation.Tests/Common/Fakes.cs`) was modified.
+
+No existing test was modified or removed. No existing test asserted the old "no confirm" behaviour
+for `SaveRangeAsync`; the new tests are purely additive.
+
+## Build and test results
+
+### Build
+
+- Command: `dotnet build TopLab.sln -c Release`
+- Start: `2026-10-27T13:21:59.0541427+03:00`
+- End: `2026-10-27T13:22:31.0515109+03:00`
+- Exit code: `0`
+- Result: **Build succeeded — 0 Warnings, 0 Errors.**
+
+An earlier build attempt (start `2026-10-27T13:15:37.5588896+03:00`, end
+`2026-10-27T13:21:28.8142874+03:00`, exit `1`) failed with one compile error in the new test file
+(CS0411: `CreateReferenceRangeCommand` implements `IRequest<Result<int>>`, so the canned response was
+corrected to `Result<int>.Success(1)`). The final build above is clean.
+
+### Tests
+
+- Command: `dotnet test TopLab.sln -c Release --no-build`
+- Start: `2026-10-27T13:22:37.9588969+03:00`
+- End: `2026-10-27T13:25:33.3159227+03:00`
+- Exit code: `0`
+
+| Test project | Passed | Failed | Skipped | Total |
+|---|---:|---:|---:|---:|
+| TopLab.Domain.Tests | 728 | 0 | 0 | 728 |
+| TopLab.Application.Tests | 1927 | 0 | 0 | 1927 |
+| TopLab.Infrastructure.Tests | 527 | 0 | 0 | 527 |
+| TopLab.Persistence.Tests | 24 | 0 | 2 | 26 |
+| TopLab.Presentation.Tests | 417 | 0 | 0 | 417 |
+| **Solution total** | **3623** | **0** | **2** | **3625** |
+
+Focused run of the new class: `dotnet test tests\TopLab.Presentation.Tests\TopLab.Presentation.Tests.csproj -c Release --no-build --filter "FullyQualifiedName~Gap28ReferenceRangeConfirmTests"`
+→ **7 passed, 0 failed, 0 skipped, exit 0.**
+
+## Self-verification results
+
+| # | Verification point | Result | Evidence |
+|---|---|---|---|
+| 1 | `SaveRangeAsync` shows a confirmation dialog before dispatch | PASS | `TestEditorViewModel.cs:397` precedes branches at `:407`/`:418` |
+| 2 | Uses `IDialogService.ShowConfirmationAsync`, same pattern as `DeleteRangeAsync` | PASS | `:397` vs. `:447` (same call shape, Arabic title/message) |
+| 3 | On confirm: correct command, then `ClearRangeEditor` + `LoadRangesAsync` | PASS | Create `:409`, update `:420`, clear `:430`, reload `:431` |
+| 4 | On cancel: no dispatch, no clear, no reload; editor retained | PASS | Cancel gate `:398-401` precedes `:403-431`; tests at test file `:176`, `:213`, `:237` |
+| 5 | Confirm applies to both create and update | PASS | Single dialog at `:397` before `if (SelectedRange is null)` at `:407`; tests `:125`, `:153` |
+| 6 | No Application/Domain/Infrastructure code modified | PASS | `git status --porcelain`: only `TestEditorViewModel.cs` (M) and the new test file (??) |
+| 7 | No new commands, handlers, queries, permissions, settings, migrations, entities | PASS | Diff is 9 added lines in one method; no new types in `src/`; `git status` shows no migration changes |
+| 8 | Tests cover all required scenarios | PASS | 7 tests at test file lines `125`, `153`, `176`, `213`, `237`, `254`, `279` |
+| 9 | Build clean (0 errors, 0 warnings) | PASS | Release build exit `0`, 0/0 |
+| 10 | All tests pass | PASS | Solution run exit `0`, 3623 passed / 0 failed / 2 pre-existing skips |
+
+## Risks and deviations
+
+- **No functional deviation** from the specification. The confirm gate was placed before `IsBusy = true`
+  so the ViewModel does not report "busy" while waiting for the user's answer; this mirrors
+  `DeleteRangeAsync`, which also awaits the dialog outside any busy state.
+- **Behaviour change (intended):** any existing automated or manual flow that called `SaveRangeAsync`
+  without answering a dialog now requires confirmation. No repository test depended on the old
+  behaviour.
+- **Cancel leaves `ErrorMessage` untouched** (it is cleared only after confirmation), so a previous
+  error message remains visible after cancelling. This is consistent with `DeleteRangeAsync` and does
+  not persist anything.
+- No security, data-integrity, or patient-safety risk: the change only adds a UI confirmation gate and
+  removes no validation; the confirm is not a substitute for the existing authorization
+  (`EDIT_SYSTEM_SETTINGS`) enforced by `IAuthorizedRequest` handlers.
+- No unrelated bug was found or fixed during this item.
+
+---
+
+# Third Batch — Item 2: GAP-27 History Selection Clearing and Cancel/Abandon Implementation
+
+**Implementation date:** 2026-10-27
+**Repository:** `C:\Users\LAP LINK\source\repos\Top-Lab`
+**Branch:** `main`
+**HEAD commit at time of implementation:** `2d72f13158f92588cf9b5ff27d3f91f311a5d5c8`
+**GAP:** GAP-27 — Stage R5 — references `1.15.4.5` and `1.15.3.4`
+**Acceptance criteria (Stage 2 roadmap §GAP-27):** select several prior results in the history report; a
+delete-all-history action exists; using it leaves the selection empty; a history operation can be cancelled,
+abandoning it without applying it. Stage 3 traceability adds M12 ("The delete-all action removes every
+selection") and M7 ("the confirm action commits and the cancel action abandons").
+**Scope:** Presentation layer only (two ViewModels, one XAML view, one dialog code-behind, one test file).
+No staging, commit, or push was performed.
+
+## Authoritative findings before the change
+
+| Reference | Authoritative wording | State before the change |
+|---|---|---|
+| `1.15.4.5` | "Delete All History Action" — "حذف الكل" — "Removes every selection from the history report." | `HistoryReportsView` had no selected-item binding, no selection state in `HistoryReportsViewModel`, and no clear action. The command bar carried only `عرض (مريض واحد)`, `عرض (متعدد)`, `عرض (منفصل)`, `طباعة`, `رجوع`. |
+| `1.15.3.4` | "History Mode Cancel Action" — "الغاء الحالى" — "Abandons the current history operation." | The only implemented operation that applies a history result is the insert-history dialog (`InsertHistoryResultCommand`). Its Cancel button closed the window in code-behind with no ViewModel-level abandon state; the normal confirm-cancel path already returned without dispatch, but nothing represented or enforced "abandoned". |
+
+The reference's History Output Mode block (`1.15.3`, `.1`, `.2`, `.3`) is not implemented in Top-Lab and is
+outside GAP-27's reference set, so no output-mode UI was invented. The abandon contract was applied to the
+actual history operation that exists and applies data: the insert-history dialog opened from the combined
+report (`CombinedReportViewModel.InsertFromHistoryAsync`, line 293).
+
+## What was changed
+
+### Production code (4 files)
+
+1. `src/TopLab.Presentation/ViewModels/Patients/HistoryReportsViewModel.cs`
+   - Private selection field at line 30.
+   - `SelectedEntry` property at lines 98-113; its setter raises `ClearSelectionCommand.CanExecuteChanged`.
+   - `ClearSelectionCommand` created at line 55 with `CanExecute` = a row is selected.
+   - `ClearSelectionCommand` property at line 181.
+   - `ClearSelection()` at lines 183-192 sets `SelectedEntry = null` only. It does not touch `Entries`,
+     `FromDate`, `ToDate`, `TestIdText`, `PrintSeparately`, `SelectedMode`, `PatientId`, `MultiPatientIds`,
+     the loaded history DTOs, or the messages, and it dispatches no request.
+
+2. `src/TopLab.Presentation/ViewModels/Patients/InsertHistoryDialogViewModel.cs`
+   - `_isAbandoned` flag at line 27.
+   - `LoadAsync` ignores a late result after abandonment: guard at lines 77-80 and after the await at
+     lines 92-97.
+   - `InsertAsync` refuses to insert after abandonment: guard at lines 122-126, after the confirmation
+     dialog at line 137, and after the command returns at lines 150-155.
+   - `Cancel()` at lines 176-189: marks the operation abandoned, clears `SelectedEntry`, clears
+     `InsertedReport`, clears `ErrorMessage`; no `InsertHistoryResultCommand` is dispatched.
+   - The confirmation-cancel path (`if (!confirmed ...)`) remains a separate meaning: it does not abandon
+     the operation and does not dispatch an insert.
+
+3. `src/TopLab.Presentation/Views/Patients/HistoryReportsView.xaml`
+   - `حذف الكل` button bound to `ClearSelectionCommand` at line 54.
+   - Entries grid `SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"` at line 90 and
+     `SelectionMode="Extended"` at line 91, so several prior results can be selected and clearing the
+     ViewModel selection clears the grid selection through the two-way binding.
+
+4. `src/TopLab.Presentation/Views/Patients/InsertHistoryDialogWindow.xaml.cs`
+   - `CancelButton_Click` calls `_vm.Cancel()` at line 30 before `DialogResult = false; Close();`.
+
+### Explicitly NOT modified
+
+`InsertHistoryResultCommand` and its handler, `GetPatientTestHistoryQuery`, the history printing path, the
+combined-report preview path, all Application/Domain/Infrastructure code, database schema, migrations,
+seed data, permissions, packages, and the accepted GAP-28 files. No new command, handler, query, permission,
+setting, entity, or package was added.
+
+## Tests added
+
+File: `tests/TopLab.Presentation.Tests/Patients/HistoryClearCancelTests.cs` (new file, 11 tests)
+
+Clear selection (`1.15.4.5`):
+
+- `History_ClearSelection_ClearsSelectionAndKeepsEntries` (line 138)
+- `History_ClearSelection_PreservesFiltersAndMode` (line 151)
+- `History_ClearSelection_WhenNothingSelected_IsSafeNoOp` (line 174)
+- `History_ClearSelection_DoesNotDispatchAnyMutatingRequest` (line 188)
+- `History_ClearSelectionCommand_CanExecuteTracksSelection` (line 203)
+
+Cancel / abandon (`1.15.3.4`):
+
+- `InsertDialog_Cancel_AbandonsWithoutDispatchingInsert` (line 221)
+- `InsertDialog_AfterCancel_InsertReturnsFalseWithoutConfirmOrDispatch` (line 238)
+- `InsertDialog_Cancel_WhenNoOperationActive_IsSafe` (line 256)
+- `InsertDialog_Cancel_DuringLoad_DoesNotRepopulateOrInsert` (line 273)
+- `InsertDialog_ConfirmationDeclined_DoesNotInsert` (line 292)
+- `InsertDialog_ConfirmedInsert_StillDispatchesInsertHistoryResultCommand` (line 312)
+
+The test doubles are local to the file (`ConfirmingDialogService`, `RecordingSender`): the recorder wraps
+the shared `FakeSender` and can gate the history query so abandonment during a load is deterministic. No
+shared test infrastructure was changed. No existing test was modified or removed.
+
+## Build and test results
+
+### Build
+
+- Command: `dotnet build TopLab.sln -c Release`
+- Start: `2026-10-27T14:15:46.6993211+03:00`
+- End: `2026-10-27T14:18:22.4439042+03:00`
+- Exit code: `0` — **Build succeeded, 0 Warnings, 0 Errors**
+
+### Focused GAP-27 tests
+
+- Command: `dotnet test tests\TopLab.Presentation.Tests\TopLab.Presentation.Tests.csproj -c Release --no-build --filter "FullyQualifiedName~HistoryClearCancelTests"`
+- Result: **11 passed, 0 failed, 0 skipped, exit 0** (xUnit reported total time 5.7 s)
+- Run after the successful Release build and before the full-suite run below; no separate start/end
+  timestamps were captured for this filtered invocation.
+
+### Full suite
+
+- Command: `dotnet test TopLab.sln -c Release --no-build`
+- Start: `2026-10-27T14:18:54.2049734+03:00`
+- End: `2026-10-27T14:22:59.0103576+03:00`
+- Exit code: `0`
+
+| Test project | Passed | Failed | Skipped | Total |
+|---|---:|---:|---:|---:|
+| TopLab.Domain.Tests | 728 | 0 | 0 | 728 |
+| TopLab.Application.Tests | 1927 | 0 | 0 | 1927 |
+| TopLab.Infrastructure.Tests | 527 | 0 | 0 | 527 |
+| TopLab.Persistence.Tests | 24 | 0 | 2 | 26 |
+| TopLab.Presentation.Tests | 428 | 0 | 0 | 428 |
+| **Solution total** | **3634** | **0** | **2** | **3636** |
+
+The two skips are the pre-existing Docker-dependent tests
+(`ConcurrentSettleTests.Settle_ConcurrentCalls_InsertOnePayment`,
+`RelationalIntegrationTests.MigrationChain_AppliesToEmptyDatabase`). Presentation tests rose from 417 to
+428 (the 11 new tests); no test was lost.
+
+## Self-verification results
+
+| # | Verification point | Result | Evidence |
+|---|---|---|---|
+| 1 | Clear action clears the relevant selection | PASS | `HistoryReportsViewModel.cs:189-191`; test `:138` |
+| 2 | UI reflects the cleared selection via MVVM notification / binding | PASS | `INotifyPropertyChanged` via `SetProperty` `:108`; two-way grid binding `HistoryReportsView.xaml:90`; `CanExecuteChanged` `:110` |
+| 3 | Dependent state reset consistently | PASS | `ClearSelection` resets only `SelectedEntry`; no other state depends on it |
+| 4 | Clear does not delete/modify/insert/persist | PASS | No mediator call in `ClearSelection`; test `:188` asserts only the load query was sent |
+| 5 | `Entries` collection preserved | PASS | Test `:138` (`11,12` remain); `ClearSelection` never touches `Entries` |
+| 6 | Clearing an empty selection is safe | PASS | `SetProperty` no-op path; test `:174` |
+| 7 | Filters/dates/search/mode/loaded results preserved | PASS | `ClearSelection` touches none; test `:151` |
+| 8 | No stale selection treated as active | PASS | Selection is null after clear; `CanExecute` false (`:203`) |
+| 9 | View and ViewModel selection stay synchronized | PASS | Two-way `SelectedItem` binding `HistoryReportsView.xaml:90`; `SelectionMode="Extended"` `:91` (WPF behaviour verified by inspection; see limitations) |
+| 10 | Selection-dependent command state consistent | PASS | `CanExecute` predicate `HistoryReportsViewModel.cs:55`, raised at `:110`; test `:203` |
+| 11 | Cancel abandons and dispatches no insert | PASS | `Cancel` `InsertHistoryDialogViewModel.cs:183-189`; tests `:221`, `:238` |
+| 12 | No equivalent insert path on cancel | PASS | No `_mediator.Send` in `Cancel`; violation fake throws; test `:221` |
+| 13 | No partial persistence on cancel | PASS | Cancel performs no I/O; the insert path is guarded at `:122`, `:137`, `:150` |
+| 14 | Dialog lifecycle correct | PASS | Code-behind calls `_vm.Cancel()` then `DialogResult = false; Close()` (`InsertHistoryDialogWindow.xaml.cs:30-32`) |
+| 15 | Parent state after cancellation | PASS | `CombinedReportViewModel` only applies `vm.InsertedReport` when `ShowDialog() == true` (`CombinedReportViewModel.cs:315-322`); cancel leaves the parent preview unchanged |
+| 16 | Late load cannot repopulate abandoned state | PASS | Load guard `InsertHistoryDialogViewModel.cs:92-97`; deterministic gated test `:273` |
+| 17 | Repeated cancel / cancel with no operation is safe | PASS | Idempotent flag; test `:256` |
+| 18 | Normal confirmed insert still works | PASS | Test `:312` asserts one `InsertHistoryResultCommand(10,11)` and `InsertedReport` set |
+| 19 | Confirmation cancel does not insert | PASS | `InsertHistoryDialogViewModel.cs:137`; test `:292` (selection deliberately retained) |
+| 20 | No Application/Domain/Infrastructure/schema/permission/package change | PASS | Final `git status` shows only Presentation files and tests; `git diff --stat` shows 4 source files plus this doc |
+
+## UI integration and architecture compliance
+
+- Actual owning view for the history screen: `MainWindow.xaml:144-145` maps
+  `HistoryReportsViewModel` to `Views/Patients/HistoryReportsView.xaml`.
+- Dialog view: `Views/Patients/InsertHistoryDialogWindow.xaml` opened by
+  `CombinedReportViewModel.cs:310-315`; the existing `إلغاء` button (`:10`) now routes through
+  `_vm.Cancel()`.
+- No Application/Domain/Infrastructure edit; no schema, migration, seed, permission, or dependency change.
+- The new command lives in the Presentation layer and performs no persistence, consistent with Stage 3
+  §7.7: history selections are session state.
+
+## Limitations and remaining gaps
+
+- Interactive WPF behaviour was **not** exercised at runtime in this environment. Verification of the
+  dialog and grid is by Release build, unit tests, and source inspection; the owner should perform the manual
+  check in the handoff notes.
+- The reference's full History Output Mode block (`1.15.3`, `.1`, `.2`, `.3`) and the history test lists
+  (`1.15.4.4`) remain unimplemented and were not added here; consequently "delete all" clears the
+  selection that exists on the current history screen (the entries grid), not a not-yet-existing
+  "available tests in report" list.
+- `SelectionMode="Extended"` lets several rows be highlighted; the ViewModel tracks the grid's
+  `SelectedItem` contract, and setting it to null clears the visual selection (standard `DataGrid`
+  behaviour). No per-row selection collection was added.
+- No blocking defect or data-safety issue was found.
+
+## Final repository state at end of GAP-27
+
+- HEAD unchanged: `2d72f13158f92588cf9b5ff27d3f91f311a5d5c8`; branch `main`.
+- Pre-existing, preserved GAP-28 changes: `src/TopLab.Presentation/ViewModels/Lab/TestEditorViewModel.cs`,
+  `tests/TopLab.Presentation.Tests/Lab/Gap28ReferenceRangeConfirmTests.cs`, and the earlier GAP-28 section
+  of this document.
+- GAP-27 changes: `HistoryReportsViewModel.cs`, `InsertHistoryDialogViewModel.cs`,
+  `HistoryReportsView.xaml`, `InsertHistoryDialogWindow.xaml.cs`,
+  `tests/TopLab.Presentation.Tests/Patients/HistoryClearCancelTests.cs`, and this section.
+- No commit, push, reset, stash, or clean operation was performed. No migration or permission change.
+
+---
+
+# Third Batch — Item 3: GAP-25 Antibiotic List PDF Printing Implementation
+
+**Implementation date:** 2026-10-27
+**Repository:** `C:\Users\LAP LINK\source\repos\Top-Lab`
+**Branch:** `main`
+**HEAD commit at time of implementation:** `2d72f13158f92588cf9b5ff27d3f91f311a5d5c8`
+**GAP:** GAP-25 — Stage R5 — reference `3.9.1.6.5`
+**Acceptance criteria (Stage 2 roadmap §GAP-25, lines 1017-1029):** open the antibiotics screen; a print
+action exists; printing produces a document listing the antibiotics with their commercial names; the
+printed list matches the on-screen catalogue. Stage 3 V3 §GAP-25 (lines 354-361) adds: an empty list
+produces an empty document or disables the action; no schema change; the existing antibiotic permission
+is respected.
+**Scope:** one new Application port, one new Infrastructure PDF writer, one DI registration, the
+antibiotics ViewModel/view, and focused tests. No staging, commit, or push was performed.
+
+## Authoritative findings before the change
+
+| Reference | Authoritative wording | State before the change |
+|---|---|---|
+| `3.9.1.6.5` | "Antibiotic Print Action" — "Prints the antibiotics of the culture." | `AntibioticsView` carried search, create, edit and delete only. No antibiotic writer existed in `src/TopLab.Infrastructure/Printing/`. |
+| Stage 2 acceptance | "Open the antibiotics screen … expect a document listing the antibiotics with their commercial names … expect the printed list to match the on-screen catalogue." | The screen displayed Name, ScientificName, Symbol, CommercialName and the two flags; none of it could be printed. |
+
+The classifier's `3.9.1.6.5` line also records the reference's per-commercial-name print mark (E-024). The
+implementation therefore prints the catalogue currently shown on the antibiotics screen, including each
+antibiotic's commercial name, which satisfies the Stage 2/Stage 3 acceptance criteria and the classification
+record. The culture-attachment screen (attaching antibiotics to one culture) was not changed; the
+acceptance criteria name the antibiotics screen and its catalogue, not a per-culture attachment report.
+
+## Source data and end-to-end path
+
+1. `src/TopLab.Application/Features/CultureAndAntibiotics/Queries/GetAntibiotics/GetAntibioticsQueryHandler.cs:22-40`
+   — reads the existing `Antibiotic` entity, applies the optional `SearchTerm` (`Name.Contains`), orders by
+   `Name`, and projects `AntibioticDto` including `CommercialName`.
+2. `src/TopLab.Presentation/ViewModels/Lab/AntibioticsViewModel.cs:99-120` — `LoadAsync` sends the query;
+   `Antibiotics` holds exactly the rows on screen (any active search filter included).
+3. `src/TopLab.Presentation/Views/Lab/AntibioticsView.xaml:10` — the new `طباعة` button binds
+   `Command="{Binding PrintListCommand}"`.
+4. `src/TopLab.Presentation/ViewModels/Lab/AntibioticsViewModel.cs:61` — the command is enabled only when
+   `Antibiotics.Count > 0`; the collection setter raises `CanExecuteChanged` (lines 70-83).
+5. `src/TopLab.Presentation/ViewModels/Lab/AntibioticsViewModel.cs:188-234` — `PrintListAsync` asks for a PDF
+   path (`PickPdfSavePathAsync("قائمة المضادات.pdf")`), loads the workstation lab header through
+   `ILabPrintTextStore.GetAsync(LabPrintTextScope.Report)`, then calls the port. A cancelled save returns
+   before the writer; lab-text failure returns before the writer; `IOException`,
+   `UnauthorizedAccessException` and unexpected failures set `ErrorMessage` and never `StatusMessage`.
+6. `src/TopLab.Application/Common/Interfaces/IAntibioticListPdfWriter.cs:15` — the Application-layer port
+   (`WritePdfAsync(path, IReadOnlyList<AntibioticDto>, LabPrintTextDto, ct)`), so Presentation names no
+   Infrastructure type.
+7. `src/TopLab.Infrastructure/Printing/AntibioticListPdfWriter.cs:26` — the writer. Its static constructor
+   (line 28) sets `QuestPDF.Settings.License = LicenseType.Community` and `UseSystemFonts = true` in its own
+   initialiser, following `PriceListPdfWriter`. `WritePdfAsync` (line 41) validates arguments, refuses a
+   missing directory or an existing file, and renders A4 portrait, RTL, with the lab header, the title
+   «قائمة المضادات الحيوية», a six-column table (المضاد، الاسم العلمي، الرمز، الاسم التجاري، معلَّم للحوامل،
+   معلَّم للأطفال) and the total line «عدد المضادات: N». `BuildTextLines` (line 139) is the pure mapping.
+8. `src/TopLab.Infrastructure/DependencyInjection.cs:108` — `AddScoped<IAntibioticListPdfWriter, AntibioticListPdfWriter>()`,
+   resolved by the existing `AntibioticsViewModel` registration in `Presentation/DependencyInjection.cs:94`.
+
+## Files added and modified
+
+Added:
+
+- `src/TopLab.Application/Common/Interfaces/IAntibioticListPdfWriter.cs` — the port.
+- `src/TopLab.Infrastructure/Printing/AntibioticListPdfWriter.cs` — the PDF writer.
+- `tests/TopLab.Infrastructure.Tests/Printing/AntibioticListPdfWriterTests.cs` — 11 writer tests.
+- `tests/TopLab.Presentation.Tests/Lab/AntibioticsPrintCommandTests.cs` — 10 command/UI tests.
+
+Modified:
+
+- `src/TopLab.Presentation/ViewModels/Lab/AntibioticsViewModel.cs` — print command, port/store dependencies,
+  enable/disable tracking, `PrintListAsync`.
+- `src/TopLab.Presentation/Views/Lab/AntibioticsView.xaml` — the `طباعة` button.
+- `src/TopLab.Infrastructure/DependencyInjection.cs` — writer registration.
+- `tests/TopLab.Infrastructure.Tests/DependencyInjection/InfrastructureRegistrationTests.cs` — one DI
+  registration test (existing tests untouched).
+- this document — the GAP-25 section.
+
+Explicitly not modified: `AntibioticDto`/the antibiotic entity/query handler, the database schema,
+migrations, seed data, permissions, packages, and the accepted GAP-27/GAP-28 files.
+
+## Tests added
+
+`tests/TopLab.Infrastructure.Tests/Printing/AntibioticListPdfWriterTests.cs` (11):
+
+- `..._ProducesNonEmptyPdf` (line 41) — real `%PDF` header and `%%EOF` trailer.
+- `..._RendersNamesAndCommercialNames` (68) — order, names, scientific names, symbols, commercial names,
+  flags and total line.
+- `..._MissingOptionalValuesRenderAsEmptyCells` (99).
+- `..._EmptyCatalogueStillProducesAValidPdf` (113).
+- `..._RenderedPdfIsLargerThanAnEmptyCatalogue` (140).
+- `..._LongCataloguePaginatesWithoutLosingContent` (172) — 250 rows, valid PDF, larger than the 3-row one,
+  first/last content and total verified.
+- `..._EmptyLabNameOmitsTheHeaderLine` (222).
+- `..._RejectsEmptyPath` (241), `..._RejectsNullArguments` (252),
+  `..._NeverOverwritesAnExistingFile` (269), `..._RejectsAMissingDirectory` (291).
+
+`tests/TopLab.Presentation.Tests/Lab/AntibioticsPrintCommandTests.cs` (10):
+
+- `PrintCommand_IsDisabledWhenTheCatalogueIsEmpty` (212), `..._IsEnabledWhenTheCatalogueHasRows` (220),
+  `..._IsDisabledWhenTheSearchReturnsNothing` (230).
+- `PrintCommand_WritesTheOnScreenCatalogueThroughThePort` (246) — the port receives the exact path, rows,
+  commercial names and lab header; status set; the only dispatched request is the catalogue load.
+- `PrintCommand_PrintsTheFilteredRowsThatMatchTheScreen` (273) — search term reaches the query and only the
+  matching row is printed.
+- `PrintCommand_SuggestsAnArabicPdfFileName` (290).
+- `PrintCommand_DoesNothingWhenTheUserCancelsTheSaveDialog` (307).
+- `PrintCommand_WriterFailureDoesNotReportSuccess` (321) — `IOException` sets the error and no success.
+- `PrintCommand_LabTextFailureDoesNotReachTheWriter` (336).
+- `PrintCommand_IsReachableFromTheAntibioticsView` (354) — binding/button/RTL present.
+
+`InfrastructureRegistrationTests.AddInfrastructure_RegistersAntibioticListPdfWriter` (line 82) — the port
+resolves to `AntibioticListPdfWriter` with `ServiceLifetime.Scoped`.
+
+## Build and test results
+
+- `dotnet build TopLab.sln -c Release` — first run after implementation succeeded with 1 analyzer warning
+  (xUnit2031 in the new DI test). The test was corrected to `Assert.Single(services, predicate)`.
+- Final `dotnet build TopLab.sln -c Release` — **Build succeeded, 0 Warning(s), 0 Error(s)**, elapsed
+  00:01:15.24 (incremental build after the correction; no source edit followed it before the test runs).
+- Focused Infrastructure run:
+  `dotnet test tests\TopLab.Infrastructure.Tests\TopLab.Infrastructure.Tests.csproj -c Release --no-build --filter "FullyQualifiedName~AntibioticListPdfWriterTests|FullyQualifiedName~AddInfrastructure_RegistersAntibioticListPdfWriter"`
+  → **12 passed, 0 failed, 0 skipped, exit 0** (run in isolation, so the writer's own license initialiser is
+  what makes the PDF tests pass).
+- Focused Presentation run:
+  `dotnet test tests\TopLab.Presentation.Tests\TopLab.Presentation.Tests.csproj -c Release --no-build --filter "FullyQualifiedName~AntibioticsPrintCommandTests"`
+  → **10 passed, 0 failed, 0 skipped, exit 0**.
+- Full suite: `dotnet test TopLab.sln -c Release --no-build`
+  — start `2026-10-27T15:22:00.2259508+03:00`, end `2026-10-27T15:26:21.7931246+03:00`, exit 0.
+
+| Test project | Passed | Failed | Skipped | Total |
+|---|---:|---:|---:|---:|
+| TopLab.Domain.Tests | 728 | 0 | 0 | 728 |
+| TopLab.Application.Tests | 1927 | 0 | 0 | 1927 |
+| TopLab.Infrastructure.Tests | 539 | 0 | 0 | 539 |
+| TopLab.Persistence.Tests | 24 | 0 | 2 | 26 |
+| TopLab.Presentation.Tests | 438 | 0 | 0 | 438 |
+| **Solution total** | **3656** | **0** | **2** | **3658** |
+
+The two skips are the pre-existing Docker-dependent tests
+(`ConcurrentSettleTests.Settle_ConcurrentCalls_InsertOnePayment`,
+`RelationalIntegrationTests.MigrationChain_AppliesToEmptyDatabase`). Infrastructure rose 527 → 539 and
+Presentation 428 → 438; no existing test was weakened, skipped or removed (the only edit to an existing test
+file is the added DI registration test, at
+`InfrastructureRegistrationTests.AddInfrastructure_RegistersAntibioticListPdfWriter`, line 82).
+
+## Self-verification results
+
+| # | Verification point | Result | Evidence |
+|---|---|---|---|
+| 1 | Print action exists on the antibiotics screen | PASS | `AntibioticsView.xaml:10`; reachability test (354) |
+| 2 | Document lists antibiotics with commercial names | PASS | `BuildTextLines` (`:139`); tests (68), (246) |
+| 3 | Printed list matches the on-screen catalogue (including a search filter) | PASS | Rows come from `Antibiotics`; tests (220), (230), (273) |
+| 4 | Empty list is safe (action disabled, writer still handles empty) | PASS | `:61`; tests (212), (113) |
+| 5 | Real PDF output, not "no throw" | PASS | `%PDF`/`%%EOF`, non-empty, larger-with-rows (41, 140) |
+| 6 | Long lists paginate without losing content | PASS | 250-row generation and content mapping (172) |
+| 7 | Writer owns its QuestPDF license initialiser | PASS | `AntibioticListPdfWriter.cs:28`; focused isolated run |
+| 8 | Presentation depends only on the Application port | PASS | Port at `IAntibioticListPdfWriter.cs:15`; no Infrastructure type in the VM |
+| 9 | DI registration correct | PASS | `DependencyInjection.cs:108`; DI test (82) |
+| 10 | Cancelled save / lab-text failure / IO failure do not report success | PASS | `:200-229`; tests (307), (321), (336) |
+| 11 | Printing is read-only | PASS | No mutating request; test (246) asserts only the load |
+| 12 | No schema/migration/permission/package change | PASS | Final `git status` shows only the files listed above |
+
+## Limitations and remaining gaps
+
+- Interactive WPF behaviour was **not** exercised at runtime here; the command/view wiring is proven by the
+  Release build, the focused tests and source inspection. The owner should print once from the antibiotics
+  tab and open the produced PDF.
+- Pagination is exercised by generating a 250-row PDF and asserting it is valid and larger than a short one;
+  the test suite does not parse the PDF page count (no PDF parser is referenced). QuestPDF paginates the
+  table automatically.
+- The writer prints the catalogue rows currently on screen. With an active search filter the printed list is
+  the filtered list, by design, so it matches the screen (acceptance criterion 4).
+- The `3.9.1.6.5` row's short wording says "prints the antibiotics of the culture"; the Stage 2/Stage 3
+  acceptance criteria (and the GAP-25 classification record) define the antibiotics-screen catalogue with
+  commercial names, which is what was implemented. No per-culture attachment report was added.
+- The GAP-27 audit's non-blocking findings were preserved as recorded and not fixed in this item.
+
+## Final repository state at end of GAP-25
+
+- HEAD unchanged: `2d72f13158f92588cf9b5ff27d3f91f311a5d5c8`; branch `main`; nothing staged.
+- Pre-existing, preserved: GAP-28 (`TestEditorViewModel.cs`, `Gap28ReferenceRangeConfirmTests.cs`, its doc
+  section) and GAP-27 (`HistoryReportsViewModel.cs`, `InsertHistoryDialogViewModel.cs`,
+  `HistoryReportsView.xaml`, `InsertHistoryDialogWindow.xaml.cs`, `HistoryClearCancelTests.cs`, its doc
+  section).
+- GAP-25: the two new source files, the two new test files, the four modified files listed above, and this
+  section.
+- No commit, push, reset, stash, or clean operation was performed. No migration or permission change.
+
+# Third Batch — Consolidated Remediation and Independent Verification of GAP-27 / GAP-25 Findings
+
+Date: 2026-10-27. Branch `main`, HEAD `2d72f13158f92588cf9b5ff27d3f91f311a5d5c8` (unchanged throughout).
+This section is appended; the GAP-28, GAP-27 and GAP-25 sections above are preserved verbatim.
+
+## Scope and change control
+
+The only authorized scope was the six recorded non-blocking findings:
+
+- GAP-27-AUDIT-01, GAP-27-AUDIT-02, GAP-27-AUDIT-03, GAP-27-AUDIT-04
+- GAP-25-AUDIT-01, GAP-25-AUDIT-02
+
+Each finding was re-investigated independently against the requirement text, the production source and, where
+practicable, the real WPF views. No production code was changed in this phase. No commit, push, amend, reset,
+stash, clean, revert or stage operation was performed; all pre-existing GAP-28/GAP-27/GAP-25 working-tree
+changes were preserved. The GAP-28 production code and tests were not modified.
+
+Files touched in this phase:
+
+- `tests/TopLab.Presentation.Tests/Patients/HistoryClearCancelTests.cs` — one added test (existing 11
+  tests unchanged).
+- `tests/TopLab.Presentation.Tests/Lab/AntibioticsPrintCommandTests.cs` — one added test (existing 10
+  tests unchanged).
+- `tests/TopLab.Infrastructure.Tests/Printing/AntibioticListPdfWriterTests.cs` — one added test and one
+  private PDF-structure helper (existing 11 tests unchanged).
+- this document — this appended section only.
+
+The three test files are still untracked work items from the preceding GAP-27/GAP-25 batch; they were edited
+in place, not staged.
+
+## Finding-by-finding disposition
+
+| Finding | Original concern | Independent disposition | Production change | Regression evidence |
+|---|---|---|---|---|
+| GAP-27-AUDIT-01 | "Delete all" clears the data but not the grid selection | **False positive — already correct.** Two-way `SelectedItem` on an `Extended` grid clears `SelectedItems` when the view model nulls the selection. | None | XAML inspection + real WPF probe + new wiring test |
+| GAP-27-AUDIT-02 | Closing the insert-history dialog with X may leave an insert path open | **No functional defect.** X-close produces `ShowDialog() == false`; the handler is read-only; the transient view model becomes unreachable; the parent acts only on `confirmed == true`. | None | Source inspection + real WPF `ShowDialog` probe + existing tests |
+| GAP-27-AUDIT-03 | No regression test locks the clear-all grid wiring | **Genuine coverage gap — closed.** | None | New `History_ClearSelection_IsWiredThroughTheExtendedGridTwoWaySelectionBinding` |
+| GAP-27-AUDIT-04 | Clear-all was verified only by unit tests, not the real view | **Verification limitation — reduced but not eliminated.** The real view path was exercised with an out-of-suite WPF probe; no interactive end-user run was performed. | None | Real-view probe (documented below) + limitation retained |
+| GAP-25-AUDIT-01 | Pagination was inferred from PDF size, not from actual pages | **Genuine verification gap — closed.** | None | New `AntibioticListPdfWriter_LongCatalogueProducesActualMultipleWellFormedPages` parses the page tree |
+| GAP-25-AUDIT-02 | Print button may stay enabled after a reload empties the catalogue | **Not a current defect.** The setter raises `CanExecuteChanged`; a reload that empties the collection disables the command. | None | New `PrintCommand_BecomesDisabledWhenAReloadReplacesTheCatalogueWithAnEmptyOne` |
+
+## GAP-27-AUDIT-01 — clear-all selection (false positive)
+
+`HistoryReportsView.xaml:90` binds `SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"` and line 91 sets
+`SelectionMode="Extended"`. `HistoryReportsViewModel` raises change notification for `SelectedEntry` and its
+`ClearSelectionCommand` sets the selection to `null` (`HistoryReportsViewModel.cs:103-113`, `:189-192`;
+command declaration `:55`). With a two-way `SelectedItem` binding, assigning `null` through the view model
+causes the `DataGrid` to clear every row in `SelectedItems`, including multi-selection under `Extended`.
+
+Evidence obtained with a real WPF `DataGrid` probe (out-of-suite, this machine): three rows selected,
+`SelectedItems.Count == 3`; setting the bound view-model property to `null` produced `SelectedItems.Count == 0`.
+
+Disposition: the finding does not reproduce and no code change is justified. `حذف الكل` is wired to
+`ClearSelectionCommand` at `HistoryReportsView.xaml:54`.
+
+## GAP-27-AUDIT-02 — X-close of the insert-history dialog (no defect)
+
+- `InsertHistoryDialogWindow.xaml.cs:26-33` handles the Cancel button by setting `DialogResult = false`; there
+  is no `Closing` handler that could convert an X-close into a success.
+- A real WPF probe opened the dialog and closed it through the window chrome: `ShowDialog()` returned
+  `False` and `DialogResult` was `False`.
+- `InsertHistoryDialogViewModel.Cancel()` (`:183-189`) abandons the operation and its guards make a later
+  insert call return `false` without confirming or dispatching.
+- `CombinedReportViewModel.cs:308-322` proceeds only when `confirmed == true`.
+- `InsertHistoryResultCommandHandler` is read-only (no add/update/remove/`SaveChanges`), so even an erroneous
+  confirmation could not mutate history.
+- `InsertHistoryDialogViewModel` is registered `AddTransient` (`DependencyInjection.cs`), so the closed
+  dialog's instance is not retained or reachable.
+
+Disposition: no functional defect; no production change. Existing tests already cover cancel, post-cancel
+insert, cancel during load, declined confirmation and the confirmed happy path
+(`HistoryClearCancelTests.cs:268-359`).
+
+## GAP-27-AUDIT-03 — added wiring regression test
+
+`History_ClearSelection_IsWiredThroughTheExtendedGridTwoWaySelectionBinding` (`HistoryClearCancelTests.cs:228`)
+reads the repository XAML through the `FindRepositoryFile` helper (`:251`) and asserts, in one place:
+
+- the entries `DataGrid` binds `SelectedItem` to `SelectedEntry` with `Mode=TwoWay`;
+- `SelectionMode="Extended"` is present;
+- the `حذف الكل` button is bound to `ClearSelectionCommand`.
+
+This locks the three conditions that make the clear-all behaviour work, so a future edit cannot silently
+drop the two-way binding or the extended selection mode while the unit tests stay green.
+
+## GAP-27-AUDIT-04 — remaining verification limitation
+
+An out-of-suite WPF probe instantiated the real `HistoryReportsView` with its real view model and exercised
+the clear path. Because of a pre-existing, out-of-scope binding crash described below, the three
+`RadioButton.IsChecked` bindings (`HistoryReportsView.xaml:32-34`) were neutralized **in memory only** for
+the probe; no repository file was altered. The probe reported:
+
+- three rows selected → clear button enabled;
+- clicking `حذف الكل` → zero selected rows, `SelectedEntry == null`, all four loaded entries retained;
+- clear button then disabled.
+
+This is stronger evidence than unit tests alone, but it is still not an interactive end-user session (no
+manual mouse-driven run of the shipped application, no visual inspection of the grid). The limitation is
+therefore reduced, not eliminated, and is recorded as such.
+
+## GAP-25-AUDIT-01 — actual PDF page structure
+
+`AntibioticListPdfWriter_LongCatalogueProducesActualMultipleWellFormedPages`
+(`AntibioticListPdfWriterTests.cs:236`) now parses the produced bytes with the private `PdfPageStructure`
+helper (`:291-313`), which reads the page objects, the declared `/Count`, the `/Kids` references and each
+page's `/MediaBox`. It asserts:
+
+- a 3-row catalogue yields exactly one page (`/Count == 1`, one page object, one `/Kids` entry);
+- a 250-row catalogue yields exactly five pages;
+- the declared `/Count`, the number of `/Kids` references and the number of page objects agree;
+- every referenced kid resolves to a real page object and every page has a `/MediaBox`.
+
+This replaces the earlier inference "the long PDF is larger than the short one" with a direct structural
+assertion. The pre-existing content assertions (`LongCataloguePaginatesWithoutLosingContent`, `:173`) are
+unchanged.
+
+## GAP-25-AUDIT-02 — print enablement after an emptying reload
+
+`AntibioticsViewModel` notifies `CanExecuteChanged` whenever the catalogue, the search text or the busy state
+changes (`AntibioticsViewModel.cs:70-83`); the print command's `CanExecute` requires a non-empty visible
+catalogue (`:61`). The only place `Antibiotics` is replaced is `LoadAsync`; no other mutation path exists.
+
+`PrintCommand_BecomesDisabledWhenAReloadReplacesTheCatalogueWithAnEmptyOne`
+(`AntibioticsPrintCommandTests.cs:250`) loads a non-empty catalogue, verifies the command is enabled,
+reloads with an empty result, verifies the command is disabled and that `CanExecuteChanged` was raised, and
+verifies the writer cannot be reached. No `CollectionChanged` subscription was added: the view model owns
+the collection instance and replaces it through the notifying property, so a subscription would be dead
+code and would risk leaks. This is a deliberate design decision, not an omission.
+
+## Out-of-scope pre-existing defect discovered during verification
+
+While probing the real history view, loading `HistoryReportsView` with its view model threw:
+
+```
+InvalidOperationException: A TwoWay or OneWayToSource binding cannot work on the read-only property 'IsSingleMode'
+```
+
+Cause: `HistoryReportsView.xaml:32-34` binds `RadioButton.IsChecked` (whose default binding mode is two-way)
+to the get-only properties `IsSingleMode`, `IsMultiMode` and `IsSeparateMode`
+(`HistoryReportsViewModel.cs:74-76`). WPF rejects the binding when the view is loaded.
+
+Static inspection shows the same pattern in four other views that bind `RadioButton.IsChecked` to get-only
+computed properties:
+
+- `Views/Accounts/AccountsHubView.xaml:18-21` → `AccountsHubViewModel.cs:110` and siblings;
+- `Views/Audit/AuditView.xaml:16-17` → `AuditViewModel.cs:54` and siblings;
+- `Views/Statistics/StatisticsView.xaml:18-22` → `StatisticsViewModel.cs:129` and siblings;
+- `Views/Utilities/UtilitiesView.xaml:17-22` → `UtilitiesViewModel.cs:107` and siblings.
+
+Only the history view was actually loaded in this phase, so only its crash is empirically confirmed; the
+other four are static matches, not exercised claims.
+
+This defect is pre-existing, unrelated to the six findings and to the GAP-28/27/25 changes, and outside the
+authorized scope. It was **not** fixed. Consequence: the shipped application cannot currently open the
+history screen (and likely the other four screens), so no interactive end-user verification of clear-all is
+possible until it is triaged. The owner should authorize a separate, minimal fix (e.g. `Mode=OneWay` on those
+radio bindings, or settable properties) before the final independent audit relies on manual UI evidence.
+
+## Build and test results
+
+All commands were run in Release from the repository root.
+
+- `dotnet build TopLab.sln -c Release` after the test additions:
+  **Build succeeded, 0 Warning(s), 0 Error(s)**, exit code 0.
+- Focused Presentation:
+  `dotnet test tests\TopLab.Presentation.Tests\TopLab.Presentation.Tests.csproj -c Release --no-build --filter "FullyQualifiedName~HistoryClearCancelTests|FullyQualifiedName~AntibioticsPrintCommandTests"`
+  → **23 passed, 0 failed, 0 skipped, exit 0** (was 21 before this phase).
+- Focused Infrastructure:
+  `dotnet test tests\TopLab.Infrastructure.Tests\TopLab.Infrastructure.Tests.csproj -c Release --no-build --filter "FullyQualifiedName~AntibioticListPdfWriterTests|FullyQualifiedName~AddInfrastructure_RegistersAntibioticListPdfWriter"`
+  → **13 passed, 0 failed, 0 skipped, exit 0** (was 12 before this phase).
+- Full suite: `dotnet test TopLab.sln -c Release --no-build`
+  — start `2026-10-27T16:25:30.3183522+03:00`, end `2026-10-27T16:28:45.1030119+03:00`, exit 0.
+
+| Test project | Passed | Failed | Skipped | Total |
+|---|---:|---:|---:|---:|
+| TopLab.Domain.Tests | 728 | 0 | 0 | 728 |
+| TopLab.Application.Tests | 1927 | 0 | 0 | 1927 |
+| TopLab.Infrastructure.Tests | 540 | 0 | 0 | 540 |
+| TopLab.Persistence.Tests | 24 | 0 | 2 | 26 |
+| TopLab.Presentation.Tests | 440 | 0 | 0 | 440 |
+| **Solution total** | **3659** | **0** | **2** | **3661** |
+
+The two skips are the pre-existing Docker-dependent tests
+(`ConcurrentSettleTests.Settle_ConcurrentCalls_InsertOnePayment`,
+`RelationalIntegrationTests.MigrationChain_AppliesToEmptyDatabase`). The batch baseline was 3656 passed; the
+three added tests account for the increase to 3659. No existing test was weakened, skipped or removed.
+
+Out-of-suite WPF probes (not committed, not part of the suite) additionally confirmed:
+
+- generic `DataGrid`: three selected rows → view-model `SelectedEntry = null` → `SelectedItems.Count == 0`;
+- real `HistoryReportsView` (radio bindings neutralized in memory): clear button enabled with three
+  selections; click → zero selected rows, `SelectedEntry == null`, four entries retained, button disabled;
+- real dialog X-close: `ShowDialog() == False`, `DialogResult == False`;
+- real `AntibioticsView`: print enabled with three rows; click → writer called once with the same three rows
+  in order, including commercial names; empty reload → print disabled.
+
+These probes are interactive-WPF-class evidence but were executed by the agent, not by the owner.
+
+## Non-regression assessment
+
+- No production source file was modified in this phase, so behaviour is unchanged by construction.
+- The three added tests are additive; the existing 21 GAP-27 tests and 22 GAP-25 writer/command/DI tests are
+  untouched.
+- Full-suite result is 0 failures, with only the two pre-existing Docker skips.
+- The pre-existing history-view load crash is not caused by, and was not hidden by, these changes; it was
+  present before this batch and is recorded here rather than fixed.
+- No schema, migration, seed, permission or package change was made.
+
+## Reconciliation note on the earlier GAP-25 wording
+
+The earlier GAP-25 self-verification row says the document "lists antibiotics with commercial names", and
+the limitations section discusses the on-screen catalogue. `AntibioticsView.xaml:33-37` exposes the columns
+`الاسم`, `الاسم العلمي`, `الرمز`, `معلَّم للحوامل`, `معلَّم للأطفال` and `إجراءات` — there is **no**
+commercial-name column on screen, although `AntibioticDto` carries `CommercialName` and the PDF renders it.
+Read correctly, the acceptance criterion is about the printed document's content (which does include
+commercial names), not about an on-screen column. The earlier wording is therefore accurate about the PDF
+but could be misread as describing the grid; this note records the distinction without rewriting the
+original history. Whether to add the column to the screen or drop it from the PDF is an owner decision and
+was not changed here.
+
+## Final status of this batch
+
+- Six findings: two false positives / non-defects (GAP-27-AUDIT-01, GAP-27-AUDIT-02), one non-defect with
+  added protection (GAP-25-AUDIT-02), two coverage gaps closed (GAP-27-AUDIT-03, GAP-25-AUDIT-01), one
+  verification limitation reduced but retained (GAP-27-AUDIT-04).
+- Production changes: none.
+- Tests added: three, all passing; full suite 3659 passed / 0 failed / 2 skipped.
+- Documentation: this section appended; prior history intact.
+- Open item outside scope: the pre-existing `RadioButton.IsChecked` two-way binding crash (history view
+  confirmed; four other views statically matched) that blocks interactive history-screen verification.
+- Repository: branch `main`, HEAD `2d72f13158f92588cf9b5ff27d3f91f311a5d5c8`, nothing staged, no commit or
+  push performed.
+
+Verdict: **CONSOLIDATED REMEDIATION COMPLETE WITH RECORDED LIMITATIONS — READY FOR OWNER REVIEW.**

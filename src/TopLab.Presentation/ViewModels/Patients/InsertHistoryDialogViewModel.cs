@@ -24,6 +24,7 @@ public sealed class InsertHistoryDialogViewModel : ViewModelBase
     private ObservableCollection<HistoryEntryDto> _entries = new();
     private HistoryEntryDto? _selectedEntry;
     private bool _isBusy;
+    private bool _isAbandoned;
     private string _errorMessage = string.Empty;
 
     public InsertHistoryDialogViewModel(ISender mediator, ResultErrorPresenter presenter, IDialogService dialogs)
@@ -73,6 +74,11 @@ public sealed class InsertHistoryDialogViewModel : ViewModelBase
 
     public async Task LoadAsync(int patientId, int targetPatientTestId, string targetTestName, CancellationToken cancellationToken = default)
     {
+        if (_isAbandoned)
+        {
+            return;
+        }
+
         _patientId = patientId;
         _targetPatientTestId = targetPatientTestId;
         TargetTestName = targetTestName;
@@ -83,6 +89,13 @@ public sealed class InsertHistoryDialogViewModel : ViewModelBase
         try
         {
             var result = await _mediator.Send(new GetPatientTestHistoryQuery(patientId), cancellationToken);
+            if (_isAbandoned)
+            {
+                // GAP-27: the operation was abandoned while loading — a late
+                // result must not repopulate the dialog.
+                return;
+            }
+
             if (result.IsSuccess && result.Value is not null)
             {
                 // W-02 S12 (WP-10): same-test filter — entries whose test name matches
@@ -106,6 +119,12 @@ public sealed class InsertHistoryDialogViewModel : ViewModelBase
 
     public async Task<bool> InsertAsync()
     {
+        if (_isAbandoned)
+        {
+            // GAP-27: an abandoned operation must never insert.
+            return false;
+        }
+
         if (SelectedEntry is null)
         {
             ErrorMessage = "اختر نتيجة تاريخية للإدراج.";
@@ -115,7 +134,7 @@ public sealed class InsertHistoryDialogViewModel : ViewModelBase
         var confirmed = await _dialogs.ShowConfirmationAsync(
             "تأكيد الإدراج",
             $"هل تريد إدراج النتيجة التاريخية للتحليل «{TargetTestName}»؟");
-        if (!confirmed)
+        if (!confirmed || _isAbandoned)
         {
             return false;
         }
@@ -127,6 +146,13 @@ public sealed class InsertHistoryDialogViewModel : ViewModelBase
         {
             var result = await _mediator.Send(
                 new InsertHistoryResultCommand(_targetPatientTestId, SelectedEntry.PatientTestId));
+
+            if (_isAbandoned)
+            {
+                // GAP-27: the dialog was abandoned while the command was in
+                // flight — do not surface the report as if it were applied.
+                return false;
+            }
 
             if (result.IsSuccess && result.Value is not null)
             {
@@ -145,5 +171,20 @@ public sealed class InsertHistoryDialogViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>
+    /// GAP-27 (1.15.3.4, Arabic label "الغاء الحالى"): abandons the current
+    /// history operation. No <see cref="InsertHistoryResultCommand"/> is
+    /// dispatched, no report is applied, the pending selection is discarded and
+    /// any late load/insert result is ignored. The view closes the dialog after
+    /// calling this method.
+    /// </summary>
+    public void Cancel()
+    {
+        _isAbandoned = true;
+        SelectedEntry = null;
+        InsertedReport = null;
+        ErrorMessage = string.Empty;
     }
 }

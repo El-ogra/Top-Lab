@@ -25,6 +25,9 @@ public partial class InsertHistoryDialogWindow : Window
 
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
+        // GAP-27: abandon the current history operation in the ViewModel before
+        // closing — no insert is dispatched and no report is applied.
+        _vm.Cancel();
         DialogResult = false;
         Close();
     }
