@@ -67,6 +67,15 @@
 
             <Button Content="مسح الفلاتر" Width="90" Margin="0,0,12,0" Command="{Binding ClearFiltersCommand}"/>
             <CheckBox Content="غير مُسلَّم" IsChecked="{Binding NotDelivered}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+            <CheckBox Content="غير مُكتمل" IsChecked="{Binding Unfinished}" Margin="0,0,12,0" VerticalAlignment="Center" IsThreeState="True"/>
+            <CheckBox Content="غير مُعتمد" IsChecked="{Binding Unverified}" Margin="0,0,12,0" VerticalAlignment="Center" IsThreeState="True"/>
+            <CheckBox Content="غير مطبوع" IsChecked="{Binding Unprinted}" Margin="0,0,12,0" VerticalAlignment="Center" IsThreeState="True"/>
+            <TextBlock Text="وضع البحث:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox Width="120" Margin="0,0,12,0"
+                      ItemsSource="{Binding SearchModeOptions}"
+                      SelectedValue="{Binding SearchMode, Mode=TwoWay}"
+                      DisplayMemberPath="Label"
+                      SelectedValuePath="Mode"/>
         </StackPanel>
 
         <!-- Paging -->
@@ -127,6 +136,7 @@
                 <DataGridTextColumn Header="الحالة" Binding="{Binding AggregateStatus}" Width="60"/>
                 <DataGridTextColumn Header="التاريخ" Binding="{Binding RegistrationDateUtc, StringFormat={}{0:yyyy-MM-dd}}" Width="100"/>
                 <DataGridTextColumn Header="عدد التحاليل" Binding="{Binding TestCount}" Width="80"/>
+        <DataGridTextColumn Header="يحتاج متابعة" Binding="{Binding IsFollowUpRequired}" Width="100"/>
                 <DataGridTemplateColumn Header="فتح" Width="60">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

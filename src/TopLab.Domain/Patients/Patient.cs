@@ -60,6 +60,8 @@ public sealed class Patient : AuditableEntity<PatientId>
 
     public bool IsDeleted { get; private set; }
 
+    public bool IsFollowUpRequired { get; private set; }
+
     private readonly List<PatientPhoneNumber> _phoneNumbers = [];
     public IReadOnlyCollection<PatientPhoneNumber> PhoneNumbers => _phoneNumbers.AsReadOnly();
 
@@ -72,6 +74,12 @@ public sealed class Patient : AuditableEntity<PatientId>
         {
             throw new InvalidOperationException("Patient is deleted and cannot be modified.");
         }
+    }
+
+    public void SetFollowUpRequired(bool required)
+    {
+        EnsureNotDeleted();
+        IsFollowUpRequired = required;
     }
 
     private Patient()

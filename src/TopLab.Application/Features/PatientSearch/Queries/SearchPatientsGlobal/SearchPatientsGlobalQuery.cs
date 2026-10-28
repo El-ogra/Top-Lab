@@ -42,4 +42,14 @@ public sealed record SearchPatientsGlobalQuery(
     // GAP-06: exact card number search (appended at tail, default null = inert)
     string? CardNumber = null,
     // GAP-07: not-delivered filter (appended at tail, default null = inert)
-    bool? NotDelivered = null) : IRequest<Result<IReadOnlyList<PatientSearchHitDto>>>;
+    bool? NotDelivered = null,
+    // U1-GAP-006: unfinished-results filter (appended at tail, default null = inert)
+    //   null = no filter; true = only visits with at least one unfinished test;
+    //   false = only visits with no unfinished test.
+    bool? Unfinished = null,
+    // U1-GAP-007: unverified-results filter (appended at tail, default null = inert)
+    bool? Unverified = null,
+    // U1-GAP-008: unprinted-results filter (appended at tail, default null = inert)
+    bool? Unprinted = null,
+    // U1-GAP-009: explicit search-mode selector (appended at tail, default All)
+    PatientSearchMode SearchMode = PatientSearchMode.All) : IRequest<Result<IReadOnlyList<PatientSearchHitDto>>>;

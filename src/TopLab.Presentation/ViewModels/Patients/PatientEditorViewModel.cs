@@ -16,6 +16,7 @@ using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
 using TopLab.Application.Features.PatientEnvelope.Commands.PrintEnvelope;
 using TopLab.Application.Features.PatientEnvelope.Commands.PrintLabOrder;
 using TopLab.Application.Features.PatientRegistration.Commands.AddCustomGroupToVisit;
+using TopLab.Application.Features.PatientRegistration.Commands.SetVisitFollowUpFlag;
 using TopLab.Application.Features.PatientRegistration.Commands.ApplyConditionDeltas;
 using TopLab.Application.Features.PatientRegistration.Commands.ApplyVisitDeltas;
 using TopLab.Application.Features.PatientRegistration.Commands.AddMedicalCondition;
@@ -68,6 +69,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private readonly INavigationService _navigation;
 
     private bool _isEditMode;
+    private bool _isFollowUpRequired;
     private int? _patientId;
     private bool _canClearAllVisitTests;
     private string _labId = string.Empty;
@@ -200,6 +202,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
         AddProfileCommand = new AsyncRelayCommand(async (_, ct) => await AddProfileAsync(ct));
         AddCustomGroupCommand = new AsyncRelayCommand(async (_, ct) => await AddCustomGroupAsync(ct));
         ClearAllVisitTestsCommand = new AsyncRelayCommand(async (_, ct) => await ClearAllVisitTestsAsync(ct));
+        ToggleFollowUpFlagCommand = new AsyncRelayCommand(async (_, ct) => await ToggleFollowUpFlagAsync(ct));
 
         // S-03 Slice 0: empty-state visibility follows the S-01/S-02 Show*Empty idiom.
         SelectedTests.CollectionChanged += (_, _) =>
@@ -403,6 +406,12 @@ public sealed class PatientEditorViewModel : ViewModelBase
         Enum.GetValues<AccountType>();
 
     public bool IsEditMode { get => _isEditMode; private set => SetProperty(ref _isEditMode, value); }
+
+    /// <summary>
+    /// Durable visit follow-up flag (baseline 1.2.2.6.10). Reflected from the loaded
+    /// visit; set by <see cref="ToggleFollowUpFlagCommand"/> and by <see cref="LoadPatientAsync"/>.
+    /// </summary>
+    public bool IsFollowUpRequired { get => _isFollowUpRequired; private set => SetProperty(ref _isFollowUpRequired, value); }
 
     /// <summary>
     /// BR-A04-5 / SD-18: true only when the Application guard would pass — i.e. this visit
@@ -894,6 +903,8 @@ public sealed class PatientEditorViewModel : ViewModelBase
     /// </summary>
     public AsyncRelayCommand FollowUpCommand { get; }
 
+    public AsyncRelayCommand ToggleFollowUpFlagCommand { get; }
+
     public AsyncRelayCommand AddProfileCommand { get; }
 
     public AsyncRelayCommand AddCustomGroupCommand { get; }
@@ -1091,6 +1102,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
             await RefreshBillingAsync(cancellationToken);
             await LoadVisitHistoryAsync(cancellationToken);
             OnPropertyChanged(nameof(IsVisitHistoryVisible));
+            IsFollowUpRequired = d.IsFollowUpRequired;
         }
         finally
         {
@@ -1789,6 +1801,30 @@ public sealed class PatientEditorViewModel : ViewModelBase
         if (_navigation.CurrentViewModel is TopLab.Presentation.ViewModels.Audit.AuditViewModel audit)
         {
             await audit.LoadWithPatientIdAsync(_patientId.Value, cancellationToken);
+        }
+    }
+
+    private async Task ToggleFollowUpFlagAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل تحديد المتابعة.";
+            return;
+        }
+
+        var request = new SetVisitFollowUpFlagCommand(_patientId.Value, !IsFollowUpRequired);
+        var result = await _mediator.Send(request, cancellationToken);
+        if (result.IsSuccess)
+        {
+            IsFollowUpRequired = result.Value;
+            StatusMessage = "تم تحديث حالة المتابعة.";
+        }
+        else
+        {
+            ErrorMessage = result.Error?.Message ?? "تعذّر تحديث حالة المتابعة.";
         }
     }
 

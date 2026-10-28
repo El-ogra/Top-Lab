@@ -469,6 +469,11 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsFastingIndicated")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsFollowUpRequired")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("IsVip")
                         .HasColumnType("bit");
 

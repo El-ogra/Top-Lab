@@ -1,10 +1,20 @@
 namespace TopLab.Application.Features.PatientSearch.Common;
 
+public enum PatientSearchMode
+{
+    All = 0,        // unrestricted (default) — reproduces today's behaviour
+    Name = 1,       // patient name only
+    Phone = 2,      // phone number only
+    LabId = 3,      // laboratory identifier (exact)
+    NationalId = 4  // national identifier (exact)
+}
+
 public sealed record PatientSearchHitDto(int PatientId, string? LabId, string FullName,
     string? Title, string Sex, int AgeValue, string AgeUnit, string? NationalId,
     IReadOnlyList<string> PhoneNumbers, string AccountType, bool IsVip,
     int AggregateStatus,                        // settled seven-state status (FR-M08-007, PRD §8)
-    DateTime RegistrationDateUtc, int TestCount);
+    DateTime RegistrationDateUtc, int TestCount,
+    bool IsFollowUpRequired = false);
 
 public sealed record VisitSummaryDto(int PatientId, string? LabId, DateTime RegistrationDateUtc,
     string AccountType, bool IsVip, int TestCount, int ResultsEntered, int ReviewedCount,

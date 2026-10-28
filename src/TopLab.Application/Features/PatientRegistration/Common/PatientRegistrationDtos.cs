@@ -50,7 +50,10 @@ public sealed record PatientDetailDto(
     // the imaging question (baseline 1.2.2.3.10). Appended to keep the existing
     // positional call sites working.
     string? CardNumber = null,
-    bool RecentUltrasoundImaging = false);
+    bool RecentUltrasoundImaging = false,
+    // Durable visit follow-up flag (baseline 1.2.2.6.10). Default false to
+    // keep the editor's positional call sites compiling unchanged.
+    bool IsFollowUpRequired = false);
 
 public sealed record PatientTitleDto(int PatientTitleId, string TitleText, bool IsDefault);
 

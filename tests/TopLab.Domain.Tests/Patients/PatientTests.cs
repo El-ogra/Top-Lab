@@ -222,4 +222,24 @@ public class PatientTests
         p.AssignLabId(LabId.Create("LAB-1"));
         Assert.Equal("LAB-1", p.LabId!.Value);
     }
+
+    [Fact]
+    public void SetFollowUpRequired_SetsFlag()
+    {
+        var p = Patient.Create(PatientId.Create(1), "Ahmed", Sex.Male, 30, AgeUnit.Year, DateTime.UtcNow);
+        p.SetFollowUpRequired(true);
+        Assert.True(p.IsFollowUpRequired);
+        p.SetFollowUpRequired(false);
+        Assert.False(p.IsFollowUpRequired);
+    }
+
+    [Fact]
+    public void SetFollowUpRequired_Throws_ForDeletedPatient()
+    {
+        var p = Patient.Create(PatientId.Create(1), "Ahmed", Sex.Male, 30, AgeUnit.Year, DateTime.UtcNow);
+        p.SoftDelete();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => p.SetFollowUpRequired(true));
+        Assert.Equal("Patient is deleted and cannot be modified.", ex.Message);
+    }
 }

@@ -31,18 +31,51 @@ public sealed class SearchPatientsGlobalQueryHandler
         {
             var lowerTerm = term.ToLowerInvariant();
 
-            var phonePatientIds = _db.Set<PatientPhoneNumber>()
-                .Where(ph => ph.PhoneNumber.Contains(term))
-                .Select(ph => ph.PatientId)
-                .Distinct()
-                .ToList();
+            // U1-GAP-009: mode-directed text clause. Default (All) reproduces the
+            // original disjunctive behaviour exactly.
+            switch (request.SearchMode)
+            {
+                case PatientSearchMode.Name:
+                    query = query.Where(p =>
+                        (nameAssist && p.FullName.ToLowerInvariant().Contains(lowerTerm))
+                        || p.FullName.ToLowerInvariant() == lowerTerm);
+                    break;
 
-            query = query.Where(p =>
-                (nameAssist && p.FullName.ToLowerInvariant().Contains(lowerTerm))
-                || p.FullName.ToLowerInvariant() == lowerTerm
-                || (p.LabId != null && p.LabId.Value.Trim() == term)
-                || (p.NationalId != null && p.NationalId.Trim() == term)
-                || phonePatientIds.Contains(p.Id));
+                case PatientSearchMode.Phone:
+                    {
+                        var phonePatientIds = _db.Set<PatientPhoneNumber>()
+                            .Where(ph => ph.PhoneNumber.Contains(term))
+                            .Select(ph => ph.PatientId)
+                            .Distinct()
+                            .ToList();
+                        query = query.Where(p => phonePatientIds.Contains(p.Id));
+                    }
+                    break;
+
+                case PatientSearchMode.LabId:
+                    query = query.Where(p => p.LabId != null && p.LabId.Value.Trim() == term);
+                    break;
+
+                case PatientSearchMode.NationalId:
+                    query = query.Where(p => p.NationalId != null && p.NationalId.Trim() == term);
+                    break;
+
+                default: // All
+                    {
+                        var phonePatientIds = _db.Set<PatientPhoneNumber>()
+                            .Where(ph => ph.PhoneNumber.Contains(term))
+                            .Select(ph => ph.PatientId)
+                            .Distinct()
+                            .ToList();
+                        query = query.Where(p =>
+                            (nameAssist && p.FullName.ToLowerInvariant().Contains(lowerTerm))
+                            || p.FullName.ToLowerInvariant() == lowerTerm
+                            || (p.LabId != null && p.LabId.Value.Trim() == term)
+                            || (p.NationalId != null && p.NationalId.Trim() == term)
+                            || phonePatientIds.Contains(p.Id));
+                    }
+                    break;
+            }
         }
 
         // GAP-06: exact card number search (inert when null/whitespace).
@@ -56,6 +89,51 @@ public sealed class SearchPatientsGlobalQueryHandler
         if (request.NotDelivered == true)
         {
             query = query.Where(p => _db.Set<PatientTest>().Any(pt => pt.PatientId.Value == p.Id.Value && !pt.IsDelivered));
+        }
+
+        // U1-GAP-006: unfinished-results filter.
+        //   true  -> visits with at least one unfinished test (not entered OR entered-not-reviewed)
+        //   false -> visits with no unfinished test (all tests entered+reviewed, or test-less)
+        //   null  -> inert
+        if (request.Unfinished == true)
+        {
+            query = query.Where(p => _db.Set<PatientTest>().Any(pt =>
+                pt.PatientId.Value == p.Id.Value && (pt.EnteredAtUtc == null || !pt.IsReviewed)));
+        }
+        else if (request.Unfinished == false)
+        {
+            query = query.Where(p => !_db.Set<PatientTest>().Any(pt =>
+                pt.PatientId.Value == p.Id.Value && (pt.EnteredAtUtc == null || !pt.IsReviewed)));
+        }
+
+        // U1-GAP-007: unverified-results filter.
+        //   true  -> visits with at least one entered-but-not-reviewed test
+        //   false -> visits with no entered-but-not-reviewed test
+        //   null  -> inert
+        if (request.Unverified == true)
+        {
+            query = query.Where(p => _db.Set<PatientTest>().Any(pt =>
+                pt.PatientId.Value == p.Id.Value && pt.EnteredAtUtc != null && !pt.IsReviewed));
+        }
+        else if (request.Unverified == false)
+        {
+            query = query.Where(p => !_db.Set<PatientTest>().Any(pt =>
+                pt.PatientId.Value == p.Id.Value && pt.EnteredAtUtc != null && !pt.IsReviewed));
+        }
+
+        // U1-GAP-008: unprinted-results filter.
+        //   true  -> visits with at least one reviewed-but-not-printed test
+        //   false -> visits with no reviewed-but-not-printed test
+        //   null  -> inert
+        if (request.Unprinted == true)
+        {
+            query = query.Where(p => _db.Set<PatientTest>().Any(pt =>
+                pt.PatientId.Value == p.Id.Value && pt.IsReviewed && !pt.IsPrinted));
+        }
+        else if (request.Unprinted == false)
+        {
+            query = query.Where(p => !_db.Set<PatientTest>().Any(pt =>
+                pt.PatientId.Value == p.Id.Value && pt.IsReviewed && !pt.IsPrinted));
         }
 
         // ------------------------------------------------------------------
@@ -163,7 +241,8 @@ public sealed class SearchPatientsGlobalQueryHandler
                     p.IsVip,
                     VisitRollup.AggregateStatus(_db, p, tests),
                     p.RegistrationDateUtc,
-                    tests.Count);
+                    tests.Count,
+                    p.IsFollowUpRequired);
             })
             .ToList();
 

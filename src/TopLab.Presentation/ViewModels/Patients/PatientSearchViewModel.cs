@@ -30,6 +30,10 @@ public sealed class PatientSearchViewModel : ViewModelBase
     private string _labIdText = string.Empty;
     private string _cardNumberText = string.Empty;
     private bool _notDelivered;
+    private bool? _unfinished;
+    private bool? _unverified;
+    private bool? _unprinted;
+    private PatientSearchMode _searchMode = PatientSearchMode.All;
     private int _page = 1;
     private int _pageSize = 50;
     private ObservableCollection<PatientSearchHitDto> _items = new();
@@ -99,6 +103,10 @@ public sealed class PatientSearchViewModel : ViewModelBase
                 FromDate = null;
                 ToDate = null;
                 SelectedAgeUnit = AgeUnit.Year;
+                Unfinished = null;
+                Unverified = null;
+                Unprinted = null;
+                SearchMode = PatientSearchMode.All;
             }
             finally
             {
@@ -128,6 +136,65 @@ public sealed class PatientSearchViewModel : ViewModelBase
         get => _notDelivered;
         set => SetProperty(ref _notDelivered, value);
     }
+
+    // U1-GAP-006/007/008: tri-state result-status filters (null = no filter).
+    public bool? Unfinished
+    {
+        get => _unfinished;
+        set
+        {
+            if (SetProperty(ref _unfinished, value))
+            {
+                OnFilterChanged();
+            }
+        }
+    }
+
+    public bool? Unverified
+    {
+        get => _unverified;
+        set
+        {
+            if (SetProperty(ref _unverified, value))
+            {
+                OnFilterChanged();
+            }
+        }
+    }
+
+    public bool? Unprinted
+    {
+        get => _unprinted;
+        set
+        {
+            if (SetProperty(ref _unprinted, value))
+            {
+                OnFilterChanged();
+            }
+        }
+    }
+
+    // U1-GAP-009: explicit search-mode selector (default All = today's behaviour).
+    public PatientSearchMode SearchMode
+    {
+        get => _searchMode;
+        set
+        {
+            if (SetProperty(ref _searchMode, value))
+            {
+                OnFilterChanged();
+            }
+        }
+    }
+
+    public IReadOnlyList<SearchModeFilterItem> SearchModeOptions { get; } = new[]
+    {
+        new SearchModeFilterItem(PatientSearchMode.All, "الكل"),
+        new SearchModeFilterItem(PatientSearchMode.Name, "الاسم"),
+        new SearchModeFilterItem(PatientSearchMode.Phone, "الهاتف"),
+        new SearchModeFilterItem(PatientSearchMode.LabId, "كود المعمل"),
+        new SearchModeFilterItem(PatientSearchMode.NationalId, "الرقم الوطني"),
+    };
 
     public string LabIdText
     {
@@ -609,7 +676,11 @@ public static int? ParseAgeBound(string? text)
                     from,
                     to,
                     cardNumber,
-                    NotDelivered ? true : (bool?)null),
+                    NotDelivered ? true : (bool?)null,
+                    Unfinished,
+                    Unverified,
+                    Unprinted,
+                    SearchMode),
                 cancellationToken);
 
             // P-02 D-3: a superseded reload must never write to the view. The generation
@@ -791,3 +862,6 @@ public sealed record SexFilterItem(Sex? Sex, string Label);
 
 /// <summary>P-01 F4 — an age-unit choice. The band compares like with like, so the unit is a filter input, never a conversion factor.</summary>
 public sealed record AgeUnitFilterItem(AgeUnit Unit, string Label);
+
+/// <summary>P-01 result-status filter item (tri-state) — label for the search-mode selector.</summary>
+public sealed record SearchModeFilterItem(PatientSearchMode Mode, string Label);
