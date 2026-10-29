@@ -70,6 +70,8 @@
   <Button Content="نتائج التحاليل" Margin="4" Padding="14,2" Command="{Binding LabResultsCommand}" IsEnabled="{Binding IsEditMode}" />
   <Button Content="متابعة" Margin="4" Padding="14,2" Command="{Binding FollowUpCommand}" IsEnabled="{Binding IsEditMode}" />
   <Button Content="يحتاج متابعة" Margin="4" Padding="14,2" Command="{Binding ToggleFollowUpFlagCommand}" IsEnabled="{Binding IsEditMode}" />
+  <Button Content="إحصائيات اليوم" Margin="4" Padding="14,2" Command="{Binding ShowTodayStatsCommand}" />
+  <Button Content="قصاصة تعريف" Margin="4" Padding="14,2" Command="{Binding PrintPatientIdSlipCommand}" IsEnabled="{Binding IsEditMode}" />
 </WrapPanel>
             <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="4,2" />
             <TextBlock Text="{Binding StatusMessage}" Foreground="#1E3A5F" TextWrapping="Wrap" Margin="4,0" />

@@ -1,3 +1,5 @@
+using System.IO;
+using System.Text.Json;
 using MediatR;
 using TopLab.Application.Features.AccessAndNavigation.Queries.CheckDatabaseConnectivity;
 using TopLab.Application.Features.UsersAndPermissions.Commands.SignIn;
@@ -21,6 +23,59 @@ public sealed class LoginViewModel : ViewModelBase
     {
         _mediator = mediator;
         _presenter = presenter;
+        LoadRememberedUserName();
+    }
+
+    private static string RememberedUserNamePath =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "TopLab", "appsettings.json");
+
+    private void LoadRememberedUserName()
+    {
+        try
+        {
+            var path = RememberedUserNamePath;
+            if (!File.Exists(path)) return;
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            if (doc.RootElement.TryGetProperty("RememberedUserName", out var prop) && prop.ValueKind == JsonValueKind.String)
+            {
+                _userName = prop.GetString() ?? string.Empty;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private void SaveRememberedUserName(string userName)
+    {
+        try
+        {
+            var path = RememberedUserNamePath;
+            var dir = Path.GetDirectoryName(path)!;
+            Directory.CreateDirectory(dir);
+            Dictionary<string, JsonElement>? existing = null;
+            if (File.Exists(path))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(File.ReadAllText(path));
+                    existing = doc.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone());
+                }
+                catch { existing = null; }
+            }
+            var dict = new Dictionary<string, object?>();
+            if (existing is not null)
+            {
+                foreach (var kv in existing) dict[kv.Key] = kv.Value;
+            }
+            dict["RememberedUserName"] = userName;
+            File.WriteAllText(path, JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch
+        {
+            // ignore
+        }
     }
 
     public string UserName
@@ -78,6 +133,7 @@ public sealed class LoginViewModel : ViewModelBase
 
             if (result.IsSuccess)
             {
+                SaveRememberedUserName(UserName.Trim());
                 return true;
             }
 

@@ -13,6 +13,7 @@ using TopLab.Application.Features.PatientBilling.Commands.RecordPayment;
 using TopLab.Application.Features.PatientBilling.Commands.RecordRefund;
 using TopLab.Application.Features.PatientBilling.Commands.SettleAccountInFull;
 using TopLab.Application.Features.PatientBilling.Queries.GetPatientAccount;
+using TopLab.Application.Features.ResultDelivery.Commands.PrintGroupPatientSlips;
 using TopLab.Application.Features.PatientEnvelope.Commands.PrintEnvelope;
 using TopLab.Application.Features.PatientEnvelope.Commands.PrintLabOrder;
 using TopLab.Application.Features.PatientRegistration.Commands.AddCustomGroupToVisit;
@@ -23,6 +24,7 @@ using TopLab.Application.Features.PatientRegistration.Commands.AddMedicalConditi
 using TopLab.Application.Features.PatientRegistration.Commands.AddProfileToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.AddTestGroupToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.AddTestsToVisit;
+using TopLab.Application.Features.PatientRegistration.Queries.GetTodayRegistrationStats;
 using TopLab.Application.Features.PatientRegistration.Commands.ClearAllTests;
 using TopLab.Application.Features.PatientRegistration.Commands.CreatePatient;
 using TopLab.Application.Features.PatientRegistration.Commands.PrintBarcode;
@@ -206,6 +208,8 @@ public sealed class PatientEditorViewModel : ViewModelBase
         AddTestGroupCommand = new AsyncRelayCommand(async (_, ct) => await AddTestGroupAsync(ct));
         ClearAllVisitTestsCommand = new AsyncRelayCommand(async (_, ct) => await ClearAllVisitTestsAsync(ct));
         ToggleFollowUpFlagCommand = new AsyncRelayCommand(async (_, ct) => await ToggleFollowUpFlagAsync(ct));
+        ShowTodayStatsCommand = new AsyncRelayCommand(async (_, ct) => await ShowTodayStatsAsync(ct));
+        PrintPatientIdSlipCommand = new AsyncRelayCommand(async (_, ct) => await PrintPatientIdSlipAsync(ct));
 
         // S-03 Slice 0: empty-state visibility follows the S-01/S-02 Show*Empty idiom.
         SelectedTests.CollectionChanged += (_, _) =>
@@ -908,6 +912,8 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public AsyncRelayCommand FollowUpCommand { get; }
 
     public AsyncRelayCommand ToggleFollowUpFlagCommand { get; }
+    public AsyncRelayCommand ShowTodayStatsCommand { get; }
+    public AsyncRelayCommand PrintPatientIdSlipCommand { get; }
 
     public AsyncRelayCommand AddProfileCommand { get; }
 
@@ -2300,6 +2306,44 @@ public sealed class PatientEditorViewModel : ViewModelBase
             }
 
             StatusMessage = "تم إرسال المستند إلى الطابعة.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ShowTodayStatsAsync(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetTodayRegistrationStatsQuery(), cancellationToken);
+        if (!result.IsSuccess)
+        {
+            ErrorMessage = _presenter.Present(result.Error!);
+            return;
+        }
+        var s = result.Value!;
+        StatusMessage = $"اليوم: {s.PatientCount} مريض، {s.TestCount} تحليل، إيراد {s.Revenue:0.##}.";
+    }
+
+    private async Task PrintPatientIdSlipAsync(CancellationToken cancellationToken)
+    {
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل الطباعة.";
+            return;
+        }
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new PrintGroupPatientSlipsCommand(new[] { _patientId.Value }), cancellationToken);
+            if (result.IsSuccess)
+            {
+                StatusMessage = "تمت طباعة قصاصة التعريف.";
+            }
+            else if (result.Error is not null)
+            {
+                ErrorMessage = _presenter.Present(result.Error);
+            }
         }
         finally
         {
