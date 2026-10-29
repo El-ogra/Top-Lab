@@ -62,6 +62,9 @@ public sealed class Patient : AuditableEntity<PatientId>
 
     public bool IsFollowUpRequired { get; private set; }
 
+    /// <summary>U1-GAP-002: primary sample type applied to tests ordered after it is set.</summary>
+    public bool PrimarySampleType { get; private set; }
+
     private readonly List<PatientPhoneNumber> _phoneNumbers = [];
     public IReadOnlyCollection<PatientPhoneNumber> PhoneNumbers => _phoneNumbers.AsReadOnly();
 
@@ -80,6 +83,12 @@ public sealed class Patient : AuditableEntity<PatientId>
     {
         EnsureNotDeleted();
         IsFollowUpRequired = required;
+    }
+
+    public void SetPrimarySampleType(bool value)
+    {
+        EnsureNotDeleted();
+        PrimarySampleType = value;
     }
 
     private Patient()

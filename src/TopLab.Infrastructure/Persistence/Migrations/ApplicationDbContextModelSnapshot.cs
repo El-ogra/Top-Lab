@@ -247,6 +247,37 @@ namespace TopLab.Infrastructure.Persistence.Migrations
                     b.ToTable("PriceListItems");
                 });
 
+            modelBuilder.Entity("TopLab.Domain.Billing.ReceiptEmission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ReceiptEmissionId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("IssuedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IssuedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalCharged")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalPaid")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("ReceiptEmissions");
+                });
+
             modelBuilder.Entity("TopLab.Domain.ExternalEntities.ExternalEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -500,6 +531,11 @@ namespace TopLab.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime?>("PickupDateUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("PrimarySampleType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("RecentContrastImaging")
                         .HasColumnType("bit");

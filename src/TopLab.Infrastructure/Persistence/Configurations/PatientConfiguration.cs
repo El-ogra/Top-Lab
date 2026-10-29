@@ -39,6 +39,7 @@ public sealed class PatientConfiguration : IEntityTypeConfiguration<Patient>
         b.Property(e => e.RecentUltrasoundImaging).IsRequired().HasDefaultValue(false);
         // STAGE-01: the durable visit follow-up flag (baseline 1.2.2.6.10).
         b.Property(e => e.IsFollowUpRequired).IsRequired().HasDefaultValue(false);
+        b.Property(e => e.PrimarySampleType).IsRequired().HasDefaultValue(false);
         // STAGE-01: the patient's card / file number (baseline 1.2.2.2.6).
         b.Property(e => e.CardNumber).HasMaxLength(Patient.MaxCardNumberLength).IsRequired(false);
         b.HasIndex(e => e.CardNumber);
