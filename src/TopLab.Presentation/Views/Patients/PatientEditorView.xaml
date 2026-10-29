@@ -498,6 +498,12 @@
                         <Button Content="إضافة" Margin="2" Padding="8,0" Command="{Binding AddCustomGroupCommand}" />
                         <Button Content="مسح الكل" Margin="8,2,2,2" Padding="8,0" Command="{Binding ClearAllVisitTestsCommand}" IsEnabled="{Binding CanClearAllVisitTests}" />
                     </WrapPanel>
+                    <WrapPanel>
+                        <TextBlock Text="مجموعة تحاليل:" Margin="2" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding TestGroups}" SelectedItem="{Binding SelectedTestGroup}"
+                                  DisplayMemberPath="Name" Width="160" Margin="2" />
+                        <Button Content="إضافة مجموعة تحاليل" Margin="2" Padding="8,0" Command="{Binding AddTestGroupCommand}" />
+                    </WrapPanel>
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Top" Text="تحاليل المريض:" FontWeight="Bold" Margin="0,4" />
                 <TextBlock DockPanel.Dock="Top" Text="لا توجد تحاليل مختارة." Foreground="#666666" Margin="0,0,0,4">

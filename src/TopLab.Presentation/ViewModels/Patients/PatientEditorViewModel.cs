@@ -21,6 +21,7 @@ using TopLab.Application.Features.PatientRegistration.Commands.ApplyConditionDel
 using TopLab.Application.Features.PatientRegistration.Commands.ApplyVisitDeltas;
 using TopLab.Application.Features.PatientRegistration.Commands.AddMedicalCondition;
 using TopLab.Application.Features.PatientRegistration.Commands.AddProfileToVisit;
+using TopLab.Application.Features.PatientRegistration.Commands.AddTestGroupToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.AddTestsToVisit;
 using TopLab.Application.Features.PatientRegistration.Commands.ClearAllTests;
 using TopLab.Application.Features.PatientRegistration.Commands.CreatePatient;
@@ -135,6 +136,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
     private bool _profileIsCsf;
     private bool _profileIsTakenOutsideLab;
     private CustomGroupSummaryDto? _selectedCustomGroup;
+    private TestGroupDto? _selectedTestGroup;
 
     /// <summary>STAGE-01: the pregnancy question row (baseline 1.2.2.3.9).</summary>
     private ConditionItem? _pregnancyItem;
@@ -201,6 +203,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
         FollowUpCommand = new AsyncRelayCommand(async (_, ct) => await FollowUpAsync(ct));
         AddProfileCommand = new AsyncRelayCommand(async (_, ct) => await AddProfileAsync(ct));
         AddCustomGroupCommand = new AsyncRelayCommand(async (_, ct) => await AddCustomGroupAsync(ct));
+        AddTestGroupCommand = new AsyncRelayCommand(async (_, ct) => await AddTestGroupAsync(ct));
         ClearAllVisitTestsCommand = new AsyncRelayCommand(async (_, ct) => await ClearAllVisitTestsAsync(ct));
         ToggleFollowUpFlagCommand = new AsyncRelayCommand(async (_, ct) => await ToggleFollowUpFlagAsync(ct));
 
@@ -842,6 +845,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public bool ProfileIsTakenOutsideLab { get => _profileIsTakenOutsideLab; set => SetProperty(ref _profileIsTakenOutsideLab, value); }
 
     public CustomGroupSummaryDto? SelectedCustomGroup { get => _selectedCustomGroup; set => SetProperty(ref _selectedCustomGroup, value); }
+    public TestGroupDto? SelectedTestGroup { get => _selectedTestGroup; set => SetProperty(ref _selectedTestGroup, value); }
 
     public AsyncRelayCommand NewPatientCommand { get; }
 
@@ -908,6 +912,7 @@ public sealed class PatientEditorViewModel : ViewModelBase
     public AsyncRelayCommand AddProfileCommand { get; }
 
     public AsyncRelayCommand AddCustomGroupCommand { get; }
+    public AsyncRelayCommand AddTestGroupCommand { get; }
 
     public AsyncRelayCommand ClearAllVisitTestsCommand { get; }
 
@@ -1903,6 +1908,42 @@ public sealed class PatientEditorViewModel : ViewModelBase
             await LoadVisitTestsAsync(cancellationToken);
             await RefreshBillingAsync(cancellationToken);
             StatusMessage = "تمت إضافة المجموعة المخصصة.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task AddTestGroupAsync(CancellationToken cancellationToken)
+    {
+        ErrorMessage = string.Empty;
+        StatusMessage = string.Empty;
+        if (!IsEditMode || !_patientId.HasValue)
+        {
+            ErrorMessage = "احفظ بيانات المريض أولًا قبل إضافة مجموعة تحاليل.";
+            return;
+        }
+
+        if (SelectedTestGroup is null)
+        {
+            ErrorMessage = "اختر مجموعة تحاليل أولًا.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _mediator.Send(new AddTestGroupToVisitCommand(_patientId.Value, SelectedTestGroup.Id), cancellationToken);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = _presenter.Present(result.Error!);
+                return;
+            }
+
+            await LoadVisitTestsAsync(cancellationToken);
+            await RefreshBillingAsync(cancellationToken);
+            StatusMessage = "تمت إضافة مجموعة التحاليل.";
         }
         finally
         {
