@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TopLab.Application.Common.Interfaces;
 using TopLab.Application.Features.AccessAndNavigation.Commands.LockWorkstation;
 using TopLab.Application.Features.AccessAndNavigation.Queries.CheckDatabaseConnectivity;
+using TopLab.Application.Features.ResultDelivery.Queries.GetUndeliveredResults;
 using TopLab.Presentation.Common;
 using TopLab.Presentation.Common.Navigation;
 using TopLab.Presentation.Common.Dialogs;
@@ -40,6 +41,7 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
     private string _databaseConnectivityText = "غير متصل";
     private string _databaseConnectivityTooltip = "جارٍ التحقق من الاتصال…";
     private DateTime _currentDateTime;
+    private int _undeliveredCount;
     private ViewModelBase? _currentViewModel;
 
     public ShellViewModel(
@@ -183,6 +185,15 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
         get => _currentDateTime;
         private set => SetProperty(ref _currentDateTime, value);
     }
+
+    public int UndeliveredCount
+    {
+        get => _undeliveredCount;
+        private set => SetProperty(ref _undeliveredCount, value);
+    }
+
+    public bool ShowUndeliveredIndicator =>
+        _currentUser.IsAbsolutePermission || _currentUser.HasPermission("DELIVER_RESULTS");
 
     private IReadOnlyList<NavigationItem> BuildNavigationItems()
     {
@@ -379,6 +390,25 @@ public sealed class ShellViewModel : ViewModelBase, IDisposable
             DatabaseConnectivityText = "تعذر الاتصال بقاعدة البيانات";
             DatabaseConnectivityTooltip = "لا يوجد اتصال بقاعدة البيانات";
         }
+
+        // U1-GAP-012: undelivered-results count (permission-gated).
+        UndeliveredCount = 0;
+        if (ShowUndeliveredIndicator)
+        {
+            try
+            {
+                var countResult = await _mediator.Send(new GetUndeliveredResultsCountQuery());
+                if (countResult.IsSuccess)
+                {
+                    UndeliveredCount = countResult.Value;
+                }
+            }
+            catch
+            {
+                UndeliveredCount = 0;
+            }
+        }
+
     }
 
     private void OnPreProcessInput(object sender, PreProcessInputEventArgs e)

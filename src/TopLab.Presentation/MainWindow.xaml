@@ -84,6 +84,22 @@
                 </StackPanel>
             </StatusBarItem>
             <Separator />
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="نتائج غير مسلّمة: " />
+                    <TextBlock Text="{Binding UndeliveredCount}" FontWeight="Bold" />
+                </StackPanel>
+                <StatusBarItem.Style>
+                    <Style TargetType="StatusBarItem">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowUndeliveredIndicator}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StatusBarItem.Style>
+            </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
                 <TextBlock Text="{Binding CurrentDateTime, StringFormat={}{0:G}}" FlowDirection="LeftToRight" />
             </StatusBarItem>
