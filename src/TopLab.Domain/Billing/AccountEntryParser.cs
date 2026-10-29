@@ -250,6 +250,21 @@ public static class AccountEntryCalculator
         return Round2(totalAccountAmount * percentage / 100m);
     }
 
+    /// <summary>
+    /// Reverse of <see cref="DiscountAmountFromPercentage"/>: derives the percentage that a
+    /// discount amount represents against the patient's total account amount, rounded to two
+    /// decimals away from zero (U1-GAP-004).
+    /// </summary>
+    public static decimal DiscountPercentageFromAmount(decimal totalAccountAmount, decimal discountAmount)
+    {
+        if (totalAccountAmount <= 0m || discountAmount < 0m)
+        {
+            return 0m;
+        }
+
+        return Round2(discountAmount / totalAccountAmount * 100m);
+    }
+
     /// <summary>Rounds to two decimals away from zero (the money convention of the panel).</summary>
     public static decimal Round2(decimal value)
         => Math.Round(value, 2, MidpointRounding.AwayFromZero);

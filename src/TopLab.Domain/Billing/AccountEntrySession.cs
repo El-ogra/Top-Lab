@@ -153,6 +153,36 @@ public sealed class AccountEntrySession
     }
 
     /// <summary>
+    /// U1-GAP-004: derives the percentage that the entered discount amount represents,
+    /// against the patient's total account amount, and writes it into the percentage field
+    /// as a read-only projection (amount is authoritative). Returns null on success.
+    /// </summary>
+    public string? ApplyDiscountAmount(decimal totalAccountAmount)
+    {
+        var discount = AccountEntryParser.ParseDiscount(_discountText);
+        if (!discount.IsValid)
+        {
+            return discount.ErrorMessage;
+        }
+
+        if (discount.Value <= 0m)
+        {
+            _percentageText = null;
+            _appliedPercentage = 0m;
+            Stage = AccountEntryStage.Idle;
+            return null;
+        }
+
+        var percentage = AccountEntryCalculator.DiscountPercentageFromAmount(totalAccountAmount, discount.Value);
+
+        // Write through the backing field so the mutual-exclusion rule for USER edits
+        // (which would clear _discountText) does not discard the derived value.
+        _percentageText = percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        _appliedPercentage = percentage;
+        Stage = AccountEntryStage.Idle;
+        return null;
+    }
+    /// <summary>
     /// One <c>Enter</c> press. <paramref name="totalCharged"/> and
     /// <paramref name="alreadyPaid"/> come from the loaded account (never from client-side
     /// arithmetic on other figures) and are used only to display the resulting figures.
